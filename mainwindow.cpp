@@ -1,4 +1,3 @@
-#include <QWidget>
 #include "ui_mainwindow.h"
 #include "mainwindow.h"
 
@@ -6,18 +5,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), c(new(SocketConne
 {
 
 	setupActions();
-	QPixmap pixmap( 200, 330 );
-	pixmap.fill( Qt::white );
+    ui->setupUi(this);
 
-	QPainter painter( &pixmap );
-	painter.setPen( Qt::black );
-    
-
-	QPoint point = QPoint( 10, 20 );
-	painter.drawText( point, "You can draw text from a point..." );
-	painter.drawLine( point+QPoint(-5, 0), point+QPoint(5, 0) );
-	painter.drawLine( point+QPoint(0, -5), point+QPoint(0, 5) );
-  }
+}
 
 MainWindow::~MainWindow()
 {
@@ -31,10 +21,11 @@ void MainWindow::setupActions()
 
 //    connectAction->setIcon(QIcon::fromTheme(""));
 //    actionCollection()->setDefaultShortcut(clearAction, Qt::CTRL + Qt::Key_W);
-    actionCollection()->addAction("connect", connectAction);
+//    connect(connectAction, &QAction::triggered, this, &MainWindow::makeConnection);
+//    actionCollection()->addAction("connect", connectAction);
     connect(c, &SocketConnection::dataStreamComplete, this, &MainWindow::processDataStream);
 
-    connect(connectAction, triggered(bool), this, SLOT(makeConnection()));
+//    connect(connectAction, &QAction::triggered, this, SLOT(makeConnection()));
     
 //    KStandardAction::quit(qApp, SLOT(quit()), actionCollection());
     
@@ -51,13 +42,14 @@ void MainWindow::paintEvent(QPaintEvent *event)
 {
     //Drawing Texts
 
+    QPainter painter(this);
 
 	
-//	painter.save();
+    painter.save();
 	
-  //  painter.setFont(QFont("Times", 16, QFont::Bold));
-//	painter.setPen( Qt::black );
-//    painter.drawText(QPoint(10,10), "Qt5 Text Drawing");
+    painter.setFont(QFont("Times", 16, QFont::Bold));
+    painter.setPen( Qt::black );
+    painter.drawText(QPoint(10,10), "Qt5 Text Drawing");
 //	QFont font = painter.font();
 //	font.setPixelSize(15);
 //	painter.setFont(font);
@@ -77,13 +69,18 @@ void MainWindow::paintEvent(QPaintEvent *event)
  //   document.setHtml("<b>Hello</b><font color='red' size='30'>Qt5 C++ </font>");
  //   document.drawContents(&painter, rect);
 //	
-//	painter.restore();
+    painter.restore();
 
 }
-
+/*
 void MainWindow::makeConnection()
 {		
-	c->connectMainframe(QHostAddress("127.0.0.1"), 3270);
+
 //	qDebug() << "Bytes available: " << c.checkData();
 }
-
+*/
+void MainWindow::on_actionConnect_triggered(bool checked)
+{
+    c->connectMainframe(QHostAddress("127.0.0.1"), 3270);
+    repaint();
+}
