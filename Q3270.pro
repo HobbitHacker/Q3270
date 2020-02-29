@@ -16,15 +16,19 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    keyboard.cpp \
     main.cpp \
     mainwindow.cpp \
     SocketConnection.cpp \
-    DisplayDataStream.cpp
+    DisplayDataStream.cpp \
+    text.cpp
 
 HEADERS += \
+    keyboard.h \
     mainwindow.h \
     SocketConnection.h \
-    DisplayDataStream.h
+    DisplayDataStream.h \
+    text.h
 
 FORMS += \
     mainwindow.ui

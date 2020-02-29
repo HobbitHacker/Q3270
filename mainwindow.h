@@ -5,10 +5,19 @@
 #include <QPainter>
 #include <QAction>
 #include <QWidget>
+#include <QGraphicsScene>
+#include <QGraphicsView>
+#include <QGraphicsItem>
+#include <QTextDocument>
+#include <QHostAddress>
+#include <QTextEdit>
+#include <QEvent>
+#include <QKeyEvent>
+#include <QDebug>
 
 #include "SocketConnection.h"
 #include "DisplayDataStream.h"
-#include "ui_mainwindow.h"
+#include "keyboard.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -23,17 +32,17 @@ class MainWindow : public QMainWindow
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 	
-	virtual void paintEvent(QPaintEvent *qpainter);
-	
-  public slots:
-	void makeConnection();
-	
+  private slots:
+    void on_actionConnect_triggered(bool checked);
+
   private:
 	void setupActions();
 	void processDataStream();
 	SocketConnection *c;
 	DisplayDataStream *d;
-    Ui::MainWindow *ui;
+    Ui::MainWindow *ui;    
+    QTextEdit *te;
+    QGraphicsScene *gs;
 	
 };
  

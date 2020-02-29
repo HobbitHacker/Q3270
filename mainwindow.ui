@@ -6,22 +6,28 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>755</width>
-    <height>588</height>
+    <width>1658</width>
+    <height>1073</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <widget class="QWidget" name="box" native="true">
+   <widget class="QGraphicsView" name="graphicsView">
     <property name="geometry">
      <rect>
-      <x>30</x>
-      <y>30</y>
-      <width>701</width>
-      <height>431</height>
+      <x>10</x>
+      <y>0</y>
+      <width>1621</width>
+      <height>921</height>
      </rect>
+    </property>
+    <property name="viewportUpdateMode">
+     <enum>QGraphicsView::FullViewportUpdate</enum>
+    </property>
+    <property name="optimizationFlags">
+     <set>QGraphicsView::DontSavePainterState|QGraphicsView::IndirectPainting</set>
     </property>
    </widget>
   </widget>
@@ -30,8 +36,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>755</width>
-     <height>23</height>
+     <width>1658</width>
+     <height>37</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuConnect">
