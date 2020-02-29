@@ -33,6 +33,7 @@ class Keyboard : public QObject
         SocketConnection *socket;
 
         bool lock;
+        bool insMode;
 
         void cursorUp();
         void cursorDown();
@@ -41,6 +42,10 @@ class Keyboard : public QObject
         void enter();
         void tab();
         void home();
+        void insert();
+        void reset();
+        void deleteKey();
+        void backspace();
         void eraseEOF();
 
         std::unordered_map<int, doSomething> defaultMap;

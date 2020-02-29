@@ -13,8 +13,11 @@ Keyboard::Keyboard(QObject *parent, DisplayDataStream *d, SocketConnection *c) :
     defaultMap.insert(std::pair<int, doSomething>(Qt::Key_Tab, &Keyboard::tab));
     defaultMap.insert(std::pair<int, doSomething>(Qt::Key_Home, &Keyboard::home));
     defaultMap.insert(std::pair<int, doSomething>(Qt::Key_End, &Keyboard::eraseEOF));
+    defaultMap.insert(std::pair<int, doSomething>(Qt::Key_Insert, &Keyboard::insert));
+    defaultMap.insert(std::pair<int, doSomething>(Qt::Key_Delete, &Keyboard::deleteKey));
 
     lock = false;
+    insMode = false;
 }
 
 bool Keyboard::eventFilter( QObject *dist, QEvent *event )
@@ -25,7 +28,7 @@ bool Keyboard::eventFilter( QObject *dist, QEvent *event )
         std::unordered_map<int, doSomething>::const_iterator got = defaultMap.find(key);
         if (got == defaultMap.end())
         {
-            display->insertChar(QString(keyEvent->text()));
+            display->insertChar(QString(keyEvent->text()), insMode);
         }
         else
         {
@@ -93,4 +96,16 @@ void Keyboard::eraseEOF()
 {
     display->eraseField();
 
+}
+
+void Keyboard::insert()
+{
+    insMode = !(insMode);
+    printf("Insert mode now %d\n", insMode);
+    fflush(stdout);
+}
+
+void Keyboard::deleteKey()
+{
+    display->deleteChar();
 }

@@ -306,7 +306,7 @@ void DisplayDataStream::placeChar(uchar *b)
     }
 }
 
-void DisplayDataStream::insertChar(QString keycode)
+void DisplayDataStream::insertChar(QString keycode, bool insMode)
 {
     int pos = cursor_x + (cursor_y * SCREENX);
 
@@ -319,12 +319,69 @@ void DisplayDataStream::insertChar(QString keycode)
         return;
     }
 
+    if (insMode)
+    {
+        std::map<int, DisplayDataStream::FieldFlags>::iterator fn = f;
+
+        int endPos = (SCREENX * SCREENY) - 1;
+        if (++fn != screenFields.end())
+        {
+            endPos = fn->first - 1;
+        }
+        QString currentField;
+        if (glyph[endPos]->text() != IBM3270_CHAR_NULL && glyph[pos]->text() != IBM3270_CHAR_SPACE)
+        {
+            printf("Overflow!\n");
+            fflush(stdout);
+            return;
+        }
+        for(int fld = endPos; fld > pos; fld--)
+        {
+            qDebug() << glyph[fld]->text();
+            glyph[fld]->setText(glyph[fld-1]->text());
+        }
+    }
+
     f->second.mdt = true;
 
     glyph[pos]->setText(keycode);
 
     moveCursor(1, 0);
 }
+
+void DisplayDataStream::deleteChar()
+{
+    int pos = getCursorAddress();
+
+    std::map<int, DisplayDataStream::FieldFlags>::iterator f = findField(pos);
+
+    if (f->second.prot || f->first == pos)
+    {
+        printf("Protected!\n");
+        fflush(stdout);
+        return;
+    }
+
+    std::map<int, DisplayDataStream::FieldFlags>::iterator fn = f;
+
+    int endPos = (SCREENX * SCREENY) - 1;
+
+    if (++fn != screenFields.end())
+    {
+        endPos = fn->first - 1;
+    }
+
+    for(int fld = pos; fld < endPos; fld++)
+    {
+        qDebug() << glyph[fld]->text();
+        glyph[fld]->setText(glyph[fld+1]->text());
+    }
+
+    glyph[endPos]->setText(IBM3270_CHAR_NULL);
+
+    f->second.mdt = true;
+}
+
 
 void DisplayDataStream::eraseField()
 {

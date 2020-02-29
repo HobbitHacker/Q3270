@@ -49,8 +49,9 @@
 #define IBM3270_IC   0x13   /* Insert Cursor */
 #define IBM3270_RA   0x3C   /* Repeat to Address */
 
-/* Special handling needed for these characters */
-#define IBM3270_CHAR_NULL 0x00
+/* Constants for some EBCDIC chars */
+#define IBM3270_CHAR_NULL  0x00
+#define IBM3270_CHAR_SPACE 0x40
 /**
  * @todo write docs
  */
@@ -66,7 +67,9 @@ class DisplayDataStream : public QObject
         bool processing;
         void addByte(uchar b);
 
-        void insertChar(QString keycode);
+        void insertChar(QString keycode, bool insMode);
+        void deleteChar();
+
         void moveCursor(int x, int y, bool absolute = false);
         void eraseField();
 
