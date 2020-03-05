@@ -500,8 +500,16 @@ void DisplayDataStream::insertChar(QString keycode, bool insMode)
         {
             endPos = fn->first - 1;
         }
-        QString currentField;
-        if (glyph[endPos]->text() != IBM3270_CHAR_NULL && glyph[pos]->text() != IBM3270_CHAR_SPACE)
+        bool space = false;
+        for(int fld = pos; fld < endPos && !space; fld++)
+        {
+            if (glyph[fld]->text() == IBM3270_CHAR_NULL)
+            {
+                endPos = fld;
+                space = true;
+            }
+        }
+        if (!space)
         {
             printf("Overflow!\n");
             fflush(stdout);
