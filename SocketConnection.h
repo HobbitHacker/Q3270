@@ -5,7 +5,9 @@
 
 #include <QObject>
 #include <QTcpSocket>
+
 #include "DisplayDataStream.h"
+
 class QHostAddress;
 
 class SocketConnection : public QObject
@@ -16,9 +18,7 @@ class SocketConnection : public QObject
     public:
     explicit SocketConnection(QObject *parent = nullptr);
 
-    void startResponse();
-    void addResponseByte(uchar b);
-    void sendResponse();
+    void sendResponse(Buffer *b);
 
 
 
@@ -31,7 +31,7 @@ private slots:
 
 signals:
     void connected();
-	void dataStreamComplete();
+    void dataStreamComplete(Buffer *b);
     void disconnected();
     void error(QAbstractSocket::SocketError socketError);
 
@@ -53,14 +53,11 @@ private:
     QTcpSocket *dataSocket;
     QDataStream dataStream;
 	DisplayDataStream *displayDataStream;
+    Buffer *incomingData;
 
     void sendData();
 
     void datastreamReceived(const QJsonObject &doc);
-	void printHex(char *s);
-
-    char *responseBuffer;
-    char *responseBufferPos;
 
 };
 

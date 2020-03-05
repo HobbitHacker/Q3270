@@ -16,3 +16,8 @@ void Text::paint(QPainter *painter, const QStyleOptionGraphicsItem * option, QWi
     painter->translate(-boundingRect().width()/2, -boundingRect().height()/2);
     QGraphicsSimpleTextItem::paint(painter, option, widget);
 }
+
+uchar Text::toUChar()
+{
+    return this->text().toStdString()[0];
+}

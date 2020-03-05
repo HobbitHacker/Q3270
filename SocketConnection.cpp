@@ -26,6 +26,8 @@ SocketConnection::SocketConnection(QObject *parent)
     // Forward the error signal, QOverload is necessary as error() is overloaded, see the Qt docs
     connect(dataSocket, QOverload<QAbstractSocket::SocketError>::of(&QAbstractSocket::error), this, &SocketConnection::error);
     // Reset the m_loggedIn variable when we disconnec. Since the operation is trivial we use a lambda instead of creating another slot
+
+    incomingData = new Buffer();
 }
 
 
@@ -38,18 +40,24 @@ void SocketConnection::connectMainframe(const QHostAddress &address, quint16 por
 {
     dataSocket->connectToHost(address, port);
     displayDataStream = d;
+    connect(displayDataStream, &DisplayDataStream::bufferReady, this, &SocketConnection::sendResponse);
 }
 
 void SocketConnection::onReadyRead()
 {
 
-    if (displayDataStream->processing)
+    if (incomingData->processing())
        return;
 
     // create a QDataStream operating on the socket
     QDataStream dataStream(dataSocket);
     // set the version so that programs compiled with different versions of Qt can agree on how to serialise
     dataStream.setVersion(QDataStream::Qt_5_7);
+
+    printf("Buffer allocated %d\n", incomingData->address());
+    fflush(stdout);
+
+    incomingData->reset();
 
     // prepare a container to hold the UTF-8 encoded JSON we receive from the socket
     uchar socketByte;
@@ -64,6 +72,7 @@ void SocketConnection::onReadyRead()
         socketByte = (uchar) data3270;
 
         if (dataStream.commitTransaction()) {
+//            printf("Byte: %02X\n", socketByte);
             switch (telnetState)
 			{
 				case TELNET_STATE_DATA:
@@ -73,15 +82,16 @@ void SocketConnection::onReadyRead()
 						telnetState = TELNET_STATE_IAC;
 					} else 
 					{
-                        displayDataStream->addByte(socketByte);
+                        incomingData->add(socketByte);
 					}
 					break;
 				case TELNET_STATE_IAC:
                     switch (socketByte)
 					{
 						case IAC: // double IAC means a data byte 0xFF
-                            displayDataStream->addByte(socketByte);
-							telnetState = TELNET_STATE_DATA;
+                            std::cout << "Double 0xFF received - stored 0xFF\n";
+                            incomingData->add(socketByte);
+                            telnetState = TELNET_STATE_DATA;
 							break;
 						case DO:		// Request something, or confirm WILL request
 							printf("  DO seen\n"); 
@@ -104,10 +114,10 @@ void SocketConnection::onReadyRead()
 							telnetState = TELNET_STATE_IAC_SB;
 							break;
 						case EOR:
-                            displayDataStream->processing = true;
+                            incomingData->setProcessing(true);
 							printf("  EOR seen - yippee!\n");
                             telnetState = TELNET_STATE_DATA;
-							emit dataStreamComplete();
+                            emit dataStreamComplete(incomingData);
 							break;
 						default:
                             printf("IAC Not sure: %02X\n", socketByte);
@@ -120,17 +130,15 @@ void SocketConnection::onReadyRead()
 						case TELOPT_TTYPE:
 						case TELOPT_BINARY:
 						case TELOPT_EOR:
-							printf("    TTYPE, BINARY or EOR seen\n");
+                            printf("    TTYPE, BINARY or EOR (%d) seen\n", socketByte);
                             sprintf(response, "%c%c%c", (char) IAC, (char) WILL, socketByte);
                             dataStream.writeRawData(response, 3);
 							telnetState = TELNET_STATE_DATA;
-							printHex(&response[0]);
 							break;
 						default:
                             sprintf(response, "%c%c%c", (char) IAC, (char) WONT, socketByte);
                             dataStream.writeRawData(response, 3);
 							telnetState = TELNET_STATE_DATA;
-							printHex(&response[0]);
                             printf("TTYPE Not sure: %02X\n", socketByte);
 							break;
 					}
@@ -148,13 +156,11 @@ void SocketConnection::onReadyRead()
                             sprintf(response, "%c%c%c", (char) IAC, (char) DO, socketByte);
                             dataStream.writeRawData(response, 3);
 							telnetState = TELNET_STATE_DATA;
-							printHex(&response[0]);
 							break;
 						default:
                             sprintf(response, "%c%c%c", (char) IAC, (char) DONT, socketByte);
                             dataStream.writeRawData(response, 3);
 							telnetState = TELNET_STATE_DATA;
-							printHex(&response[0]);
                             printf("WILL Not sure: %02X\n", socketByte);
 							break;
 					}
@@ -209,10 +215,9 @@ void SocketConnection::onReadyRead()
 					{
 						case SE:
 							printf("    SB TTYPE SEND IAC SE seen - good!\n");
-							sprintf(response, "%c%c%c%cIBM-3279-2%c%c", (char) IAC, (char) SB, (char) TELOPT_TTYPE, (char) TELQUAL_IS, (char) IAC, (char) SE);
-                            dataStream.writeRawData(response, 16);
+                            sprintf(response, "%c%c%c%cIBM-3279-2-E%c%c", (char) IAC, (char) SB, (char) TELOPT_TTYPE, (char) TELQUAL_IS, (char) IAC, (char) SE);
+                            dataStream.writeRawData(response, 18);
 							telnetState = TELNET_STATE_DATA;
-							printHex(&response[0]);
 							break;
 						default:
                             printf("SB TTYPE SEND IAC Not sure: %02.2X\n", socketByte);
@@ -224,31 +229,24 @@ void SocketConnection::onReadyRead()
 			}
             fflush(stdout);
         } else {
+            incomingData->reset();
             // the read failed, the socket goes automatically back to the state it was in before the transaction started
             // we just exit the loop and wait for more data to become available
            break;
        }
     }
+    printf("Loop done\n");
+    fflush(stdout);
 }
 
-void SocketConnection::startResponse()
-{
-    responseBuffer = (char *)malloc(1020400);
-    responseBufferPos = responseBuffer;
-}
-
-void SocketConnection::addResponseByte(uchar b)
-{
-    *responseBufferPos = b;
-    responseBufferPos++;
-}
-
-void SocketConnection::sendResponse()
+void SocketConnection::sendResponse(Buffer *b)
 {
     // create a QDataStream operating on the socket
     QDataStream dataStream(dataSocket);
 
-    dataStream.writeRawData(responseBuffer, responseBufferPos - responseBuffer);
+    printf("buffer: %d for %d bytes", b->address(), b->size());
+    fflush(stdout);
+    dataStream.writeRawData(b->address(), b->size());
 
     char response[2];
 
@@ -256,16 +254,5 @@ void SocketConnection::sendResponse()
     response[1] = EOR;
 
     dataStream.writeRawData(response, 2);
-    free(responseBuffer);
-}
 
-void SocketConnection::printHex(char *st)
-{
-	printf("sent: ");
-	for(int i=0; *st!=0; i++)
-	{
-		printf("%02.2X ", (uchar) *st++);
-	}
-	printf("\n");
-	fflush(stdout);
 }

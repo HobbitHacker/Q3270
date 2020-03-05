@@ -15,6 +15,7 @@
  */
 
 #include "DisplayDataStream.h"
+
 #include <stdlib.h>
 #include <QObject>
 #include <QDebug>
@@ -24,12 +25,6 @@
 DisplayDataStream::DisplayDataStream(QGraphicsScene* parent)
 {
     display = parent;
-
-    //TODO: return codes from malloc
-    buffer = (uchar*) malloc(102400);
-    bufferCurrentPos = buffer;
-
-    bufferLength = 0;
 
     //TODO: screen sizes
     defaultScreenSize = 80*24;
@@ -42,6 +37,8 @@ DisplayDataStream::DisplayDataStream(QGraphicsScene* parent)
     cursor_y = 0;
 
     count = 0;
+
+    chars = new DisplayData(defaultScreenSize);
 
     display->setBackgroundBrush(Qt::blue);
 
@@ -74,68 +71,103 @@ DisplayDataStream::DisplayDataStream(QGraphicsScene* parent)
     cursor->setPos(cells[cursor_x + (cursor_y * SCREENX)]->boundingRect().left(), cells[cursor_x + (cursor_y * SCREENX)]->boundingRect().top());
     cursor->setBrush(Qt::lightGray);
     cursor->setOpacity(0.5);
+
+    chars->clear();
+
 }
 
-void DisplayDataStream::addByte(uchar b)
+void DisplayDataStream::processStream(Buffer *b)
 {
-    *bufferCurrentPos++ = b;
-    bufferLength++;
-}
-
-void DisplayDataStream::processStream()
-{
-    uchar *b = buffer;
-
-    if (*b == (uchar)IBM3270_EW)
+    //FIXME: buffer size 0 shouldn't happen!
+    if (b->size() == 0)
     {
-        b = processEW(b);
-    }
-    else
-    {
-        printf("Eeek. Structured field!\n");
+        return;
     }
 
-    while(b < (buffer + bufferLength))
+    b->dump();
+
+    // Process WRITE command
+    extended.on = false;
+
+    switch(b->getByte())
     {
-//        printf("Processing .. BufferLenth=%d (bufferCurrentPos=%d)\n", bufferLength, bufferCurrentPos);
-        switch(*b)
+        case IBM3270_EW:
+            processEW(b);
+            break;
+        case IBM3270_W:
+            processW(b);
+            break;
+        case IBM3270_WSF:
+            processWSF(b->nextByte());
+            break;
+        case IBM3270_EWA:
+            processEWA(b);
+            break;
+        default:
+            printf("Unrecognised WRITE command: %02.2X\n", b->getByte());
+            b->dump();
+            processing = false;
+            return;
+    }
+
+    while(b->nextByte())
+    {
+//        printf("Processing %02.2X\n", b->getByte());
+        switch(b->getByte())
         {
             case IBM3270_SF:
-                b = processSF(b);
+                processSF(b);
                 break;
             case IBM3270_SBA:
-                b = processSBA(b);
+                processSBA(b);
                 break;
             case IBM3270_SFE:
-                b = processSFE(b);
+                processSFE(b);
                 break;
             case IBM3270_IC:
                 processIC();
                 break;
             case IBM3270_RA:
-                b = processRA(b);
+                processRA(b);
                 break;
-            case IBM3270_W:  // TODO: cursor address for WRITE command
+            case IBM3270_SA:
+                processSA(b);
+                break;
             default:
-                placeChar(b);
+                placeChar(b->getByte());
         }
-        b++;
     }
-    processing = false;
-    bufferLength = 0;
-    bufferCurrentPos = buffer;
+
+    b->reset();
+    b->setProcessing(false);
+
+    if (resetMDT)
+    {
+
+    }
+
+    showFields();
+    fflush(stdout);
 
 }
 
-uchar * DisplayDataStream::processEW(uchar *buf)
+void DisplayDataStream::processWCC(Buffer *b)
 {
-    uchar wcc = *(++buf);
+    uchar wcc = b->getByte();
 
-    bool resetMDT = !(wcc&1);
+    int reset = wcc>6&1;
+
+    resetMDT = wcc&1;
     resetKB  = (wcc>>1)&1;
     alarm    = (wcc>>2)&1;
 
-    printf("Seen WCC %02.2X\n", (uchar) wcc);
+    printf("Seen WCC %02.2X - reset=%d, resetMDT=%d, resetKB=%d, alarm=%d\n", (uchar) wcc, reset, resetMDT, resetKB, alarm);
+
+}
+
+void DisplayDataStream::processEW(Buffer *buf)
+{
+    processWCC(buf->nextByte());
 
     primary_x = 0;
     primary_y = 0;
@@ -147,47 +179,54 @@ uchar * DisplayDataStream::processEW(uchar *buf)
 
     for(int i = 0; i < SCREENX * SCREENY; i++)
     {
-        cells[i]->setBrush(Qt::black);
-        glyph[i]->setBrush(Qt::green);
+        cells[i]->setBrush(palette[0]);
+        glyph[i]->setBrush(palette[4]);
         glyph[i]->setText(0x00);
     }
 
     screenFields.clear();
+    chars->clear();
 
-    return ++buf;
-
+    printf("Erase Write\n");
 }
 
-uchar * DisplayDataStream::processSF(uchar *buf)
+void DisplayDataStream::processW(Buffer *buf)
 {
-    buf++;
+    printf("Write\n");
+
+    processWCC(buf->nextByte());
+}
+
+void DisplayDataStream::processSF(Buffer *buf)
+{
+    printf("Start Field\n");
+
+    buf->nextByte();
 
     int pos = primary_x + (primary_y * SCREENX);
 
     setAttributes(buf);
 
-    screenFields.emplace(pos, FieldFlags{ askip, prot });
+    placeChar(0x40);
 
-    uchar spc = 0x40; // EBCDIC space :-)
-    placeChar(&spc);
+    screenFields.emplace(pos, FieldFlags{ askip, prot, mdt });
 
-    return buf;
+    chars->setChar(pos, buf->getByte());
 }
 
-uchar *DisplayDataStream::processSBA(uchar *buf)
+void DisplayDataStream::processSBA(Buffer *buf)
 {
-    int pos = extractBufferAddress(++buf);
+    int pos = extractBufferAddress(buf->nextByte());
 
     primary_y = (pos / SCREENX);
     primary_x = pos - (primary_y * SCREENX);
-
-    return ++buf;
 }
 
-uchar *DisplayDataStream::processSFE(uchar *b)
+void DisplayDataStream::processSFE(Buffer *b)
 {
     printf("SFE seen\n");
-    return ++b;
+
+    b->nextByte();
 }
 
 void DisplayDataStream::processIC()
@@ -197,9 +236,9 @@ void DisplayDataStream::processIC()
     addCursor();
 }
 
-uchar *DisplayDataStream::processRA(uchar *b)
+void DisplayDataStream::processRA(Buffer *b)
 {
-    int endPos = extractBufferAddress(++b);
+    int endPos = extractBufferAddress(b->nextByte());
 
     if (endPos > (SCREENX * SCREENY) - 1)
     {
@@ -208,8 +247,22 @@ uchar *DisplayDataStream::processRA(uchar *b)
 
     int curPos = primary_x + (primary_y * SCREENX);
 
-    b++;
-    uchar *newChar = ++b;
+    b->nextByte();
+    uchar newChar = b->getByte();
+
+    if(endPos == curPos)
+    {
+        int tmp_x = primary_x;
+        int tmp_y = primary_y;
+
+        for(int i = 0; i < SCREENX * SCREENY; i++)
+        {
+            placeChar(newChar);
+        }
+        primary_x = tmp_x;
+        primary_y = tmp_y;
+        placeChar(newChar);
+    }
 
     if (endPos > curPos)
     {
@@ -220,20 +273,117 @@ uchar *DisplayDataStream::processRA(uchar *b)
     }
     if (endPos < curPos)
     {
-        for(int i = 0; i < endPos; i++)
+        for(int i = 0; i <= endPos; i++)
         {
             placeChar(newChar);
         }
     }
 
-    return b;
 }
 
-int DisplayDataStream::extractBufferAddress(uchar *b)
+void DisplayDataStream::processSA(Buffer *b)
 {
-    //TODO: non-12/14 bit addresses
-    int sba1 = *b++;
-    int sba2 = *b;
+    int extendedType = b->nextByte()->getByte();
+    int extendedValue = b->nextByte()->getByte();
+
+    printf("SetAttribute: %02.2X : %02.2X\n", extendedType, extendedValue);
+    fflush(stdout);
+
+    switch(extendedType)
+    {
+        case IBM3270_EXT_DEFAULT:
+            extended.on = false;
+            extended.highlight = 0;
+            extended.foreground = 1;
+            extended.background = 0;
+            return;
+        case IBM3270_EXT_HILITE:
+            extended.highlight = extendedValue;
+            break;
+        case IBM3270_EXT_FG_COLOUR:
+            extended.foreground = extendedValue&7;
+            break;
+        case IBM3270_EXT_BG_COLOUR:
+            extended.background = extendedValue&7;
+            break;
+        default:
+            printf("Not implemented: SA order %02.2X : %02.2X\n", extendedType, extendedValue);
+            fflush(stdout);
+    }
+
+    extended.on = true;
+}
+
+void DisplayDataStream::processEWA(Buffer *b)
+{
+    processEW(b);
+}
+
+void DisplayDataStream::processWSF(Buffer *b)
+{
+    wsfLen = b->getByte()<<8;
+    b->nextByte();
+    wsfLen += b->getByte();
+    b->nextByte();
+
+    printf("WSF - length: %03d; command = %02.2X\n", wsfLen, b->getByte());
+    fflush(stdout);
+
+    switch(b->getByte())
+    {
+        case IBM3270_WSF_RESET:
+            WSFreset(b);
+            break;
+        case IBM3270_WSF_READPARTITION:
+            WSFreadPartition(b);
+            break;
+        default:
+            printf("Unimplemented WSF command: %02.2X\n", b->getByte());
+            break;
+    }
+}
+
+void DisplayDataStream::WSFreset(Buffer *b)
+{
+    printf("Reset Partition %02.2X\n", b->nextByte()->getByte());
+    fflush(stdout);
+    return;
+}
+
+void DisplayDataStream::WSFreadPartition(Buffer *b)
+{
+    uchar partition = b->nextByte()->getByte();
+    uchar type = b->nextByte()->getByte();
+
+    printf("ReadPartition %d - type %02.2X\n", partition, type);
+
+    Buffer *queryReply = new Buffer();
+    queryReply->add(IBM3270_WSF_QUERYREPLY);
+
+    replySummary(queryReply);
+
+    emit(bufferReady(queryReply));
+
+}
+
+void DisplayDataStream::replySummary(Buffer *buffer)
+{
+    unsigned char qrt[] = { 0x80, 0x86, 0x87, 0xA6 };
+
+    buffer->add(strlen((char*)qrt)>>8);
+    buffer->add(strlen((char*)qrt)&0xFF);
+
+    for(int i = 0; i < strlen((char*)qrt); i++)
+    {
+        buffer->add(qrt[i]);
+    }
+}
+
+int DisplayDataStream::extractBufferAddress(Buffer *b)
+{
+    //TODO: non-12/14 bit addresses & EBCDIC characters
+    int sba1 = b->getByte();
+    int sba2 = b->nextByte()->getByte();
 
     sba1 = sba1&63;
     sba2 = sba2&63;
@@ -241,59 +391,81 @@ int DisplayDataStream::extractBufferAddress(uchar *b)
     return (sba1<<6)|sba2;
 }
 
-void DisplayDataStream::setAttributes(uchar *b)
+void DisplayDataStream::setAttributes(Buffer *b)
 {
-    bool prot = ((*b)>>5)&1;
-    bool num  = ((*b)>>4)&1;
-    int disppen = ((*b)>>2)&3;
-    bool mdt = (*b)&1;
+
+    //TODO: extended attributes with 3270 field attributes
+    prot = ((b->getByte())>>5)&1;
+    bool num  = ((b->getByte())>>4)&1;
+    int disppen = ((b->getByte())>>2)&3;
+    bool mdt = (b->getByte())&1;
 
     askip = (prot & num);
 
     if(prot)
     {
-        this->prot = true;
         if (disppen == 2)
         {
-            fieldAttr = Qt::white;
+            fieldAttr = palette[7]; //TODO: use names  (white)
         }
         else
         {
-            fieldAttr = Qt::blue;
+            fieldAttr = palette[1]; /* Blue */
         }
 
     }
     else
     {
-        this->prot = false;
         if (disppen == 2)
         {
-            fieldAttr = Qt::red;
+            fieldAttr = palette[2]; /* Red */
         }
         else
         {
-            fieldAttr = Qt::green;
+            fieldAttr = palette[4]; /* Green */
         }
     }
+    printf("%02d,%02d: Attrbute byte: %02.2X prot=%d num=%d disppen=%d mdt=%d\n", primary_x, primary_y, b->getByte(), prot, num, disppen, mdt);
+    fflush(stdout);
 
 }
 
-void DisplayDataStream::placeChar(uchar *b)
+void DisplayDataStream::placeChar(Buffer *b)
 {
+    int ebcdic = (int)(b->getByte());
+
+    placeChar(ebcdic);
+}
+
+void DisplayDataStream::placeChar(int ebcdic)
+{
+
     int pos = primary_x + (primary_y * SCREENX);
 
-    int ebcdic = (int)((uchar) *b);
+    if (screenFields.find(pos) != screenFields.end())
+    {
+        printf("Removed existing field entry at %02d,%02d\n", primary_x, primary_y);
+        fflush(stdout);
+        screenFields.erase(pos);
+    }
+
+    glyph[pos]->setBrush(fieldAttr);
 
     switch(ebcdic)
     {
         case IBM3270_CHAR_NULL:
             glyph[pos]->setText(0x00);
+            chars->setChar(pos, 0x00);
             break;
         default:
+            if (extended.on)
+            {
+                glyph[pos]->setBrush(palette[extended.foreground]);
+                cells[pos]->setBrush(palette[extended.background]);
+            }
             glyph[pos]->setText(QString(EBCDICtoASCIImap[ebcdic]));
+            attributes[pos].prot = prot;
     }
-
-    glyph[pos]->setBrush(fieldAttr);
 
     if (++primary_x >= SCREENX)
     {
@@ -476,10 +648,20 @@ void DisplayDataStream::addCursor()
 
 }
 
-int DisplayDataStream::getCursorAddress()
+int DisplayDataStream::getCursorAddress(int offset)
 {
 
     int c1 = cursor_x + (cursor_y * SCREENX);
+
+    if (offset == 0)
+    {
+        return c1;
+    }
+
+    if ((c1 + offset) > (SCREENX * SCREENY) - 1)
+    {
+        return 0;
+    }
 
     return c1;
 }
@@ -494,41 +676,65 @@ void DisplayDataStream::showFields()
     }
 }
 
-void DisplayDataStream::findNextUnprotected()
+void DisplayDataStream::tab()
+{
+    FieldIterator it = findNextUnprotected();
+
+    cursor_y = (it->first / SCREENX);
+    cursor_x = it->first - (cursor_y * SCREENX);
+    // Move cursor right (skip attribute byte)
+    moveCursor(1, 0);
+}
+
+void DisplayDataStream::home()
+{
+    FieldIterator it = findFirstUnprotected();
+    cursor_y = (it->first / SCREENX);
+    cursor_x = it->first - (cursor_y * SCREENX);
+
+    // Move cursor right (skip attribute byte)
+    moveCursor(1, 0);
+}
+
+
+DisplayDataStream::FieldIterator DisplayDataStream::findNextUnprotected()
 {
     int cpos = getCursorAddress();
 
-    for (std::map<int, FieldFlags>::iterator it = screenFields.begin(); it != screenFields.end(); it++)
+    for (FieldIterator it = screenFields.begin(); it != screenFields.end(); it++)
     {
         if (it->first > cpos && !it->second.prot)
         {
-            cursor_y = (it->first / SCREENX);
-            cursor_x = it->first - (cursor_y * SCREENX);
-            moveCursor(1, 0);
-            return;
+            int nextPos = getCursorAddress(it->first + 1);
+            if (screenFields.find(nextPos) == screenFields.end())
+            {
+                return it;
+            }
         }
     }
-    findFirstUnprotected();
+    return findFirstUnprotected();
 
 }
 
-void DisplayDataStream::findFirstUnprotected()
+DisplayDataStream::FieldIterator DisplayDataStream::findFirstUnprotected()
 {
-    for (std::map<int, FieldFlags>::iterator it = screenFields.begin(); it != screenFields.end(); it++)
+    for (FieldIterator it = screenFields.begin(); it != screenFields.end(); it++)
     {
         if (!it->second.prot)
         {
-            cursor_y = (it->first / SCREENX);
-            cursor_x = it->first - (cursor_y * SCREENX);
-            moveCursor(1, 0);
-            return;
+            int nextPos = getCursorAddress(it->first + 1);
+            if (screenFields.find(nextPos) == screenFields.end())
+            {
+                return it;
+            }
         }
     }
+    return screenFields.begin();
 }
 
-std::map<int, DisplayDataStream::FieldFlags>::iterator DisplayDataStream::findField(int pos)
+DisplayDataStream::FieldIterator DisplayDataStream::findField(int pos)
 {
-    std::map<int, FieldFlags>::iterator last = screenFields.begin();
+    FieldIterator last = screenFields.begin();
 
     for (std::map<int, FieldFlags>::iterator it = screenFields.begin(); it != screenFields.end(); it++)
     {
@@ -541,5 +747,53 @@ std::map<int, DisplayDataStream::FieldFlags>::iterator DisplayDataStream::findFi
         last = it;
     }
     return last;
+}
+
+Buffer *DisplayDataStream::processFields()
+{
+    Buffer *respBuffer = new Buffer();
+
+    respBuffer->add(IBM3270_AID_ENTER);
+
+    int cPos = getCursorAddress();
+
+    respBuffer->add(twelveBitBufferAddress[(cPos>>5)&63]);
+    respBuffer->add(twelveBitBufferAddress[cPos&63]);
+
+    FieldIterator fn = screenFields.begin();
+
+    for (FieldIterator it = screenFields.begin(); it != screenFields.end(); it++)
+    {
+        if (it->second.mdt)
+        {
+            fn = it;
+            int endPos = (SCREENX * SCREENY) - 1;
+            if (++fn != screenFields.end())
+            {
+                endPos = fn->first - 1;
+            }
+
+            respBuffer->add(IBM3270_SBA);
+            int f = it->first + 1;
+
+
+            respBuffer->add(twelveBitBufferAddress[(f>>6)&63]);
+            respBuffer->add(twelveBitBufferAddress[(f&63)]);
+
+            for(int i = f; i <= endPos; i++)
+            {
+                uchar b = glyph[i]->toUChar();
+                if (b != IBM3270_CHAR_NULL)
+                {
+                    respBuffer->add(ASCIItoEBCDICmap[b]);
+                }
+            }
+            it->second.mdt = false;
+        }
+    }
+
+    respBuffer->dump();
+
+    return respBuffer;
 }
 

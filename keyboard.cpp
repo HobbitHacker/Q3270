@@ -5,6 +5,7 @@ Keyboard::Keyboard(QObject *parent, DisplayDataStream *d, SocketConnection *c) :
     display = d;
     socket = c;
 
+    //TODO: Call DisplayDataStream methods directly?
     defaultMap.insert(std::pair<int, doSomething>(Qt::Key_Up, &Keyboard::cursorUp));
     defaultMap.insert(std::pair<int, doSomething>(Qt::Key_Down, &Keyboard::cursorDown));
     defaultMap.insert(std::pair<int, doSomething>(Qt::Key_Right, &Keyboard::cursorRight));
@@ -26,6 +27,7 @@ bool Keyboard::eventFilter( QObject *dist, QEvent *event )
         QKeyEvent *keyEvent = static_cast<QKeyEvent *>(event);
         int key = keyEvent->key();
         std::unordered_map<int, doSomething>::const_iterator got = defaultMap.find(key);
+        printf("Keyboard: Count: %d   Key: %d   Native: %d Modifiers: %d   nativeModifiers: %d   nativeVirtualKey: %d    text: %s\n", keyEvent->count(), keyEvent->key(), keyEvent->nativeScanCode(), keyEvent->modifiers(), keyEvent->nativeModifiers(), keyEvent->nativeVirtualKey(), keyEvent->text().toLatin1().data());
         if (got == defaultMap.end())
         {
             display->insertChar(QString(keyEvent->text()), insMode);
@@ -66,36 +68,23 @@ void Keyboard::cursorLeft()
 void Keyboard::enter()
 {
     lock = true;
-
-    //TODO - utility method to set processing mode
-    display->processing = true;
-
-    socket->startResponse();
-
-    socket->addResponseByte(IBM3270_ENTER);
-
-    socket->addResponseByte(display->getCursorAddress());
-
-    socket->sendResponse();
-
-    display->processing = false;
-
+    Buffer *b = display->processFields();
+    socket->sendResponse(b);
 }
 
 void Keyboard::tab()
 {
-    display->findNextUnprotected();
+    display->tab();
 }
 
 void Keyboard::home()
 {
-    display->findFirstUnprotected();
+        display->home();
 }
 
 void Keyboard::eraseEOF()
 {
     display->eraseField();
-
 }
 
 void Keyboard::insert()

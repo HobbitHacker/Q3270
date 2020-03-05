@@ -28,10 +28,10 @@ MainWindow::~MainWindow()
 }
 
 
-void MainWindow::processDataStream()
+void MainWindow::processDataStream(Buffer *b)
 {
     printf("Found something to process!\n");
-    d->processStream();
+    d->processStream(b);
 	fflush(stdout);
 }
 

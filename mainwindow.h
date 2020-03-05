@@ -37,7 +37,7 @@ class MainWindow : public QMainWindow
 
   private:
 	void setupActions();
-	void processDataStream();
+    void processDataStream(Buffer *b);
 	SocketConnection *c;
 	DisplayDataStream *d;
     Ui::MainWindow *ui;    

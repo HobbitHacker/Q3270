@@ -16,6 +16,7 @@ class Text : public QObject, public QGraphicsSimpleTextItem
         Text(QGraphicsItem* parent = 0);
         QRectF boundingRect() const;
         void paint(QPainter *painter, const QStyleOptionGraphicsItem * option, QWidget * widget = 0);
+        uchar toUChar();
 };
 
 #endif // TEXT_H

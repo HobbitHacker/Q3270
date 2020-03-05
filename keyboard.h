@@ -9,6 +9,7 @@
 
 #include "DisplayDataStream.h"
 #include "SocketConnection.h"
+#include "buffer.h"
 
 #define IBM3270_ENTER 0x7D
 
