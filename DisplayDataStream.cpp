@@ -589,7 +589,7 @@ void DisplayDataStream::eraseField()
     f->second.mdt = true;
 
     /* Blank field */
-    for(int i = f->first + 1; i < fend; i++)
+    for(int i = cpos; i < fend; i++)
     {
         glyph[i]->setText(0x00);
     }
