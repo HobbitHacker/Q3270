@@ -10,12 +10,27 @@ Keyboard::Keyboard(QObject *parent, DisplayDataStream *d, SocketConnection *c) :
     defaultMap.insert(std::pair<int, doSomething>(Qt::Key_Down, &Keyboard::cursorDown));
     defaultMap.insert(std::pair<int, doSomething>(Qt::Key_Right, &Keyboard::cursorRight));
     defaultMap.insert(std::pair<int, doSomething>(Qt::Key_Left, &Keyboard::cursorLeft));
+
     defaultMap.insert(std::pair<int, doSomething>(Qt::Key_Enter, &Keyboard::enter));
     defaultMap.insert(std::pair<int, doSomething>(Qt::Key_Tab, &Keyboard::tab));
     defaultMap.insert(std::pair<int, doSomething>(Qt::Key_Home, &Keyboard::home));
+
     defaultMap.insert(std::pair<int, doSomething>(Qt::Key_End, &Keyboard::eraseEOF));
     defaultMap.insert(std::pair<int, doSomething>(Qt::Key_Insert, &Keyboard::insert));
     defaultMap.insert(std::pair<int, doSomething>(Qt::Key_Delete, &Keyboard::deleteKey));
+
+    defaultMap.insert(std::pair<int, doSomething>(Qt::Key_F1, &Keyboard::functionkey));
+    defaultMap.insert(std::pair<int, doSomething>(Qt::Key_F2, &Keyboard::functionkey));
+    defaultMap.insert(std::pair<int, doSomething>(Qt::Key_F3, &Keyboard::functionkey));
+    defaultMap.insert(std::pair<int, doSomething>(Qt::Key_F4, &Keyboard::functionkey));
+    defaultMap.insert(std::pair<int, doSomething>(Qt::Key_F5, &Keyboard::functionkey));
+    defaultMap.insert(std::pair<int, doSomething>(Qt::Key_F6, &Keyboard::functionkey));
+    defaultMap.insert(std::pair<int, doSomething>(Qt::Key_F7, &Keyboard::functionkey));
+    defaultMap.insert(std::pair<int, doSomething>(Qt::Key_F8, &Keyboard::functionkey));
+    defaultMap.insert(std::pair<int, doSomething>(Qt::Key_F9, &Keyboard::functionkey));
+    defaultMap.insert(std::pair<int, doSomething>(Qt::Key_F10, &Keyboard::functionkey));
+    defaultMap.insert(std::pair<int, doSomething>(Qt::Key_F11, &Keyboard::functionkey));
+    defaultMap.insert(std::pair<int, doSomething>(Qt::Key_F12, &Keyboard::functionkey));
 
     lock = false;
     insMode = false;
@@ -25,12 +40,16 @@ bool Keyboard::eventFilter( QObject *dist, QEvent *event )
 {
     if (event->type() == QEvent::KeyPress) {
         QKeyEvent *keyEvent = static_cast<QKeyEvent *>(event);
-        int key = keyEvent->key();
+        key = keyEvent->key();
+        modifier = keyEvent->modifiers();
         std::unordered_map<int, doSomething>::const_iterator got = defaultMap.find(key);
         printf("Keyboard: Count: %d   Key: %d   Native: %d Modifiers: %d   nativeModifiers: %d   nativeVirtualKey: %d    text: %s\n", keyEvent->count(), keyEvent->key(), keyEvent->nativeScanCode(), keyEvent->modifiers(), keyEvent->nativeModifiers(), keyEvent->nativeVirtualKey(), keyEvent->text().toLatin1().data());
         if (got == defaultMap.end())
         {
-            display->insertChar(QString(keyEvent->text()), insMode);
+            if (keyEvent->text() != "")
+            {
+                display->insertChar(QString(keyEvent->text()), insMode);
+            }
         }
         else
         {
@@ -68,7 +87,7 @@ void Keyboard::cursorLeft()
 void Keyboard::enter()
 {
     lock = true;
-    Buffer *b = display->processFields();
+    Buffer *b = display->processFields(IBM3270_AID_ENTER);
     socket->sendResponse(b);
 }
 
@@ -97,4 +116,17 @@ void Keyboard::insert()
 void Keyboard::deleteKey()
 {
     display->deleteChar();
+}
+
+void Keyboard::functionkey()
+{
+    int fkeyAdjusted = key - Qt::Key_F1;
+
+    if (modifier == Qt::ShiftModifier)
+    {
+        fkeyAdjusted = fkeyAdjusted + 12;
+    }
+    lock = true;
+    Buffer *b = display->processFields(fkeys[fkeyAdjusted]);
+    socket->sendResponse(b);
 }

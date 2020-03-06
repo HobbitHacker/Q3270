@@ -186,6 +186,7 @@ void DisplayDataStream::processEW(Buffer *buf)
 
     screenFields.clear();
     chars->clear();
+    fieldAttr = palette[4];
 
     printf("Erase Write\n");
 }
@@ -199,7 +200,7 @@ void DisplayDataStream::processW(Buffer *buf)
 
 void DisplayDataStream::processSF(Buffer *buf)
 {
-    printf("Start Field\n");
+//    printf("Start Field\n");
 
     buf->nextByte();
 
@@ -210,6 +211,31 @@ void DisplayDataStream::processSF(Buffer *buf)
     placeChar(0x40);
 
     screenFields.emplace(pos, FieldFlags{ askip, prot, mdt });
+
+    FieldIterator it = screenFields.find(pos);
+    it++;
+
+    //TODO: Performance improvement - terrible code
+    if (it == screenFields.end())
+    {
+        it = screenFields.begin();
+
+        for (int i = pos; i < SCREENX * SCREENY; i++)
+        {
+            glyph[i]->setBrush(fieldAttr);
+        }
+        for (int i = 0; i < it->first; i++)
+        {
+            glyph[i]->setBrush(fieldAttr);
+        }
+    }
+    else
+    {
+        for (int i = pos; i < it->first; i++)
+        {
+            glyph[i]->setBrush(fieldAttr);
+        }
+    }
 
     chars->setChar(pos, buf->getByte());
 }
@@ -273,7 +299,11 @@ void DisplayDataStream::processRA(Buffer *b)
     }
     if (endPos < curPos)
     {
-        for(int i = 0; i <= endPos; i++)
+        for(int i = curPos; i < SCREENX * SCREENY; i++)
+        {
+            placeChar(newChar);
+        }
+        for(int i = 0; i < endPos; i++)
         {
             placeChar(newChar);
         }
@@ -286,7 +316,7 @@ void DisplayDataStream::processSA(Buffer *b)
     int extendedType = b->nextByte()->getByte();
     int extendedValue = b->nextByte()->getByte();
 
-    printf("SetAttribute: %02.2X : %02.2X\n", extendedType, extendedValue);
+//    printf("SetAttribute: %02.2X : %02.2X\n", extendedType, extendedValue);
     fflush(stdout);
 
     switch(extendedType)
@@ -425,7 +455,7 @@ void DisplayDataStream::setAttributes(Buffer *b)
             fieldAttr = palette[4]; /* Green */
         }
     }
-    printf("%02d,%02d: Attrbute byte: %02.2X prot=%d num=%d disppen=%d mdt=%d\n", primary_x, primary_y, b->getByte(), prot, num, disppen, mdt);
+//    printf("%02d,%02d: Attrbute byte: %02.2X prot=%d num=%d disppen=%d mdt=%d\n", primary_x, primary_y, b->getByte(), prot, num, disppen, mdt);
     fflush(stdout);
 
 }
@@ -473,7 +503,6 @@ void DisplayDataStream::placeChar(int ebcdic)
         if (++primary_y >= SCREENY)
         {
             primary_y = 0;
-            printf("ERROR - screen overflow\n");
         }
     }
 }
@@ -522,6 +551,7 @@ void DisplayDataStream::insertChar(QString keycode, bool insMode)
         }
     }
 
+    printf("MDT set for %d\n", f->first);
     f->second.mdt = true;
 
     glyph[pos]->setText(keycode);
@@ -676,13 +706,37 @@ int DisplayDataStream::getCursorAddress(int offset)
 
 void DisplayDataStream::showFields()
 {
-    int t = 0;
+    char fmt[SCREENX][SCREENY];
+    for(int y = 0; y < SCREENY; y++)
+    {
+        for(int x = 0; x < SCREENX; x++)
+        {
+            fmt[x][y]=' ';
+        }
+    }
     for (std::map<int, FieldFlags>::iterator it = screenFields.begin(); it != screenFields.end(); it++)
     {
-        FieldFlags thisField = it->second;
-         printf("Field %d at %d (protected = %d, askip = %d)\n", t++, it->first, thisField.prot, thisField.askip);
+        int y = (it->first / SCREENX);
+        int x = it->first - (y * SCREENX);
+        if (it->second.prot)
+        {
+            fmt[x][y] = '.';
+        }
+        else
+        {
+            fmt[x][y] = '>';
+        }
+    }
+    for(int y = 0; y < SCREENY; y++)
+    {
+        for(int x = 0; x < SCREENX; x++)
+        {
+            printf("%c",fmt[x][y]);
+        }
+        printf("\r");
     }
 }
+
 
 void DisplayDataStream::tab()
 {
@@ -713,8 +767,9 @@ DisplayDataStream::FieldIterator DisplayDataStream::findNextUnprotected()
     {
         if (it->first > cpos && !it->second.prot)
         {
-            int nextPos = getCursorAddress(it->first + 1);
-            if (screenFields.find(nextPos) == screenFields.end())
+            int nextPos = getCursorAddress(1);
+            FieldIterator it1 = screenFields.find(nextPos);
+            if (it1 == screenFields.end())
             {
                 return it;
             }
@@ -730,7 +785,7 @@ DisplayDataStream::FieldIterator DisplayDataStream::findFirstUnprotected()
     {
         if (!it->second.prot)
         {
-            int nextPos = getCursorAddress(it->first + 1);
+            int nextPos = getCursorAddress(1);
             if (screenFields.find(nextPos) == screenFields.end())
             {
                 return it;
@@ -757,11 +812,11 @@ DisplayDataStream::FieldIterator DisplayDataStream::findField(int pos)
     return last;
 }
 
-Buffer *DisplayDataStream::processFields()
+Buffer *DisplayDataStream::processFields(int aid)
 {
     Buffer *respBuffer = new Buffer();
 
-    respBuffer->add(IBM3270_AID_ENTER);
+    respBuffer->add(aid);
 
     int cPos = getCursorAddress();
 
@@ -784,6 +839,7 @@ Buffer *DisplayDataStream::processFields()
             respBuffer->add(IBM3270_SBA);
             int f = it->first + 1;
 
+            printf("Adding field at %d : ", f);
 
             respBuffer->add(twelveBitBufferAddress[(f>>6)&63]);
             respBuffer->add(twelveBitBufferAddress[(f&63)]);
@@ -794,9 +850,11 @@ Buffer *DisplayDataStream::processFields()
                 if (b != IBM3270_CHAR_NULL)
                 {
                     respBuffer->add(ASCIItoEBCDICmap[b]);
+                    printf("%c", b);
                 }
             }
             it->second.mdt = false;
+            printf("\n");
         }
     }
 

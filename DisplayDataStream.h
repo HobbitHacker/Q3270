@@ -97,7 +97,7 @@ class DisplayDataStream : public QObject
 
         void resetMDTs();
 
-        Buffer *processFields();
+        Buffer *processFields(int aid);
 
         int getCursorAddress(int offset = 0);
 

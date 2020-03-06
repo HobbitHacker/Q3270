@@ -69,7 +69,7 @@ unsigned char Buffer::getByte()
 
 void Buffer::dump()
 {
-    printf("\n\n--------------- Buffer (size = %d) -----------------", size());
+    printf("\n\n---------------- Buffer (size = %d) ------------------", size());
     unsigned char *c = buffer;
     for(int i = 0; i < size(); i++)
     {
@@ -79,7 +79,7 @@ void Buffer::dump()
         }
         printf("%02.2X ", *c++);
     }
-    printf("\n--------------- Buffer (size = %d) -----------------\n\n", size());
+    printf("\n---------------- Buffer (size = %d) ------------------\n\n", size());
     fflush(stdout);
 }
 
