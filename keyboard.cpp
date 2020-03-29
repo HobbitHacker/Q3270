@@ -14,6 +14,7 @@ Keyboard::Keyboard(QObject *parent, DisplayDataStream *d, SocketConnection *c) :
     defaultMap.insert(std::pair<int, doSomething>(Qt::Key_Enter, &Keyboard::enter));
     defaultMap.insert(std::pair<int, doSomething>(Qt::Key_Tab, &Keyboard::tab));
     defaultMap.insert(std::pair<int, doSomething>(Qt::Key_Home, &Keyboard::home));
+    defaultMap.insert(std::pair<int, doSomething>(Qt::Key_Return, &Keyboard::newline));
 
     defaultMap.insert(std::pair<int, doSomething>(Qt::Key_End, &Keyboard::eraseEOF));
     defaultMap.insert(std::pair<int, doSomething>(Qt::Key_Insert, &Keyboard::insert));
@@ -48,7 +49,8 @@ bool Keyboard::eventFilter( QObject *dist, QEvent *event )
         {
             if (keyEvent->text() != "")
             {
-                display->insertChar(QString(keyEvent->text()), insMode);
+                //TODO: might break
+                display->insertChar((keyEvent->text()).toUtf8()[0], insMode);
             }
         }
         else
@@ -89,6 +91,8 @@ void Keyboard::enter()
     lock = true;
     Buffer *b = display->processFields(IBM3270_AID_ENTER);
     socket->sendResponse(b);
+
+    insMode = false;
 }
 
 void Keyboard::tab()
@@ -129,4 +133,11 @@ void Keyboard::functionkey()
     lock = true;
     Buffer *b = display->processFields(fkeys[fkeyAdjusted]);
     socket->sendResponse(b);
+
+    insMode = false;
+}
+
+void Keyboard::newline()
+{
+    display->newline();
 }

@@ -18,6 +18,7 @@
 #include "SocketConnection.h"
 #include "DisplayDataStream.h"
 #include "keyboard.h"
+#include "DisplayView.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -30,6 +31,7 @@ class MainWindow : public QMainWindow
   
   public:
     MainWindow(QWidget *parent = nullptr);
+    void setupDisplay();
     ~MainWindow();
 	
   private slots:
@@ -37,13 +39,14 @@ class MainWindow : public QMainWindow
 
   private:
 	void setupActions();
-    void processDataStream(Buffer *b);
+    void processDataStream(Buffer *b);        
+
 	SocketConnection *c;
 	DisplayDataStream *d;
     Ui::MainWindow *ui;    
     QTextEdit *te;
     QGraphicsScene *gs;
-	
+    DisplayView *display;    
 };
  
 #endif

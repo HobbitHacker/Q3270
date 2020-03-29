@@ -7,6 +7,8 @@
 #include <QStyleOptionGraphicsItem>
 #include <QGraphicsSimpleTextItem>
 
+#include "3270.h"
+
 class Text : public QObject, public QGraphicsSimpleTextItem
 {
 
@@ -17,6 +19,7 @@ class Text : public QObject, public QGraphicsSimpleTextItem
         QRectF boundingRect() const;
         void paint(QPainter *painter, const QStyleOptionGraphicsItem * option, QWidget * widget = 0);
         uchar toUChar();
+        void setText(const QString &text);
 };
 
 #endif // TEXT_H

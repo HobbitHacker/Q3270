@@ -24,56 +24,19 @@
 
 DisplayDataStream::DisplayDataStream(QGraphicsScene* parent)
 {
-    display = parent;
-
     //TODO: screen sizes
     defaultScreenSize = 80*24;
     alternateScreenSize = 80*24;
 
     primary_x = 0;
     primary_y = 0;
+    primary_pos = 0;
 
     cursor_x = 0;
     cursor_y = 0;
+    cursor_pos = 0;
 
-    count = 0;
-
-    chars = new DisplayData(defaultScreenSize);
-
-    display->setBackgroundBrush(Qt::blue);
-
-    for(int y = 0; y < SCREENY; y++)
-    {
-        int y_pos = y * GRIDSIZE_Y;
-
-        for(int x = 0; x < SCREENX; x++)
-        {
-
-            int pos = x + (y * SCREENX);
-
-            int x_pos = x * GRIDSIZE_X;
-
-            cells[pos] = new QGraphicsRectItem(x_pos, y_pos, GRIDSIZE_X*2, GRIDSIZE_Y*2);
-            cells[pos]->setBrush(Qt::black);
-            cells[pos]->setPos(x_pos, y_pos);
-
-            glyph[pos] = new Text(cells[pos]);
-            glyph[pos]->setBrush(Qt::blue);
-            glyph[pos]->setFont(QFont("Consolas", 24));
-            glyph[pos]->setText(0x00);
-
-            display->addItem(cells[pos]);
-        }
-    }
-
-    cursor = new QGraphicsRectItem(cells[0]);
-    cursor->setRect(cells[0]->rect());
-    cursor->setPos(cells[cursor_x + (cursor_y * SCREENX)]->boundingRect().left(), cells[cursor_x + (cursor_y * SCREENX)]->boundingRect().top());
-    cursor->setBrush(Qt::lightGray);
-    cursor->setOpacity(0.5);
-
-    chars->clear();
-
+    screen = new DisplayData(parent, defaultScreenSize);
 }
 
 void DisplayDataStream::processStream(Buffer *b)
@@ -87,24 +50,28 @@ void DisplayDataStream::processStream(Buffer *b)
     b->dump();
 
     // Process WRITE command
-    extended.on = false;
+    screen->resetCharAttr();
 
     switch(b->getByte())
     {
         case IBM3270_EW:
+        case IBM3270_CCW_EW:
             processEW(b);
             break;
         case IBM3270_W:
+        case IBM3270_CCW_W:
             processW(b);
             break;
         case IBM3270_WSF:
+        case IBM3270_CCW_WSF:
             processWSF(b->nextByte());
             break;
         case IBM3270_EWA:
+        case IBM3270_CCW_EWA:
             processEWA(b);
             break;
         default:
-            printf("Unrecognised WRITE command: %02.2X\n", b->getByte());
+            printf("[Unrecognised WRITE command: %2.2X]", b->getByte());
             b->dump();
             processing = false;
             return;
@@ -116,7 +83,7 @@ void DisplayDataStream::processStream(Buffer *b)
         switch(b->getByte())
         {
             case IBM3270_SF:
-                processSF(b);
+                processSF(b->nextByte());
                 break;
             case IBM3270_SBA:
                 processSBA(b);
@@ -145,121 +112,161 @@ void DisplayDataStream::processStream(Buffer *b)
     {
 
     }
-
-    showFields();
+    screen->dumpFields();
+//    screen->dumpDisplay();
     fflush(stdout);
 
 }
 
 void DisplayDataStream::processWCC(Buffer *b)
 {
+    std::string c;
+
     uchar wcc = b->getByte();
 
-    int reset = wcc>6&1;
+    int reset = (wcc>>6)&1;
+
+    printf("WCC=%2.2X(",wcc);
 
     resetMDT = wcc&1;
     resetKB  = (wcc>>1)&1;
     alarm    = (wcc>>2)&1;
 
-    printf("Seen WCC %02.2X - reset=%d, resetMDT=%d, resetKB=%d, alarm=%d\n", (uchar) wcc, reset, resetMDT, resetKB, alarm);
+    if (reset)
+    {
+        printf("reset");
+    }
 
+    if (resetMDT)
+    {
+        if (reset)
+        {
+            printf(",");
+        }
+        printf("reset MDT");
+    }
+
+    if (resetKB)
+    {
+        if(reset|resetMDT)
+        {
+            printf(",");
+        }
+        printf("reset KB");
+    }
+
+    if (alarm)
+    {
+        if (resetKB|resetMDT|reset)
+        {
+            printf(",");
+        }
+        printf("alarm");
+    }
+    printf(")");
 }
 
 void DisplayDataStream::processEW(Buffer *buf)
 {
+    printf("[Erase Write");
+
     processWCC(buf->nextByte());
+
+    printf("]");
+    fflush(stdout);
 
     primary_x = 0;
     primary_y = 0;
+    primary_pos = 0;
 
     cursor_x = 0;
     cursor_y = 0;
+    cursor_pos = 0;
 
 //    display->setBackgroundBrush(Qt::black);
 
-    for(int i = 0; i < SCREENX * SCREENY; i++)
-    {
-        cells[i]->setBrush(palette[0]);
-        glyph[i]->setBrush(palette[4]);
-        glyph[i]->setText(0x00);
-    }
+    screen->clear();
 
-    screenFields.clear();
-    chars->clear();
-    fieldAttr = palette[4];
-
-    printf("Erase Write\n");
 }
 
 void DisplayDataStream::processW(Buffer *buf)
 {
-    printf("Write\n");
+    printf("[Write");
 
     processWCC(buf->nextByte());
+
+    printf("]");
+    fflush(stdout);
 }
 
 void DisplayDataStream::processSF(Buffer *buf)
 {
-//    printf("Start Field\n");
+    printf("[Start Field:");
 
-    buf->nextByte();
+    screen->setField(primary_pos, buf->getByte());
 
-    int pos = primary_x + (primary_y * SCREENX);
+    printf("]");
+    fflush(stdout);
 
-    setAttributes(buf);
-
-    placeChar(0x40);
-
-    screenFields.emplace(pos, FieldFlags{ askip, prot, mdt });
-
-    FieldIterator it = screenFields.find(pos);
-    it++;
-
-    //TODO: Performance improvement - terrible code
-    if (it == screenFields.end())
+    primary_pos++;
+    if (++primary_x >= SCREENX)
     {
-        it = screenFields.begin();
-
-        for (int i = pos; i < SCREENX * SCREENY; i++)
+        primary_x = 0;
+        if (++primary_y >= SCREENY)
         {
-            glyph[i]->setBrush(fieldAttr);
-        }
-        for (int i = 0; i < it->first; i++)
-        {
-            glyph[i]->setBrush(fieldAttr);
+            primary_pos = 0;
+            primary_y = 0;
         }
     }
-    else
-    {
-        for (int i = pos; i < it->first; i++)
-        {
-            glyph[i]->setBrush(fieldAttr);
-        }
-    }
-
-    chars->setChar(pos, buf->getByte());
 }
 
 void DisplayDataStream::processSBA(Buffer *buf)
 {
-    int pos = extractBufferAddress(buf->nextByte());
+    printf("[SetBufferAddress ");
+    primary_pos = extractBufferAddress(buf->nextByte());
 
-    primary_y = (pos / SCREENX);
-    primary_x = pos - (primary_y * SCREENX);
+    primary_y = (primary_pos / SCREENX);
+    primary_x = primary_pos - (primary_y * SCREENX);
+    printf(" %d,%d (%d)]", primary_x, primary_y, primary_pos);
 }
 
 void DisplayDataStream::processSFE(Buffer *b)
 {
-    printf("SFE seen\n");
+    int pairs = b->nextByte()->getByte();
 
-    b->nextByte();
+    int type;
+    int value;
+
+    printf("[SFE pairs :%d]", pairs);
+    for(int i = 1; i <= pairs; i++)
+    {
+        type = b->nextByte()->getByte();
+        value = b->nextByte()->getByte();
+
+//        printf("%3.3d  Type: %2.2X = %2.2X ",i,  type, value);
+        switch(type)
+        {
+            case IBM3270_EXT_3270:
+                processSF(b);
+                break;
+            case IBM3270_EXT_FG_COLOUR:
+                printf("[ForegroundColour %d]", value);
+                screen->setExtendedColour(primary_pos, true, value);
+                break;
+            case IBM3270_EXT_BG_COLOUR:
+                printf("[BackgroundColour %d]", value);
+                screen->setExtendedColour(primary_pos, false, value);
+                break;
+            default:
+                printf("[%2.2X-%2.2X ***Ignored***]", type, value);
+                break;
+        }
+    }
 }
 
 void DisplayDataStream::processIC()
 {
-    cursor_x = primary_x;
-    cursor_y = primary_y;
-    addCursor();
+    moveCursor(primary_x, primary_y, true);
 }
 
 void DisplayDataStream::processRA(Buffer *b)
@@ -271,77 +278,49 @@ void DisplayDataStream::processRA(Buffer *b)
         endPos = (SCREENX * SCREENY) - 1;
     }
 
-    int curPos = primary_x + (primary_y * SCREENX);
-
     b->nextByte();
     uchar newChar = b->getByte();
 
-    if(endPos == curPos)
-    {
-        int tmp_x = primary_x;
-        int tmp_y = primary_y;
+    printf("[RepeatToAddress %d (0x%2.2X)]", endPos, newChar);
+    fflush(stdout);
 
+    if(endPos == primary_pos)
+    {
         for(int i = 0; i < SCREENX * SCREENY; i++)
         {
-            placeChar(newChar);
+            screen->setChar(i, newChar);
         }
-        primary_x = tmp_x;
-        primary_y = tmp_y;
-        placeChar(newChar);
+        screen->setChar(primary_pos, newChar);
     }
 
-    if (endPos > curPos)
+    if (endPos > primary_pos)
     {
-        for(int i = curPos; i < endPos; i++)
+        for(int i = primary_pos; i < endPos; i++)
         {
-            placeChar(newChar);
+            screen->setChar(i, newChar);
         }
     }
-    if (endPos < curPos)
+    if (endPos < primary_pos)
     {
-        for(int i = curPos; i < SCREENX * SCREENY; i++)
+        for(int i = primary_pos; i < SCREENX * SCREENY; i++)
         {
-            placeChar(newChar);
+            screen->setChar(i, newChar);
         }
         for(int i = 0; i < endPos; i++)
         {
-            placeChar(newChar);
+            screen->setChar(i, newChar);
         }
     }
-
+    primary_pos = endPos;
+    primary_y = (primary_pos / SCREENX);
+    primary_x = primary_pos - (primary_y * SCREENX);
 }
 
 void DisplayDataStream::processSA(Buffer *b)
 {
     int extendedType = b->nextByte()->getByte();
     int extendedValue = b->nextByte()->getByte();
-
-//    printf("SetAttribute: %02.2X : %02.2X\n", extendedType, extendedValue);
-    fflush(stdout);
-
-    switch(extendedType)
-    {
-        case IBM3270_EXT_DEFAULT:
-            extended.on = false;
-            extended.highlight = 0;
-            extended.foreground = 1;
-            extended.background = 0;
-            return;
-        case IBM3270_EXT_HILITE:
-            extended.highlight = extendedValue;
-            break;
-        case IBM3270_EXT_FG_COLOUR:
-            extended.foreground = extendedValue&7;
-            break;
-        case IBM3270_EXT_BG_COLOUR:
-            extended.background = extendedValue&7;
-            break;
-        default:
-            printf("Not implemented: SA order %02.2X : %02.2X\n", extendedType, extendedValue);
-            fflush(stdout);
-    }
-
-    extended.on = true;
+    screen->setCharAttr(primary_pos, extendedType, extendedValue);
 }
 
 void DisplayDataStream::processEWA(Buffer *b)
@@ -356,7 +335,7 @@ void DisplayDataStream::processWSF(Buffer *b)
     wsfLen += b->getByte();
     b->nextByte();
 
-    printf("WSF - length: %03d; command = %02.2X\n", wsfLen, b->getByte());
+    printf("WSF - length: %03d; command = %2.2X\n", wsfLen, b->getByte());
     fflush(stdout);
 
     switch(b->getByte())
@@ -368,14 +347,14 @@ void DisplayDataStream::processWSF(Buffer *b)
             WSFreadPartition(b);
             break;
         default:
-            printf("Unimplemented WSF command: %02.2X\n", b->getByte());
+            printf("Unimplemented WSF command: %2.2X\n", b->getByte());
             break;
     }
 }
 
 void DisplayDataStream::WSFreset(Buffer *b)
 {
-    printf("Reset Partition %02.2X\n", b->nextByte()->getByte());
+    printf("Reset Partition %2.2X\n", b->nextByte()->getByte());
     fflush(stdout);
     return;
 }
@@ -385,7 +364,7 @@ void DisplayDataStream::WSFreadPartition(Buffer *b)
     uchar partition = b->nextByte()->getByte();
     uchar type = b->nextByte()->getByte();
 
-    printf("ReadPartition %d - type %02.2X\n", partition, type);
+    printf("ReadPartition %d - type %2.2X\n", partition, type);
 
     Buffer *queryReply = new Buffer();
     queryReply->add(IBM3270_WSF_QUERYREPLY);
@@ -398,66 +377,86 @@ void DisplayDataStream::WSFreadPartition(Buffer *b)
 
 void DisplayDataStream::replySummary(Buffer *buffer)
 {
-    unsigned char qrt[] = { 0x80, 0x86, 0x87, 0xA6 };
 
-    buffer->add(strlen((char*)qrt)>>8);
-    buffer->add(strlen((char*)qrt)&0xFF);
+    /*
 
-    for(int i = 0; i < strlen((char*)qrt); i++)
+0040         88 00 0e 81 80 80 81 84 85 86 87 88 95 a1
+0050   a6 00 17 81 81 01 00 00 50 00 2b 01 00 0a 02 e5
+0060   00 02 00 6f 09 0c 0d 70 00 08 81 84 00 0d 70 00
+0070   00 1b 81 85 82 00 09 0c 00 00 00 00 07 00 10 00
+0080   02 b9 00 25 01 10 f1 03 c3 01 36 00 26 81 86 00
+0090   10 00 f4 f1 f1 f2 f2 f3 f3 f4 f4 f5 f5 f6 f6 f7
+00a0   f7 f8 f8 f9 f9 fa fa fb fb fc fc fd fd fe fe ff
+00b0   ff ff ff 00 0f 81 87 05 00 f0 f1 f1 f2 f2 f4 f4
+00c0   f8 f8 00 07 81 88 00 01 02 00 0c 81 95 00 00 10
+00d0   00 10 00 01 01 00 12 81 a1 00 00 00 00 00 00 00
+00e0   00 06 a7 f3 f2 f7 f0 00 11 81 a6 00 00 0b 01 00
+00f0   00 50 00 18 00 50 00 2b ff ef
+
+     */
+//    unsigned char qrt[] = { 0x81, 0x80, 0x86, 0x87, 0xA6 };
+    unsigned char qrt[] = { 0x81, 0x86, 0xA6 };
+    unsigned char qrcolour[] = { 0x81, 0x86, 0x00, 0x08,
+                                 0x00, 0xF4,  /* Default colour */
+                                 0xF1, 0xF1,  /* Blue */
+                                 0xF2, 0xF2,  /* Red */
+                                 0xF3, 0xF3,  /* Magenta */
+                                 0xF4, 0xF4,  /* Green */
+                                 0xF5, 0xF5,  /* Cyan */
+                                 0xF6, 0xF6,  /* Yellow */
+                                 0xF7, 0xf7   /* White */
+                               };
+    unsigned char qpart[] = { 0x81, 0xA6, 0x00, 0x00, 0x0B, 0x01, 0x00, 0x00, 0x50, 0x00, 0x18, 0x00, 0x50, 0x00, 0x18};
+
+    buffer->add(0x00);    //(char*)qrt)>>8);
+    buffer->add(0x05);    //strlen((char*)qrt)&0xFF);
+
+    for(int i = 0; (unsigned long)i < 3; i++)
     {
         buffer->add(qrt[i]);
     }
+
+    buffer->add(0x00);
+    buffer->add(22);
+
+    for(int i = 0; (unsigned long)i < 20; i++)
+    {
+        buffer->add(qrcolour[i]);
+    }
+
+    buffer->add(0x00);
+    buffer->add(17);
+
+    for(int i = 0; (unsigned long)i < 15; i++)
+    {
+        buffer->add(qpart[i]);
+    }
+
 }
 
 int DisplayDataStream::extractBufferAddress(Buffer *b)
 {
     //TODO: non-12/14 bit addresses & EBCDIC characters
-    int sba1 = b->getByte();
-    int sba2 = b->nextByte()->getByte();
 
-    sba1 = sba1&63;
-    sba2 = sba2&63;
+    unsigned char sba1 = b->getByte();
+    unsigned char sba2 = b->nextByte()->getByte();
 
-    return (sba1<<6)|sba2;
-}
-
-void DisplayDataStream::setAttributes(Buffer *b)
-{
-
-    //TODO: extended attributes with 3270 field attributes
-    prot = ((b->getByte())>>5)&1;
-    bool num  = ((b->getByte())>>4)&1;
-    int disppen = ((b->getByte())>>2)&3;
-    bool mdt = (b->getByte())&1;
-
-    askip = (prot & num);
-
-    if(prot)
+    switch((sba1>>6)&3)
     {
-        if (disppen == 2)
-        {
-            fieldAttr = palette[7]; //TODO: use names  (white)
-        }
-        else
-        {
-            fieldAttr = palette[1]; /* Blue */
-        }
-
+        case 0b11:     // 12 bit
+            printf("%2.2X%2.2X (%d%d - 12 bit)", sba1, sba2, (sba1>>7)&1, (sba1>>6)&1);
+            return ((sba1&63)<<6)+(sba2&63);
+        case 0b01:     // 12 bit
+            printf("%2.2X%2.2X (%d%d - 12 bit)", sba1, sba2, (sba1>>7)&1, (sba1>>6)&1);
+            return ((sba1&63)<<6)+(sba2&63);
+        case 0b00:     // 14 bit
+            printf("%2.2X%2.2X (%d%d - 14 bit)", sba1, sba2, (sba1>>7)&1, (sba1>>6)&1);
+            return ((sba1&63)<<8)+sba2;
+        case 0b10:     // reserved
+            printf("%2.2X%2.2X (%d%d - unknown)", sba1, sba2, (sba1>>7)&1, (sba1>>6)&1);
+            return 0;
     }
-    else
-    {
-        if (disppen == 2)
-        {
-            fieldAttr = palette[2]; /* Red */
-        }
-        else
-        {
-            fieldAttr = palette[4]; /* Green */
-        }
-    }
-//    printf("%02d,%02d: Attrbute byte: %02.2X prot=%d num=%d disppen=%d mdt=%d\n", primary_x, primary_y, b->getByte(), prot, num, disppen, mdt);
-    fflush(stdout);
-
+    printf("Extract Buffer Address failed: sba1: %2.2X sba2: %2.2X (sba1&63 = %d%d)", sba1, sba2, (sba1>>7)&1, (sba1>>6)&1);
 }
 
 void DisplayDataStream::placeChar(Buffer *b)
@@ -470,176 +469,52 @@ void DisplayDataStream::placeChar(Buffer *b)
 void DisplayDataStream::placeChar(int ebcdic)
 {
 
-    int pos = primary_x + (primary_y * SCREENX);
-
-    if (screenFields.find(pos) != screenFields.end())
-    {
-        printf("Removed existing field entry at %02d,%02d\n", primary_x, primary_y);
-        fflush(stdout);
-        screenFields.erase(pos);
-    }
-
-    glyph[pos]->setBrush(fieldAttr);
+//    glyph[pos]->setBrush(fieldAttr);
 
     switch(ebcdic)
     {
         case IBM3270_CHAR_NULL:
-            glyph[pos]->setText(0x00);
-            chars->setChar(pos, 0x00);
+            screen->setChar(primary_pos, 0x00);
             break;
         default:
-            if (extended.on)
+/*            if (extended.on)
             {
                 glyph[pos]->setBrush(palette[extended.foreground]);
                 cells[pos]->setBrush(palette[extended.background]);
-            }
-            glyph[pos]->setText(QString(EBCDICtoASCIImap[ebcdic]));
-            attributes[pos].prot = prot;
+            }*/
+            screen->setChar(primary_pos, ebcdic);
+//            attributes[pos].prot = prot;
     }
 
+    primary_pos++;
     if (++primary_x >= SCREENX)
     {
         primary_x = 0;
         if (++primary_y >= SCREENY)
         {
+            primary_pos = 0;
             primary_y = 0;
         }
     }
 }
 
-void DisplayDataStream::insertChar(QString keycode, bool insMode)
+void DisplayDataStream::insertChar(unsigned char keycode, bool insMode)
 {
-    int pos = cursor_x + (cursor_y * SCREENX);
-
-    std::map<int, DisplayDataStream::FieldFlags>::iterator f = findField(pos);
-
-    if (f->second.prot || f->first == pos)
+    if (screen->insertChar(cursor_pos, keycode, insMode))
     {
-        printf("Protected!\n");
-        fflush(stdout);
-        return;
+        moveCursor(1, 0);
     }
-
-    if (insMode)
-    {
-        std::map<int, DisplayDataStream::FieldFlags>::iterator fn = f;
-
-        int endPos = (SCREENX * SCREENY) - 1;
-        if (++fn != screenFields.end())
-        {
-            endPos = fn->first - 1;
-        }
-        bool space = false;
-        for(int fld = pos; fld < endPos && !space; fld++)
-        {
-            if (glyph[fld]->text() == IBM3270_CHAR_NULL)
-            {
-                endPos = fld;
-                space = true;
-            }
-        }
-        if (!space)
-        {
-            printf("Overflow!\n");
-            fflush(stdout);
-            return;
-        }
-        for(int fld = endPos; fld > pos; fld--)
-        {
-            qDebug() << glyph[fld]->text();
-            glyph[fld]->setText(glyph[fld-1]->text());
-        }
-    }
-
-    printf("MDT set for %d\n", f->first);
-    f->second.mdt = true;
-
-    glyph[pos]->setText(keycode);
-
-    moveCursor(1, 0);
 }
 
 void DisplayDataStream::deleteChar()
 {
-    int pos = getCursorAddress();
-
-    std::map<int, DisplayDataStream::FieldFlags>::iterator f = findField(pos);
-
-    if (f->second.prot || f->first == pos)
-    {
-        printf("Protected!\n");
-        fflush(stdout);
-        return;
-    }
-
-    std::map<int, DisplayDataStream::FieldFlags>::iterator fn = f;
-
-    int endPos = (SCREENX * SCREENY) - 1;
-
-    if (++fn != screenFields.end())
-    {
-        endPos = fn->first - 1;
-    }
-
-    for(int fld = pos; fld < endPos; fld++)
-    {
-        qDebug() << glyph[fld]->text();
-        glyph[fld]->setText(glyph[fld+1]->text());
-    }
-
-    glyph[endPos]->setText(IBM3270_CHAR_NULL);
-
-    f->second.mdt = true;
+    screen->deleteChar(cursor_pos);
 }
 
 
 void DisplayDataStream::eraseField()
 {
-    int cpos = getCursorAddress();
-
-    /* Find current field, and next field */
-    std::map<int, DisplayDataStream::FieldFlags>::iterator f = findField(cpos);
-    std::map<int, DisplayDataStream::FieldFlags>::iterator fn;
-
-    /* If there is no next field, find first field */
-    if (f == screenFields.end())
-    {
-        fn = screenFields.begin();
-    }
-    else
-    {
-        fn = f;
-        fn++;
-    }
-
-    /* Calculate ending position - either start of next field of end of screen */
-    int fend;
-
-    if (fn->first < f->first)
-    {
-        fend = (SCREENX * SCREENY);
-    }
-    else
-    {
-        fend = fn->first;
-    }
-
-    f->second.mdt = true;
-
-    /* Blank field */
-    for(int i = cpos; i < fend; i++)
-    {
-        glyph[i]->setText(0x00);
-    }
-
-    /* If there wasn't a next field, start again from the start of the screen */
-    if (fn->first < f->first)
-    {
-        for(int i = 0; i < fn->first; i++)
-        {
-            glyph[i]->setText(0x00);
-        }
-    }
+    screen->eraseEOF(cursor_pos);
 }
 
 void DisplayDataStream::moveCursor(int x, int y, bool absolute)
@@ -654,163 +529,74 @@ void DisplayDataStream::moveCursor(int x, int y, bool absolute)
     {
         cursor_x+= x;
         cursor_y+= y;
+
+        if(cursor_x >= SCREENX)
+        {
+            cursor_x = 0;
+            cursor_y++;
+        }
+        if (cursor_x < 0)
+        {
+            cursor_x = SCREENX - 1;
+            cursor_y--;
+        }
+        if(cursor_y >= SCREENY)
+        {
+            cursor_y = 0;
+        }
+        if (cursor_y < 0)
+        {
+            cursor_y = SCREENY - 1;
+        }
     }
 
-    printf("Cursor now: %d,%d\n", cursor_x, cursor_y);
+//    printf("Cursor now %d,%d\n", cursor_x, cursor_y);
     fflush(stdout);
-    if(cursor_x >= SCREENX)
-    {
-        cursor_x = 0;
-        cursor_y++;
-    }
-    if (cursor_x < 0)
-    {
-        cursor_x = SCREENX - 1;
-        cursor_y--;
-    }
-    if(cursor_y >= SCREENY)
-    {
-        cursor_y = 0;
-    }
-    if (cursor_y < 0)
-    {
-        cursor_y = SCREENY - 1;
-    }
-    addCursor();
+
+    cursor_pos = cursor_x + (cursor_y * SCREENX);
+    screen->setCursor(cursor_pos);
 }
-
-void DisplayDataStream::addCursor()
-{
-    cursor->setParentItem(cells[cursor_x + (cursor_y * SCREENX)]);
-    cursor->setPos(cells[cursor_x + (cursor_y * SCREENX)]->boundingRect().left(), cells[cursor_x + (cursor_y * SCREENX)]->boundingRect().top());
-
-}
-
-int DisplayDataStream::getCursorAddress(int offset)
-{
-
-    int c1 = cursor_x + (cursor_y * SCREENX);
-
-    if (offset == 0)
-    {
-        return c1;
-    }
-
-    if ((c1 + offset) > (SCREENX * SCREENY) - 1)
-    {
-        return 0;
-    }
-
-    return c1;
-}
-
-void DisplayDataStream::showFields()
-{
-    char fmt[SCREENX][SCREENY];
-    for(int y = 0; y < SCREENY; y++)
-    {
-        for(int x = 0; x < SCREENX; x++)
-        {
-            fmt[x][y]=' ';
-        }
-    }
-    for (std::map<int, FieldFlags>::iterator it = screenFields.begin(); it != screenFields.end(); it++)
-    {
-        int y = (it->first / SCREENX);
-        int x = it->first - (y * SCREENX);
-        if (it->second.prot)
-        {
-            fmt[x][y] = '.';
-        }
-        else
-        {
-            fmt[x][y] = '>';
-        }
-    }
-    for(int y = 0; y < SCREENY; y++)
-    {
-        for(int x = 0; x < SCREENX; x++)
-        {
-            printf("%c",fmt[x][y]);
-        }
-        printf("\r");
-    }
-}
-
 
 void DisplayDataStream::tab()
 {
-    FieldIterator it = findNextUnprotected();
+    int nf = screen->findNextUnprotectedField(cursor_pos);
 
-    cursor_y = (it->first / SCREENX);
-    cursor_x = it->first - (cursor_y * SCREENX);
+    if(nf == cursor_pos)
+    {
+        return;
+    }
+
+    cursor_y = (nf / SCREENX);
+    cursor_x = nf - (cursor_y * SCREENX);
     // Move cursor right (skip attribute byte)
     moveCursor(1, 0);
 }
 
 void DisplayDataStream::home()
 {
-    FieldIterator it = findFirstUnprotected();
-    cursor_y = (it->first / SCREENX);
-    cursor_x = it->first - (cursor_y * SCREENX);
+    int nf = screen->findNextUnprotectedField(0);
+    cursor_y = (nf / SCREENX);
+    cursor_x = nf - (cursor_y * SCREENX);
 
     // Move cursor right (skip attribute byte)
     moveCursor(1, 0);
 }
 
-
-DisplayDataStream::FieldIterator DisplayDataStream::findNextUnprotected()
+void DisplayDataStream::newline()
 {
-    int cpos = getCursorAddress();
+    cursor_x = 0;
+    cursor_y += 1;
 
-    for (FieldIterator it = screenFields.begin(); it != screenFields.end(); it++)
+    if (cursor_y > SCREENY)
     {
-        if (it->first > cpos && !it->second.prot)
-        {
-            int nextPos = getCursorAddress(1);
-            FieldIterator it1 = screenFields.find(nextPos);
-            if (it1 == screenFields.end())
-            {
-                return it;
-            }
-        }
+        cursor_y = 0;
     }
-    return findFirstUnprotected();
 
+    cursor_pos = cursor_x + cursor_y * SCREENX;
+
+    tab();
 }
 
-DisplayDataStream::FieldIterator DisplayDataStream::findFirstUnprotected()
-{
-    for (FieldIterator it = screenFields.begin(); it != screenFields.end(); it++)
-    {
-        if (!it->second.prot)
-        {
-            int nextPos = getCursorAddress(1);
-            if (screenFields.find(nextPos) == screenFields.end())
-            {
-                return it;
-            }
-        }
-    }
-    return screenFields.begin();
-}
-
-DisplayDataStream::FieldIterator DisplayDataStream::findField(int pos)
-{
-    FieldIterator last = screenFields.begin();
-
-    for (std::map<int, FieldFlags>::iterator it = screenFields.begin(); it != screenFields.end(); it++)
-    {
-        if (it->first > pos)
-        {
-            printf("Field begins at %d\n", last->first);
-            fflush(stdout);
-            return last;
-        }
-        last = it;
-    }
-    return last;
-}
 
 Buffer *DisplayDataStream::processFields(int aid)
 {
@@ -818,45 +604,10 @@ Buffer *DisplayDataStream::processFields(int aid)
 
     respBuffer->add(aid);
 
-    int cPos = getCursorAddress();
+    respBuffer->add((cursor_pos>>6)&63);
+    respBuffer->add(cursor_pos&63);
 
-    respBuffer->add(twelveBitBufferAddress[(cPos>>5)&63]);
-    respBuffer->add(twelveBitBufferAddress[cPos&63]);
-
-    FieldIterator fn = screenFields.begin();
-
-    for (FieldIterator it = screenFields.begin(); it != screenFields.end(); it++)
-    {
-        if (it->second.mdt)
-        {
-            fn = it;
-            int endPos = (SCREENX * SCREENY) - 1;
-            if (++fn != screenFields.end())
-            {
-                endPos = fn->first - 1;
-            }
-
-            respBuffer->add(IBM3270_SBA);
-            int f = it->first + 1;
-
-            printf("Adding field at %d : ", f);
-
-            respBuffer->add(twelveBitBufferAddress[(f>>6)&63]);
-            respBuffer->add(twelveBitBufferAddress[(f&63)]);
-
-            for(int i = f; i <= endPos; i++)
-            {
-                uchar b = glyph[i]->toUChar();
-                if (b != IBM3270_CHAR_NULL)
-                {
-                    respBuffer->add(ASCIItoEBCDICmap[b]);
-                    printf("%c", b);
-                }
-            }
-            it->second.mdt = false;
-            printf("\n");
-        }
-    }
+    screen->getModifiedFields(respBuffer);
 
     respBuffer->dump();
 

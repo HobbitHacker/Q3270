@@ -3,28 +3,33 @@
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), c(new(SocketConnection)), ui(new(Ui::MainWindow))
 {
-    QAction* connectAction = new QAction(this);
-    connectAction->setText("Connect");
-
-    connect(c, &SocketConnection::dataStreamComplete, this, &MainWindow::processDataStream);
-
-    gs = new QGraphicsScene();
-
     ui->setupUi(this);
-
-    ui->graphicsView->setScene(gs);
-    d = new DisplayDataStream(gs);
-
-    Keyboard *kbd = new Keyboard(gs, d, c);
-    gs->installEventFilter(kbd);
-
-    statusBar()->addPermanentWidget(new QLabel("C:000 R:000"));
+//    ui->statusBar().addPermanentWidget(new QLabel("C:000 R:000"));
 
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
+}
+
+void MainWindow::setupDisplay()
+{
+    display = new DisplayView();
+    ui->verticalLayout->addWidget(display);
+
+    gs = new QGraphicsScene();
+    display->setScene(gs);
+
+    QAction* connectAction = new QAction(this);
+    connectAction->setText("Connect");
+
+    connect(c, &SocketConnection::dataStreamComplete, this, &MainWindow::processDataStream);
+
+    d = new DisplayDataStream(gs);
+
+    Keyboard *kbd = new Keyboard(gs, d, c);
+    gs->installEventFilter(kbd);
 }
 
 
@@ -37,5 +42,8 @@ void MainWindow::processDataStream(Buffer *b)
 
 void MainWindow::on_actionConnect_triggered(bool checked)
 {
-    c->connectMainframe(QHostAddress("127.0.0.1"), 3270, d);
+    QHostInfo hi = QHostInfo::fromName("fandezhi.efglobe.com");
+    c->connectMainframe(hi.addresses().first(), 23, d);
+//    QHostInfo hi = QHostInfo::fromName("127.0.0.1");
+//    c->connectMainframe(hi.addresses().first(), 3270, d);
 }

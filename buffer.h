@@ -15,12 +15,16 @@ class Buffer
         void add(char b);
         Buffer *nextByte();
         unsigned char getByte();
+        unsigned char getByte(int offset);
+        bool compare(int offset, char *string);
         void reset();
+        void restart();
+        bool byteEquals(int offset, unsigned char byte);
         bool processing();
         void setProcessing(bool mode);
 
         const char *address();
-        void dump();
+        void dump(bool send = false);
 
     private:
 

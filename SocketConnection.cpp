@@ -1,16 +1,6 @@
 #include "SocketConnection.h"
 #include "DisplayDataStream.h"
 
-#include <QTcpSocket>
-#include <QDataStream>
-
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <iostream>
-#include <string.h>
-
-#include <arpa/telnet.h>
 
 SocketConnection::SocketConnection(QObject *parent)
     : QObject(parent)
@@ -28,6 +18,8 @@ SocketConnection::SocketConnection(QObject *parent)
     // Reset the m_loggedIn variable when we disconnec. Since the operation is trivial we use a lambda instead of creating another slot
 
     incomingData = new Buffer();
+    subNeg = new Buffer();
+    tn3270e_Mode = false;
 }
 
 
@@ -63,6 +55,10 @@ void SocketConnection::onReadyRead()
     uchar socketByte;
 	char data3270; 
 	char response[50];
+    bool readingSB;
+
+    readingSB = false;
+
     // start an infinite loop
     for (;;) {
         // we start a transaction so we can revert to the previous state in case we try to read more data than is available on the socket
@@ -75,6 +71,7 @@ void SocketConnection::onReadyRead()
 //            printf("Byte: %02X\n", socketByte);
             switch (telnetState)
 			{
+
 				case TELNET_STATE_DATA:
                     if (socketByte == IAC)
 					{
@@ -85,12 +82,20 @@ void SocketConnection::onReadyRead()
                         incomingData->add(socketByte);
 					}
 					break;
+
 				case TELNET_STATE_IAC:
                     switch (socketByte)
 					{
 						case IAC: // double IAC means a data byte 0xFF
                             std::cout << "Double 0xFF received - stored 0xFF\n";
-                            incomingData->add(socketByte);
+                            if (readingSB)
+                            {
+                                subNeg->add(socketByte);
+                            }
+                            else
+                            {
+                                incomingData->add(socketByte);
+                            }
                             telnetState = TELNET_STATE_DATA;
 							break;
 						case DO:		// Request something, or confirm WILL request
@@ -111,23 +116,42 @@ void SocketConnection::onReadyRead()
 							break;
 						case SB:
 							printf("  SB seen\n");
-							telnetState = TELNET_STATE_IAC_SB;
+                            telnetState = TELNET_STATE_SB;
+                            readingSB = true;
 							break;
-						case EOR:
+                        case SE:
+                            printf("  SE seen\n");
+                            if (readingSB)
+                            {
+                               processSubNegotiation(subNeg);
+                            }
+                            else
+                            {
+                                printf("IAC SE seen, no SB?\n");
+                            }
+                            readingSB = false;
+                            telnetState = TELNET_STATE_DATA;
+                            break;
+                        case EOR:
                             incomingData->setProcessing(true);
 							printf("  EOR seen - yippee!\n");
                             telnetState = TELNET_STATE_DATA;
-                            emit dataStreamComplete(incomingData);
+                            processBuffer(incomingData);
 							break;
 						default:
                             printf("IAC Not sure: %02X\n", socketByte);
 							break;
 					}
-					break;
+                    break;
+
 				case TELNET_STATE_IAC_DO:
                     switch (socketByte)
 					{
-						case TELOPT_TTYPE:
+                        // Note fall-through
+                        case TELOPT_TN3270E:
+                            tn3270e_Mode = true;
+                            printf("TN3270E switched on\n");
+                        case TELOPT_TTYPE:
 						case TELOPT_BINARY:
 						case TELOPT_EOR:
                             printf("    TTYPE, BINARY or EOR (%d) seen\n", socketByte);
@@ -143,10 +167,19 @@ void SocketConnection::onReadyRead()
 							break;
 					}
 					break;		
+
 				case TELNET_STATE_IAC_DONT:
-                    printf("IAC DON'T - Not sure: %02X\n", socketByte);
-					telnetState = TELNET_STATE_DATA;
-					break;
+                    switch(socketByte)
+                    {
+                        case TELOPT_TN3270E:
+                            tn3270e_Mode = false;
+                            printf("TN3270E switched off\n");
+                        default:
+                            printf("IAC DON'T - Not sure: %02X\n", socketByte);
+                            telnetState = TELNET_STATE_DATA;
+                            break;
+                    }
+
 				case TELNET_STATE_IAC_WILL:
                     switch (socketByte)
 					{
@@ -165,65 +198,24 @@ void SocketConnection::onReadyRead()
 							break;
 					}
 					break;
+
 				case TELNET_STATE_IAC_WONT:
                     printf("IAC WON'T - Not sure: %02X\n", socketByte);
 					telnetState = TELNET_STATE_DATA;
 					break;
-				case TELNET_STATE_IAC_SB:
+
+                case TELNET_STATE_SB:
                     switch(socketByte)
-					{
-						case IAC:
-							telnetState = TELNET_STATE_SB_IAC;
-							printf("   IAC in SB seen\n");
-							break;
-						case SE:
-							telnetState = TELNET_STATE_DATA;
-							printf("    SE seen\n");
-							break;
-						case TELOPT_TTYPE:
-							telnetState = TELNET_STATE_SB_TTYPE;
-							printf("    SB TTYPE seen\n");
-							break;
-						default:
-                            printf("IAC SB Not sure: %02.2X\n", socketByte);
-					}
-					break;
-				case TELNET_STATE_SB_TTYPE:
-                    switch(socketByte)
-					{
-						case TELQUAL_SEND:
-							telnetState = TELNET_STATE_SB_TTYPE_SEND;
-							printf("    SB TTYPE SEND seen\n");
-							break;
-						default:
-                            printf("SB TTYPE Not sure: %02.2X\n", socketByte);
-					}
-					break;
-				case TELNET_STATE_SB_TTYPE_SEND:
-                    switch(socketByte)
-					{
-						case IAC:
-							printf("    SB TTYPE SEND IAC seen\n");
-							telnetState = TELNET_STATE_SB_TTYPE_SEND_IAC;
-							break;
-						default:
-                            printf("SB TTYPE SEND Not sure: %02.2X\n", socketByte);
-					}
-					break;
-				case TELNET_STATE_SB_TTYPE_SEND_IAC:
-                    switch(socketByte)
-					{
-						case SE:
-							printf("    SB TTYPE SEND IAC SE seen - good!\n");
-                            sprintf(response, "%c%c%c%cIBM-3279-2-E%c%c", (char) IAC, (char) SB, (char) TELOPT_TTYPE, (char) TELQUAL_IS, (char) IAC, (char) SE);
-                            dataStream.writeRawData(response, 18);
-							telnetState = TELNET_STATE_DATA;
-							break;
-						default:
-                            printf("SB TTYPE SEND IAC Not sure: %02.2X\n", socketByte);
-							break;
-					}
-					break;				
+                    {
+                        case IAC:
+                            telnetState = TELNET_STATE_IAC;
+                            printf("IAC seen in SB processing\n");
+                            break;
+                        default:
+                            subNeg->add(socketByte);
+                            break;
+                    }
+                    break;
 				default:
                     printf("telnetState Not sure! : %02.2X\n", socketByte);
 			}
@@ -235,24 +227,130 @@ void SocketConnection::onReadyRead()
            break;
        }
     }
-    printf("Loop done\n");
     fflush(stdout);
 }
 
 void SocketConnection::sendResponse(Buffer *b)
 {
+    char response[10];
     // create a QDataStream operating on the socket
     QDataStream dataStream(dataSocket);
 
-    printf("buffer: %d for %d bytes", b->address(), b->size());
+    if (tn3270e_Mode)
+    {
+        sprintf(response,"%c%c%c%c%c",(char) TN3270E_DATATYPE_3270_DATA, (char) 0x00, (char) 0x00, (char) 0x00, (char) 0x00);
+        dataStream.writeRawData(response, 5);
+    }
+
+//    printf("buffer: %d for %d bytes", b->address(), b->size());
     fflush(stdout);
+    b->dump(true);
     dataStream.writeRawData(b->address(), b->size());
 
-    char response[2];
-
-    response[0] = IAC;
-    response[1] = EOR;
+    response[0] = (char) IAC;
+    response[1] = (char) EOR;
 
     dataStream.writeRawData(response, 2);
+}
 
+void SocketConnection::processSubNegotiation(Buffer *buf)
+{
+    QDataStream dataStream(dataSocket);
+
+    char response[50];
+
+    buf->dump();
+
+    switch(buf->getByte())
+    {
+        case TELOPT_TTYPE:
+            if (buf->byteEquals(1, TELQUAL_SEND))
+            {
+                sprintf(response, "%c%c%c%c%s%c%c", (char) IAC, (char) SB, (char) TELOPT_TTYPE, (char) TELQUAL_IS, termType, (char) IAC, (char) SE);
+                dataStream.writeRawData(response, 6 + strlen(termType));
+            }
+            else
+            {
+                printf("Unknown TTYPE subnegotiation: %2.2X\n", buf->getByte(1));
+            }
+            break;
+        case TELOPT_TN3270E:
+            if (buf->byteEquals(1, TN3270E_SEND) && buf->byteEquals(2, TN3270E_DEVICE_TYPE))
+            {
+                printf("    SB TN3270E SEND DEVICE_TYPE IAC SE seen - good!\n");
+                sprintf(response, "%c%c%c%c%c%s%c%c", (char) IAC, (char) SB, (char) TELOPT_TN3270E, (char) TN3270E_DEVICE_TYPE, (char) TN3270E_REQUEST, termType, (char) IAC, (char) SE);
+                sprintf(response,"%s%c%c%c%c%c%c%c", response, (char) IAC, (char) SB, (char) TELOPT_TN3270E, (char) TN3270E_FUNCTIONS, (char) TN3270E_REQUEST, (char) IAC, (char) SE);
+                int rc = dataStream.writeRawData(response, 14 + strlen(termType));
+                printf("(%s) - length %d: RC=%d. Error=\n", response, 14 + strlen(termType), rc);
+                fflush(stdout);
+                break;
+            }
+            if (buf->byteEquals(1, TN3270E_DEVICE_TYPE) && buf->byteEquals(2, TN3270E_IS))
+            {
+                if (buf->compare(3,termType) && buf->byteEquals(3+strlen(termType), TN3270E_CONNECT))
+                {
+                    printf("Received device-name: '");
+                    for(int i = 4+strlen(termType); i < buf->size(); i++)
+                    {
+                        printf("%c", buf->getByte(i));
+                    }
+                    printf("'\n");
+                    break;
+                }
+            }
+            if (buf->byteEquals(1, TN3270E_FUNCTIONS) && buf->byteEquals(2, TN3270E_IS))
+            {
+                printf("Supported functions: ");
+                for(int i = 3; i < buf->size(); i++)
+                {
+                    printf("%s ", tn3270e_functions_strings[buf->getByte(i)]);
+                }
+                printf("\n");
+                break;
+            }
+            if (buf->byteEquals(1, TN3270E_FUNCTIONS) && buf->byteEquals(2, TN3270E_REQUEST))
+            {
+                sprintf(response, "%c%c%c%c%c", (char) IAC, (char) SB, (char) TELOPT_TN3270E, (char) TN3270E_FUNCTIONS, (char) TN3270E_IS);
+                printf("Requested functions:");
+                for(int i = 3; i < buf->size(); i++)
+                {
+                    printf("%s ", tn3270e_functions_strings[buf->getByte(i)]);
+                    sprintf(response, "%s%c", response, buf->getByte());
+                }
+                sprintf(response, "%s%c%c", response, (char) IAC, (char) SE);
+                printf("\n");
+                int rc = dataStream.writeRawData(response, buf->size()-2 + strlen(response));
+                printf("(%s) - length %ld: RC=%d. Error=\n", response, buf->size()-2 + strlen(response), rc);
+                break;
+            }
+            printf("Unknown TN3270E request %2.2X\n", buf->getByte(1));
+            break;
+        default:
+            printf("Unknown Subnegotiation option: %2.2X\n", buf->getByte(0));
+            break;
+    }
+    telnetState = TELNET_STATE_DATA;
+    buf->reset();
+}
+
+void SocketConnection::processBuffer(Buffer *buf)
+{
+    if (!tn3270e_Mode)
+    {
+        emit dataStreamComplete(buf);
+        return;
+    }
+
+    unsigned char dataType = buf->getByte();
+    unsigned char requestFlag = buf->nextByte()->getByte();
+    unsigned char responseFlag = buf->nextByte()->getByte();
+    unsigned char seqNumber = (buf->nextByte()->getByte()<<16) + buf->nextByte()->getByte();
+
+    printf("TN3270E Header:\n   Data Type:      %2.2X\n   Request Flag:   %2.2X\n   Response Flag:  %2.2X\n   Sequence Number: %2.2X\n",
+                    dataType, requestFlag, responseFlag, seqNumber);
+
+    if (dataType == TN3270E_DATATYPE_3270_DATA)
+    {
+        emit(dataStreamComplete(buf->nextByte()));
+    }
 }

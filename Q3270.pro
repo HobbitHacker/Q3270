@@ -16,6 +16,7 @@ DEFINES += QT_DEPRECATED_WARNINGS QT_FLUSH_PAINT=1
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    DisplayView.cpp \
     DisplayData.cpp \
     buffer.cpp \
     keyboard.cpp \
@@ -26,6 +27,8 @@ SOURCES += \
     text.cpp
 
 HEADERS += \
+    DisplayView.h \
+    3270.h \
     DisplayData.h \
     buffer.h \
     keyboard.h \

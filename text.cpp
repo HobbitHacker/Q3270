@@ -1,4 +1,5 @@
 #include "text.h"
+#include <QDebug>
 
 Text::Text(QGraphicsItem* parent) : QGraphicsSimpleTextItem(parent)
 {
@@ -20,4 +21,24 @@ void Text::paint(QPainter *painter, const QStyleOptionGraphicsItem * option, QWi
 uchar Text::toUChar()
 {
     return this->text().toStdString()[0];
+}
+
+void Text::setText(const QString &text)
+{
+    if (text.size()>0)
+    {
+//        qDebug() << text;
+        if (text == '\u0000')
+        {
+            QGraphicsSimpleTextItem::setText(0x00);
+        }
+        else
+        {
+            QGraphicsSimpleTextItem::setText(text);
+        }
+    }
+    else
+    {
+        QGraphicsSimpleTextItem::setText(0x00);
+    }
 }
