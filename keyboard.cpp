@@ -1,6 +1,6 @@
 #include "keyboard.h"
 
-Keyboard::Keyboard(QObject *parent, DisplayDataStream *d, SocketConnection *c) : QObject(parent)
+Keyboard::Keyboard(DisplayDataStream *d, SocketConnection *c)
 {    
     display = d;
     socket = c;

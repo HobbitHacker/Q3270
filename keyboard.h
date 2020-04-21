@@ -12,14 +12,14 @@
 #include "buffer.h"
 #include "3270.h"
 
-#define CALL_MEMBER_FN(object,ptrToMember)  ((object).*(ptrToMember))
+//#define CALL_MEMBER_FN(object,ptrToMember)  ((object).*(ptrToMember))
 
 class Keyboard : public QObject
 {
     typedef void (Keyboard::*doSomething)();
 
     public:
-        Keyboard(QObject *parent = 0, DisplayDataStream *d = 0, SocketConnection *c = 0);
+        Keyboard(DisplayDataStream *d = 0, SocketConnection *c = 0);
 
     protected:
         bool eventFilter( QObject *dist, QEvent *event );

@@ -31,11 +31,6 @@
 
 #include <map>
 
-#define SCREENX 80
-#define SCREENY 24
-#define GRIDSIZE_X 9
-#define GRIDSIZE_Y 16
-
 /**
  * @todo write docs
  */
@@ -45,7 +40,7 @@ class DisplayDataStream : public QObject
 	
 	public:
 	
-        DisplayDataStream(QGraphicsScene *parent = nullptr);
+        DisplayDataStream(QGraphicsScene *parent, DisplayView *dv);
         QString EBCDICtoASCII();
         void processStream(Buffer *b);
         bool processing;
@@ -80,8 +75,13 @@ class DisplayDataStream : public QObject
 
 	private:
 
-        QGraphicsScene *display;
+        QGraphicsScene *scene;
+        QGraphicsView *view;
+
         DisplayData *screen;
+
+        DisplayData *default_screen;
+        DisplayData *alternate_screen;
 
         uchar *buffer;
         uchar *bufferCurrentPos;
@@ -90,72 +90,51 @@ class DisplayDataStream : public QObject
 
         int bufferLength;
 
-        uchar *primaryDisplay;
-        uchar *primaryDisplayPos;
+        /* Which screen size we're currently using */
+        bool alternate_size;
 
-        uchar *alternateDisplay;
-        uchar *alternateDisplayPos;
-
+        /* Screen position according to incoming 3270 data stream */
         int primary_x, primary_y;
         int primary_pos;
 
-        int alternate_x, alternate_y;
+        /* Dimensions of currently active screen */
+        int screen_x;
+        int screen_y;
+        int screenSize;
 
+        /* Cursor position */
         int cursor_x, cursor_y;
         int cursor_pos;
 
-        int count;
-
-        int defaultScreenSize, alternateScreenSize;
-
-        QBrush fieldAttr;
-        bool mdt;
-        bool prot;
-        bool askip;
-
+        bool resetMDT;
         bool resetKB;
         bool alarm;
-        bool resetMDT;
-
-        int wsfLen;
-
-        struct {
-            bool on;
-            int foreground;
-            int background;
-            int highlight;
-        } extended;
-
-        DisplayData *chars;
-
-        struct {
-                bool mdt;
-                bool prot;
-                bool startField;
-                bool askip;
-        } attributes[SCREENX * SCREENY];
 
         QLabel *cursorAddress;
+
+        void setScreen(bool alternate = false);
 
         void placeChar(Buffer *b);
         void placeChar(int c);
 
         void processWCC(Buffer *b);
+        void processOrders(Buffer *b);
 
         /* Write Commands */
-        void processEW(Buffer *b);
+        void processEW(Buffer *b, bool alternate);
         void processW(Buffer *b);
         void processSF(Buffer *b);
         void processSBA(Buffer *b);
         void processSFE(Buffer *b);
         void processRA(Buffer *b);
         void processSA(Buffer *b);
-        void processEWA(Buffer *b);
         void processWSF(Buffer *b);
+        void processEUA(Buffer *b);
 
         void processIC();
 
         int extractBufferAddress(Buffer *b);
+        void incPos();
 
         void removeCursor();
         void addCursor();
@@ -163,8 +142,12 @@ class DisplayDataStream : public QObject
         FieldIterator findNextUnprotected();
         FieldIterator findFirstUnprotected();
 
+        bool wsfProcessing;
+        int wsfLen;
+
         void WSFreset(Buffer *b);
         void WSFreadPartition(Buffer *b);
+        void WSFoutbound3270DS(Buffer *b);
 
         void replySummary(Buffer *buffer);
 };

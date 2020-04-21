@@ -30,6 +30,7 @@
 #define IBM3270_IC   0x13   /* Insert Cursor */
 #define IBM3270_RA   0x3C   /* Repeat to Address */
 #define IBM3270_SA   0x28   /* Set Attribute */
+#define IBM3270_EUA  0x12   /* Erase Unprotected to Address */
 
 /* Constants for some EBCDIC chars */
 #define IBM3270_CHAR_NULL  0x00
@@ -38,7 +39,7 @@
 /* Write Structured Field Commands */
 #define IBM3270_WSF_RESET         0x00
 #define IBM3270_WSF_READPARTITION 0x01
-
+#define IBM3270_WSF_OB3270DS      0x40
 #define IBM3270_WSF_QUERYREPLY    0x88
 
 /* Extended Attributes */

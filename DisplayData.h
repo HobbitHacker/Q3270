@@ -15,14 +15,25 @@
 class DisplayData
 {
     public:
-        DisplayData(QGraphicsScene *screen, int size);
+        DisplayData(QGraphicsScene *parent, int screen_x, int screen_y);
         ~DisplayData();
 
+        int width();
+        int height();
+
+        void setParent(QGraphicsScene* scene);
+        QGraphicsScene* getScene();
         void setChar(int pos, unsigned char c);
-        void setCharAttr(int pos, unsigned char c, unsigned char d);
+        void setCharAttr(unsigned char c, unsigned char d);
+        void resetExtendedHilite(int pos);
+        void resetExtended(int pos);
         void setExtendedColour(int pos, bool foreground, unsigned char c);
+        void setExtendedHilite(int pos);
+        void setExtendedBlink(int pos);
+        void setExtendedReverse(int pos);
+        void setExtendedUscore(int pos);
         void setColour(int pos, bool foreground, unsigned char c);
-        void setField(int pos, unsigned char c);
+        void setField(int pos, unsigned char c, bool sfe);
         void getModifiedFields(Buffer *buffer);
 //        void setFieldProt(int pos);
 //        void setFieldUnprot(int pos);
@@ -34,7 +45,11 @@ class DisplayData
         void deleteChar(int pos);
         void eraseEOF(int pos);
 
+        void eraseUnprotected(int start, int end);
+
         void setCursor(int pos);
+        void setFieldAttrs(int startPos);
+        int resetFieldAttrs(int start);
 
         unsigned char getChar(int pos);
 
@@ -139,11 +154,21 @@ class DisplayData
             QColor(255,255,255)     /* White */
         };
 
-        unsigned char *matrix;      /* Character matrix */
+        const QPen uscore_pen[8] = {
+            QPen(QColor(000, 000, 000), 2),
+            QPen(QColor(128, 128, 255), 2),
+            QPen(QColor(255, 000, 000), 2),
+            QPen(QColor(255, 000, 255), 2),
+            QPen(QColor(000, 255, 255), 2),
+            QPen(QColor(255, 255, 000), 2),
+            QPen(QColor(255, 255, 255), 2)
+        };
+
+        const char *colName[8] = { "black", "blue", "red", "magenta", "green", "cyan", "yellow", "neutral"};
 
         struct Attributes {
                 //TODO: Do we need a basic colour as well as extended?
-                QBrush colour;
+                int colNum;
                 bool askip;
                 bool num;
                 bool mdt;
@@ -157,9 +182,13 @@ class DisplayData
                 bool uscore;
                 bool reverse;
                 bool blink;
-                /* Character Attribute */
-
+                /* Character Attribute in effect */
+                bool charAttr;
         };
+
+        int screen_x;                /* Max Columns */
+        int screen_y;                /* Max Rows */
+        int screenPos_max;           /* Max position on screen */
 
         Attributes *field;            /* Temporary field attrbute */
 
@@ -169,12 +198,26 @@ class DisplayData
         QGraphicsScene *screen;      /* Graphical display */
         Text **glyph;                /* Character on screen */
         QGraphicsRectItem **cell;    /* Screen slot */
+        QGraphicsLineItem **uscore;  /* Underscores */
 
         int size;
 
         /* Character Attributes in effect */
         bool useCharAttr;
-        Attributes charAttr;
+        struct {
+                bool uscore;
+                bool uscore_default;
+
+                bool reverse;
+                bool reverse_default;
+
+                bool blink;
+                bool blink_default;
+
+                QBrush colour;
+                int colNum;
+                bool colour_default;
+        } charAttr;
 
         QGraphicsRectItem *cursor;
 
@@ -183,8 +226,7 @@ class DisplayData
 
         int findField(int pos);
         int findNextField(int pos);
-        void decodeFieldAttribute(unsigned char attr, Attributes &f);
-
+        int findPrevField(int pos);
 };
 
 #endif // DISPLAYDATA_H

@@ -46,7 +46,7 @@ void SocketConnection::onReadyRead()
     // set the version so that programs compiled with different versions of Qt can agree on how to serialise
     dataStream.setVersion(QDataStream::Qt_5_7);
 
-    printf("Buffer allocated %d\n", incomingData->address());
+//    printf("Buffer allocated %ld\n", incomingData->address());
     fflush(stdout);
 
     incomingData->reset();
@@ -91,12 +91,13 @@ void SocketConnection::onReadyRead()
                             if (readingSB)
                             {
                                 subNeg->add(socketByte);
+                                telnetState = TELNET_STATE_SB;
                             }
                             else
                             {
                                 incomingData->add(socketByte);
+                                telnetState = TELNET_STATE_DATA;
                             }
-                            telnetState = TELNET_STATE_DATA;
 							break;
 						case DO:		// Request something, or confirm WILL request
 							printf("  DO seen\n"); 
@@ -134,7 +135,7 @@ void SocketConnection::onReadyRead()
                             break;
                         case EOR:
                             incomingData->setProcessing(true);
-							printf("  EOR seen - yippee!\n");
+                            printf("  EOR\n");
                             telnetState = TELNET_STATE_DATA;
                             processBuffer(incomingData);
 							break;
@@ -174,12 +175,13 @@ void SocketConnection::onReadyRead()
                         case TELOPT_TN3270E:
                             tn3270e_Mode = false;
                             printf("TN3270E switched off\n");
+                            break;
                         default:
                             printf("IAC DON'T - Not sure: %02X\n", socketByte);
                             telnetState = TELNET_STATE_DATA;
                             break;
                     }
-
+                    break;
 				case TELNET_STATE_IAC_WILL:
                     switch (socketByte)
 					{
@@ -217,7 +219,7 @@ void SocketConnection::onReadyRead()
                     }
                     break;
 				default:
-                    printf("telnetState Not sure! : %02.2X\n", socketByte);
+                    printf("telnetState Not sure! : %2.2X\n", socketByte);
 			}
             fflush(stdout);
         } else {
@@ -259,6 +261,7 @@ void SocketConnection::processSubNegotiation(Buffer *buf)
 
     char response[50];
 
+    printf("-- SubNegotiation --\n");
     buf->dump();
 
     switch(buf->getByte())
@@ -281,7 +284,7 @@ void SocketConnection::processSubNegotiation(Buffer *buf)
                 sprintf(response, "%c%c%c%c%c%s%c%c", (char) IAC, (char) SB, (char) TELOPT_TN3270E, (char) TN3270E_DEVICE_TYPE, (char) TN3270E_REQUEST, termType, (char) IAC, (char) SE);
                 sprintf(response,"%s%c%c%c%c%c%c%c", response, (char) IAC, (char) SB, (char) TELOPT_TN3270E, (char) TN3270E_FUNCTIONS, (char) TN3270E_REQUEST, (char) IAC, (char) SE);
                 int rc = dataStream.writeRawData(response, 14 + strlen(termType));
-                printf("(%s) - length %d: RC=%d. Error=\n", response, 14 + strlen(termType), rc);
+                printf("(%s) - length %ld: RC=%d. Error=\n", response, 14 + strlen(termType), rc);
                 fflush(stdout);
                 break;
             }

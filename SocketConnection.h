@@ -100,7 +100,7 @@ private:
         TELNET_STATE_SB_TN3270E_SEND_DEVICE_TYPE
     };
 
-    char termType[13] = "IBM-3279-2-E";
+    char termType[13] = "IBM-3279-4-E";
 
     bool tn3270e_Mode;
 

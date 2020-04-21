@@ -35,7 +35,7 @@ class MainWindow : public QMainWindow
     ~MainWindow();
 	
   private slots:
-    void on_actionConnect_triggered(bool checked);
+    void on_actionConnect_triggered();
 
   private:
 	void setupActions();

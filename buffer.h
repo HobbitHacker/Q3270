@@ -15,6 +15,7 @@ class Buffer
         void add(char b);
         Buffer *nextByte();
         unsigned char getByte();
+        bool moreBytes();
         unsigned char getByte(int offset);
         bool compare(int offset, char *string);
         void reset();

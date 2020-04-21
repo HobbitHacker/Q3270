@@ -1,16 +1,19 @@
 #include "DisplayData.h"
 
-
-#define SCREENX 80
-#define SCREENY 24
-
-DisplayData::DisplayData(QGraphicsScene *screen, int size)
+DisplayData::DisplayData(QGraphicsScene *parent, int screen_x, int screen_y)
 {
 
-    DisplayView *d = (DisplayView *)screen->views().first();
+    DisplayView *d = (DisplayView *)parent->views().first();
 
-    gridSize_X = (d->width()) / 80;
-    gridSize_Y = (d->height()) / 24;
+    screen = new QGraphicsScene(0, 0, parent->width(), parent->height());
+
+    this->screen_x = screen_x;
+    this->screen_y = screen_y;
+
+    gridSize_X = (d->width()) / screen_x;
+    gridSize_Y = (d->height()) / screen_y;
+
+    screenPos_max = screen_x * screen_y;
 
     printf("Screen size: %d x %d - gridsize: %d x %d\n", d->width(), d->height(), gridSize_X, gridSize_Y);
     fflush(stdout);
@@ -19,48 +22,38 @@ DisplayData::DisplayData(QGraphicsScene *screen, int size)
     p.setCosmetic(false);
     p.setWidth(0);
 
-    attrs = new Attributes[size];
-    glyph = new Text*[size];
-    cell = new QGraphicsRectItem*[size];
+    QPen u;
+    u.setWidth(8);
+    u.setBrush(Qt::green);
 
-    this->size = size;
+    attrs = new Attributes[screenPos_max];
+    glyph = new Text*[screenPos_max];
+    cell = new QGraphicsRectItem*[screenPos_max];
+    uscore = new QGraphicsLineItem*[screenPos_max];
 
-    screen->setBackgroundBrush(Qt::blue);
-
-    for(int y = 0; y < SCREENY; y++)
+    for(int y = 0; y < screen_y; y++)
     {
-        int y_pos = y * gridSize_Y;
+        qreal y_pos = y * gridSize_Y;
 
-        for(int x = 0; x < SCREENX; x++)
+        for(int x = 0; x < screen_x; x++)
         {
-            int pos = x + (y * SCREENX);
+            int pos = x + (y * screen_x);
 
-            int x_pos = x * gridSize_X;
+            qreal x_pos = x * gridSize_X;
 
             cell[pos] = new QGraphicsRectItem(x_pos/2, y_pos/2, gridSize_X, gridSize_Y);
-            cell[pos]->setBrush(Qt::black);
-            cell[pos]->setPen(p);
+            uscore[pos] = new QGraphicsLineItem(cell[pos]->boundingRect().left() + 1, cell[pos]->boundingRect().bottom() - 2, cell[pos]->boundingRect().right(), cell[pos]->boundingRect().bottom() - 2, cell[pos]);
+
             cell[pos]->setPos(x_pos/2, y_pos/2);
 
             glyph[pos] = new Text(cell[pos]);
-            glyph[pos]->setBrush(palette[4]);
             glyph[pos]->setFont(QFont("Hack", 11));
-            glyph[pos]->setText(0x00);
-
-            attrs[pos].prot = false;
-            attrs[pos].askip = false;
-            attrs[pos].colour = palette[4];
-            attrs[pos].reverse = false;
-            attrs[pos].uscore = false;
-            attrs[pos].blink = false;
-            attrs[pos].mdt = false;
-            attrs[pos].display = true;
-            attrs[pos].extended = false;
-            attrs[pos].fieldStart = false;
 
             screen->addItem(cell[pos]);
         }
     }
+
+    clear();
 
     cursor = new QGraphicsRectItem(cell[0]);
     cursor->setRect(cell[0]->rect());
@@ -69,64 +62,176 @@ DisplayData::DisplayData(QGraphicsScene *screen, int size)
     cursor->setOpacity(0.5);
 }
 
+int DisplayData::width()
+{
+    return screen_x;
+}
+
+int DisplayData::height()
+{
+    return screen_y;
+}
+
+void DisplayData::setParent(QGraphicsScene *scene)
+{
+    screen->setParent(scene);
+}
+
+QGraphicsScene *DisplayData::getScene()
+{
+    return screen;
+}
+
 void DisplayData::clear()
 {
-    for(int i = 0; i < SCREENX * SCREENY; i++)
+    for(int i = 0; i < screenPos_max; i++)
     {
         cell[i]->setBrush(palette[0]);
+        uscore[i]->setPen(uscore_pen[0]);
+        uscore[i]->setVisible(false);
 
         glyph[i]->setBrush(palette[1]);
         glyph[i]->setText(0x00);
 
+        attrs[i].colNum = 1;
+
         attrs[i].askip = false;
+        attrs[i].num = false;
+        attrs[i].mdt = false;
+        attrs[i].prot = false;
+
+        attrs[i].fieldStart = false;
+
+        attrs[i].display = true;
         attrs[1].pen = false;
         attrs[i].intensify = false;
-        attrs[i].prot = false;
-        attrs[i].askip = false;
-        attrs[i].colour = palette[1];
-        attrs[i].reverse = false;
-        attrs[i].uscore = false;
-        attrs[i].blink = false;
-        attrs[i].mdt = false;
-        attrs[i].display = true;
+
         attrs[i].extended = false;
-        attrs[i].fieldStart = false;
+        attrs[i].uscore = false;
+
+        attrs[i].reverse = false;
+        attrs[i].blink = false;
+
+        attrs[i].charAttr = false;
+
     }
+    resetCharAttr();
 }
 
 void DisplayData::setChar(int pos, unsigned char c)
 {
-    attrs[pos].fieldStart = false;
-    glyph[pos]->setText(QString(EBCDICtoASCIImap[c]));
-    printf("%c", EBCDICtoASCIImap[c]);
-    int thisField = findField(pos);
 
-    attrs[pos] = attrs[thisField];
-    attrs[pos].fieldStart = false;
-    if (useCharAttr)
+    int lastField;
+
+    if (attrs[pos].fieldStart)
     {
-        if(charAttr.reverse)
-        {
-            glyph[pos]->setBrush(palette[0]);
-            cell[pos]->setBrush(charAttr.colour);
-        }
-        else
-        {
-            glyph[pos]->setBrush(charAttr.colour);
-            cell[pos]->setBrush(palette[0]);
-        }
-        return;
-    }
-    if (attrs[pos].reverse)
-    {
-        glyph[pos]->setBrush(palette[0]);
-        cell[pos]->setBrush(attrs[pos].colour);
+        attrs[pos].fieldStart = false;
+        lastField = resetFieldAttrs(pos);
     }
     else
     {
-        glyph[pos]->setBrush(attrs[pos].colour);
-        cell[pos]->setBrush(palette[0]);
+        lastField = findField(pos);
     }
+
+    attrs[pos].charAttr = useCharAttr;
+
+    glyph[pos]->setText(QString(EBCDICtoASCIImap[c]));
+
+    if (attrs[pos].charAttr)
+    {
+        // Set colour
+
+        if (!charAttr.colour_default)
+        {
+            attrs[pos].colNum = charAttr.colNum;
+            printf("<CH %s>", colName[attrs[pos].colNum]);
+        }
+        else
+        {
+            attrs[pos].colNum = attrs[lastField].colNum;
+        }
+
+        // Reverse video
+        if (!charAttr.reverse_default)
+        {
+            attrs[pos].reverse = charAttr.reverse;
+            if (attrs[pos].reverse)
+            {
+                printf("<CH reverse>");
+            }
+        }
+        else
+        {
+            attrs[pos].reverse = attrs[lastField].reverse;
+        }
+
+        // Underscore
+        if (!charAttr.uscore_default)
+        {
+            attrs[pos].uscore = charAttr.uscore;
+            if (attrs[pos].uscore)
+            {
+                printf("<CH uscore>");
+            }
+        }
+        else
+        {
+            attrs[pos].uscore = attrs[lastField].uscore;
+        }
+    }
+    else
+    {
+        attrs[pos].uscore = attrs[lastField].uscore;
+        attrs[pos].reverse = attrs[lastField].reverse;
+        attrs[pos].colNum = attrs[lastField].colNum;
+    }
+
+    // Colour - non-display / reverse / normal
+    if (!attrs[pos].display)
+    {
+        glyph[pos]->setBrush(cell[pos]->brush());
+    }
+    else
+    {
+        if (attrs[pos].reverse)
+        {
+            cell[pos]->setBrush(palette[attrs[pos].colNum]);
+            glyph[pos]->setBrush(palette[0]);
+            printf("<reverse>");
+        }
+        else
+        {
+            glyph[pos]->setBrush(palette[attrs[pos].colNum]);
+            cell[pos]->setBrush(palette[0]);
+        }
+    }
+
+    //
+    // Underscore processing
+    //
+
+    if (attrs[pos].uscore)
+    {
+        uscore[pos]->setVisible(true);
+        uscore[pos]->setPen(QPen(palette[attrs[pos].colNum], 2));
+
+        printf("<uscore>");
+    }
+    else
+    {
+        uscore[pos]->setVisible(false);
+    }
+
+    if (c != IBM3270_CHAR_NULL)
+    {
+        printf("%c", EBCDICtoASCIImap[c]);
+    }
+    else
+    {
+        printf("0x00");
+    }
+
+    fflush(stdout);
 }
 
 unsigned char DisplayData::getChar(int pos)
@@ -134,57 +239,27 @@ unsigned char DisplayData::getChar(int pos)
     return (glyph[pos]->text().toUtf8()[0]);
 }
 
-void DisplayData::setExtendedColour(int pos, bool foreground, unsigned char c)
-{
-/*    int nextField = findNextField(pos);
-    if (nextField < pos)
-    {
-        nextField = nextField + SCREENX * SCREENY;
-    }
-*/
-    attrs[pos].colour = palette[c&7];
-    attrs[pos].reverse = !foreground;
-    attrs[pos].fieldStart = true;
-    attrs[pos].extended = true;
-/*
-    for(int i = pos; i < nextField; i++)
-    {
-        int offset = i%(SCREENX * SCREENY);
-        attrs[offset] = attrs[pos];
-        if (attrs[offset].display)
-        {
-            if (attrs[offset].reverse)
-            {
-                cell[offset]->setBrush(attrs[offset].colour);
-                glyph[offset]->setBrush(palette[0]);
-            }
-            else
-            {
-                cell[offset]->setBrush(palette[0]);
-                glyph[offset]->setBrush(attrs[offset].colour);
-            }
-        }
-        else
-        {
-            cell[offset]->setBrush(palette[0]);
-            glyph[offset]->setBrush(palette[0]);
-        }
-    }
-*/
-}
 
-void DisplayData::setCharAttr(int pos, unsigned char extendedType, unsigned char extendedValue)
+void DisplayData::setCharAttr(unsigned char extendedType, unsigned char extendedValue)
 {
-    printf("SetAttribute(%d, %d) - %2.2X : %2.2X\n", pos - (int)((pos / SCREENX) * SCREENX), (int)pos/SCREENX, extendedType, extendedValue);
-    fflush(stdout);
+/*    if (!useCharAttr)
+    {
+        charAttr.blink = attrs[pos].blink;
+        charAttr.colour = attrs[pos].colour;
+        charAttr.uscore = attrs[pos].uscore;
+        charAttr.reverse = attrs[pos].reverse;
+
+    } */
+    printf("[SetAttribute ");
     switch(extendedType)
     {
         case IBM3270_EXT_DEFAULT:
-            charAttr.blink = false;
-            charAttr.reverse = false;
-            charAttr.uscore = false;
-            charAttr.colour = palette[1];
-            return;
+            charAttr.blink_default = true;
+            charAttr.reverse_default = true;
+            charAttr.uscore_default = true;
+            charAttr.colour_default = true;
+            printf("default");
+            break;
         case IBM3270_EXT_HILITE:
             switch(extendedValue)
             {
@@ -192,41 +267,50 @@ void DisplayData::setCharAttr(int pos, unsigned char extendedType, unsigned char
                     charAttr.uscore  = false;
                     charAttr.reverse = false;
                     charAttr.blink   = false;
+                    printf("normal");
                     break;
                 case IBM3270_EXT_HI_BLINK:
                     charAttr.blink   = true;
                     charAttr.uscore  = false;
                     charAttr.reverse = false;
+                    charAttr.blink_default = false;
+                    printf("blink");
                     break;
                 case IBM3270_EXT_HI_REVERSE:
                     charAttr.blink   = false;
                     charAttr.uscore  = false;
                     charAttr.reverse = true;
+                    charAttr.reverse_default = false;
+                    printf("reverse");
                     break;
                 case IBM3270_EXT_HI_USCORE:
                     charAttr.blink   = false;
+                    charAttr.reverse = false;
                     charAttr.uscore  = true;
-                    charAttr.reverse = false;
-                    break;
-                default:
-                    charAttr.uscore  = false;
-                    charAttr.reverse = false;
-                    charAttr.blink   = false;
+                    charAttr.uscore_default = false;
+                    printf("uscore");
                     break;
             }
             break;
         case IBM3270_EXT_FG_COLOUR:
             charAttr.colour = palette[extendedValue&7];
+            charAttr.colNum = extendedValue&7;
+            charAttr.colour_default = false;
 //            extAttr.reverse = false;
+            printf("fg colour %s", colName[charAttr.colNum]);
             break;
         case IBM3270_EXT_BG_COLOUR:
             charAttr.colour = palette[extendedValue&7];
-//            extAttr.reverse = true;
+            charAttr.colNum = extendedValue&7;
+            charAttr.colour_default = false;
+            printf("bg colour %s", colName[charAttr.colNum]);
+            //            extAttr.reverse = true;
             break;
         default:
-            printf("Not implemented: SA order %2.2X : %2.2X\n", extendedType, extendedValue);
-            fflush(stdout);
+            printf(" ** Not implemented **");
     }
+    printf("]");
+    fflush(stdout);
 
     useCharAttr = true;
 
@@ -234,90 +318,64 @@ void DisplayData::setCharAttr(int pos, unsigned char extendedType, unsigned char
 
 void DisplayData::resetCharAttr()
 {
-    useCharAttr = false;
+    charAttr.blink_default = true;
+    charAttr.reverse_default = true;
+    charAttr.uscore_default = true;
+    charAttr.colour_default = true;
 }
 
-void DisplayData::setField(int pos, unsigned char c)
+void DisplayData::setField(int pos, unsigned char c, bool sfe)
 {
-    int nextField = findNextField(pos);
-    if (nextField < pos)
+    printf("3270 Attribute %2.2X at %d", c, pos);
+
+    attrs[pos].prot = (c>>5)&1;
+    attrs[pos].num  = (c>>4)&1;
+    attrs[pos].display = (((c>>2)&3) != 3);
+    attrs[pos].pen = (( c >> 2) & 3) == 2 || (( c >> 2) & 3) == 1;
+    attrs[pos].intensify = ((c >> 2) & 3) == 2;
+    attrs[pos].mdt = c & 1;
+    attrs[pos].extended = sfe;
+/*
+    if (!useCharAttr)
     {
-        nextField = nextField + SCREENX * SCREENY;
+        attrs[pos].charAttr = false;
     }
-    printf("Attribute %2.2X", c);
-
-    decodeFieldAttribute(c, attrs[pos]);
-    //TODO: Attribute conflict resolution
-
-    for(int i = pos; i < nextField; i++)
+    else
     {
-        int offset = i%(SCREENX * SCREENY);
-        attrs[offset] = attrs[pos];
-        attrs[offset].fieldStart = false;
-        if (attrs[offset].display)
+        attrs[pos].charAttr = true;
+    }
+*/
+    attrs[pos].charAttr = false;
+    attrs[pos].askip = (attrs[pos].prot & attrs[pos].num);
+
+    //    printf("P:%d N:%d D:%d L:%d I:%d M:%d A:%d\n", f.prot, f.num, f.display, f.pen, f.intensify, f.mdt, f.askip);
+
+    if (!sfe)
+    {
+        if (attrs[pos].prot && !attrs[pos].intensify)
         {
-            if (attrs[offset].reverse)
-            {
-                cell[offset]->setBrush(attrs[offset].colour);
-                glyph[offset]->setBrush(palette[0]);
-            }
-            else
-            {
-                cell[offset]->setBrush(palette[0]);
-                glyph[offset]->setBrush(attrs[offset].colour);
-            }
+            attrs[pos].colNum = 1; /* Blue */
+        }
+        else if (attrs[pos].prot && attrs[pos].intensify)
+        {
+            attrs[pos].colNum = 7;  /* White */
+        }
+        else if (!attrs[pos].prot && !attrs[pos].intensify)
+        {
+            attrs[pos].colNum = 4;   /* Green */
         }
         else
         {
-            cell[offset]->setBrush(palette[0]);
-            glyph[offset]->setBrush(palette[0]);
+            attrs[pos].colNum = 2;    /* Red */
         }
+        //uscore[pos]->hide();
+        //attrs[pos].uscore = false;
+        attrs[pos].uscore = false;
+        attrs[pos].reverse = false;
+        attrs[pos].blink = false;
     }
-    attrs[pos].fieldStart = true;
-    glyph[pos]->setText(IBM3270_CHAR_NULL);
 
-    int py = pos / SCREENX;
-    int px = pos - (py * SCREENX);
-
-//    printf("[S%4d - %2d,%2d): Attribute byte: %2.2X prot=%d num=%d display=%d pen=%d mdt=%d reverse=%d intens=%d : ", pos, px, py, c, attrs[pos].prot, attrs[pos].num, attrs[pos].display, attrs[pos].pen, attrs[pos].mdt, attrs[pos].reverse, attrs[pos].intensify);
-
-}
-
-void DisplayData::decodeFieldAttribute(unsigned char attr, Attributes &f)
-{
-    //TODO: extended attributes with 3270 field attributes
-
-    f.prot = (attr>>5)&1;
-    f.num  = (attr>>4)&1;
-    f.display = (((attr>>2)&3) != 3);
-    f.pen = ((attr>>2)&3) == 2 || ((attr>>2)&3) == 1;
-    f.intensify = ((attr>>2)&3) == 2;
-    f.mdt = (attr)&1;
-
-    f.askip = (f.prot & f.num);
-
-//    printf("P:%d N:%d D:%d L:%d I:%d M:%d A:%d\n", f.prot, f.num, f.display, f.pen, f.intensify, f.mdt, f.askip);
-
-    if (!f.extended)
-    {
-        if (f.prot && !f.intensify)
-        {
-            f.colour = palette[1]; /* Blue */
-        }
-        else if (f.prot && f.intensify)
-        {
-            f.colour = palette[7]; //TODO: use names  (white)
-        }
-        else if (!f.prot && !f.intensify)
-        {
-            f.colour = palette[4]; /* Green */
-        }
-        else
-        {
-            f.colour = palette[2]; /* Red */
-        }
-    }
-    if(!f.prot)
+    if(!attrs[pos].prot)
     {
         printf("(unprot,");
     }
@@ -325,57 +383,213 @@ void DisplayData::decodeFieldAttribute(unsigned char attr, Attributes &f)
     {
         printf("(prot,");
     }
-    if(f.intensify)
+    if(attrs[pos].intensify)
     {
         printf("intens,");
     }
-    if (f.askip)
+    if (attrs[pos].askip)
     {
         printf("askip,");
     }
-    if (!f.display)
+    if (!attrs[pos].display)
     {
         printf("nondisp,");
     }
-    if (f.pen)
+    if (attrs[pos].pen)
     {
         printf("pen,");
     }
-    if (f.num)
+    if (attrs[pos].num)
     {
         printf("num,");
     }
-    if (f.mdt)
+    if (attrs[pos].mdt)
     {
         printf("mdt,");
     }
     printf(")");
     fflush(stdout);
+
+//    int py = pos / SCREENX;
+//    int px = pos - (py * SCREENX);
+
+    if (!sfe)
+    {
+        setFieldAttrs(pos);
+    }
+
+//    printf("[S%4d - %2d,%2d): Attribute byte: %2.2X prot=%d num=%d display=%d pen=%d mdt=%d reverse=%d intens=%d : ", pos, px, py, c, attrs[pos].prot, attrs[pos].num, attrs[pos].display, attrs[pos].pen, attrs[pos].mdt, attrs[pos].reverse, attrs[pos].intensify);
+
 }
+
+void DisplayData::resetExtended(int pos)
+{
+    resetExtendedHilite(pos);
+
+    attrs[pos].colNum = 1;
+
+    attrs[pos].display = true;
+    attrs[pos].num = false;
+    attrs[pos].mdt = false;
+    attrs[pos].pen = false;
+    attrs[pos].askip = false;
+    attrs[pos].prot = false;
+}
+
+
+void DisplayData::resetExtendedHilite(int pos)
+{
+    attrs[pos].uscore = false;
+    attrs[pos].blink = false;
+    attrs[pos].reverse = false;
+}
+
+void DisplayData::setExtendedColour(int pos, bool foreground, unsigned char c)
+{
+    attrs[pos].colNum = c&7;
+    attrs[pos].reverse = !foreground;
+    attrs[pos].extended = true;
+    if(foreground)
+    {
+        printf(" %s]", colName[attrs[pos].colNum]);
+    }
+}
+
+void DisplayData::setExtendedBlink(int pos)
+{
+    attrs[pos].reverse = false;
+    attrs[pos].blink = true;
+    printf("[Blink]");
+}
+
+void DisplayData::setExtendedReverse(int pos)
+{
+    attrs[pos].blink = false;
+    attrs[pos].reverse = true;
+    printf("[Reverse]");
+}
+
+void DisplayData::setExtendedUscore(int pos)
+{
+    attrs[pos].uscore = true;
+    printf("[UScore]");
+}
+
+void DisplayData::setFieldAttrs(int start)
+{
+    attrs[start].fieldStart = true;
+
+    printf("[setting field %d to uscore %d colour %s]", start, attrs[start].uscore, colName[attrs[start].colNum]);
+    fflush(stdout);
+
+    resetFieldAttrs(start);
+
+    glyph[start]->setText(IBM3270_CHAR_NULL);
+    uscore[start]->setVisible(false);
+}
+
+
+int DisplayData::resetFieldAttrs(int start)
+{
+    int lastField = findField(start);
+
+    printf("[attributes obtained from %d]", lastField);
+
+    int endPos = start + screenPos_max;
+
+    for(int i = start; i < endPos; i++)
+    {
+        int offset = i % screenPos_max;
+//        bool uscore = attrs[offset].uscore;
+
+        if (attrs[offset].fieldStart && i > start)
+        {
+            printf("[ended at %d]", offset);
+            return lastField;
+        }
+
+        attrs[offset].prot = attrs[lastField].prot;
+        attrs[offset].mdt = attrs[lastField].mdt;
+        attrs[offset].num = attrs[lastField].num;
+        attrs[offset].askip = attrs[lastField].askip;
+        attrs[offset].pen = attrs[lastField].pen;
+        attrs[offset].display = attrs[lastField].display;
+
+//        if (!useCharAttr)
+  //      {
+            attrs[offset].colNum = attrs[lastField].colNum;
+            attrs[offset].uscore = attrs[lastField].uscore;
+            attrs[offset].blink = attrs[lastField].blink;
+            attrs[offset].reverse = attrs[lastField].reverse;
+            attrs[offset].charAttr = false;
+    //    }
+
+        //        attrs[offset] = attrs[start];
+//        attrs[offset].fieldStart = false;
+
+        if (attrs[offset].display)
+        {
+//            if (!attrs[offset].charAttr)
+//            {
+                if (attrs[offset].reverse)
+                {
+                    cell[offset]->setBrush(palette[attrs[offset].colNum]);
+                    glyph[offset]->setBrush(palette[0]);
+                }
+                else
+                {
+                    cell[offset]->setBrush(palette[0]);
+                    glyph[offset]->setBrush(palette[attrs[offset].colNum]);
+                }
+                if (attrs[offset].uscore)
+                {
+                    uscore[offset]->setPen(QPen(palette[attrs[offset].colNum], 2));
+                    uscore[offset]->setVisible(true);
+                }
+                else
+                {
+                  uscore[offset]->setVisible(false);
+                }
+  //          }
+        }
+        else
+        {
+            cell[offset]->setBrush(palette[0]);
+            glyph[offset]->setBrush(palette[0]);
+        }
+    }
+
+    printf("[ended at %d]", endPos);
+    return lastField;
+}
+
 
 bool DisplayData::insertChar(int pos, unsigned char c, bool insertMode)
 {
-    if (attrs[pos].prot)
+    if (attrs[pos].prot || attrs[pos].fieldStart)
     {
         printf("Protected!\n");
         fflush(stdout);
         return false;
     }
 
+    int thisField = findField(pos);
+
     if (insertMode)
     {
         int endPos = -1;
-        for(int i = pos; i < (pos + (SCREENX * SCREENY)); i++)
+        for(int i = pos; i < (pos + screenPos_max); i++)
         {
-            unsigned char thisChar = glyph[i%(SCREENX*SCREENY)]->text().toUtf8()[0];
+//            unsigned char thisChar = glyph[i%(SCREENX*SCREENY)]->text().toUtf8()[0];
 //            printf("%4d = %c (%2.2X)\n", i, thisChar, thisChar);
             fflush(stdout);
-            if (glyph[i%(SCREENX * SCREENY)]->text()[0] == IBM3270_CHAR_NULL)
+            int offset = i % screenPos_max;
+            if (glyph[offset]->text()[0] == IBM3270_CHAR_NULL)
             {
                 endPos = i;
                 break;
             }
-            if (attrs[i%(SCREENX * SCREENY)].prot)
+            if (attrs[i % screenPos_max].prot)
             {
                 break;
             }
@@ -388,18 +602,14 @@ bool DisplayData::insertChar(int pos, unsigned char c, bool insertMode)
         }
         for(int fld = endPos; fld > pos; fld--)
         {
-            glyph[fld%(SCREENX * SCREENY)]->setText(glyph[+((fld-1)%(SCREENX * SCREENY))]->text());
+            attrs[fld % screenPos_max] = attrs[+((fld-1)%screenPos_max)];
+            setChar(fld % screenPos_max, ASCIItoEBCDICmap[glyph[+((fld-1)%screenPos_max)]->toUChar()]);
         }
     }
 
-    int thisField = findField(pos);
     printf("MDT set for %d\n", thisField);
     attrs[thisField].mdt = true;
-    if (!attrs[thisField].display)
-    {
-        glyph[pos]->setBrush(cell[pos]->brush());
-    }
-    glyph[pos]->setText(QString(c));
+    setChar(pos, ASCIItoEBCDICmap[c]);
 
     return true;
 }
@@ -418,12 +628,12 @@ void DisplayData::deleteChar(int pos)
 
     if (nextField < pos)
     {
-        nextField = nextField + (SCREENX * SCREENY);
+        nextField += screenPos_max;
     }
 
     for(int fld = pos; fld < endPos - 1 && glyph[pos]->text() != IBM3270_CHAR_NULL; fld++)
     {
-        glyph[fld%(SCREENX*SCREENY)]->setText(glyph[(fld+1)%(SCREENX*SCREENY)]->text());
+        glyph[fld % screenPos_max]->setText(glyph[(fld+1) % screenPos_max]->text());
     }
 
     glyph[endPos]->setText(IBM3270_CHAR_NULL);
@@ -438,16 +648,42 @@ void DisplayData::eraseEOF(int pos)
 
     if (nextField < pos)
     {
-        nextField+= SCREENX * SCREENY;
+        nextField += screenPos_max;
     }
 
     /* Blank field */
     for(int i = pos; i < nextField; i++)
     {
-        glyph[i%(SCREENX * SCREENY)]->setText(0x00);
+        glyph[i % screenPos_max]->setText(0x00);
     }
 
     attrs[findField(pos)].mdt = true;
+}
+
+void DisplayData::eraseUnprotected(int start, int end)
+{
+    if (end < start)
+    {
+        end += screenPos_max;
+    }
+
+    int thisField = findField(start);
+    if (attrs[thisField].prot)
+    {
+        start = findNextUnprotectedField(start);
+    }
+
+    for(int i = start; i < end; i++)
+    {
+        if(attrs[i].prot || attrs[i].fieldStart)
+        {
+            i = findNextUnprotectedField(i);
+        }
+        else
+        {
+                glyph[i]->setText(" ");
+        }
+    }
 }
 
 void DisplayData::setCursor(int pos)
@@ -458,7 +694,7 @@ void DisplayData::setCursor(int pos)
 
 int DisplayData::findField(int pos)
 {
-    int endPos = pos - (SCREENX * SCREENY);
+    int endPos = pos - screenPos_max;
 //    printf("findField: endpos = %d\n", endPos);
 //    fflush(stdout);
     for (int i = pos; i > endPos ; i--)
@@ -466,7 +702,7 @@ int DisplayData::findField(int pos)
         int offset = i;
         if (i < 0)
         {
-            offset = (SCREENX*SCREENY) + i;
+            offset = screenPos_max + i;
         }
 
 //        printf("findField: i = %d, offset = %d (new offset = %d)\n", i, +(i%(SCREENX*SCREENY)), offset);
@@ -486,9 +722,9 @@ int DisplayData::findNextField(int pos)
         pos++;
     }
     int tmpPos;
-    for(int i = pos; i < (pos+(SCREENX * SCREENY)); i++)
+    for(int i = pos; i < (pos + screenPos_max); i++)
     {
-        tmpPos = i%(SCREENX * SCREENY);
+        tmpPos = i % screenPos_max;
         if (attrs[tmpPos].fieldStart)
         {
             return tmpPos;
@@ -502,22 +738,22 @@ int DisplayData::findNextField(int pos)
 int DisplayData::findNextUnprotectedField(int pos)
 {
     int tmpPos;
-    for(int i = pos; i < (pos+(SCREENX * SCREENY)); i++)
+    for(int i = pos; i < (pos + screenPos_max); i++)
     {
-        tmpPos = i%(SCREENX * SCREENY);
+        tmpPos = i % screenPos_max;
         if (attrs[tmpPos].fieldStart & !attrs[tmpPos].prot)
         {
             return tmpPos;
         }
     }
-    printf("No unprotected field found: start = %d, end = %d\n", pos, pos +(SCREENX * SCREENY));
+    printf("No unprotected field found: start = %d, end = %d\n", pos, pos + screenPos_max);
     fflush(stdout);
     return 0;
 }
 
 void DisplayData::getModifiedFields(Buffer *buffer)
 {
-    for(int i = 0; i < (SCREENX * SCREENY); i++)
+    for(int i = 0; i < screenPos_max; i++)
     {
         if (attrs[i].fieldStart & !attrs[i].prot)
         {
@@ -531,7 +767,7 @@ void DisplayData::getModifiedFields(Buffer *buffer)
 
                     printf("Adding field at %d : ", thisField);
 
-                    int nextPos = (thisField + 1)%(SCREENX * SCREENY);
+                    int nextPos = (thisField + 1) % screenPos_max;
 
                     buffer->add(twelveBitBufferAddress[(nextPos>>6)&63]);
                     buffer->add(twelveBitBufferAddress[(nextPos&63)]);
@@ -546,7 +782,7 @@ void DisplayData::getModifiedFields(Buffer *buffer)
                             buffer->add(ASCIItoEBCDICmap[b]);
                             printf("%c", b);
                         }
-                        thisField = thisField % (SCREENX * SCREENY);
+                        thisField = thisField % screenPos_max;
                     }
                     while(!attrs[thisField].fieldStart);
                     printf("\n");
@@ -562,12 +798,12 @@ void DisplayData::getModifiedFields(Buffer *buffer)
 
 void DisplayData::dumpFields()
 {
-    for(int i = 0; i < (SCREENX * SCREENY); i++)
+    for(int i = 0; i < screenPos_max; i++)
     {
         if (attrs[i].fieldStart)
         {
-            int tmpy = i / SCREENX;
-            int tmpx = i - (tmpy * SCREENX);
+            int tmpy = i / screen_x;
+            int tmpx = i - (tmpy * screen_y);
 
             printf("Field at %4d (%2d,%2d) : Prot: %d\n", i, tmpx, tmpy, attrs[i].prot);
         }
@@ -579,9 +815,9 @@ void DisplayData::dumpFields()
 void DisplayData::dumpDisplay()
 {
     printf("---- SCREEN ----");
-    for (int i = 0; i < (SCREENX * SCREENY); i++)
+    for (int i = 0; i < screenPos_max; i++)
     {
-        if (i%SCREENX == 0)
+        if (i % screen_x == 0)
         {
             printf("\n");
         }

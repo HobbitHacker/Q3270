@@ -22,11 +22,12 @@
 #include <chrono>
 #include <thread>
 
-DisplayDataStream::DisplayDataStream(QGraphicsScene* parent)
+DisplayDataStream::DisplayDataStream(QGraphicsScene* parent, DisplayView *dv)
 {
     //TODO: screen sizes
-    defaultScreenSize = 80*24;
-    alternateScreenSize = 80*24;
+
+    scene = parent;
+    view = dv;
 
     primary_x = 0;
     primary_y = 0;
@@ -36,7 +37,31 @@ DisplayDataStream::DisplayDataStream(QGraphicsScene* parent)
     cursor_y = 0;
     cursor_pos = 0;
 
-    screen = new DisplayData(parent, defaultScreenSize);
+    default_screen = new DisplayData(parent, 80, 24);
+    alternate_screen = new DisplayData(parent, 80, 43);
+
+    setScreen();
+}
+
+void DisplayDataStream::setScreen(bool alternate)
+{
+    if (alternate)
+    {
+        view->setScene(alternate_screen->getScene());
+        screen = alternate_screen;
+    }
+    else
+    {
+        view->setScene(default_screen->getScene());
+        screen = default_screen;
+    }
+
+    alternate_size = alternate;
+
+    screen_x = screen->width();
+    screen_y = screen->height();
+
+    screenSize = screen_x * screen_y;
 }
 
 void DisplayDataStream::processStream(Buffer *b)
@@ -49,60 +74,54 @@ void DisplayDataStream::processStream(Buffer *b)
 
     b->dump();
 
+    wsfProcessing = false;
+
     // Process WRITE command
+    // Structured Fields Require Multiple WRITE commands
+    // Add logic to cycle round buffer for structure field length if appropriate so we can come
+    // back here to restart.
     screen->resetCharAttr();
 
     switch(b->getByte())
     {
         case IBM3270_EW:
         case IBM3270_CCW_EW:
-            processEW(b);
+            processEW(b, false);
+            b->nextByte();
             break;
         case IBM3270_W:
         case IBM3270_CCW_W:
             processW(b);
+            b->nextByte();
             break;
         case IBM3270_WSF:
         case IBM3270_CCW_WSF:
-            processWSF(b->nextByte());
+            wsfProcessing = true;
+            b->nextByte();
             break;
         case IBM3270_EWA:
         case IBM3270_CCW_EWA:
-            processEWA(b);
+            processEW(b, true);
+            b->nextByte();
             break;
         default:
-            printf("[Unrecognised WRITE command: %2.2X]", b->getByte());
+            printf("[Unrecognised WRITE command: %2.2X - Block Ignored]", b->getByte());
             b->dump();
             processing = false;
             return;
     }
 
-    while(b->nextByte())
+    while(b->moreBytes())
     {
-//        printf("Processing %02.2X\n", b->getByte());
-        switch(b->getByte())
+        if (wsfProcessing)
         {
-            case IBM3270_SF:
-                processSF(b->nextByte());
-                break;
-            case IBM3270_SBA:
-                processSBA(b);
-                break;
-            case IBM3270_SFE:
-                processSFE(b);
-                break;
-            case IBM3270_IC:
-                processIC();
-                break;
-            case IBM3270_RA:
-                processRA(b);
-                break;
-            case IBM3270_SA:
-                processSA(b);
-                break;
-            default:
-                placeChar(b->getByte());
+            processWSF(b);
         }
+        else
+        {
+            processOrders(b);
+        }
+        b->nextByte();
     }
 
     b->reset();
@@ -116,6 +135,36 @@ void DisplayDataStream::processStream(Buffer *b)
 //    screen->dumpDisplay();
     fflush(stdout);
 
+}
+
+void DisplayDataStream::processOrders(Buffer *b)
+{
+    switch(b->getByte())
+    {
+        case IBM3270_SF:
+            processSF(b->nextByte());
+            break;
+        case IBM3270_SBA:
+            processSBA(b);
+            break;
+        case IBM3270_SFE:
+            processSFE(b);
+            break;
+        case IBM3270_IC:
+            processIC();
+            break;
+        case IBM3270_RA:
+            processRA(b);
+            break;
+        case IBM3270_SA:
+            processSA(b);
+            break;
+        case IBM3270_EUA:
+            processEUA(b);
+            break;
+        default:
+            placeChar(b->getByte());
+    }
 }
 
 void DisplayDataStream::processWCC(Buffer *b)
@@ -166,9 +215,19 @@ void DisplayDataStream::processWCC(Buffer *b)
     printf(")");
 }
 
-void DisplayDataStream::processEW(Buffer *buf)
+void DisplayDataStream::processEW(Buffer *buf, bool alternate)
 {
-    printf("[Erase Write");
+    printf("[Erase Write ");
+
+    if (alternate)
+    {
+        printf("Alternate ");
+    }
+
+    if (alternate != alternate_size)
+    {
+        setScreen(alternate);
+    }
 
     processWCC(buf->nextByte());
 
@@ -191,7 +250,7 @@ void DisplayDataStream::processEW(Buffer *buf)
 
 void DisplayDataStream::processW(Buffer *buf)
 {
-    printf("[Write");
+    printf("[Write ");
 
     processWCC(buf->nextByte());
 
@@ -203,21 +262,12 @@ void DisplayDataStream::processSF(Buffer *buf)
 {
     printf("[Start Field:");
 
-    screen->setField(primary_pos, buf->getByte());
+    screen->setField(primary_pos, buf->getByte(), false);
 
     printf("]");
     fflush(stdout);
 
-    primary_pos++;
-    if (++primary_x >= SCREENX)
-    {
-        primary_x = 0;
-        if (++primary_y >= SCREENY)
-        {
-            primary_pos = 0;
-            primary_y = 0;
-        }
-    }
+    incPos();
 }
 
 void DisplayDataStream::processSBA(Buffer *buf)
@@ -225,8 +275,8 @@ void DisplayDataStream::processSBA(Buffer *buf)
     printf("[SetBufferAddress ");
     primary_pos = extractBufferAddress(buf->nextByte());
 
-    primary_y = (primary_pos / SCREENX);
-    primary_x = primary_pos - (primary_y * SCREENX);
+    primary_y = (primary_pos / screen_x);
+    primary_x = primary_pos - (primary_y * screen_x);
     printf(" %d,%d (%d)]", primary_x, primary_y, primary_pos);
 }
 
@@ -237,7 +287,9 @@ void DisplayDataStream::processSFE(Buffer *b)
     int type;
     int value;
 
-    printf("[SFE pairs :%d]", pairs);
+    screen->resetExtended(primary_pos);
+
+    printf("[SFE pairs %d]", pairs);
     for(int i = 1; i <= pairs; i++)
     {
         type = b->nextByte()->getByte();
@@ -247,21 +299,46 @@ void DisplayDataStream::processSFE(Buffer *b)
         switch(type)
         {
             case IBM3270_EXT_3270:
-                processSF(b);
+                printf("[Field ");
+                screen->setField(primary_pos, b->getByte(), true);
+                printf("]");
                 break;
             case IBM3270_EXT_FG_COLOUR:
-                printf("[ForegroundColour %d]", value);
+                printf("Extended FG");
                 screen->setExtendedColour(primary_pos, true, value);
                 break;
             case IBM3270_EXT_BG_COLOUR:
-                printf("[BackgroundColour %d]", value);
+                printf("Extended BG");
                 screen->setExtendedColour(primary_pos, false, value);
+                break;
+            case IBM3270_EXT_HILITE:
+                switch(value)
+                {
+                    case IBM3270_EXT_HI_NORMAL:
+                        printf("[Reset Extended]");
+                        screen->resetExtendedHilite(primary_pos);
+                        break;
+                    case IBM3270_EXT_HI_BLINK:
+                        screen->setExtendedBlink(primary_pos);
+                        break;
+                    case IBM3270_EXT_HI_REVERSE:
+                        screen->setExtendedReverse(primary_pos);
+                        break;
+                    case IBM3270_EXT_HI_USCORE:
+                        screen->setExtendedUscore(primary_pos);
+                        break;
+                    default:
+                        break;
+                }
                 break;
             default:
                 printf("[%2.2X-%2.2X ***Ignored***]", type, value);
                 break;
         }
+        fflush(stdout);
     }
+    screen->setFieldAttrs(primary_pos);
+    incPos();
 }
 
 void DisplayDataStream::processIC()
@@ -273,63 +350,45 @@ void DisplayDataStream::processRA(Buffer *b)
 {
     int endPos = extractBufferAddress(b->nextByte());
 
-    if (endPos > (SCREENX * SCREENY) - 1)
+    if (endPos > screenSize - 1)
     {
-        endPos = (SCREENX * SCREENY) - 1;
+        endPos = screenSize - 1;
     }
 
     b->nextByte();
     uchar newChar = b->getByte();
 
-    printf("[RepeatToAddress %d (0x%2.2X)]", endPos, newChar);
+    printf("[RepeatToAddress %d to %d (0x%2.2X)]", primary_pos, endPos, newChar);
     fflush(stdout);
 
-    if(endPos == primary_pos)
-    {
-        for(int i = 0; i < SCREENX * SCREENY; i++)
-        {
-            screen->setChar(i, newChar);
-        }
-        screen->setChar(primary_pos, newChar);
-    }
-
-    if (endPos > primary_pos)
-    {
-        for(int i = primary_pos; i < endPos; i++)
-        {
-            screen->setChar(i, newChar);
-        }
-    }
     if (endPos < primary_pos)
     {
-        for(int i = primary_pos; i < SCREENX * SCREENY; i++)
-        {
-            screen->setChar(i, newChar);
-        }
-        for(int i = 0; i < endPos; i++)
-        {
-            screen->setChar(i, newChar);
-        }
+        endPos += screenSize;
     }
-    primary_pos = endPos;
-    primary_y = (primary_pos / SCREENX);
-    primary_x = primary_pos - (primary_y * SCREENX);
+
+    for(int i = primary_pos; i < endPos; i++)
+    {
+        int offset = i % screenSize;
+
+        screen->setChar(offset, newChar);
+    }
+
+    primary_pos = endPos % screenSize;
+    primary_y = (primary_pos / screen_x);
+    primary_x = primary_pos - (primary_y * screen_x);
 }
 
 void DisplayDataStream::processSA(Buffer *b)
 {
     int extendedType = b->nextByte()->getByte();
     int extendedValue = b->nextByte()->getByte();
-    screen->setCharAttr(primary_pos, extendedType, extendedValue);
-}
-
-void DisplayDataStream::processEWA(Buffer *b)
-{
-    processEW(b);
+    screen->setCharAttr(extendedType, extendedValue);
 }
 
 void DisplayDataStream::processWSF(Buffer *b)
 {
+    wsfProcessing = true;
+
     wsfLen = b->getByte()<<8;
     b->nextByte();
     wsfLen += b->getByte();
@@ -337,6 +396,9 @@ void DisplayDataStream::processWSF(Buffer *b)
 
     printf("WSF - length: %03d; command = %2.2X\n", wsfLen, b->getByte());
     fflush(stdout);
+
+    // Decrease length by two-byte length field and structured field id byte
+    wsfLen-=3;
 
     switch(b->getByte())
     {
@@ -346,15 +408,55 @@ void DisplayDataStream::processWSF(Buffer *b)
         case IBM3270_WSF_READPARTITION:
             WSFreadPartition(b);
             break;
+        case IBM3270_WSF_OB3270DS:
+            WSFoutbound3270DS(b);
+            break;
         default:
             printf("Unimplemented WSF command: %2.2X\n", b->getByte());
             break;
     }
 }
 
+void DisplayDataStream::processEUA(Buffer *b)
+{
+    printf("[EraseUnprotected to Address ");
+    int stopAddress = extractBufferAddress(b->nextByte());
+    printf("]");
+
+    screen->eraseUnprotected(primary_pos, stopAddress);
+}
+
+void DisplayDataStream::WSFoutbound3270DS(Buffer *b)
+{
+    printf("[Outbound 3270DS");
+    int partition = b->nextByte()->getByte();
+
+    printf("partition #%d ", partition);
+
+    int cmnd = b->nextByte()->getByte();
+
+    wsfLen-=2;
+
+    switch(cmnd)
+    {
+        case IBM3270_W:
+            printf("Write ");
+            processWCC(b->nextByte());
+            wsfLen--;
+            break;
+        default:
+            printf("** Unrecognised command %d **]", cmnd);
+    }
+    while(wsfLen>0)
+    {
+        processOrders(b);
+        wsfLen--;
+    }
+}
+
 void DisplayDataStream::WSFreset(Buffer *b)
 {
-    printf("Reset Partition %2.2X\n", b->nextByte()->getByte());
+    printf("\n\nReset Partition (***Not Implemented***) %2.2X\n\n", b->nextByte()->getByte());
     fflush(stdout);
     return;
 }
@@ -394,7 +496,7 @@ void DisplayDataStream::replySummary(Buffer *buffer)
 00f0   00 50 00 18 00 50 00 2b ff ef
 
      */
-//    unsigned char qrt[] = { 0x81, 0x80, 0x86, 0x87, 0xA6 };
+//    unsigned char qrt[] = { 0x81, 0x80, 0x86, 0x87, 0xA6 0x87 };
     unsigned char qrt[] = { 0x81, 0x86, 0xA6 };
     unsigned char qrcolour[] = { 0x81, 0x86, 0x00, 0x08,
                                  0x00, 0xF4,  /* Default colour */
@@ -406,7 +508,10 @@ void DisplayDataStream::replySummary(Buffer *buffer)
                                  0xF6, 0xF6,  /* Yellow */
                                  0xF7, 0xf7   /* White */
                                };
-    unsigned char qpart[] = { 0x81, 0xA6, 0x00, 0x00, 0x0B, 0x01, 0x00, 0x00, 0x50, 0x00, 0x18, 0x00, 0x50, 0x00, 0x18};
+    unsigned char qpart[] = { 0x81, 0xA6, 0x00, 0x00, 0x0B, 0x01, 0x00, 0x00, 0x50, 0x00, 0x18, 0x00, 0x50, 0x00, 0x2B
+                            };
+
+    unsigned char qhighlight[] = { 0x81, 0x87, 0x04, 0x00, 0xF0, 0xF1, 0xF1, 0xF2, 0xF2, 0xF4, 0xF4};
 
     buffer->add(0x00);    //(char*)qrt)>>8);
     buffer->add(0x05);    //strlen((char*)qrt)&0xFF);
@@ -431,6 +536,15 @@ void DisplayDataStream::replySummary(Buffer *buffer)
     {
         buffer->add(qpart[i]);
     }
+
+    buffer->add(0x00);
+    buffer->add(13);
+
+    for(int i = 0; (unsigned long)i < 11; i++)
+    {
+        buffer->add(qhighlight[i]);
+    }
+
 
 }
 
@@ -457,6 +571,8 @@ int DisplayDataStream::extractBufferAddress(Buffer *b)
             return 0;
     }
     printf("Extract Buffer Address failed: sba1: %2.2X sba2: %2.2X (sba1&63 = %d%d)", sba1, sba2, (sba1>>7)&1, (sba1>>6)&1);
+
+    return -1;
 }
 
 void DisplayDataStream::placeChar(Buffer *b)
@@ -486,11 +602,16 @@ void DisplayDataStream::placeChar(int ebcdic)
 //            attributes[pos].prot = prot;
     }
 
+    incPos();
+}
+
+void DisplayDataStream::incPos()
+{
     primary_pos++;
-    if (++primary_x >= SCREENX)
+    if (++primary_x >= screen_x)
     {
         primary_x = 0;
-        if (++primary_y >= SCREENY)
+        if (++primary_y >= screen_y)
         {
             primary_pos = 0;
             primary_y = 0;
@@ -530,30 +651,30 @@ void DisplayDataStream::moveCursor(int x, int y, bool absolute)
         cursor_x+= x;
         cursor_y+= y;
 
-        if(cursor_x >= SCREENX)
+        if(cursor_x >= screen_x)
         {
             cursor_x = 0;
             cursor_y++;
         }
         if (cursor_x < 0)
         {
-            cursor_x = SCREENX - 1;
+            cursor_x = screen_x - 1;
             cursor_y--;
         }
-        if(cursor_y >= SCREENY)
+        if(cursor_y >= screen_y)
         {
             cursor_y = 0;
         }
         if (cursor_y < 0)
         {
-            cursor_y = SCREENY - 1;
+            cursor_y = screen_y - 1;
         }
     }
 
 //    printf("Cursor now %d,%d\n", cursor_x, cursor_y);
     fflush(stdout);
 
-    cursor_pos = cursor_x + (cursor_y * SCREENX);
+    cursor_pos = cursor_x + (cursor_y * screen_x);
     screen->setCursor(cursor_pos);
 }
 
@@ -566,8 +687,8 @@ void DisplayDataStream::tab()
         return;
     }
 
-    cursor_y = (nf / SCREENX);
-    cursor_x = nf - (cursor_y * SCREENX);
+    cursor_y = (nf / screen_x);
+    cursor_x = nf - (cursor_y * screen_x);
     // Move cursor right (skip attribute byte)
     moveCursor(1, 0);
 }
@@ -575,8 +696,8 @@ void DisplayDataStream::tab()
 void DisplayDataStream::home()
 {
     int nf = screen->findNextUnprotectedField(0);
-    cursor_y = (nf / SCREENX);
-    cursor_x = nf - (cursor_y * SCREENX);
+    cursor_y = (nf / screen_x);
+    cursor_x = nf - (cursor_y * screen_x);
 
     // Move cursor right (skip attribute byte)
     moveCursor(1, 0);
@@ -587,12 +708,12 @@ void DisplayDataStream::newline()
     cursor_x = 0;
     cursor_y += 1;
 
-    if (cursor_y > SCREENY)
+    if (cursor_y > screen_y)
     {
         cursor_y = 0;
     }
 
-    cursor_pos = cursor_x + cursor_y * SCREENX;
+    cursor_pos = cursor_x + cursor_y * screen_x;
 
     tab();
 }
@@ -604,7 +725,7 @@ Buffer *DisplayDataStream::processFields(int aid)
 
     respBuffer->add(aid);
 
-    respBuffer->add((cursor_pos>>6)&63);
+    respBuffer->add(0xC0|((cursor_pos>>6)&63));
     respBuffer->add(cursor_pos&63);
 
     screen->getModifiedFields(respBuffer);

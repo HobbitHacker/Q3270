@@ -80,6 +80,15 @@ Buffer *Buffer::nextByte()
     return this;
 }
 
+bool Buffer::moreBytes()
+{
+    if (next >= bufferEnd)
+    {
+        return false;
+    }
+    return true;
+}
+
 bool Buffer::compare(int offset, char *string)
 {
     for (int i = 0; *(string+i) != 0; i++)

@@ -23,13 +23,12 @@ void MainWindow::setupDisplay()
 
     QAction* connectAction = new QAction(this);
     connectAction->setText("Connect");
-
     connect(c, &SocketConnection::dataStreamComplete, this, &MainWindow::processDataStream);
 
-    d = new DisplayDataStream(gs);
+    d = new DisplayDataStream(gs, display);
 
-    Keyboard *kbd = new Keyboard(gs, d, c);
-    gs->installEventFilter(kbd);
+    Keyboard *kbd = new Keyboard(d, c);
+    display->installEventFilter(kbd);
 }
 
 
@@ -40,10 +39,10 @@ void MainWindow::processDataStream(Buffer *b)
 	fflush(stdout);
 }
 
-void MainWindow::on_actionConnect_triggered(bool checked)
+void MainWindow::on_actionConnect_triggered()
 {
-    QHostInfo hi = QHostInfo::fromName("fandezhi.efglobe.com");
-    c->connectMainframe(hi.addresses().first(), 23, d);
-//    QHostInfo hi = QHostInfo::fromName("127.0.0.1");
-//    c->connectMainframe(hi.addresses().first(), 3270, d);
+//    QHostInfo hi = QHostInfo::fromName("fandezhi.efglobe.com");
+//    c->connectMainframe(hi.addresses().first(), 23, d);
+    QHostInfo hi = QHostInfo::fromName("127.0.0.1");
+    c->connectMainframe(hi.addresses().first(), 3271, d);
 }
