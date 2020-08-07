@@ -23,11 +23,20 @@
 #include <QGraphicsRectItem>
 #include <QLabel>
 #include <QHostInfo>
+#include <QGuiApplication>
+#include <QScreen>
+
+#include <stdlib.h>
+#include <QObject>
+#include <QDebug>
+#include <chrono>
+#include <thread>
 
 #include "text.h"
 #include "buffer.h"
 #include "DisplayData.h"
 #include "3270.h"
+#include "Terminal.h"
 
 #include <map>
 
@@ -40,7 +49,7 @@ class DisplayDataStream : public QObject
 	
 	public:
 	
-        DisplayDataStream(QGraphicsScene *parent, DisplayView *dv);
+        DisplayDataStream(QGraphicsScene *parent, DisplayView *dv, Terminal *t);
         QString EBCDICtoASCII();
         void processStream(Buffer *b);
         bool processing;
@@ -69,16 +78,19 @@ class DisplayDataStream : public QObject
             bool mdt;
         } FieldFlags;
 
+        DisplayData *screen;
+
     signals:
 
         void bufferReady(Buffer *buffer);
+        void keyboardUnlocked();
 
 	private:
 
         QGraphicsScene *scene;
         QGraphicsView *view;
 
-        DisplayData *screen;
+        Terminal *term;
 
         DisplayData *default_screen;
         DisplayData *alternate_screen;

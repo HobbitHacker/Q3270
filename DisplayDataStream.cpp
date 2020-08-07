@@ -16,13 +16,7 @@
 
 #include "DisplayDataStream.h"
 
-#include <stdlib.h>
-#include <QObject>
-#include <QDebug>
-#include <chrono>
-#include <thread>
-
-DisplayDataStream::DisplayDataStream(QGraphicsScene* parent, DisplayView *dv)
+DisplayDataStream::DisplayDataStream(QGraphicsScene* parent, DisplayView *dv, Terminal *t)
 {
     //TODO: screen sizes
 
@@ -38,7 +32,9 @@ DisplayDataStream::DisplayDataStream(QGraphicsScene* parent, DisplayView *dv)
     cursor_pos = 0;
 
     default_screen = new DisplayData(parent, 80, 24);
-    alternate_screen = new DisplayData(parent, 80, 43);
+    alternate_screen = new DisplayData(parent, t->width(), t->height());
+    printf("Alternate screen size %dx%d\n",t->width(), t->height());
+    fflush(stdout);
 
     setScreen();
 }
@@ -69,6 +65,8 @@ void DisplayDataStream::processStream(Buffer *b)
     //FIXME: buffer size 0 shouldn't happen!
     if (b->size() == 0)
     {
+        printf("DisplayDataStream: zero buffer size - returning\n");
+        fflush(stdout);
         return;
     }
 
@@ -130,6 +128,11 @@ void DisplayDataStream::processStream(Buffer *b)
     if (resetMDT)
     {
 
+    }
+    if (resetKB)
+    {
+        printf("WCC reset keyboard - ");
+        emit(keyboardUnlocked());
     }
     screen->dumpFields();
 //    screen->dumpDisplay();
@@ -424,6 +427,7 @@ void DisplayDataStream::processEUA(Buffer *b)
     printf("]");
 
     screen->eraseUnprotected(primary_pos, stopAddress);
+    resetKB = true;
 }
 
 void DisplayDataStream::WSFoutbound3270DS(Buffer *b)
@@ -469,7 +473,7 @@ void DisplayDataStream::WSFreadPartition(Buffer *b)
     printf("ReadPartition %d - type %2.2X\n", partition, type);
 
     Buffer *queryReply = new Buffer();
-    queryReply->add(IBM3270_WSF_QUERYREPLY);
+    queryReply->add(IBM3270_AID_SF);
 
     replySummary(queryReply);
 
@@ -480,25 +484,132 @@ void DisplayDataStream::WSFreadPartition(Buffer *b)
 void DisplayDataStream::replySummary(Buffer *buffer)
 {
 
-    /*
+    /* 62 x 160
 
-0040         88 00 0e 81 80 80 81 84 85 86 87 88 95 a1
-0050   a6 00 17 81 81 01 00 00 50 00 2b 01 00 0a 02 e5
-0060   00 02 00 6f 09 0c 0d 70 00 08 81 84 00 0d 70 00
-0070   00 1b 81 85 82 00 09 0c 00 00 00 00 07 00 10 00
-0080   02 b9 00 25 01 10 f1 03 c3 01 36 00 26 81 86 00
+    > 0x0   88 000e 81 80 80 81 84 85 86 87 88 95 a1 a6 0017 81 81 01 00 *00a0* *003e* 01 000a 02e5 0002
+    > 0x20  006f 09 0c *26c0* 000881840026c000001b81858200090c000000000700100002b9
+    > 0x40  00250110f103c3013600268186001000f4f1f1f2f2f3f3f4f4f5f5f6f6f7f7f8
+    > 0x60  f8f9f9fafafbfbfcfcfdfdfefeffffffff000f81870500f0f1f1f2f2f4f4f8f8
+    > 0x80  00078188000102000c81950000100010000101001281a1000000000000000006
+    > 0xa0  a7f3f2f7f0001181a600000b01000050001800a0003effef
+
+    */
+
+    /* 43 x 80
+
+0040   88 - AID
+       00 0e - length (14 bytes including length)
+       81 - reply summary
+       80 - summary query reply
+       80 81 84 85 86 87 88 95 a1 - codes supported (summary, usable area, alphanumeric partitions, char sets, colour, hilighting, reply modes, DDM, RPQ names,
+0050   a6 - implicit partitions)
+
+       00 17 - length (23 bytes)
+       81 - query reply
+       81 - usable area
+       01 - 12/14 bit addressing allowed
+       00 - variable cells not supported, matrix character, units in cells
+       00 50 - width of usable area
+       00 2b - height of usable area
+       01 - size in mm
+       00 0a 02 e5 - distance between points in X as 2 byte numerator and 2 byte denominator (10/741)
+0060   00 02 00 6f - distance between points in Y as 2 byte n/d (2/111)
+       09 - number X of UNITS in default cell (9)
+       0c - number of Y UNITS in default cell (12)
+       0d 70 - display size (3440 - 43x80)
+
+       00 08 - length
+       81 - query reply
+       84 - alphanumeric partitions
+       00  - one partition only
+       0d 70 - total partition storage (3440 - 43x80)
+       00 - no vertical scrolling, no all points addressability, no partition protection, no presentation space copy, no modify partition
+
+0070   00 1b - length
+       81 - query reply
+       85 - character sets
+       82 - graphic escape, no multiple LCIDs, no LOAD PS, no LOAD PS EXTENDED, one char size only, no DBCS, not CGCSID
+       00 - LOAD PS slot size required
+       09 - default width
+       0c - default height
+       00 00 00 00 - LOAD PS format types supported (none)
+          07  - char set 7
+          00 -  non-loadable, single plane, single byte char set, LCID compare
+          10 - local char set id
+          00
+0080      02 - char set 2
+          b9 00 25 01 10 f1 03 c3 01 36
+
+       00 26 - length (38)
+       81  - query reply
+       86 - colour
+       00
 0090   10 00 f4 f1 f1 f2 f2 f3 f3 f4 f4 f5 f5 f6 f6 f7
 00a0   f7 f8 f8 f9 f9 fa fa fb fb fc fc fd fd fe fe ff
-00b0   ff ff ff 00 0f 81 87 05 00 f0 f1 f1 f2 f2 f4 f4
-00c0   f8 f8 00 07 81 88 00 01 02 00 0c 81 95 00 00 10
-00d0   00 10 00 01 01 00 12 81 a1 00 00 00 00 00 00 00
-00e0   00 06 a7 f3 f2 f7 f0 00 11 81 a6 00 00 0b 01 00
-00f0   00 50 00 18 00 50 00 2b ff ef
+00b0   ff ff ff
+
+
+       00 0f - length (15)
+       81 - query reply
+       87 - highlight
+       05 00 f0 f1 f1 f2 f2 f4 f4
+00c0   f8 f8
+
+       00 07 - length (7)
+       81 - query reply
+       88 - reply modes
+       00 - field mode
+       01 - extended field mode
+       02 - character mode
+
+       00 0c - length (12)
+       81 - query reply
+       95 - DDM
+       00 00 - reserved
+       10
+00d0   00 - limin 4096
+       10 00 - limout 4096
+       01 - 1 subset
+       01 - subset id
+
+       00 12 - length (18)
+       81 - query reply
+       a1 - rpq names
+       00 00 00 00 - device type id
+       00 00 00 00 - model (all models)
+00e0   06 - length (6)
+       a7 f3 f2 f7 f0 - x3270
+
+       00 11 - length (17)
+       81 - query reply
+       a6 - implicit partition
+       00 00 - reserved
+       0b - length
+       01 - implicit partition sizes
+       00 - reserved
+00f0   00 50 - width of default screen (80)
+       00 18 - height of default screen (24)
+       00 50 - width of alternate screen (80)
+       00 2b - height of alternate screen (43)
 
      */
 //    unsigned char qrt[] = { 0x81, 0x80, 0x86, 0x87, 0xA6 0x87 };
-    unsigned char qrt[] = { 0x81, 0x86, 0xA6 };
-    unsigned char qrcolour[] = { 0x81, 0x86, 0x00, 0x08,
+    unsigned char qrt[] = {
+                            IBM3270_SF_QUERYREPLY,
+                            IBM3270_SF_QUERYREPLY_SUMMARY,
+                            IBM3270_SF_QUERYREPLY_COLOUR,
+                            IBM3270_SF_QUERYREPLY_IMPPARTS,
+                            IBM3270_SF_QUERYREPLY_USABLE
+                          };
+
+    unsigned char qrcolour[] = {
+                                 IBM3270_SF_QUERYREPLY,
+                                 IBM3270_SF_QUERYREPLY_COLOUR,
+                                 0x00,        /* Flags:  x.xxxxxx - Reserved
+                                                         .0...... - Printer Only - Black ribbon not loaded
+                                                         .1...... - Printer Only - Black ribbon loaded
+                                              */
+                                 0x08,        /* Number of colours, plus default colour */
                                  0x00, 0xF4,  /* Default colour */
                                  0xF1, 0xF1,  /* Blue */
                                  0xF2, 0xF2,  /* Red */
@@ -506,17 +617,56 @@ void DisplayDataStream::replySummary(Buffer *buffer)
                                  0xF4, 0xF4,  /* Green */
                                  0xF5, 0xF5,  /* Cyan */
                                  0xF6, 0xF6,  /* Yellow */
-                                 0xF7, 0xf7   /* White */
+                                 0xF7, 0xF7   /* White */
                                };
-    unsigned char qpart[] = { 0x81, 0xA6, 0x00, 0x00, 0x0B, 0x01, 0x00, 0x00, 0x50, 0x00, 0x18, 0x00, 0x50, 0x00, 0x2B
+
+    unsigned char qpart[] = {
+                              IBM3270_SF_QUERYREPLY,
+                              IBM3270_SF_QUERYREPLY_IMPPARTS,
+                              0x00, 0x00,  /* Reserved */
+                              0x0B,  /* Data Length */
+                              0x01,  /* Implicit Partition Sizes */
+                              0x00,  /* Reserved */
+                              0x00, 0x50,  /* Default Width in characters */
+                              0x00, 0x18,  /* Default Height in characters */
+                              0x00, 0x00,  /* Alternate Width in characters */
+                              0x00, 0x00   /* Alternate Height in characters */
                             };
 
-    unsigned char qhighlight[] = { 0x81, 0x87, 0x04, 0x00, 0xF0, 0xF1, 0xF1, 0xF2, 0xF2, 0xF4, 0xF4};
+    qpart[12] = alternate_screen->width();
+    qpart[14] = alternate_screen->height();
+
+    unsigned char qhighlight[] = {
+                                    IBM3270_SF_QUERYREPLY,
+                                    IBM3270_SF_QUERYREPLY_HIGHLIGHT,
+                                    0x04,  /* Number of pairs */
+                                    0x00, 0xF0,  /* Default */
+                                    0xF1, 0xF1,  /* Blink */
+                                    0xF2, 0xF2,  /* Reverse */
+                                    0xF4, 0xF4   /* Uscore */
+                                 };
+
+    unsigned char qusablearea[] = {
+                                    IBM3270_SF_QUERYREPLY,
+                                    IBM3270_SF_QUERYREPLY_USABLE,
+                                    0x01,       /* 12/14 bit addressing */
+                                    0x00,       /* Nothing enabled */
+                                    0x00, 0x00, /*  4 & 5 - Columns */
+                                    0x00, 0x00, /*  6 & 7 - Rows */
+                                    0x01,       /* Units in mm */
+                                    0x00, 0x00, /*  9 & 10 - Xr Numerator */
+                                    0x00, 0x00, /* 11 & 12 - Xr Denominator */
+                                    0x00, 0x00, /* 13 & 14 - Yr Numerator */
+                                    0x00, 0x00, /* 15 & 16 - Yr Denominator */
+                                    0x00, 0x00, /* 17 & 18 - X units in cell */
+                                    0x00, 0x00, /* 19 & 20 - Y units in cell */
+                                    0x00, 0x00  /* 21 & 22 - Screen buffer size */
+                                  };
 
     buffer->add(0x00);    //(char*)qrt)>>8);
-    buffer->add(0x05);    //strlen((char*)qrt)&0xFF);
+    buffer->add(0x06);    //strlen((char*)qrt)&0xFF);
 
-    for(int i = 0; (unsigned long)i < 3; i++)
+    for(int i = 0; (unsigned long)i < 4; i++)
     {
         buffer->add(qrt[i]);
     }
@@ -543,6 +693,50 @@ void DisplayDataStream::replySummary(Buffer *buffer)
     for(int i = 0; (unsigned long)i < 11; i++)
     {
         buffer->add(qhighlight[i]);
+    }
+
+    qusablearea[4] = 0x00;
+    qusablearea[5] = alternate_screen->width();
+
+    qusablearea[6] = 0x00;
+    qusablearea[7] = alternate_screen->height();
+
+    QSizeF screenSizeMM = QGuiApplication::primaryScreen()->physicalSize();
+    QSizeF screenSizePix = QGuiApplication::primaryScreen()->size();
+
+    int xmm = screenSizeMM.width();
+    int ymm = screenSizeMM.height();
+
+    qusablearea[9]  = (xmm & 0xFF00) >> 8;
+    qusablearea[10] = (xmm & 0xFF);
+
+    qusablearea[13] = (ymm & 0xFF00) >> 8;
+    qusablearea[14] = (ymm & 0xFF);
+
+    int x = screenSizePix.width();
+    int y = screenSizePix.height();
+
+    qusablearea[11] = (x & 0xFF00) >> 8;
+    qusablearea[12] = (x & 0xFF);
+
+    qusablearea[15] = (y & 0xFF00) >> 8;
+    qusablearea[16] = (y & 0xFF);
+
+    qusablearea[17] = (default_screen->gridWidth() & 0xFF00) >> 8;
+    qusablearea[18] = (default_screen->gridWidth() & 0xFF);
+
+    qusablearea[19] = (default_screen->gridHeight() & 0xFF00) >> 8;
+    qusablearea[20] = (default_screen->gridHeight() & 0xFF);
+
+    qusablearea[21] = ((qusablearea[5] * qusablearea[7]) & 0xFF00) >> 8;
+    qusablearea[22] = ((qusablearea[5] * qusablearea[7]) & 0xFF);
+
+    buffer->add(0x00);
+    buffer->add(25);
+
+    for(int i = 0; (unsigned long)i < 23; i++)
+    {
+        buffer->add(qusablearea[i]);
     }
 
 

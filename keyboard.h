@@ -20,12 +20,14 @@ class Keyboard : public QObject
 
     public:
         Keyboard(DisplayDataStream *d = 0, SocketConnection *c = 0);
+        void processKey();
+
+    public slots:
+        void unlockKeyboard();
+        void lockKeyboard();
 
     protected:
         bool eventFilter( QObject *dist, QEvent *event );
-
-    signals:
-
 
     private:
 
@@ -63,6 +65,7 @@ class Keyboard : public QObject
         bool lock;
         bool insMode;
         int key;
+
         Qt::KeyboardModifiers modifier;
 
         void cursorUp();
@@ -80,7 +83,24 @@ class Keyboard : public QObject
         void newline();
         void functionkey();
 
+        void nextKey();
+
         std::unordered_map<int, doSomething> defaultMap;
+
+        typedef struct
+        {
+            int key;
+            int modifiers;
+            QString keyChar;
+            bool isMapped;
+            doSomething mapped;
+        } keyStruct;
+
+        keyStruct kbBuffer[1024];
+
+        int bufferPos;
+        int bufferEnd;
+        int keyCount;
 };
 
 #endif // KEYBOARD_H

@@ -10,6 +10,7 @@ Keyboard::Keyboard(DisplayDataStream *d, SocketConnection *c)
     defaultMap.insert(std::pair<int, doSomething>(Qt::Key_Down, &Keyboard::cursorDown));
     defaultMap.insert(std::pair<int, doSomething>(Qt::Key_Right, &Keyboard::cursorRight));
     defaultMap.insert(std::pair<int, doSomething>(Qt::Key_Left, &Keyboard::cursorLeft));
+    defaultMap.insert(std::pair<int, doSomething>(Qt::Key_Backspace, &Keyboard::cursorLeft));
 
     defaultMap.insert(std::pair<int, doSomething>(Qt::Key_Enter, &Keyboard::enter));
     defaultMap.insert(std::pair<int, doSomething>(Qt::Key_Tab, &Keyboard::tab));
@@ -35,34 +36,100 @@ Keyboard::Keyboard(DisplayDataStream *d, SocketConnection *c)
 
     lock = false;
     insMode = false;
+
+    bufferPos = 0;
+    bufferEnd = 0;
+    keyCount  = 0;
+
+    connect(d, &DisplayDataStream::keyboardUnlocked, this, &Keyboard::unlockKeyboard);
+    printf("Keyboard unlocked\n");
+    fflush(stdout);
+}
+
+void Keyboard::lockKeyboard()
+{
+    lock = true;
+    printf("Keyboard locked\n");
+    fflush(stdout);
+}
+
+void Keyboard::unlockKeyboard()
+{
+    lock = false;
+    printf("Keyboard unlocked\n");
+    fflush(stdout);
+    nextKey();
 }
 
 bool Keyboard::eventFilter( QObject *dist, QEvent *event )
 {
-    if (event->type() == QEvent::KeyPress) {
-        QKeyEvent *keyEvent = static_cast<QKeyEvent *>(event);
-        key = keyEvent->key();
-        modifier = keyEvent->modifiers();
-        std::unordered_map<int, doSomething>::const_iterator got = defaultMap.find(key);
-        printf("Keyboard: Count: %d   Key: %d   Native: %d Modifiers: %d   nativeModifiers: %d   nativeVirtualKey: %d    text: %s\n", keyEvent->count(), keyEvent->key(), keyEvent->nativeScanCode(), keyEvent->modifiers(), keyEvent->nativeModifiers(), keyEvent->nativeVirtualKey(), keyEvent->text().toLatin1().data());
+    if (event->type() != QEvent::KeyPress) {
+        // standard event processing
+        return QObject::eventFilter(dist, event);
+    }
+
+    QKeyEvent *keyEvent = static_cast<QKeyEvent *>(event);
+    key = keyEvent->key();
+    modifier = keyEvent->modifiers();
+    std::unordered_map<int, doSomething>::const_iterator got = defaultMap.find(key);
+    printf("Keyboard: Count: %d   Key: %d   Native: %d Modifiers: %d   nativeModifiers: %d   nativeVirtualKey: %d    text: %s\n", keyEvent->count(), keyEvent->key(), keyEvent->nativeScanCode(), keyEvent->modifiers(), keyEvent->nativeModifiers(), keyEvent->nativeVirtualKey(), keyEvent->text().toLatin1().data());
+
+    if (keyEvent->text() != "" | got != defaultMap.end())
+    {
+        kbBuffer[bufferEnd].key = key;
+        kbBuffer[bufferEnd].modifiers = modifier;
+        kbBuffer[bufferEnd].keyChar = keyEvent->text();
+
         if (got == defaultMap.end())
         {
-            if (keyEvent->text() != "")
-            {
-                //TODO: might break
-                display->insertChar((keyEvent->text()).toUtf8()[0], insMode);
-            }
+            kbBuffer[bufferEnd].isMapped = false;
         }
         else
         {
-            (this->*got->second)();
+            kbBuffer[bufferEnd].isMapped = true;
+            kbBuffer[bufferEnd].mapped = got->second;
         }
-        return true;
+
+        keyCount++;
+
+        if (!lock) {
+            nextKey();
+        } else {
+            printf("Keyboard: locked, cannot process, buffering\n");
+            fflush(stdout);
+        }
+
+        bufferEnd++;
+        if (bufferEnd > 1023) {
+            bufferEnd = 0;
+        }
     }
-    else
+    return true;
+}
+
+void Keyboard::nextKey()
+{
+    if (keyCount > 0)
     {
-        // standard event processing
-        return QObject::eventFilter(dist, event);
+        if (kbBuffer[bufferPos].isMapped)
+        {
+            (this->*kbBuffer[bufferPos].mapped)();
+        }
+        else
+        {
+            // TODO: Might break
+            display->insertChar(kbBuffer[bufferPos].keyChar.toUtf8()[0], insMode);
+        }
+        bufferPos++;
+        if (bufferPos > 1023)
+        {
+            bufferPos = 0;
+        }
+        keyCount--;
+        if (!lock && keyCount > 0)
+        {
+            nextKey();
+        }
     }
 }
 
@@ -88,7 +155,7 @@ void Keyboard::cursorLeft()
 
 void Keyboard::enter()
 {
-    lock = true;
+    lockKeyboard();
     Buffer *b = display->processFields(IBM3270_AID_ENTER);
     socket->sendResponse(b);
 
@@ -130,7 +197,7 @@ void Keyboard::functionkey()
     {
         fkeyAdjusted = fkeyAdjusted + 12;
     }
-    lock = true;
+    lockKeyboard();
     Buffer *b = display->processFields(fkeys[fkeyAdjusted]);
     socket->sendResponse(b);
 

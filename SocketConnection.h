@@ -55,6 +55,7 @@
 #endif
 
 #include "DisplayDataStream.h"
+#include "Terminal.h"
 
 class QHostAddress;
 
@@ -69,7 +70,7 @@ class SocketConnection : public QObject
     void sendResponse(Buffer *b);
 
     public slots:
-    void connectMainframe(const QHostAddress &address, quint16 port, DisplayDataStream *d);
+    void connectMainframe(const QHostAddress &address, quint16 port, DisplayDataStream *d, Terminal *t);
     void disconnectMainframe();
 
 private slots:
@@ -100,14 +101,14 @@ private:
         TELNET_STATE_SB_TN3270E_SEND_DEVICE_TYPE
     };
 
-    char termType[13] = "IBM-3279-4-E";
-
     bool tn3270e_Mode;
 
     TelnetState telnetState;
     QTcpSocket *dataSocket;
     QDataStream dataStream;
 	DisplayDataStream *displayDataStream;
+
+    Terminal *term;
 
     Buffer *incomingData;
     Buffer *subNeg;
