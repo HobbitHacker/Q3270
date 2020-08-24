@@ -6,7 +6,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), c(new(SocketConne
     ui->setupUi(this);
     t = new Terminal();
 
-    //    ui->statusBar().addPermanentWidget(new QLabel("C:000 R:000"));
+    cursorAddress = new QLabel("0,0");
+    statusBar()->addPermanentWidget(cursorAddress);
 
 }
 
@@ -23,7 +24,6 @@ void MainWindow::setupDisplay()
 
 //    connectAction->setText("Connect");
     connect(c, &SocketConnection::dataStreamComplete, this, &MainWindow::processDataStream);
-
 }
 
 
@@ -31,6 +31,11 @@ void MainWindow::processDataStream(Buffer *b)
 {
     d->processStream(b);
 	fflush(stdout);
+}
+
+void MainWindow::showCursorAddress(int x, int y)
+{
+    cursorAddress->setText(QString("%1,%2").arg(x + 1).arg(y + 1));
 }
 
 void MainWindow::menuConnect()
@@ -45,6 +50,7 @@ void MainWindow::menuConnect()
     display->setScene(gs);
 
     d = new DisplayDataStream(gs, display, t);
+    connect(d, &DisplayDataStream::cursorMoved, this, &MainWindow::showCursorAddress);
 
     Keyboard *kbd = new Keyboard(d, c);
     display->installEventFilter(kbd);

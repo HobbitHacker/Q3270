@@ -36,6 +36,9 @@ class MainWindow : public QMainWindow
     MainWindow(QWidget *parent = nullptr);
     void setupDisplay();
     ~MainWindow();
+
+  public slots:
+    void showCursorAddress(int x, int y);
 	
   private slots:
     // Connect menu
@@ -56,6 +59,7 @@ class MainWindow : public QMainWindow
     QTextEdit *te;
     QGraphicsScene *gs;
     DisplayView *display;
+    QLabel *cursorAddress;
 
     struct {
             int termType;

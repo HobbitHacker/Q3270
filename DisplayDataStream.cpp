@@ -872,6 +872,7 @@ void DisplayDataStream::moveCursor(int x, int y, bool absolute)
     fflush(stdout);
 
     screen->setCursor(cursor_pos);
+    emit cursorMoved(cursor_x, cursor_y);
 }
 
 void DisplayDataStream::tab(int offset)

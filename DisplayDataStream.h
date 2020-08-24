@@ -85,6 +85,7 @@ class DisplayDataStream : public QObject
 
         void bufferReady(Buffer *buffer);
         void keyboardUnlocked();
+        void cursorMoved(int x, int y);
 
 	private:
 
