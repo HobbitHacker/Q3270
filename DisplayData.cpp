@@ -788,16 +788,16 @@ int DisplayData::findPrevUnprotectedField(int pos)
 
     int endPos = pos - screenPos_max;
 
-    for(int i = pos; i > endPos; i++)
+    for(int i = pos - 2; i > endPos; i--)
     {
         tmpPos = i;
         if (tmpPos < 0)
         {
-            tmpPos = screenPos_max - 1;
+            tmpPos = screenPos_max + i;
         }
         // Check this position for unprotected and fieldStart and check the position for
         // fieldStart - an unprotected field cannot start where two fieldStarts are adajacent
-        tmpNxt = (i + 1) % screenPos_max;
+        tmpNxt = (tmpPos + 1) % screenPos_max;
         if (attrs[tmpPos].fieldStart && !attrs[tmpPos].prot && !attrs[tmpNxt].fieldStart)
         {
             return tmpPos;

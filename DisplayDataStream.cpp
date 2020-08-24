@@ -890,6 +890,18 @@ void DisplayDataStream::tab(int offset)
     moveCursor(1, 0);
 }
 
+void DisplayDataStream::backtab()
+{
+    int pf = screen->findPrevUnprotectedField(cursor_pos);
+
+    cursor_y = (pf / screen_x);
+    cursor_x = pf - (cursor_y * screen_x);
+    printf("Backtab: Unprotected field found at %d (%d,%d) ", pf, cursor_x, cursor_y);
+    // Move cursor right (skip attribute byte)
+    moveCursor(1, 0);
+
+}
+
 void DisplayDataStream::home()
 {
     int nf = screen->findNextUnprotectedField(0);

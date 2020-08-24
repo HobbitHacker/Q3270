@@ -74,6 +74,7 @@ class Keyboard : public QObject
         void cursorLeft();
         void enter();
         void tab();
+        void backtab();
         void home();
         void insert();
         void reset();

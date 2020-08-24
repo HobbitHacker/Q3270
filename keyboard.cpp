@@ -14,6 +14,8 @@ Keyboard::Keyboard(DisplayDataStream *d, SocketConnection *c)
 
     defaultMap.insert(std::pair<int, doSomething>(Qt::Key_Enter, &Keyboard::enter));
     defaultMap.insert(std::pair<int, doSomething>(Qt::Key_Tab, &Keyboard::tab));
+    defaultMap.insert(std::pair<int, doSomething>(Qt::Key_Backtab, &Keyboard::backtab));
+
     defaultMap.insert(std::pair<int, doSomething>(Qt::Key_Home, &Keyboard::home));
     defaultMap.insert(std::pair<int, doSomething>(Qt::Key_Return, &Keyboard::newline));
 
@@ -164,12 +166,17 @@ void Keyboard::enter()
 
 void Keyboard::tab()
 {
-            display->tab();
+    display->tab();
+}
+
+void Keyboard::backtab()
+{
+    display->backtab();
 }
 
 void Keyboard::home()
 {
-        display->home();
+    display->home();
 }
 
 void Keyboard::eraseEOF()
