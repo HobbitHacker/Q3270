@@ -2,13 +2,26 @@
 
 DisplayView::DisplayView()
 {
-
+    resizeFont = true;
 }
 
 void DisplayView::resizeEvent(QResizeEvent *event)
 {
 
-    fitInView(this->scene()->itemsBoundingRect(), Qt::IgnoreAspectRatio);
+    if (resizeFont)
+    {
+        fitInView(this->scene()->itemsBoundingRect(), Qt::IgnoreAspectRatio);
+    }
+    else
+    {
+        fitInView(this->scene()->itemsBoundingRect(), Qt::KeepAspectRatio);
+    }
 
     QGraphicsView::resizeEvent(event);
 }
+
+void DisplayView::scaleFont(bool scale)
+{
+    resizeFont = scale;
+}
+

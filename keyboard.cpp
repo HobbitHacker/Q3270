@@ -164,7 +164,7 @@ void Keyboard::enter()
 
 void Keyboard::tab()
 {
-    display->tab();
+            display->tab();
 }
 
 void Keyboard::home()

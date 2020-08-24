@@ -40,7 +40,15 @@
 #define IBM3270_WSF_RESET         0x00
 #define IBM3270_WSF_READPARTITION 0x01
 #define IBM3270_WSF_OB3270DS      0x40
-#define IBM3270_WSF_QUERYREPLY    0x88
+
+/* Inbound Structured Fields */
+#define IBM3270_SF_QUERYREPLY            0x81
+
+#define IBM3270_SF_QUERYREPLY_SUMMARY    0x80
+#define IBM3270_SF_QUERYREPLY_USABLE     0x81
+#define IBM3270_SF_QUERYREPLY_HIGHLIGHT  0x87
+#define IBM3270_SF_QUERYREPLY_COLOUR     0x86
+#define IBM3270_SF_QUERYREPLY_IMPPARTS   0xA6 /* Implicit Partitions */
 
 /* Extended Attributes */
 #define IBM3270_EXT_DEFAULT       0x00
@@ -61,6 +69,7 @@
 
 /* 3270 AIDs */
 #define IBM3270_AID_ENTER 0x7D
+#define IBM3270_AID_SF    0x88
 #define IBM3270_AID_F1    0xF1
 #define IBM3270_AID_F2    0xF2
 #define IBM3270_AID_F3    0xF3

@@ -865,24 +865,27 @@ void DisplayDataStream::moveCursor(int x, int y, bool absolute)
         }
     }
 
-//    printf("Cursor now %d,%d\n", cursor_x, cursor_y);
+    cursor_pos = cursor_x + (cursor_y * screen_x);
+
+    printf("moveCursor: Now at %d,%d ", cursor_x, cursor_y);
+    screen->dumpAttrs(cursor_pos);
     fflush(stdout);
 
-    cursor_pos = cursor_x + (cursor_y * screen_x);
     screen->setCursor(cursor_pos);
 }
 
-void DisplayDataStream::tab()
+void DisplayDataStream::tab(int offset)
 {
-    int nf = screen->findNextUnprotectedField(cursor_pos);
+    int nf = screen->findNextUnprotectedField(cursor_pos + offset);
 
-    if(nf == cursor_pos)
+/*    if(nf == cursor_pos)
     {
         return;
     }
-
+*/
     cursor_y = (nf / screen_x);
     cursor_x = nf - (cursor_y * screen_x);
+    printf("Unprotected field found at %d (%d,%d) ", nf, cursor_x, cursor_y);
     // Move cursor right (skip attribute byte)
     moveCursor(1, 0);
 }
@@ -909,7 +912,7 @@ void DisplayDataStream::newline()
 
     cursor_pos = cursor_x + cursor_y * screen_x;
 
-    tab();
+    tab(0);
 }
 
 
@@ -919,8 +922,21 @@ Buffer *DisplayDataStream::processFields(int aid)
 
     respBuffer->add(aid);
 
-    respBuffer->add(0xC0|((cursor_pos>>6)&63));
-    respBuffer->add(cursor_pos&63);
+    if (cursor_pos < 4096) // 12 bit
+    {
+        respBuffer->add(0xC0|((cursor_pos>>6)&63));
+        respBuffer->add(cursor_pos&63);
+    }
+    else if (cursor_pos < 16384) // 14 bit
+    {
+        respBuffer->add((cursor_pos>>8)&63);
+        respBuffer->add(cursor_pos&0xFF);
+    }
+    else // 16 bit
+    {
+        respBuffer->add((cursor_pos>>8)&0xFF);
+        respBuffer->add(cursor_pos&0xFF);
+    }
 
     screen->getModifiedFields(respBuffer);
 

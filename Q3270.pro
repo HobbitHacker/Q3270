@@ -24,21 +24,27 @@ SOURCES += \
     mainwindow.cpp \
     SocketConnection.cpp \
     DisplayDataStream.cpp \
+    settings.cpp \
+    terminal.cpp \
     text.cpp
 
 HEADERS += \
     DisplayView.h \
     3270.h \
     DisplayData.h \
+    Terminal.h \
     buffer.h \
     keyboard.h \
     mainwindow.h \
     SocketConnection.h \
     DisplayDataStream.h \
+    settings.h \
     text.h
 
 FORMS += \
-    mainwindow.ui
+    mainwindow.ui \
+    set.ui \
+    settings.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

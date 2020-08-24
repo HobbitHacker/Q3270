@@ -58,7 +58,7 @@ class DisplayDataStream : public QObject
 
         void moveCursor(int x, int y, bool absolute = false);
 
-        void tab();
+        void tab(int offset = 1);
         void home();
         void eraseField();
         void deleteChar();

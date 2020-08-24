@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1654</width>
-    <height>1047</height>
+    <width>1644</width>
+    <height>1037</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -21,8 +21,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1654</width>
-     <height>37</height>
+     <width>1644</width>
+     <height>29</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuConnect">
@@ -32,7 +32,15 @@
     <addaction name="actionConnect"/>
     <addaction name="actionQuit"/>
    </widget>
+   <widget class="QMenu" name="menuFont_Settings">
+    <property name="title">
+     <string>Settings</string>
+    </property>
+    <addaction name="actionSet_Font"/>
+    <addaction name="actionTerminalSettings"/>
+   </widget>
    <addaction name="menuConnect"/>
+   <addaction name="menuFont_Settings"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
   <action name="actionConnect">
@@ -45,7 +53,88 @@
     <string>Quit</string>
    </property>
   </action>
+  <action name="actionTerminalSettings">
+   <property name="text">
+    <string>Terminal Settings</string>
+   </property>
+  </action>
+  <action name="actionSet_Font">
+   <property name="text">
+    <string>Set Font</string>
+   </property>
+  </action>
  </widget>
  <resources/>
- <connections/>
+ <connections>
+  <connection>
+   <sender>actionTerminalSettings</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>menuTerminalSettings()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>822</x>
+     <y>519</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionConnect</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>menuConnect()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>822</x>
+     <y>519</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionQuit</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>menuQuit()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>822</x>
+     <y>519</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionSet_Font</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>menuSetFont()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>152</x>
+     <y>78</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>821</x>
+     <y>518</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+ <slots>
+  <slot>menuConnect()</slot>
+  <slot>menuQuit()</slot>
+  <slot>menuTerminalSettings()</slot>
+  <slot>menuSetFont()</slot>
+ </slots>
 </ui>

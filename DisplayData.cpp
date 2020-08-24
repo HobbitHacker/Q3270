@@ -10,12 +10,12 @@ DisplayData::DisplayData(QGraphicsScene *parent, int screen_x, int screen_y)
     this->screen_x = screen_x;
     this->screen_y = screen_y;
 
-    gridSize_X = (d->width()) / screen_x;
-    gridSize_Y = (d->height()) / screen_y;
+    gridSize_X = ((qreal) d->width()) / (qreal) screen_x;
+    gridSize_Y = ((qreal) d->height()) / (qreal) screen_y;
 
     screenPos_max = screen_x * screen_y;
 
-    printf("Screen size: %d x %d - gridsize: %d x %d\n", d->width(), d->height(), gridSize_X, gridSize_Y);
+    printf("Screen size: %d x %d - gridsize: %lf x %lf\n", d->width(), d->height(), gridSize_X, gridSize_Y);
     fflush(stdout);
 
     QPen p;
@@ -42,18 +42,18 @@ DisplayData::DisplayData(QGraphicsScene *parent, int screen_x, int screen_y)
             qreal x_pos = x * gridSize_X;
 
             cell[pos] = new QGraphicsRectItem(x_pos/2, y_pos/2, gridSize_X, gridSize_Y);
-            uscore[pos] = new QGraphicsLineItem(cell[pos]->boundingRect().left() + 1, cell[pos]->boundingRect().bottom() - 2, cell[pos]->boundingRect().right(), cell[pos]->boundingRect().bottom() - 2, cell[pos]);
+            uscore[pos] = new QGraphicsLineItem(cell[pos]->boundingRect().left() + 1, cell[pos]->boundingRect().bottom() - 1, cell[pos]->boundingRect().right(), cell[pos]->boundingRect().bottom() -1, cell[pos]);
 
             cell[pos]->setPos(x_pos/2, y_pos/2);
 
             glyph[pos] = new Text(cell[pos]);
-            glyph[pos]->setFont(QFont("Hack", 11));
 
             screen->addItem(cell[pos]);
         }
     }
 
     clear();
+    setFont(QFont("Hack", 11));
 
     cursor = new QGraphicsRectItem(cell[0]);
     cursor->setRect(cell[0]->rect());
@@ -72,6 +72,16 @@ int DisplayData::height()
     return screen_y;
 }
 
+int DisplayData::gridWidth()
+{
+    return gridSize_X;
+}
+
+int DisplayData::gridHeight()
+{
+    return gridSize_Y;
+}
+
 void DisplayData::setParent(QGraphicsScene *scene)
 {
     screen->setParent(scene);
@@ -80,6 +90,14 @@ void DisplayData::setParent(QGraphicsScene *scene)
 QGraphicsScene *DisplayData::getScene()
 {
     return screen;
+}
+
+void DisplayData::setFont(QFont font)
+{
+    for (int i = 0; i < screenPos_max; i++)
+    {
+        glyph[i]->setFont(QFont(font));
+    }
 }
 
 void DisplayData::clear()
@@ -737,11 +755,50 @@ int DisplayData::findNextField(int pos)
 
 int DisplayData::findNextUnprotectedField(int pos)
 {
+ /*----------------------------------------------------------------------------------
+  | Find the next field that is unprotected. This incorporates two field start      |
+  | attributes next to each other - field start attributes are protected.           |
+  ----------------------------------------------------------------------------------*/
     int tmpPos;
+    int tmpNxt;
     for(int i = pos; i < (pos + screenPos_max); i++)
     {
+        // Check this position for unprotected and fieldStart and check the position for
+        // fieldStart - an unprotected field cannot start where two fieldStarts are adajacent
         tmpPos = i % screenPos_max;
-        if (attrs[tmpPos].fieldStart & !attrs[tmpPos].prot)
+        tmpNxt = (i + 1) % screenPos_max;
+        if (attrs[tmpPos].fieldStart && !attrs[tmpPos].prot && !attrs[tmpNxt].fieldStart)
+        {
+            return tmpPos;
+        }
+    }
+    printf("No unprotected field found: start = %d, end = %d\n", pos, pos + screenPos_max);
+    fflush(stdout);
+    return 0;
+}
+
+int DisplayData::findPrevUnprotectedField(int pos)
+{
+ /*----------------------------------------------------------------------------------
+  | Find the previous field that is unprotected. This incorporates two field start  |
+  | attributes next to each other - field start attributes are protected.           |
+  ----------------------------------------------------------------------------------*/
+    int tmpPos;
+    int tmpNxt;
+
+    int endPos = pos - screenPos_max;
+
+    for(int i = pos; i > endPos; i++)
+    {
+        tmpPos = i;
+        if (tmpPos < 0)
+        {
+            tmpPos = screenPos_max - 1;
+        }
+        // Check this position for unprotected and fieldStart and check the position for
+        // fieldStart - an unprotected field cannot start where two fieldStarts are adajacent
+        tmpNxt = (i + 1) % screenPos_max;
+        if (attrs[tmpPos].fieldStart && !attrs[tmpPos].prot && !attrs[tmpNxt].fieldStart)
         {
             return tmpPos;
         }
@@ -755,13 +812,13 @@ void DisplayData::getModifiedFields(Buffer *buffer)
 {
     for(int i = 0; i < screenPos_max; i++)
     {
-        if (attrs[i].fieldStart & !attrs[i].prot)
+        if (attrs[i].fieldStart && !attrs[i].prot)
         {
             int firstField = i;
             int thisField = i;
             do
             {
-                if (attrs[thisField].mdt & !attrs[thisField].prot)
+                if (attrs[thisField].mdt && !attrs[thisField].prot)
                 {
                     buffer->add(IBM3270_SBA);
 
@@ -769,8 +826,22 @@ void DisplayData::getModifiedFields(Buffer *buffer)
 
                     int nextPos = (thisField + 1) % screenPos_max;
 
-                    buffer->add(twelveBitBufferAddress[(nextPos>>6)&63]);
-                    buffer->add(twelveBitBufferAddress[(nextPos&63)]);
+                    if (nextPos < 4096) // 12 bit
+                    {
+                        buffer->add(twelveBitBufferAddress[(nextPos>>6)&63]);
+                        buffer->add(twelveBitBufferAddress[(nextPos&63)]);
+                    }
+                    else if (nextPos < 16384) // 14 bit
+                    {
+                        buffer->add((nextPos>>8)&63);
+                        buffer->add(nextPos&0xFF);
+                    }
+                    else // 16 bit
+                    {
+                        buffer->add((nextPos>>8)&0xFF);
+                        buffer->add(nextPos&0xFF);
+                    }
+
 
                     attrs[thisField].mdt = false;
 
@@ -798,12 +869,14 @@ void DisplayData::getModifiedFields(Buffer *buffer)
 
 void DisplayData::dumpFields()
 {
+    printf("Screen_X = %d, screen_y =%d\n", screen_x, screen_y);
+    fflush(stdout);
     for(int i = 0; i < screenPos_max; i++)
     {
         if (attrs[i].fieldStart)
         {
             int tmpy = i / screen_x;
-            int tmpx = i - (tmpy * screen_y);
+            int tmpx = i - (tmpy * screen_x);
 
             printf("Field at %4d (%2d,%2d) : Prot: %d\n", i, tmpx, tmpy, attrs[i].prot);
         }
@@ -825,4 +898,10 @@ void DisplayData::dumpDisplay()
     }
     printf("\n---- SCREEN ----\n");
     fflush(stdout);
+}
+
+void DisplayData::dumpAttrs(int pos)
+{
+    printf("   Attrs: Prot:%d Ext:%d Start:%d Skip:%d Display:%d Uscore:%d Rev:%d Blnk:%d Intens:%d Num:%d Pen:%d\n",
+           attrs[pos].prot, attrs[pos].extended, attrs[pos].fieldStart, attrs[pos].askip, attrs[pos].display, attrs[pos].uscore, attrs[pos].reverse, attrs[pos].blink, attrs[pos].intensify, attrs[pos].num, attrs[pos].pen);
 }

@@ -20,6 +20,8 @@ class DisplayData
 
         int width();
         int height();
+        int gridWidth();
+        int gridHeight();
 
         void setParent(QGraphicsScene* scene);
         QGraphicsScene* getScene();
@@ -38,6 +40,7 @@ class DisplayData
 //        void setFieldProt(int pos);
 //        void setFieldUnprot(int pos);
         int findNextUnprotectedField(int pos);
+        int findPrevUnprotectedField(int pos);
 
         void resetCharAttr();
 
@@ -54,9 +57,11 @@ class DisplayData
         unsigned char getChar(int pos);
 
         void clear();
+        void setFont(QFont font);
 
         void dumpFields();
         void dumpDisplay();
+        void dumpAttrs(int pos);
 
     private:
 
@@ -71,7 +76,7 @@ class DisplayData
             0x1A, 0x1A ,0x16, 0x1A, 0x1A, 0x1A, 0x1A, 0x04,  /* 30 - 37 */
             0x1A, 0x1A ,0x1A, 0x1A, 0x14, 0x15, 0x1A, 0x1A,  /* 38 - 3F */
             0x20, 0x1A ,0x1A, 0x1A, 0x1A, 0x1A, 0x1A, 0x1A,  /* 40 - 47 */
-            0x1A, 0x1A ,0x5B, 0x2E, 0x3C, 0x28, 0x2B, 0x21,  /* 48 - 4F */
+            0x1A, 0x1A ,0x5B, 0x2E, 0x3C, 0x28, 0x2B, 0x7C,  /* 48 - 4F */
             0x26, 0x1A ,0x1A, 0x1A, 0x1A, 0x1A, 0x1A, 0x1A,  /* 50 - 57 */
             0x1A, 0x1A ,0x21, 0x24, 0x2A, 0x29, 0x3B, 0x5E,  /* 58 - 5F */
             0x2D, 0x2F ,0x1A, 0x1A, 0x1A, 0x1A, 0x1A, 0x1A,  /* 60 - 67 */
@@ -113,7 +118,7 @@ class DisplayData
             0x79, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87,  /* 60 - 67 */
             0x88, 0x89, 0x91, 0x92, 0x93, 0x94, 0x95, 0x96,  /* 68 - 6F */
             0x97, 0x98, 0x99, 0xA2, 0xA3, 0xA4, 0xA5, 0xA6,  /* 70 - 77 */
-            0xA7, 0xA8, 0xA9, 0xC0, 0x6A, 0xD0, 0xA1, 0x07,  /* 78 - 7F */
+            0xA7, 0xA8, 0xA9, 0xC0, 0x4F, 0xD0, 0xA1, 0x07,  /* 78 - 7F */
             0x3F, 0x3F ,0x3F, 0x3F, 0x3F, 0x3F, 0x3F, 0x3F,  /* 80 - 87 */
             0x3F, 0x3F ,0x3F, 0x3F, 0x3F, 0x3F, 0x3F, 0x3F,  /* 80 - 8F */
             0x3F, 0x3F ,0x3F, 0x3F, 0x3F, 0x3F, 0x3F, 0x3F,  /* 90 - 97 */
@@ -145,9 +150,9 @@ class DisplayData
 
         const QBrush palette[8] = {
             QColor(0,0,0),          /* Black */
-            QColor(128,128,255),      /* Blue */
+            QColor(128,128,255),    /* Blue */
             QColor(255,0,0),        /* Red */
-            QColor(255,0, 255),      /* Magenta */
+            QColor(255,0, 255),     /* Magenta */
             QColor(0,255,0),        /* Green */
             QColor(0,255,255),      /* Cyan */
             QColor(255,255,0),      /* Yellow */
@@ -221,8 +226,8 @@ class DisplayData
 
         QGraphicsRectItem *cursor;
 
-        int gridSize_X;
-        int gridSize_Y;
+        qreal gridSize_X;
+        qreal gridSize_Y;
 
         int findField(int pos);
         int findNextField(int pos);

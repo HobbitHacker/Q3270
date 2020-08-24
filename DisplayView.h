@@ -9,6 +9,10 @@ class DisplayView : public QGraphicsView
     public:
         DisplayView();
         void resizeEvent(QResizeEvent *r);
+        void scaleFont(bool scale);
+
+    private:
+        bool resizeFont;
 
 };
 

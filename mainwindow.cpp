@@ -56,6 +56,8 @@ void MainWindow::menuConnect()
 
 void MainWindow::menuSetFont()
 {
+
+    // TODO: breaks if non connected
     bool ok;
     QFont font = QFontDialog::getFont(&ok, QFont("ibm3270", 12), this);
     if (ok)
