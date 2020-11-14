@@ -95,4 +95,18 @@
 #define IBM3270_AID_F23   0x4B
 #define IBM3270_AID_F24   0x4C
 
+#define IBM3270_AID_PA1   0x6C
+#define IBM3270_AID_PA2   0x6E
+#define IBM3270_AID_PA3   0x6B
+
+enum Indicators {
+    Unlocked,
+    SystemLock,
+    TerminalWait,
+    OvertypeMode,
+    InsertMode,
+    GoElsewhere
+};
+
+
 #endif // N3270_H

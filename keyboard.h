@@ -14,13 +14,22 @@
 
 //#define CALL_MEMBER_FN(object,ptrToMember)  ((object).*(ptrToMember))
 
+#define Q3270_LEFT_CTRL 65507
+#define Q3270_RIGHT_CTRL 65508
+
 class Keyboard : public QObject
-{
+{    
+
+    Q_OBJECT
+
     typedef void (Keyboard::*doSomething)();
 
     public:
         Keyboard(DisplayDataStream *d = 0, SocketConnection *c = 0);
-        void processKey();
+        bool processKey(QKeyEvent *qk);
+
+    signals:
+        void setLock(Indicators i);
 
     public slots:
         void unlockKeyboard();
@@ -31,42 +40,12 @@ class Keyboard : public QObject
 
     private:
 
-        const unsigned fkeys[24] =
-        {
-            IBM3270_AID_F1,
-            IBM3270_AID_F2,
-            IBM3270_AID_F3,
-            IBM3270_AID_F4,
-            IBM3270_AID_F5,
-            IBM3270_AID_F6,
-            IBM3270_AID_F7,
-            IBM3270_AID_F8,
-            IBM3270_AID_F9,
-            IBM3270_AID_F10,
-            IBM3270_AID_F11,
-            IBM3270_AID_F12,
-            IBM3270_AID_F13,
-            IBM3270_AID_F14,
-            IBM3270_AID_F15,
-            IBM3270_AID_F16,
-            IBM3270_AID_F17,
-            IBM3270_AID_F18,
-            IBM3270_AID_F19,
-            IBM3270_AID_F20,
-            IBM3270_AID_F21,
-            IBM3270_AID_F22,
-            IBM3270_AID_F23,
-            IBM3270_AID_F24
-        };
-
         DisplayDataStream *display;
         SocketConnection *socket;
 
         bool lock;
         bool insMode;
-        int key;
-
-        Qt::KeyboardModifiers modifier;
+        bool waitRelease;
 
         void cursorUp();
         void cursorDown();
@@ -82,18 +61,57 @@ class Keyboard : public QObject
         void backspace();
         void eraseEOF();
         void newline();
-        void functionkey();
+        void functionKey(int k);
+        void programaccessKey(int k);
+        void attn();
+
+        void fKey1();
+        void fKey2();
+        void fKey3();
+        void fKey4();
+        void fKey5();
+        void fKey6();
+        void fKey7();
+        void fKey8();
+        void fKey9();
+        void fKey10();
+        void fKey11();
+        void fKey12();
+        void fKey13();
+        void fKey14();
+        void fKey15();
+        void fKey16();
+        void fKey17();
+        void fKey18();
+        void fKey19();
+        void fKey20();
+        void fKey21();
+        void fKey22();
+        void fKey23();
+        void fKey24();
+
+        void paKey1();
+        void paKey2();
+        void paKey3();
 
         void nextKey();
+        bool needtoWait(QKeyEvent *q);
 
         std::unordered_map<int, doSomething> defaultMap;
+        std::unordered_map<int, doSomething> altMap;
+        std::unordered_map<int, doSomething> ctrlMap;
+        std::unordered_map<int, doSomething> shiftMap;
+        std::unordered_map<int, doSomething> modifierMap;
 
         typedef struct
         {
             int key;
             int modifiers;
+            int nativeKey;
             QString keyChar;
+            std::unordered_map<int, doSomething> *map;
             bool isMapped;
+            bool mustMap;
             doSomething mapped;
         } keyStruct;
 

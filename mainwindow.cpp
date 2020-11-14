@@ -7,8 +7,12 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), c(new(SocketConne
     t = new Terminal();
 
     cursorAddress = new QLabel("0,0");
-    statusBar()->addPermanentWidget(cursorAddress);
+    syslock = new QLabel(" ");
+    insMode = new QLabel(" ");
 
+    statusBar()->addPermanentWidget(syslock, 50);
+    statusBar()->addPermanentWidget(insMode, 50);
+    statusBar()->addPermanentWidget(cursorAddress, 50);
 }
 
 MainWindow::~MainWindow()
@@ -38,6 +42,27 @@ void MainWindow::showCursorAddress(int x, int y)
     cursorAddress->setText(QString("%1,%2").arg(x + 1).arg(y + 1));
 }
 
+void MainWindow::setIndicators(Indicators ind)
+{
+
+    switch(ind) {
+        case Indicators::InsertMode:
+            insMode->setText(QString("^"));
+            break;
+        case Indicators::OvertypeMode:
+            insMode->setText(QString(" "));
+            break;
+        case Indicators::SystemLock:
+            syslock->setText(QString("X SYSTEM"));
+            break;
+        case Indicators::Unlocked:
+            syslock->setText(QString(""));
+            break;
+        default:
+            break;
+    }
+}
+
 void MainWindow::menuConnect()
 {
 //    QHostInfo hi = QHostInfo::fromName("fandezhi.efglobe.com");
@@ -53,6 +78,9 @@ void MainWindow::menuConnect()
     connect(d, &DisplayDataStream::cursorMoved, this, &MainWindow::showCursorAddress);
 
     Keyboard *kbd = new Keyboard(d, c);
+
+    connect(kbd, &Keyboard::setLock, this, &MainWindow::setIndicators);
+
     display->installEventFilter(kbd);
 
     QHostInfo hi = QHostInfo::fromName("127.0.0.1");

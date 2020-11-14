@@ -22,11 +22,11 @@
 #include "DisplayView.h"
 #include "Terminal.h"
 #include "settings.h"
+#include "3270.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
-
 
 class MainWindow : public QMainWindow
 {
@@ -39,6 +39,7 @@ class MainWindow : public QMainWindow
 
   public slots:
     void showCursorAddress(int x, int y);
+    void setIndicators(Indicators i);
 	
   private slots:
     // Connect menu
@@ -52,6 +53,9 @@ class MainWindow : public QMainWindow
 	void setupActions();
     void processDataStream(Buffer *b);        
 
+    bool xSystem;
+    bool xClock;
+
     Terminal *t;
 	SocketConnection *c;
 	DisplayDataStream *d;
@@ -59,7 +63,10 @@ class MainWindow : public QMainWindow
     QTextEdit *te;
     QGraphicsScene *gs;
     DisplayView *display;
+
     QLabel *cursorAddress;
+    QLabel *syslock;
+    QLabel *insMode;
 
     struct {
             int termType;
