@@ -5,6 +5,8 @@ Keyboard::Keyboard(DisplayDataStream *d, SocketConnection *c)
     display = d;
     socket = c;
 
+    setFactoryMaps();
+
     //TODO: Call DisplayDataStream methods directly?
     defaultMap.insert(std::pair<int, doSomething>(Qt::Key_Up, &Keyboard::cursorUp));
     defaultMap.insert(std::pair<int, doSomething>(Qt::Key_Down, &Keyboard::cursorDown));
@@ -38,6 +40,9 @@ Keyboard::Keyboard(DisplayDataStream *d, SocketConnection *c)
 
     defaultMap.insert(std::pair<int, doSomething>(Qt::Key_Escape, &Keyboard::attn));
 
+    defaultMap.insert(std::pair<int, doSomething>(Qt::Key_PageUp, &Keyboard::fKey7));
+    defaultMap.insert(std::pair<int, doSomething>(Qt::Key_PageDown, &Keyboard::fKey8));
+
     ctrlMap.insert(std::pair<int, doSomething>(Q3270_LEFT_CTRL, &Keyboard::reset));
     ctrlMap.insert(std::pair<int, doSomething>(Q3270_RIGHT_CTRL, &Keyboard::enter));
 
@@ -54,6 +59,8 @@ Keyboard::Keyboard(DisplayDataStream *d, SocketConnection *c)
     shiftMap.insert(std::pair<int, doSomething>(Qt::Key_F11, &Keyboard::fKey23));
     shiftMap.insert(std::pair<int, doSomething>(Qt::Key_F12, &Keyboard::fKey24));
 
+    shiftMap.insert(std::pair<int, doSomething>(Qt::Key_Backtab, &Keyboard::backtab));
+
     altMap.insert(std::pair<int, doSomething>(Qt::Key_1, &Keyboard::paKey1));
     altMap.insert(std::pair<int, doSomething>(Qt::Key_2, &Keyboard::paKey2));
     altMap.insert(std::pair<int, doSomething>(Qt::Key_3, &Keyboard::paKey3));
@@ -66,9 +73,21 @@ Keyboard::Keyboard(DisplayDataStream *d, SocketConnection *c)
     keyCount  = 0;
     waitRelease = false;
 
+    clearBufferEntry();
+
     connect(d, &DisplayDataStream::keyboardUnlocked, this, &Keyboard::unlockKeyboard);
     printf("Keyboard unlocked\n");
     fflush(stdout);
+}
+
+void Keyboard::clearBufferEntry()
+{
+    kbBuffer[bufferEnd].modifiers = Qt::NoModifier;
+    kbBuffer[bufferEnd].keyChar = "";
+    kbBuffer[bufferEnd].mustMap = false;
+    kbBuffer[bufferEnd].isMapped = false;
+    kbBuffer[bufferEnd].key = 0;
+
 }
 
 void Keyboard::lockKeyboard()
@@ -90,61 +109,84 @@ void Keyboard::unlockKeyboard()
 
 bool Keyboard::eventFilter( QObject *dist, QEvent *event )
 {
-    if (event->type() == QEvent::KeyPress || event->type() == QEvent::KeyRelease)
+
+    if (event->type() != QEvent::KeyPress && event->type() != QEvent::KeyRelease)
     {
-        QKeyEvent *keyEvent = static_cast<QKeyEvent *>(event);
+        return QObject::eventFilter(dist, event);
+    }
 
-        printf("Keyboard: Type: %s   Count: %d   Key: %d   Native: %d Modifiers: %d   nativeModifiers: %d   nativeVirtualKey: %d    text: %s    Mapped:%d\n", event->type() == QEvent::KeyPress ? "Press" : "Release", keyEvent->count(), keyEvent->key(), keyEvent->nativeScanCode(), keyEvent->modifiers(), keyEvent->nativeModifiers(), keyEvent->nativeVirtualKey(), keyEvent->text().toLatin1().data(), kbBuffer[bufferEnd].isMapped);
+    QKeyEvent *keyEvent = static_cast<QKeyEvent *>(event);
+
+    printf("Keyboard: Type: %s   Count: %d   Key: %d   Native: %d Modifiers: %d   nativeModifiers: %d   nativeVirtualKey: %d    text: %s (%2.2X)    Mapped:%d\n", event->type() == QEvent::KeyPress ? "Press" : "Release", keyEvent->count(), keyEvent->key(), keyEvent->nativeScanCode(), keyEvent->modifiers(), keyEvent->nativeModifiers(), keyEvent->nativeVirtualKey(), keyEvent->text().toLatin1().data(), keyEvent->text().toLatin1().data()[0], kbBuffer[bufferEnd].isMapped);
+    fflush(stdout);
+
+    // If we need to wait for a key to be released (from a previous key press)
+    // check to see if the event was a key press. If so, and it generated a character,
+    // don't wait. This is to stop shifted letters waiting for their release, but allowing
+    // an F-key to wait for its press.
+
+    bool keyUsed = false;
+
+    if (keyEvent->type() == QEvent::KeyPress)
+    {
+        waitRelease = needtoWait(keyEvent);
+    }
+
+    if (waitRelease)
+    {
+        printf("Waiting for release\n");
         fflush(stdout);
-
-        // If we need to wait for a key to be released (from a previous key press)
-        // check to see if the event was a key press. If so, and it generated a character,
-        // don't wait. This is to stop shifted letters waiting for their release, but allowing
-        // an F-key to wait for its press.
-
-        bool keyUsed = false;
-
-        if (waitRelease)
+        if  (event->type() == QEvent::KeyPress && kbBuffer[bufferEnd].key != 0)
         {
-            if  (event->type() == QEvent::KeyPress && keyEvent->text() != "")
-            {
-                waitRelease = false;
-                keyUsed = processKey(keyEvent);
-            }
-            if (event->type() == QEvent::KeyRelease)
-            {
-                waitRelease = false;
-                keyUsed = processKey(keyEvent);
-            }
-        }
-        else if (!waitRelease && event->type() == QEvent::KeyPress)
+            printf("Processing key - KeyPress or key stored\n");
+            fflush(stdout);
+            waitRelease = false;
+            keyUsed = processKey(keyEvent);
+        } else if (event->type() == QEvent::KeyRelease)
         {
-            if (keyEvent->text() == "" && needtoWait(keyEvent))
-            {
-                waitRelease = true;
-                keyUsed = true;
-            }
-            else
-            {
-                keyUsed = processKey(keyEvent);
-            }
+            printf("Processing key - KeyRelease\n");
+            fflush(stdout);
+            waitRelease = false;
+            keyUsed = processKey(keyEvent);
+        } else
+        {
+            printf("Not a KeyPress or no key stored\n");
+            fflush(stdout);
+        }
+    }
+    else if (event->type() == QEvent::KeyPress)
+    {
+        printf("KeyPress\n");
+        fflush(stdout);
+        if (kbBuffer[bufferEnd].key == 0)
+        {
+            printf("Set Waiting for release - no key stored\n");
+            fflush(stdout);
+            waitRelease = true;
+            keyUsed = true;
+        }
+        else
+        {
+            printf("Processing Key - key stored or no need to wait\n");
+            fflush(stdout);
+            keyUsed = processKey(keyEvent);
+        }
 
-        }
-        if (keyUsed)
-        {
-            return true;
-        }
+    }
+    if (keyUsed)
+    {
+        return true;
     }
 
     return QObject::eventFilter(dist, event);
+
 }
 
 bool Keyboard::processKey(QKeyEvent *keyEvent)
 {
-    if (keyEvent->type() == QEvent::KeyPress && keyEvent->text() != "")
-    {
-        needtoWait(keyEvent);
-    }
+
+    printf("Searching for %d in map %ld\n", kbBuffer[bufferEnd].key, kbBuffer[bufferEnd].map);
+    fflush(stdout);
 
     std::unordered_map<int, doSomething>::const_iterator got;
 
@@ -156,57 +198,20 @@ bool Keyboard::processKey(QKeyEvent *keyEvent)
 
     printf("Mapped: %d\n", kbBuffer[bufferEnd].isMapped);
 
-    if (!kbBuffer[bufferEnd].isMapped && keyEvent->type() == QEvent::KeyRelease)
+    if (!kbBuffer[bufferEnd].isMapped)
     {
+        if (kbBuffer[bufferEnd].keyChar == "")
+        {
+            kbBuffer[bufferEnd].mustMap = true;
+        }
         got = kbBuffer[bufferEnd].map->find(kbBuffer[bufferEnd].nativeKey);
         kbBuffer[bufferEnd].isMapped = (got != kbBuffer[bufferEnd].map->end());
         printf(" - Modifier Mapped: %d\n", kbBuffer[bufferEnd].isMapped);
     }
     fflush(stdout);
 
-    /*
-    switch(kbBuffer[bufferEnd].modifiers)
+    if (kbBuffer[bufferEnd].key != 0  || kbBuffer[bufferEnd].isMapped)
     {
-        case Qt::AltModifier:
-            got = altMap.find(kbBuffer[bufferEnd].key);
-            kbBuffer[bufferEnd].isMapped = (got != altMap.end());
-            if (!kbBuffer[bufferEnd].isMapped && keyEvent->type() == QEvent::KeyRelease)
-            {
-                got = altMap.find(kbBuffer[bufferEnd].nativeKey);
-                kbBuffer[bufferEnd].isMapped = (got != altMap.end());
-            }
-            break;
-        case Qt::ShiftModifier:
-            got = shiftMap.find(kbBuffer[bufferEnd].key);
-            kbBuffer[bufferEnd].isMapped = (got != shiftMap.end());
-            if (!kbBuffer[bufferEnd].isMapped && keyEvent->type() == QEvent::KeyRelease)
-            {
-                got = shiftMap.find(kbBuffer[bufferEnd].nativeKey);
-                kbBuffer[bufferEnd].isMapped = (got != shiftMap.end());
-            }
-            break;
-        case Qt::ControlModifier:
-            got = ctrlMap.find(kbBuffer[bufferEnd].key);
-            kbBuffer[bufferEnd].isMapped = (got != ctrlMap.end());
-            if (!kbBuffer[bufferEnd].isMapped && keyEvent->type() == QEvent::KeyRelease)
-            {
-                got = ctrlMap.find(kbBuffer[bufferEnd].nativeKey);
-                kbBuffer[bufferEnd].isMapped = (got != ctrlMap.end());
-            }
-            break;
-        case Qt::NoModifier:
-        case Qt::KeypadModifier:
-            got = defaultMap.find(kbBuffer[bufferEnd].key);
-            kbBuffer[bufferEnd].isMapped = (got != defaultMap.end());
-            if (!kbBuffer[bufferEnd].isMapped && keyEvent->type() == QEvent::KeyRelease)
-            {
-                got = defaultMap.find(kbBuffer[bufferEnd].nativeKey);
-                kbBuffer[bufferEnd].isMapped = (got != defaultMap.end());
-            }
-            break;
-    }
-*/
-    if (keyEvent->text() != "" || kbBuffer[bufferEnd].isMapped) {
 
         // Store target mapping if key is mapped
         if (kbBuffer[bufferEnd].isMapped) {
@@ -237,6 +242,7 @@ bool Keyboard::processKey(QKeyEvent *keyEvent)
            {
                printf("Dropping key");
                fflush(stdout);
+               clearBufferEntry();
                return false;
            }
         }
@@ -247,38 +253,74 @@ bool Keyboard::processKey(QKeyEvent *keyEvent)
         }
 
         bufferEnd++;
+
         if (bufferEnd > 1023) {
             bufferEnd = 0;
         }
+
+        clearBufferEntry();
     }
+
     return true;
 }
 
 
+
 bool Keyboard::needtoWait(QKeyEvent *event)
 {
-    kbBuffer[bufferEnd].key = event->key();
-    kbBuffer[bufferEnd].keyChar = event->text();
-    kbBuffer[bufferEnd].nativeKey = event->nativeVirtualKey();
-    kbBuffer[bufferEnd].modifiers = event->modifiers();
-    kbBuffer[bufferEnd].mustMap = false;
+    bool wait;
 
-    if (ctrlMap.size() > 0 && event->modifiers() == Qt::ControlModifier) {
-        kbBuffer[bufferEnd].map = &ctrlMap;
-        kbBuffer[bufferEnd].mustMap = true;
-        return true;
+    switch(event->key())
+    {
+        case Qt::Key_Control:
+        case Qt::Key_Shift:
+        case Qt::Key_Alt:
+        case Qt::Key_AltGr:
+        case Qt::Key_Meta:
+            printf("Storing modifiers %8.8x\n", event->modifiers());
+            kbBuffer[bufferEnd].modifiers = event->modifiers();
+            kbBuffer[bufferEnd].nativeKey = event->nativeVirtualKey();
+            wait = true;
+            break;
+        default:
+            printf("Storing %d\n", event->key());
+            kbBuffer[bufferEnd].modifiers = event->modifiers();
+            kbBuffer[bufferEnd].key = event->key();
+            kbBuffer[bufferEnd].keyChar = event->text();
+            wait = false;
     }
-    if (altMap.size() > 0 && event->modifiers() == Qt::AltModifier) {
-        kbBuffer[bufferEnd].map = &altMap;
-        kbBuffer[bufferEnd].mustMap = true;
-        return true;
+    fflush(stdout);
+
+    switch(kbBuffer[bufferEnd].modifiers)
+    {
+        case Qt::ControlModifier:
+            printf("Switching to CTRL map\n");
+            fflush(stdout);
+            kbBuffer[bufferEnd].map = &ctrlMap;
+            kbBuffer[bufferEnd].mustMap = true;
+            break;
+
+        case Qt::AltModifier:
+            printf("Switching to ALT map\n");
+            fflush(stdout);
+            kbBuffer[bufferEnd].map = &altMap;
+            kbBuffer[bufferEnd].mustMap = true;
+            break;
+
+        case Qt::ShiftModifier:
+            printf("Switching to SHIFT map\n");
+            fflush(stdout);
+            kbBuffer[bufferEnd].map = &shiftMap;
+            break;
+
+        default:
+            printf("Switching to default map\n");
+            fflush(stdout);
+            kbBuffer[bufferEnd].map = &defaultMap;
+            break;
     }
-    if (shiftMap.size() > 0 && event->modifiers() == Qt::ShiftModifier) {
-        kbBuffer[bufferEnd].map = &shiftMap;
-        return true;
-    }
-    kbBuffer[bufferEnd].map = &defaultMap;
-    return false;
+
+    return wait;
 }
 
 void Keyboard::nextKey()
@@ -555,4 +597,14 @@ void Keyboard::reset()
     fflush(stdout);
     emit setLock(Indicators::Unlocked);
     emit setLock(Indicators::OvertypeMode);
+}
+
+void Keyboard::setMapping(int key, QString function)
+{
+
+}
+
+void Keyboard::setFactoryMaps()
+{
+
 }

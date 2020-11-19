@@ -34,6 +34,7 @@ class Keyboard : public QObject
     public slots:
         void unlockKeyboard();
         void lockKeyboard();
+        void setMapping(int key, QString function);
 
     protected:
         bool eventFilter( QObject *dist, QEvent *event );
@@ -97,11 +98,16 @@ class Keyboard : public QObject
         void nextKey();
         bool needtoWait(QKeyEvent *q);
 
+        void clearBufferEntry();
+
+        void setFactoryMaps();
+
         std::unordered_map<int, doSomething> defaultMap;
         std::unordered_map<int, doSomething> altMap;
         std::unordered_map<int, doSomething> ctrlMap;
         std::unordered_map<int, doSomething> shiftMap;
-        std::unordered_map<int, doSomething> modifierMap;
+        std::unordered_map<int, doSomething> metaMap;
+
 
         typedef struct
         {
@@ -114,6 +120,8 @@ class Keyboard : public QObject
             bool mustMap;
             doSomething mapped;
         } keyStruct;
+
+
 
         keyStruct kbBuffer[1024];
 
