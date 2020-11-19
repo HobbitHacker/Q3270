@@ -44,6 +44,7 @@ class MainWindow : public QMainWindow
   private slots:
     // Connect menu
     void menuConnect();
+    void menuDisconnect();
     void menuQuit();
     // Settings menu
     void menuSetFont();

@@ -86,6 +86,27 @@ void MainWindow::menuConnect()
     QHostInfo hi = QHostInfo::fromName("127.0.0.1");
     c->connectMainframe(hi.addresses().first(), 3271, d, t);
 
+    ui->actionDisconnect->setEnabled(true);
+    ui->actionConnect->setDisabled(true);
+
+}
+
+void MainWindow::menuDisconnect()
+{
+
+    c->disconnectMainframe();
+
+    ui->verticalLayout->removeWidget(display);
+
+    delete c;
+    delete d;
+    gs->clear();
+    delete gs;
+
+    delete display;
+
+    ui->actionDisconnect->setDisabled(true);
+    ui->actionConnect->setEnabled(true);
 }
 
 void MainWindow::menuSetFont()
