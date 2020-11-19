@@ -25,7 +25,7 @@ class DisplayData
 
         void setParent(QGraphicsScene* scene);
         QGraphicsScene* getScene();
-        void setChar(int pos, unsigned char c);
+        void setChar(int pos, unsigned char c, bool move);
         void setCharAttr(unsigned char c, unsigned char d);
         void resetExtendedHilite(int pos);
         void resetExtended(int pos);

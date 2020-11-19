@@ -373,7 +373,7 @@ void DisplayDataStream::processRA(Buffer *b)
     {
         int offset = i % screenSize;
 
-        screen->setChar(offset, newChar);
+        screen->setChar(offset, newChar, false);
     }
 
     primary_pos = endPos % screenSize;
@@ -784,7 +784,7 @@ void DisplayDataStream::placeChar(int ebcdic)
     switch(ebcdic)
     {
         case IBM3270_CHAR_NULL:
-            screen->setChar(primary_pos, 0x00);
+            screen->setChar(primary_pos, 0x00, false);
             break;
         default:
 /*            if (extended.on)
@@ -792,7 +792,7 @@ void DisplayDataStream::placeChar(int ebcdic)
                 glyph[pos]->setBrush(palette[extended.foreground]);
                 cells[pos]->setBrush(palette[extended.background]);
             }*/
-            screen->setChar(primary_pos, ebcdic);
+            screen->setChar(primary_pos, ebcdic, false);
 //            attributes[pos].prot = prot;
     }
 
@@ -867,7 +867,7 @@ void DisplayDataStream::moveCursor(int x, int y, bool absolute)
 
     cursor_pos = cursor_x + (cursor_y * screen_x);
 
-    printf("moveCursor: Now at %d,%d ", cursor_x, cursor_y);
+    printf("moveCursor: Now at %d,%d (%d) ", cursor_x, cursor_y, cursor_pos);
     screen->dumpAttrs(cursor_pos);
     fflush(stdout);
 

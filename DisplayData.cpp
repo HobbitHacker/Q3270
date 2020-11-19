@@ -136,7 +136,7 @@ void DisplayData::clear()
     resetCharAttr();
 }
 
-void DisplayData::setChar(int pos, unsigned char c)
+void DisplayData::setChar(int pos, unsigned char c, bool move)
 {
 
     int lastField;
@@ -155,53 +155,56 @@ void DisplayData::setChar(int pos, unsigned char c)
 
     glyph[pos]->setText(QString(EBCDICtoASCIImap[c]));
 
-    if (attrs[pos].charAttr)
+    if (!move)
     {
-        // Set colour
+        if (attrs[pos].charAttr)
+        {
+            // Set colour
 
-        if (!charAttr.colour_default)
-        {
-            attrs[pos].colNum = charAttr.colNum;
-            printf("<CH %s>", colName[attrs[pos].colNum]);
-        }
-        else
-        {
-            attrs[pos].colNum = attrs[lastField].colNum;
-        }
-
-        // Reverse video
-        if (!charAttr.reverse_default)
-        {
-            attrs[pos].reverse = charAttr.reverse;
-            if (attrs[pos].reverse)
+            if (!charAttr.colour_default)
             {
-                printf("<CH reverse>");
+                attrs[pos].colNum = charAttr.colNum;
+                printf("<CH %s>", colName[attrs[pos].colNum]);
             }
-        }
-        else
-        {
-            attrs[pos].reverse = attrs[lastField].reverse;
-        }
-
-        // Underscore
-        if (!charAttr.uscore_default)
-        {
-            attrs[pos].uscore = charAttr.uscore;
-            if (attrs[pos].uscore)
+            else
             {
-                printf("<CH uscore>");
+                attrs[pos].colNum = attrs[lastField].colNum;
+            }
+
+            // Reverse video
+            if (!charAttr.reverse_default)
+            {
+                attrs[pos].reverse = charAttr.reverse;
+                if (attrs[pos].reverse)
+                {
+                    printf("<CH reverse>");
+                }
+            }
+            else
+            {
+                attrs[pos].reverse = attrs[lastField].reverse;
+            }
+
+            // Underscore
+            if (!charAttr.uscore_default)
+            {
+                attrs[pos].uscore = charAttr.uscore;
+                if (attrs[pos].uscore)
+                {
+                    printf("<CH uscore>");
+                }
+            }
+            else
+            {
+                attrs[pos].uscore = attrs[lastField].uscore;
             }
         }
         else
         {
             attrs[pos].uscore = attrs[lastField].uscore;
+            attrs[pos].reverse = attrs[lastField].reverse;
+            attrs[pos].colNum = attrs[lastField].colNum;
         }
-    }
-    else
-    {
-        attrs[pos].uscore = attrs[lastField].uscore;
-        attrs[pos].reverse = attrs[lastField].reverse;
-        attrs[pos].colNum = attrs[lastField].colNum;
     }
 
     // Colour - non-display / reverse / normal
@@ -602,13 +605,13 @@ bool DisplayData::insertChar(int pos, unsigned char c, bool insertMode)
 //            printf("%4d = %c (%2.2X)\n", i, thisChar, thisChar);
             fflush(stdout);
             int offset = i % screenPos_max;
+            if (attrs[offset].prot || attrs[offset].fieldStart)
+            {
+                break;
+            }
             if (glyph[offset]->text()[0] == IBM3270_CHAR_NULL)
             {
                 endPos = i;
-                break;
-            }
-            if (attrs[i % screenPos_max].prot)
-            {
                 break;
             }
         }
@@ -618,16 +621,23 @@ bool DisplayData::insertChar(int pos, unsigned char c, bool insertMode)
             fflush(stdout);
             return false;
         }
+        printf("Field length: %d, starting at %d, ending at %d\n", endPos - pos, pos, endPos);
+        fflush(stdout);
         for(int fld = endPos; fld > pos; fld--)
         {
-            attrs[fld % screenPos_max] = attrs[+((fld-1)%screenPos_max)];
-            setChar(fld % screenPos_max, ASCIItoEBCDICmap[glyph[+((fld-1)%screenPos_max)]->toUChar()]);
+            int offset = fld % screenPos_max;
+            int offsetPrev = (fld - 1) % screenPos_max;
+
+            printf("Moving %c to %d\n", glyph[offsetPrev]->toUChar(), offset);
+            fflush(stdout);
+            attrs[offset] = attrs[offsetPrev];
+            setChar(offset, ASCIItoEBCDICmap[glyph[offsetPrev]->toUChar()], true);
         }
     }
 
     printf("MDT set for %d\n", thisField);
     attrs[thisField].mdt = true;
-    setChar(pos, ASCIItoEBCDICmap[c]);
+    setChar(pos, ASCIItoEBCDICmap[c], false);
 
     return true;
 }
@@ -649,15 +659,17 @@ void DisplayData::deleteChar(int pos)
         nextField += screenPos_max;
     }
 
-    for(int fld = pos; fld < endPos - 1 && glyph[pos]->text() != IBM3270_CHAR_NULL; fld++)
+    for(int fld = pos; fld < endPos - 1 && glyph[fld % screenPos_max]->text() != IBM3270_CHAR_NULL; fld++)
     {
-        glyph[fld % screenPos_max]->setText(glyph[(fld+1) % screenPos_max]->text());
+        int offset = fld % screenPos_max;
+        int offsetNext = (fld + 1) % screenPos_max;
+
+        attrs[offset] = attrs[offsetNext];
+        setChar(offset, ASCIItoEBCDICmap[glyph[offsetNext]->toUChar()], true);
     }
 
-    glyph[endPos]->setText(IBM3270_CHAR_NULL);
-
+    glyph[endPos - 1]->setText(IBM3270_CHAR_NULL);
     attrs[findField(pos)].mdt = true;
-
 }
 
 void DisplayData::eraseEOF(int pos)
