@@ -26,7 +26,7 @@ class Keyboard : public QObject
 
     public:
         Keyboard(DisplayDataStream *d = 0, SocketConnection *c = 0);
-        bool processKey(QKeyEvent *qk);
+        bool processKey();
 
     signals:
         void setLock(Indicators i);
@@ -34,7 +34,7 @@ class Keyboard : public QObject
     public slots:
         void unlockKeyboard();
         void lockKeyboard();
-        void setMapping(int key, QString function);
+        void setMapping(QString key, QString function);
 
     protected:
         bool eventFilter( QObject *dist, QEvent *event );
@@ -102,12 +102,13 @@ class Keyboard : public QObject
 
         void setFactoryMaps();
 
-        std::unordered_map<int, doSomething> defaultMap;
-        std::unordered_map<int, doSomething> altMap;
-        std::unordered_map<int, doSomething> ctrlMap;
-        std::unordered_map<int, doSomething> shiftMap;
-        std::unordered_map<int, doSomething> metaMap;
+        typedef std::unordered_map<int, doSomething> kbMap;
 
+        kbMap defaultMap;
+        kbMap altMap;
+        kbMap ctrlMap;
+        kbMap shiftMap;
+        kbMap metaMap;
 
         typedef struct
         {
@@ -115,19 +116,18 @@ class Keyboard : public QObject
             int modifiers;
             int nativeKey;
             QString keyChar;
-            std::unordered_map<int, doSomething> *map;
+            kbMap *map;
             bool isMapped;
             bool mustMap;
             doSomething mapped;
         } keyStruct;
-
-
 
         keyStruct kbBuffer[1024];
 
         int bufferPos;
         int bufferEnd;
         int keyCount;
-};
 
+        std::unordered_map<QString, doSomething> functionMap;
+};
 #endif // KEYBOARD_H
