@@ -60,6 +60,20 @@ DisplayData::DisplayData(QGraphicsScene *parent, int screen_x, int screen_y)
     cursor->setPos(cell[0]->boundingRect().left(), cell[0]->boundingRect().top());
     cursor->setBrush(Qt::lightGray);
     cursor->setOpacity(0.5);
+
+    crosshair_X = new QGraphicsLineItem(0, 0, 0, screen->height());
+    crosshair_Y = new QGraphicsLineItem(0, 0, screen->width(), 0);
+
+    crosshair_X->setPen(QPen(Qt::white));
+    crosshair_Y->setPen(QPen(Qt::white));
+
+    screen->addItem(crosshair_X);
+    screen->addItem(crosshair_Y);
+
+    crosshair_X->hide();
+    crosshair_Y->hide();
+
+    ruler = false;
 }
 
 int DisplayData::width()
@@ -720,6 +734,31 @@ void DisplayData::setCursor(int pos)
 {
     cursor->setParentItem(cell[pos]);
     cursor->setPos(cell[pos]->boundingRect().left(), cell[pos]->boundingRect().top());
+}
+
+void DisplayData::toggleRuler()
+{
+    ruler = !ruler;
+
+    if (ruler)
+    {
+        crosshair_X->show();
+        crosshair_Y->show();
+    }
+    else
+    {
+        crosshair_X->hide();
+        crosshair_Y->hide();
+    }
+}
+
+void DisplayData::drawRuler(int x, int y)
+{
+    if (ruler)
+    {
+       crosshair_X->setLine(x * gridSize_X, 0, x * gridSize_X, screen_y * gridSize_Y);
+       crosshair_Y->setLine(0 , (y + 1) * gridSize_Y - 1, screen_x * gridSize_X, (y + 1) * gridSize_Y - 1);
+    }
 }
 
 int DisplayData::findField(int pos)

@@ -872,6 +872,8 @@ void DisplayDataStream::moveCursor(int x, int y, bool absolute)
     fflush(stdout);
 
     screen->setCursor(cursor_pos);
+    screen->drawRuler(cursor_x, cursor_y);
+
     emit cursorMoved(cursor_x, cursor_y);
 }
 
@@ -926,6 +928,12 @@ void DisplayDataStream::newline()
     cursor_pos = cursor_x + cursor_y * screen_x;
 
     tab(0);
+}
+
+void DisplayDataStream::toggleRuler()
+{
+    screen->toggleRuler();
+    screen->drawRuler(cursor_x, cursor_y);
 }
 
 

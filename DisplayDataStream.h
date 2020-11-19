@@ -64,6 +64,7 @@ class DisplayDataStream : public QObject
         void eraseField();
         void deleteChar();
         void newline();
+        void toggleRuler();
 
         void showFields();
 

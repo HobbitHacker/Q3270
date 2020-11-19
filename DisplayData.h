@@ -58,6 +58,8 @@ class DisplayData
 
         void clear();
         void setFont(QFont font);
+        void toggleRuler();
+        void drawRuler(int x, int y);
 
         void dumpFields();
         void dumpDisplay();
@@ -207,6 +209,9 @@ class DisplayData
 
         int size;
 
+        bool ruler;                  /* Whether the crosshairs are shown. */
+                                    /* 0 - off, 1 - horizontal, 2 - vertical, 3 - crosshair */
+
         /* Character Attributes in effect */
         bool useCharAttr;
         struct {
@@ -225,6 +230,9 @@ class DisplayData
         } charAttr;
 
         QGraphicsRectItem *cursor;
+
+        QGraphicsLineItem *crosshair_X;
+        QGraphicsLineItem *crosshair_Y;
 
         qreal gridSize_X;
         qreal gridSize_Y;

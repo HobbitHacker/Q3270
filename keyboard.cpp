@@ -58,6 +58,8 @@ Keyboard::Keyboard(DisplayDataStream *d, SocketConnection *c)
     functionMap.insert(std::pair<QString, doSomething>("PA2",&Keyboard::paKey2));
     functionMap.insert(std::pair<QString, doSomething>("PA3",&Keyboard::paKey3));
 
+    functionMap.insert(std::pair<QString, doSomething>("ToggleRuler",&Keyboard::ruler));
+
     setFactoryMaps();
 
 /*    defaultMap.insert(std::pair<int, doSomething>(Qt::Key_Up, &Keyboard::cursorUp));
@@ -775,4 +777,11 @@ void Keyboard::setFactoryMaps()
 
     setMapping("PageUp", "F7");
     setMapping("PageDown", "F8");
+
+    setMapping("Ctrl+Home", "ToggleRuler");
+}
+
+void Keyboard::ruler()
+{
+    display->toggleRuler();
 }
