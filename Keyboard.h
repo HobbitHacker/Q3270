@@ -7,9 +7,9 @@
 #include <unordered_map>
 #include <functional>
 
-#include "DisplayDataStream.h"
+#include "ProcessDataStream.h"
 #include "SocketConnection.h"
-#include "buffer.h"
+#include "Buffer.h"
 #include "3270.h"
 
 //#define CALL_MEMBER_FN(object,ptrToMember)  ((object).*(ptrToMember))
@@ -25,7 +25,7 @@ class Keyboard : public QObject
     typedef void (Keyboard::*doSomething)();
 
     public:
-        Keyboard(DisplayDataStream *d = 0, SocketConnection *c = 0);
+        Keyboard(ProcessDataStream *d = 0);
         bool processKey();
 
     signals:
@@ -41,8 +41,7 @@ class Keyboard : public QObject
 
     private:
 
-        DisplayDataStream *display;
-        SocketConnection *socket;
+        ProcessDataStream *datastream;
 
         bool lock;
         bool insMode;

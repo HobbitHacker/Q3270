@@ -54,7 +54,7 @@
 
 #endif
 
-#include "DisplayDataStream.h"
+#include "ProcessDataStream.h"
 #include "Terminal.h"
 
 class QHostAddress;
@@ -70,7 +70,7 @@ class SocketConnection : public QObject
     void sendResponse(Buffer *b);
 
     public slots:
-    void connectMainframe(const QHostAddress &address, quint16 port, DisplayDataStream *d, Terminal *t);
+    void connectMainframe(const QHostAddress &address, quint16 port, ProcessDataStream *d, Terminal *t);
     void disconnectMainframe();
 
 private slots:
@@ -106,7 +106,7 @@ private:
     TelnetState telnetState;
     QTcpSocket *dataSocket;
     QDataStream dataStream;
-	DisplayDataStream *displayDataStream;
+	ProcessDataStream *displayDataStream;
 
     Terminal *term;
 

@@ -33,23 +33,24 @@
 #include <thread>
 
 #include "text.h"
-#include "buffer.h"
-#include "DisplayData.h"
+#include "Buffer.h"
+#include "DisplayScreen.h"
 #include "3270.h"
 #include "Terminal.h"
+#include <arpa/telnet.h>
 
 #include <map>
 
 /**
  * @todo write docs
  */
-class DisplayDataStream : public QObject
+class ProcessDataStream : public QObject
 {
 	Q_OBJECT
 	
 	public:
 	
-        DisplayDataStream(QGraphicsScene *parent, DisplayView *dv, Terminal *t);
+        ProcessDataStream(QGraphicsScene *parent, DisplayView *dv, Terminal *t);
         QString EBCDICtoASCII();
         void processStream(Buffer *b);
         bool processing;
@@ -70,7 +71,8 @@ class DisplayDataStream : public QObject
 
         void resetMDTs();
 
-        Buffer *processFields(int aid);
+        void processAID(int aid, bool shortRead);
+        void interruptProcess();
 
         int getCursorAddress(int offset = 0);
 

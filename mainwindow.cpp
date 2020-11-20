@@ -74,10 +74,10 @@ void MainWindow::menuConnect()
     gs = new QGraphicsScene();
     display->setScene(gs);
 
-    d = new DisplayDataStream(gs, display, t);
-    connect(d, &DisplayDataStream::cursorMoved, this, &MainWindow::showCursorAddress);
+    d = new ProcessDataStream(gs, display, t);
+    connect(d, &ProcessDataStream::cursorMoved, this, &MainWindow::showCursorAddress);
 
-    Keyboard *kbd = new Keyboard(d, c);
+    Keyboard *kbd = new Keyboard(d);
 
     connect(kbd, &Keyboard::setLock, this, &MainWindow::setIndicators);
 

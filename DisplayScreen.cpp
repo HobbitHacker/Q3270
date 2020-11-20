@@ -1,4 +1,4 @@
-#include "DisplayData.h"
+#include "DisplayScreen.h"
 
 DisplayData::DisplayData(QGraphicsScene *parent, int screen_x, int screen_y)
 {

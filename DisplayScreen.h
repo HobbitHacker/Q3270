@@ -8,7 +8,7 @@
 #include <QDebug>
 
 #include "text.h"
-#include "buffer.h"
+#include "Buffer.h"
 #include "3270.h"
 #include "DisplayView.h"
 

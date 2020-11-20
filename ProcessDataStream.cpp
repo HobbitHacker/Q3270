@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-#include "DisplayDataStream.h"
+#include "ProcessDataStream.h"
 
-DisplayDataStream::DisplayDataStream(QGraphicsScene* parent, DisplayView *dv, Terminal *t)
+ProcessDataStream::ProcessDataStream(QGraphicsScene* parent, DisplayView *dv, Terminal *t)
 {
     //TODO: screen sizes
 
@@ -39,7 +39,7 @@ DisplayDataStream::DisplayDataStream(QGraphicsScene* parent, DisplayView *dv, Te
     setScreen();
 }
 
-void DisplayDataStream::setScreen(bool alternate)
+void ProcessDataStream::setScreen(bool alternate)
 {
     if (alternate)
     {
@@ -60,7 +60,7 @@ void DisplayDataStream::setScreen(bool alternate)
     screenSize = screen_x * screen_y;
 }
 
-void DisplayDataStream::processStream(Buffer *b)
+void ProcessDataStream::processStream(Buffer *b)
 {
     //FIXME: buffer size 0 shouldn't happen!
     if (b->size() == 0)
@@ -140,7 +140,7 @@ void DisplayDataStream::processStream(Buffer *b)
 
 }
 
-void DisplayDataStream::processOrders(Buffer *b)
+void ProcessDataStream::processOrders(Buffer *b)
 {
     switch(b->getByte())
     {
@@ -170,7 +170,7 @@ void DisplayDataStream::processOrders(Buffer *b)
     }
 }
 
-void DisplayDataStream::processWCC(Buffer *b)
+void ProcessDataStream::processWCC(Buffer *b)
 {
     std::string c;
 
@@ -218,7 +218,7 @@ void DisplayDataStream::processWCC(Buffer *b)
     printf(")");
 }
 
-void DisplayDataStream::processEW(Buffer *buf, bool alternate)
+void ProcessDataStream::processEW(Buffer *buf, bool alternate)
 {
     printf("[Erase Write ");
 
@@ -251,7 +251,7 @@ void DisplayDataStream::processEW(Buffer *buf, bool alternate)
 
 }
 
-void DisplayDataStream::processW(Buffer *buf)
+void ProcessDataStream::processW(Buffer *buf)
 {
     printf("[Write ");
 
@@ -261,7 +261,7 @@ void DisplayDataStream::processW(Buffer *buf)
     fflush(stdout);
 }
 
-void DisplayDataStream::processSF(Buffer *buf)
+void ProcessDataStream::processSF(Buffer *buf)
 {
     printf("[Start Field:");
 
@@ -273,7 +273,7 @@ void DisplayDataStream::processSF(Buffer *buf)
     incPos();
 }
 
-void DisplayDataStream::processSBA(Buffer *buf)
+void ProcessDataStream::processSBA(Buffer *buf)
 {
     printf("[SetBufferAddress ");
     primary_pos = extractBufferAddress(buf->nextByte());
@@ -283,7 +283,7 @@ void DisplayDataStream::processSBA(Buffer *buf)
     printf(" %d,%d (%d)]", primary_x, primary_y, primary_pos);
 }
 
-void DisplayDataStream::processSFE(Buffer *b)
+void ProcessDataStream::processSFE(Buffer *b)
 {
     int pairs = b->nextByte()->getByte();
 
@@ -344,12 +344,12 @@ void DisplayDataStream::processSFE(Buffer *b)
     incPos();
 }
 
-void DisplayDataStream::processIC()
+void ProcessDataStream::processIC()
 {
     moveCursor(primary_x, primary_y, true);
 }
 
-void DisplayDataStream::processRA(Buffer *b)
+void ProcessDataStream::processRA(Buffer *b)
 {
     int endPos = extractBufferAddress(b->nextByte());
 
@@ -381,14 +381,14 @@ void DisplayDataStream::processRA(Buffer *b)
     primary_x = primary_pos - (primary_y * screen_x);
 }
 
-void DisplayDataStream::processSA(Buffer *b)
+void ProcessDataStream::processSA(Buffer *b)
 {
     int extendedType = b->nextByte()->getByte();
     int extendedValue = b->nextByte()->getByte();
     screen->setCharAttr(extendedType, extendedValue);
 }
 
-void DisplayDataStream::processWSF(Buffer *b)
+void ProcessDataStream::processWSF(Buffer *b)
 {
     wsfProcessing = true;
 
@@ -420,7 +420,7 @@ void DisplayDataStream::processWSF(Buffer *b)
     }
 }
 
-void DisplayDataStream::processEUA(Buffer *b)
+void ProcessDataStream::processEUA(Buffer *b)
 {
     printf("[EraseUnprotected to Address ");
     int stopAddress = extractBufferAddress(b->nextByte());
@@ -430,7 +430,7 @@ void DisplayDataStream::processEUA(Buffer *b)
     resetKB = true;
 }
 
-void DisplayDataStream::WSFoutbound3270DS(Buffer *b)
+void ProcessDataStream::WSFoutbound3270DS(Buffer *b)
 {
     printf("[Outbound 3270DS");
     int partition = b->nextByte()->getByte();
@@ -458,14 +458,14 @@ void DisplayDataStream::WSFoutbound3270DS(Buffer *b)
     }
 }
 
-void DisplayDataStream::WSFreset(Buffer *b)
+void ProcessDataStream::WSFreset(Buffer *b)
 {
     printf("\n\nReset Partition (***Not Implemented***) %2.2X\n\n", b->nextByte()->getByte());
     fflush(stdout);
     return;
 }
 
-void DisplayDataStream::WSFreadPartition(Buffer *b)
+void ProcessDataStream::WSFreadPartition(Buffer *b)
 {
     uchar partition = b->nextByte()->getByte();
     uchar type = b->nextByte()->getByte();
@@ -481,7 +481,7 @@ void DisplayDataStream::WSFreadPartition(Buffer *b)
 
 }
 
-void DisplayDataStream::replySummary(Buffer *buffer)
+void ProcessDataStream::replySummary(Buffer *buffer)
 {
 
     /* 62 x 160
@@ -742,7 +742,7 @@ void DisplayDataStream::replySummary(Buffer *buffer)
 
 }
 
-int DisplayDataStream::extractBufferAddress(Buffer *b)
+int ProcessDataStream::extractBufferAddress(Buffer *b)
 {
     //TODO: non-12/14 bit addresses & EBCDIC characters
 
@@ -769,14 +769,14 @@ int DisplayDataStream::extractBufferAddress(Buffer *b)
     return -1;
 }
 
-void DisplayDataStream::placeChar(Buffer *b)
+void ProcessDataStream::placeChar(Buffer *b)
 {
     int ebcdic = (int)(b->getByte());
 
     placeChar(ebcdic);
 }
 
-void DisplayDataStream::placeChar(int ebcdic)
+void ProcessDataStream::placeChar(int ebcdic)
 {
 
 //    glyph[pos]->setBrush(fieldAttr);
@@ -799,7 +799,7 @@ void DisplayDataStream::placeChar(int ebcdic)
     incPos();
 }
 
-void DisplayDataStream::incPos()
+void ProcessDataStream::incPos()
 {
     primary_pos++;
     if (++primary_x >= screen_x)
@@ -813,7 +813,7 @@ void DisplayDataStream::incPos()
     }
 }
 
-void DisplayDataStream::insertChar(unsigned char keycode, bool insMode)
+void ProcessDataStream::insertChar(unsigned char keycode, bool insMode)
 {
     if (screen->insertChar(cursor_pos, keycode, insMode))
     {
@@ -821,18 +821,18 @@ void DisplayDataStream::insertChar(unsigned char keycode, bool insMode)
     }
 }
 
-void DisplayDataStream::deleteChar()
+void ProcessDataStream::deleteChar()
 {
     screen->deleteChar(cursor_pos);
 }
 
 
-void DisplayDataStream::eraseField()
+void ProcessDataStream::eraseField()
 {
     screen->eraseEOF(cursor_pos);
 }
 
-void DisplayDataStream::moveCursor(int x, int y, bool absolute)
+void ProcessDataStream::moveCursor(int x, int y, bool absolute)
 {
     // Absolute or relative
     if (absolute)
@@ -877,7 +877,7 @@ void DisplayDataStream::moveCursor(int x, int y, bool absolute)
     emit cursorMoved(cursor_x, cursor_y);
 }
 
-void DisplayDataStream::tab(int offset)
+void ProcessDataStream::tab(int offset)
 {
     int nf = screen->findNextUnprotectedField(cursor_pos + offset);
 
@@ -893,7 +893,7 @@ void DisplayDataStream::tab(int offset)
     moveCursor(1, 0);
 }
 
-void DisplayDataStream::backtab()
+void ProcessDataStream::backtab()
 {
     int pf = screen->findPrevUnprotectedField(cursor_pos);
 
@@ -905,7 +905,7 @@ void DisplayDataStream::backtab()
 
 }
 
-void DisplayDataStream::home()
+void ProcessDataStream::home()
 {
     int nf = screen->findNextUnprotectedField(0);
     cursor_y = (nf / screen_x);
@@ -915,7 +915,7 @@ void DisplayDataStream::home()
     moveCursor(1, 0);
 }
 
-void DisplayDataStream::newline()
+void ProcessDataStream::newline()
 {
     cursor_x = 0;
     cursor_y += 1;
@@ -930,39 +930,53 @@ void DisplayDataStream::newline()
     tab(0);
 }
 
-void DisplayDataStream::toggleRuler()
+void ProcessDataStream::toggleRuler()
 {
     screen->toggleRuler();
     screen->drawRuler(cursor_x, cursor_y);
 }
 
 
-Buffer *DisplayDataStream::processFields(int aid)
+void ProcessDataStream::processAID(int aid, bool shortRead)
 {
     Buffer *respBuffer = new Buffer();
 
     respBuffer->add(aid);
 
-    if (cursor_pos < 4096) // 12 bit
+    if (!shortRead)
     {
-        respBuffer->add(0xC0|((cursor_pos>>6)&63));
-        respBuffer->add(cursor_pos&63);
-    }
-    else if (cursor_pos < 16384) // 14 bit
-    {
-        respBuffer->add((cursor_pos>>8)&63);
-        respBuffer->add(cursor_pos&0xFF);
-    }
-    else // 16 bit
-    {
-        respBuffer->add((cursor_pos>>8)&0xFF);
-        respBuffer->add(cursor_pos&0xFF);
+        if (cursor_pos < 4096) // 12 bit
+        {
+            respBuffer->add(0xC0|((cursor_pos>>6)&63));
+            respBuffer->add(cursor_pos&63);
+        }
+        else if (cursor_pos < 16384) // 14 bit
+        {
+            respBuffer->add((cursor_pos>>8)&63);
+            respBuffer->add(cursor_pos&0xFF);
+        }
+        else // 16 bit
+        {
+            respBuffer->add((cursor_pos>>8)&0xFF);
+            respBuffer->add(cursor_pos&0xFF);
+        }
+
+        screen->getModifiedFields(respBuffer);
+
+        respBuffer->dump();
     }
 
-    screen->getModifiedFields(respBuffer);
-
-    respBuffer->dump();
-
-    return respBuffer;
+    emit bufferReady(respBuffer);
 }
 
+void ProcessDataStream::interruptProcess()
+{
+
+    Buffer *b = new Buffer();
+
+    b->add(IAC);
+    b->add(IP);
+
+    emit bufferReady(b);
+
+}

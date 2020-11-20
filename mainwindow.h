@@ -17,8 +17,8 @@
 #include <QFontDialog>
 
 #include "SocketConnection.h"
-#include "DisplayDataStream.h"
-#include "keyboard.h"
+#include "ProcessDataStream.h"
+#include "Keyboard.h"
 #include "DisplayView.h"
 #include "Terminal.h"
 #include "settings.h"
@@ -59,7 +59,7 @@ class MainWindow : public QMainWindow
 
     Terminal *t;
 	SocketConnection *c;
-	DisplayDataStream *d;
+    ProcessDataStream *d;
     Ui::MainWindow *ui;    
     QTextEdit *te;
     QGraphicsScene *gs;

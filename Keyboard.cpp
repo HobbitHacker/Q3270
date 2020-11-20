@@ -1,9 +1,8 @@
-#include "keyboard.h"
+#include "Keyboard.h"
 
-Keyboard::Keyboard(DisplayDataStream *d, SocketConnection *c)
+Keyboard::Keyboard(ProcessDataStream *d)
 {    
-    display = d;
-    socket = c;
+    datastream = d;
 
     functionMap.insert(std::pair<QString, doSomething>("Enter",&Keyboard::enter));
     functionMap.insert(std::pair<QString, doSomething>("Reset",&Keyboard::reset));
@@ -62,64 +61,6 @@ Keyboard::Keyboard(DisplayDataStream *d, SocketConnection *c)
 
     setFactoryMaps();
 
-/*    defaultMap.insert(std::pair<int, doSomething>(Qt::Key_Up, &Keyboard::cursorUp));
-    defaultMap.insert(std::pair<int, doSomething>(Qt::Key_Down, &Keyboard::cursorDown));
-    defaultMap.insert(std::pair<int, doSomething>(Qt::Key_Right, &Keyboard::cursorRight));
-    defaultMap.insert(std::pair<int, doSomething>(Qt::Key_Left, &Keyboard::cursorLeft));
-    defaultMap.insert(std::pair<int, doSomething>(Qt::Key_Backspace, &Keyboard::cursorLeft));
-
-    defaultMap.insert(std::pair<int, doSomething>(Qt::Key_Enter, &Keyboard::enter));
-
-    defaultMap.insert(std::pair<int, doSomething>(Qt::Key_Tab, &Keyboard::tab));
-    defaultMap.insert(std::pair<int, doSomething>(Qt::Key_Backtab, &Keyboard::backtab));
-
-    defaultMap.insert(std::pair<int, doSomething>(Qt::Key_Home, &Keyboard::home));
-    defaultMap.insert(std::pair<int, doSomething>(Qt::Key_Return, &Keyboard::newline));
-
-    defaultMap.insert(std::pair<int, doSomething>(Qt::Key_End, &Keyboard::eraseEOF));
-    defaultMap.insert(std::pair<int, doSomething>(Qt::Key_Insert, &Keyboard::insert));
-    defaultMap.insert(std::pair<int, doSomething>(Qt::Key_Delete, &Keyboard::deleteKey));
-
-    defaultMap.insert(std::pair<int, doSomething>(Qt::Key_F1, &Keyboard::fKey1));
-    defaultMap.insert(std::pair<int, doSomething>(Qt::Key_F2, &Keyboard::fKey2));
-    defaultMap.insert(std::pair<int, doSomething>(Qt::Key_F3, &Keyboard::fKey3));
-    defaultMap.insert(std::pair<int, doSomething>(Qt::Key_F4, &Keyboard::fKey4));
-    defaultMap.insert(std::pair<int, doSomething>(Qt::Key_F5, &Keyboard::fKey5));
-    defaultMap.insert(std::pair<int, doSomething>(Qt::Key_F6, &Keyboard::fKey6));
-    defaultMap.insert(std::pair<int, doSomething>(Qt::Key_F7, &Keyboard::fKey7));
-    defaultMap.insert(std::pair<int, doSomething>(Qt::Key_F8, &Keyboard::fKey8));
-    defaultMap.insert(std::pair<int, doSomething>(Qt::Key_F9, &Keyboard::fKey9));
-    defaultMap.insert(std::pair<int, doSomething>(Qt::Key_F10, &Keyboard::fKey10));
-    defaultMap.insert(std::pair<int, doSomething>(Qt::Key_F11, &Keyboard::fKey11));
-    defaultMap.insert(std::pair<int, doSomething>(Qt::Key_F12, &Keyboard::fKey12));
-
-    defaultMap.insert(std::pair<int, doSomething>(Qt::Key_Escape, &Keyboard::attn));
-
-    defaultMap.insert(std::pair<int, doSomething>(Qt::Key_PageUp, &Keyboard::fKey7));
-    defaultMap.insert(std::pair<int, doSomething>(Qt::Key_PageDown, &Keyboard::fKey8));
-
-    ctrlMap.insert(std::pair<int, doSomething>(Q3270_LEFT_CTRL, &Keyboard::reset));
-    ctrlMap.insert(std::pair<int, doSomething>(Q3270_RIGHT_CTRL, &Keyboard::enter));
-
-    shiftMap.insert(std::pair<int, doSomething>(Qt::Key_F1, &Keyboard::fKey13));
-    shiftMap.insert(std::pair<int, doSomething>(Qt::Key_F2, &Keyboard::fKey14));
-    shiftMap.insert(std::pair<int, doSomething>(Qt::Key_F3, &Keyboard::fKey15));
-    shiftMap.insert(std::pair<int, doSomething>(Qt::Key_F4, &Keyboard::fKey16));
-    shiftMap.insert(std::pair<int, doSomething>(Qt::Key_F5, &Keyboard::fKey17));
-    shiftMap.insert(std::pair<int, doSomething>(Qt::Key_F6, &Keyboard::fKey18));
-    shiftMap.insert(std::pair<int, doSomething>(Qt::Key_F7, &Keyboard::fKey19));
-    shiftMap.insert(std::pair<int, doSomething>(Qt::Key_F8, &Keyboard::fKey20));
-    shiftMap.insert(std::pair<int, doSomething>(Qt::Key_F9, &Keyboard::fKey21));
-    shiftMap.insert(std::pair<int, doSomething>(Qt::Key_F10, &Keyboard::fKey22));
-    shiftMap.insert(std::pair<int, doSomething>(Qt::Key_F11, &Keyboard::fKey23));
-    shiftMap.insert(std::pair<int, doSomething>(Qt::Key_F12, &Keyboard::fKey24));
-
-    shiftMap.insert(std::pair<int, doSomething>(Qt::Key_Backtab, &Keyboard::backtab));
-
-    altMap.insert(std::pair<int, doSomething>(Qt::Key_1, &Keyboard::paKey1));
-    altMap.insert(std::pair<int, doSomething>(Qt::Key_2, &Keyboard::paKey2));
-    altMap.insert(std::pair<int, doSomething>(Qt::Key_3, &Keyboard::paKey3));
-*/
     lock = false;
     insMode = false;
 
@@ -130,7 +71,7 @@ Keyboard::Keyboard(DisplayDataStream *d, SocketConnection *c)
 
     clearBufferEntry();
 
-    connect(d, &DisplayDataStream::keyboardUnlocked, this, &Keyboard::unlockKeyboard);
+    connect(d, &ProcessDataStream::keyboardUnlocked, this, &Keyboard::unlockKeyboard);
     printf("Keyboard unlocked\n");
     fflush(stdout);
 }
@@ -390,7 +331,7 @@ void Keyboard::nextKey()
         else
         {
             // TODO: Might break
-            display->insertChar(kbBuffer[bufferPos].keyChar.toUtf8()[0], insMode);
+            datastream->insertChar(kbBuffer[bufferPos].keyChar.toUtf8()[0], insMode);
         }
         bufferPos++;
         if (bufferPos > 1023)
@@ -407,51 +348,51 @@ void Keyboard::nextKey()
 
 void Keyboard::cursorUp()
 {
-    display->moveCursor(0, -1);
+    datastream->moveCursor(0, -1);
 }
 
 void Keyboard::cursorDown()
 {
-    display->moveCursor(0, 1);
+    datastream->moveCursor(0, 1);
 }
 
 void Keyboard::cursorRight()
 {
-    display->moveCursor(1, 0);
+    datastream->moveCursor(1, 0);
 }
 
 void Keyboard::cursorLeft()
 {
-    display->moveCursor(-1, 0);
+    datastream->moveCursor(-1, 0);
 }
 
 void Keyboard::enter()
 {
     lockKeyboard();
-    Buffer *b = display->processFields(IBM3270_AID_ENTER);
-    socket->sendResponse(b);
+
+    datastream->processAID(IBM3270_AID_ENTER, false);
 
     insMode = false;
 }
 
 void Keyboard::tab()
 {
-    display->tab();
+    datastream->tab();
 }
 
 void Keyboard::backtab()
 {
-    display->backtab();
+    datastream->backtab();
 }
 
 void Keyboard::home()
 {
-    display->home();
+    datastream->home();
 }
 
 void Keyboard::eraseEOF()
 {
-    display->eraseField();
+    datastream->eraseField();
 }
 
 void Keyboard::insert()
@@ -468,14 +409,14 @@ void Keyboard::insert()
 
 void Keyboard::deleteKey()
 {
-    display->deleteChar();
+    datastream->deleteChar();
 }
 
 void Keyboard::functionKey(int key)
 {
     lockKeyboard();
-    Buffer *b = display->processFields(key);
-    socket->sendResponse(b);
+
+    datastream->processAID(key, false);
 
     insMode = false;
 }
@@ -602,24 +543,17 @@ void Keyboard::fKey24()
 
 void Keyboard::attn()
 {
-    Buffer *b = new Buffer();
 
-    b->add(IAC);
-    b->add(IP);
-
-    socket->sendResponse(b);
+    datastream->interruptProcess();
 
     insMode = false;
 
     printf("ATTN pressed\n");
 }
 
-void Keyboard::programaccessKey(int k)
+void Keyboard::programaccessKey(int aidKey)
 {
-    Buffer *b = new Buffer();
-
-    b->add(k);
-    socket->sendResponse(b);
+    datastream->processAID(aidKey, true);
 
     insMode = false;
 }
@@ -641,7 +575,7 @@ void Keyboard::paKey3()
 
 void Keyboard::newline()
 {
-    display->newline();
+    datastream->newline();
 }
 
 void Keyboard::reset()
@@ -783,5 +717,5 @@ void Keyboard::setFactoryMaps()
 
 void Keyboard::ruler()
 {
-    display->toggleRuler();
+    datastream->toggleRuler();
 }

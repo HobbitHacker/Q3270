@@ -26,12 +26,12 @@ void SocketConnection::disconnectMainframe()
     dataSocket->disconnectFromHost();
 }
 
-void SocketConnection::connectMainframe(const QHostAddress &address, quint16 port, DisplayDataStream *d, Terminal *t)
+void SocketConnection::connectMainframe(const QHostAddress &address, quint16 port, ProcessDataStream *d, Terminal *t)
 {
     dataSocket->connectToHost(address, port);
     displayDataStream = d;
     term = t;
-    connect(displayDataStream, &DisplayDataStream::bufferReady, this, &SocketConnection::sendResponse);
+    connect(displayDataStream, &ProcessDataStream::bufferReady, this, &SocketConnection::sendResponse);
 }
 
 void SocketConnection::onReadyRead()
