@@ -31,8 +31,10 @@ ProcessDataStream::ProcessDataStream(QGraphicsScene* parent, DisplayView *dv, Te
     cursor_y = 0;
     cursor_pos = 0;
 
-    default_screen = new DisplayData(parent, 80, 24);
-    alternate_screen = new DisplayData(parent, t->width(), t->height());
+    lastAID = IBM3270_AID_NOAID;
+
+    default_screen = new DisplayScreen(parent, 80, 24);
+    alternate_screen = new DisplayScreen(parent, t->width(), t->height());
     printf("Alternate screen size %dx%d\n",t->width(), t->height());
     fflush(stdout);
 
@@ -74,7 +76,7 @@ void ProcessDataStream::processStream(Buffer *b)
 
     wsfProcessing = false;
 
-    // Process WRITE command
+    // Process Command codes
     // Structured Fields Require Multiple WRITE commands
     // Add logic to cycle round buffer for structure field length if appropriate so we can come
     // back here to restart.
@@ -101,6 +103,10 @@ void ProcessDataStream::processStream(Buffer *b)
         case IBM3270_CCW_EWA:
             processEW(b, true);
             b->nextByte();
+            break;
+        case IBM3270_RM:
+        case IBM3270_CCW_RM:
+            processRM();
             break;
         default:
             printf("[Unrecognised WRITE command: %2.2X - Block Ignored]", b->getByte());
@@ -205,6 +211,7 @@ void ProcessDataStream::processWCC(Buffer *b)
             printf(",");
         }
         printf("reset KB");
+        lastAID = IBM3270_AID_NOAID;
     }
 
     if (alarm)
@@ -216,6 +223,17 @@ void ProcessDataStream::processWCC(Buffer *b)
         printf("alarm");
     }
     printf(")");
+}
+
+
+void ProcessDataStream::processW(Buffer *buf)
+{
+    printf("[Write ");
+
+    processWCC(buf->nextByte());
+
+    printf("]");
+    fflush(stdout);
 }
 
 void ProcessDataStream::processEW(Buffer *buf, bool alternate)
@@ -251,14 +269,41 @@ void ProcessDataStream::processEW(Buffer *buf, bool alternate)
 
 }
 
-void ProcessDataStream::processW(Buffer *buf)
+void ProcessDataStream::processWSF(Buffer *b)
 {
-    printf("[Write ");
+    wsfProcessing = true;
 
-    processWCC(buf->nextByte());
+    wsfLen = b->getByte()<<8;
+    b->nextByte();
+    wsfLen += b->getByte();
+    b->nextByte();
 
-    printf("]");
+    printf("WSF - length: %03d; command = %2.2X\n", wsfLen, b->getByte());
     fflush(stdout);
+
+    // Decrease length by two-byte length field and structured field id byte
+    wsfLen-=3;
+
+    switch(b->getByte())
+    {
+        case IBM3270_WSF_RESET:
+            WSFreset(b);
+            break;
+        case IBM3270_WSF_READPARTITION:
+            WSFreadPartition(b);
+            break;
+        case IBM3270_WSF_OB3270DS:
+            WSFoutbound3270DS(b);
+            break;
+        default:
+            printf("Unimplemented WSF command: %2.2X\n", b->getByte());
+            break;
+    }
+}
+
+void ProcessDataStream::processRM()
+{
+    processAID(lastAID, false);
 }
 
 void ProcessDataStream::processSF(Buffer *buf)
@@ -271,16 +316,6 @@ void ProcessDataStream::processSF(Buffer *buf)
     fflush(stdout);
 
     incPos();
-}
-
-void ProcessDataStream::processSBA(Buffer *buf)
-{
-    printf("[SetBufferAddress ");
-    primary_pos = extractBufferAddress(buf->nextByte());
-
-    primary_y = (primary_pos / screen_x);
-    primary_x = primary_pos - (primary_y * screen_x);
-    printf(" %d,%d (%d)]", primary_x, primary_y, primary_pos);
 }
 
 void ProcessDataStream::processSFE(Buffer *b)
@@ -344,6 +379,23 @@ void ProcessDataStream::processSFE(Buffer *b)
     incPos();
 }
 
+void ProcessDataStream::processSBA(Buffer *buf)
+{
+    printf("[SetBufferAddress ");
+    primary_pos = extractBufferAddress(buf->nextByte());
+
+    primary_y = (primary_pos / screen_x);
+    primary_x = primary_pos - (primary_y * screen_x);
+    printf(" %d,%d (%d)]", primary_x, primary_y, primary_pos);
+}
+
+void ProcessDataStream::processSA(Buffer *b)
+{
+    int extendedType = b->nextByte()->getByte();
+    int extendedValue = b->nextByte()->getByte();
+    screen->setCharAttr(extendedType, extendedValue);
+}
+
 void ProcessDataStream::processIC()
 {
     moveCursor(primary_x, primary_y, true);
@@ -379,45 +431,6 @@ void ProcessDataStream::processRA(Buffer *b)
     primary_pos = endPos % screenSize;
     primary_y = (primary_pos / screen_x);
     primary_x = primary_pos - (primary_y * screen_x);
-}
-
-void ProcessDataStream::processSA(Buffer *b)
-{
-    int extendedType = b->nextByte()->getByte();
-    int extendedValue = b->nextByte()->getByte();
-    screen->setCharAttr(extendedType, extendedValue);
-}
-
-void ProcessDataStream::processWSF(Buffer *b)
-{
-    wsfProcessing = true;
-
-    wsfLen = b->getByte()<<8;
-    b->nextByte();
-    wsfLen += b->getByte();
-    b->nextByte();
-
-    printf("WSF - length: %03d; command = %2.2X\n", wsfLen, b->getByte());
-    fflush(stdout);
-
-    // Decrease length by two-byte length field and structured field id byte
-    wsfLen-=3;
-
-    switch(b->getByte())
-    {
-        case IBM3270_WSF_RESET:
-            WSFreset(b);
-            break;
-        case IBM3270_WSF_READPARTITION:
-            WSFreadPartition(b);
-            break;
-        case IBM3270_WSF_OB3270DS:
-            WSFoutbound3270DS(b);
-            break;
-        default:
-            printf("Unimplemented WSF command: %2.2X\n", b->getByte());
-            break;
-    }
 }
 
 void ProcessDataStream::processEUA(Buffer *b)
@@ -942,6 +955,8 @@ void ProcessDataStream::processAID(int aid, bool shortRead)
     Buffer *respBuffer = new Buffer();
 
     respBuffer->add(aid);
+
+    lastAID = aid;
 
     if (!shortRead)
     {

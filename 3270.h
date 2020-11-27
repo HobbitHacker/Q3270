@@ -68,8 +68,12 @@
 #define IBM3270_EXT_HI_USCORE     0xF4
 
 /* 3270 AIDs */
+#define IBM3270_AID_NOAID 0x60
+
 #define IBM3270_AID_ENTER 0x7D
+
 #define IBM3270_AID_SF    0x88
+
 #define IBM3270_AID_F1    0xF1
 #define IBM3270_AID_F2    0xF2
 #define IBM3270_AID_F3    0xF3

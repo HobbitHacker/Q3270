@@ -4,6 +4,21 @@ Keyboard::Keyboard(ProcessDataStream *d)
 {    
     datastream = d;
 
+    lock = false;
+    insMode = false;
+
+    bufferPos = 0;
+    bufferEnd = 0;
+    keyCount  = 0;
+    waitRelease = false;
+
+    clearBufferEntry();
+
+    connect(d, &ProcessDataStream::keyboardUnlocked, this, &Keyboard::unlockKeyboard);
+}
+
+void Keyboard::setMap()
+{
     functionMap.insert(std::pair<QString, doSomething>("Enter",&Keyboard::enter));
     functionMap.insert(std::pair<QString, doSomething>("Reset",&Keyboard::reset));
 
@@ -60,20 +75,6 @@ Keyboard::Keyboard(ProcessDataStream *d)
     functionMap.insert(std::pair<QString, doSomething>("ToggleRuler",&Keyboard::ruler));
 
     setFactoryMaps();
-
-    lock = false;
-    insMode = false;
-
-    bufferPos = 0;
-    bufferEnd = 0;
-    keyCount  = 0;
-    waitRelease = false;
-
-    clearBufferEntry();
-
-    connect(d, &ProcessDataStream::keyboardUnlocked, this, &Keyboard::unlockKeyboard);
-    printf("Keyboard unlocked\n");
-    fflush(stdout);
 }
 
 void Keyboard::clearBufferEntry()
@@ -653,6 +654,7 @@ void Keyboard::setMapping(QString key, QString function)
     }
 
     setMap->insert(std::pair<int, doSomething>(keyCode, (*setIterator).second));
+    emit saveKeyboardMapping("keyboard/" + key, function);
 }
 
 void Keyboard::setFactoryMaps()
@@ -670,12 +672,16 @@ void Keyboard::setFactoryMaps()
     setMapping("Left", "Left");
     setMapping("Right", "Right");
 
+    //TODO: make backspace stop at start of field
+    setMapping("Backspace","Left");
+
     setMapping("Tab", "Tab");
     setMapping("Backtab", "Backtab");
     setMapping("Shift+Tab", "Backtab");
 
     setMapping("Home", "Home");
     setMapping("End", "EraseEOF");
+    setMapping("Return", "Newline");
 
     setMapping("F1", "F1");
     setMapping("F2", "F2");

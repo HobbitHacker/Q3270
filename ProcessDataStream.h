@@ -42,7 +42,7 @@
 #include <map>
 
 /**
- * @todo write docs
+ * TODO write docs
  */
 class ProcessDataStream : public QObject
 {
@@ -82,7 +82,7 @@ class ProcessDataStream : public QObject
             bool mdt;
         } FieldFlags;
 
-        DisplayData *screen;
+        DisplayScreen *screen;
 
     signals:
 
@@ -97,8 +97,8 @@ class ProcessDataStream : public QObject
 
         Terminal *term;
 
-        DisplayData *default_screen;
-        DisplayData *alternate_screen;
+        DisplayScreen *default_screen;
+        DisplayScreen *alternate_screen;
 
         uchar *buffer;
         uchar *bufferCurrentPos;
@@ -126,6 +126,7 @@ class ProcessDataStream : public QObject
         bool resetMDT;
         bool resetKB;
         bool alarm;
+        int lastAID;    // Last AID encountered
 
         QLabel *cursorAddress;
 
@@ -137,18 +138,24 @@ class ProcessDataStream : public QObject
         void processWCC(Buffer *b);
         void processOrders(Buffer *b);
 
-        /* Write Commands */
-        void processEW(Buffer *b, bool alternate);
+        /* 3270 Command Codes */
+        /* TODO: 3270 Command codes RB, RMA and EAU */
         void processW(Buffer *b);
-        void processSF(Buffer *b);
-        void processSBA(Buffer *b);
-        void processSFE(Buffer *b);
-        void processRA(Buffer *b);
-        void processSA(Buffer *b);
+        void processEW(Buffer *b, bool alternate);      // Incorporates EWA
         void processWSF(Buffer *b);
+        void processRM();
+
+
+        /* 3270 Orders */
+        /* TODO: 3270 Orders MF, PT and GE */
+        void processSF(Buffer *b);
+        void processSFE(Buffer *b);
+        void processSBA(Buffer *b);
+        void processSA(Buffer *b);
+        void processIC();
+        void processRA(Buffer *b);
         void processEUA(Buffer *b);
 
-        void processIC();
 
         int extractBufferAddress(Buffer *b);
         void incPos();
@@ -156,8 +163,9 @@ class ProcessDataStream : public QObject
         void removeCursor();
         void addCursor();
 
-        FieldIterator findNextUnprotected();
-        FieldIterator findFirstUnprotected();
+        // FIXME: Not used?
+//        FieldIterator findNextUnprotected();
+//        FieldIterator findFirstUnprotected();
 
         bool wsfProcessing;
         int wsfLen;

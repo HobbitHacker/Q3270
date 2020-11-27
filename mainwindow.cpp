@@ -4,6 +4,13 @@
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), c(new(SocketConnection)), ui(new(Ui::MainWindow))
 {
     ui->setupUi(this);
+
+    QCoreApplication::setOrganizationDomain("styles.homeip.net");
+    QCoreApplication::setApplicationName("Q3270");
+    QCoreApplication::setOrganizationName("'andyWare");
+
+    applicationSettings = new QSettings();
+
     t = new Terminal();
 
     cursorAddress = new QLabel("0,0");
@@ -22,11 +29,6 @@ MainWindow::~MainWindow()
 
 void MainWindow::setupDisplay()
 {
-
-//    QAction* connectAction = new QAction(this);
-//    QAction* setFontAction = new QAction(this);
-
-//    connectAction->setText("Connect");
     connect(c, &SocketConnection::dataStreamComplete, this, &MainWindow::processDataStream);
 }
 
@@ -80,6 +82,9 @@ void MainWindow::menuConnect()
     Keyboard *kbd = new Keyboard(d);
 
     connect(kbd, &Keyboard::setLock, this, &MainWindow::setIndicators);
+    connect(kbd, &Keyboard::saveKeyboardMapping, this, &MainWindow::setSetting);
+
+    kbd->setMap();
 
     display->installEventFilter(kbd);
 
@@ -138,5 +143,12 @@ void MainWindow::menuTerminalSettings()
 
 void MainWindow::menuQuit()
 {
+    QApplication::quit();
+}
 
+void MainWindow::setSetting(QString key, QString value)
+{
+    applicationSettings->setValue(key, value);
+    printf("Saving %s as %s/n", key.toLatin1().data(), value.toLatin1().data());
+    fflush(stdout);
 }

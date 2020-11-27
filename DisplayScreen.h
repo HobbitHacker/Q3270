@@ -12,11 +12,11 @@
 #include "3270.h"
 #include "DisplayView.h"
 
-class DisplayData
+class DisplayScreen
 {
     public:
-        DisplayData(QGraphicsScene *parent, int screen_x, int screen_y);
-        ~DisplayData();
+        DisplayScreen(QGraphicsScene *parent, int screen_x, int screen_y);
+        ~DisplayScreen();
 
         int width();
         int height();

@@ -15,6 +15,7 @@
 #include <QKeyEvent>
 #include <QDebug>
 #include <QFontDialog>
+#include <QSettings>
 
 #include "SocketConnection.h"
 #include "ProcessDataStream.h"
@@ -40,6 +41,7 @@ class MainWindow : public QMainWindow
   public slots:
     void showCursorAddress(int x, int y);
     void setIndicators(Indicators i);
+    void setSetting(QString k, QString v);
 	
   private slots:
     // Connect menu
@@ -64,6 +66,8 @@ class MainWindow : public QMainWindow
     QTextEdit *te;
     QGraphicsScene *gs;
     DisplayView *display;
+
+    QSettings *applicationSettings;
 
     QLabel *cursorAddress;
     QLabel *syslock;

@@ -26,10 +26,12 @@ class Keyboard : public QObject
 
     public:
         Keyboard(ProcessDataStream *d = 0);
+        void setMap();
         bool processKey();
 
     signals:
         void setLock(Indicators i);
+        void saveKeyboardMapping(QString k, QString v);
 
     public slots:
         void unlockKeyboard();

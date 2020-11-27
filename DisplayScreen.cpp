@@ -1,6 +1,6 @@
 #include "DisplayScreen.h"
 
-DisplayData::DisplayData(QGraphicsScene *parent, int screen_x, int screen_y)
+DisplayScreen::DisplayScreen(QGraphicsScene *parent, int screen_x, int screen_y)
 {
 
     DisplayView *d = (DisplayView *)parent->views().first();
@@ -76,37 +76,37 @@ DisplayData::DisplayData(QGraphicsScene *parent, int screen_x, int screen_y)
     ruler = false;
 }
 
-int DisplayData::width()
+int DisplayScreen::width()
 {
     return screen_x;
 }
 
-int DisplayData::height()
+int DisplayScreen::height()
 {
     return screen_y;
 }
 
-int DisplayData::gridWidth()
+int DisplayScreen::gridWidth()
 {
     return gridSize_X;
 }
 
-int DisplayData::gridHeight()
+int DisplayScreen::gridHeight()
 {
     return gridSize_Y;
 }
 
-void DisplayData::setParent(QGraphicsScene *scene)
+void DisplayScreen::setParent(QGraphicsScene *scene)
 {
     screen->setParent(scene);
 }
 
-QGraphicsScene *DisplayData::getScene()
+QGraphicsScene *DisplayScreen::getScene()
 {
     return screen;
 }
 
-void DisplayData::setFont(QFont font)
+void DisplayScreen::setFont(QFont font)
 {
     for (int i = 0; i < screenPos_max; i++)
     {
@@ -114,7 +114,7 @@ void DisplayData::setFont(QFont font)
     }
 }
 
-void DisplayData::clear()
+void DisplayScreen::clear()
 {
     for(int i = 0; i < screenPos_max; i++)
     {
@@ -150,7 +150,7 @@ void DisplayData::clear()
     resetCharAttr();
 }
 
-void DisplayData::setChar(int pos, unsigned char c, bool move)
+void DisplayScreen::setChar(int pos, unsigned char c, bool move)
 {
 
     int lastField;
@@ -269,13 +269,13 @@ void DisplayData::setChar(int pos, unsigned char c, bool move)
     fflush(stdout);
 }
 
-unsigned char DisplayData::getChar(int pos)
+unsigned char DisplayScreen::getChar(int pos)
 {
     return (glyph[pos]->text().toUtf8()[0]);
 }
 
 
-void DisplayData::setCharAttr(unsigned char extendedType, unsigned char extendedValue)
+void DisplayScreen::setCharAttr(unsigned char extendedType, unsigned char extendedValue)
 {
 /*    if (!useCharAttr)
     {
@@ -351,7 +351,7 @@ void DisplayData::setCharAttr(unsigned char extendedType, unsigned char extended
 
 }
 
-void DisplayData::resetCharAttr()
+void DisplayScreen::resetCharAttr()
 {
     charAttr.blink_default = true;
     charAttr.reverse_default = true;
@@ -359,7 +359,7 @@ void DisplayData::resetCharAttr()
     charAttr.colour_default = true;
 }
 
-void DisplayData::setField(int pos, unsigned char c, bool sfe)
+void DisplayScreen::setField(int pos, unsigned char c, bool sfe)
 {
     printf("3270 Attribute %2.2X at %d", c, pos);
 
@@ -457,7 +457,7 @@ void DisplayData::setField(int pos, unsigned char c, bool sfe)
 
 }
 
-void DisplayData::resetExtended(int pos)
+void DisplayScreen::resetExtended(int pos)
 {
     resetExtendedHilite(pos);
 
@@ -472,14 +472,14 @@ void DisplayData::resetExtended(int pos)
 }
 
 
-void DisplayData::resetExtendedHilite(int pos)
+void DisplayScreen::resetExtendedHilite(int pos)
 {
     attrs[pos].uscore = false;
     attrs[pos].blink = false;
     attrs[pos].reverse = false;
 }
 
-void DisplayData::setExtendedColour(int pos, bool foreground, unsigned char c)
+void DisplayScreen::setExtendedColour(int pos, bool foreground, unsigned char c)
 {
     attrs[pos].colNum = c&7;
     attrs[pos].reverse = !foreground;
@@ -490,27 +490,27 @@ void DisplayData::setExtendedColour(int pos, bool foreground, unsigned char c)
     }
 }
 
-void DisplayData::setExtendedBlink(int pos)
+void DisplayScreen::setExtendedBlink(int pos)
 {
     attrs[pos].reverse = false;
     attrs[pos].blink = true;
     printf("[Blink]");
 }
 
-void DisplayData::setExtendedReverse(int pos)
+void DisplayScreen::setExtendedReverse(int pos)
 {
     attrs[pos].blink = false;
     attrs[pos].reverse = true;
     printf("[Reverse]");
 }
 
-void DisplayData::setExtendedUscore(int pos)
+void DisplayScreen::setExtendedUscore(int pos)
 {
     attrs[pos].uscore = true;
     printf("[UScore]");
 }
 
-void DisplayData::setFieldAttrs(int start)
+void DisplayScreen::setFieldAttrs(int start)
 {
     attrs[start].fieldStart = true;
 
@@ -524,7 +524,7 @@ void DisplayData::setFieldAttrs(int start)
 }
 
 
-int DisplayData::resetFieldAttrs(int start)
+int DisplayScreen::resetFieldAttrs(int start)
 {
     int lastField = findField(start);
 
@@ -599,7 +599,7 @@ int DisplayData::resetFieldAttrs(int start)
 }
 
 
-bool DisplayData::insertChar(int pos, unsigned char c, bool insertMode)
+bool DisplayScreen::insertChar(int pos, unsigned char c, bool insertMode)
 {
     if (attrs[pos].prot || attrs[pos].fieldStart)
     {
@@ -656,7 +656,7 @@ bool DisplayData::insertChar(int pos, unsigned char c, bool insertMode)
     return true;
 }
 
-void DisplayData::deleteChar(int pos)
+void DisplayScreen::deleteChar(int pos)
 {
     if (attrs[pos].prot)
     {
@@ -686,7 +686,7 @@ void DisplayData::deleteChar(int pos)
     attrs[findField(pos)].mdt = true;
 }
 
-void DisplayData::eraseEOF(int pos)
+void DisplayScreen::eraseEOF(int pos)
 {
     int nextField = findNextField(pos);
 
@@ -704,7 +704,7 @@ void DisplayData::eraseEOF(int pos)
     attrs[findField(pos)].mdt = true;
 }
 
-void DisplayData::eraseUnprotected(int start, int end)
+void DisplayScreen::eraseUnprotected(int start, int end)
 {
     if (end < start)
     {
@@ -730,13 +730,13 @@ void DisplayData::eraseUnprotected(int start, int end)
     }
 }
 
-void DisplayData::setCursor(int pos)
+void DisplayScreen::setCursor(int pos)
 {
     cursor->setParentItem(cell[pos]);
     cursor->setPos(cell[pos]->boundingRect().left(), cell[pos]->boundingRect().top());
 }
 
-void DisplayData::toggleRuler()
+void DisplayScreen::toggleRuler()
 {
     ruler = !ruler;
 
@@ -752,7 +752,7 @@ void DisplayData::toggleRuler()
     }
 }
 
-void DisplayData::drawRuler(int x, int y)
+void DisplayScreen::drawRuler(int x, int y)
 {
     if (ruler)
     {
@@ -761,7 +761,7 @@ void DisplayData::drawRuler(int x, int y)
     }
 }
 
-int DisplayData::findField(int pos)
+int DisplayScreen::findField(int pos)
 {
     int endPos = pos - screenPos_max;
 //    printf("findField: endpos = %d\n", endPos);
@@ -784,7 +784,7 @@ int DisplayData::findField(int pos)
     return pos;
 }
 
-int DisplayData::findNextField(int pos)
+int DisplayScreen::findNextField(int pos)
 {
     if(attrs[pos].fieldStart)
     {
@@ -804,7 +804,7 @@ int DisplayData::findNextField(int pos)
     return pos;
 }
 
-int DisplayData::findNextUnprotectedField(int pos)
+int DisplayScreen::findNextUnprotectedField(int pos)
 {
  /*----------------------------------------------------------------------------------
   | Find the next field that is unprotected. This incorporates two field start      |
@@ -828,7 +828,7 @@ int DisplayData::findNextUnprotectedField(int pos)
     return 0;
 }
 
-int DisplayData::findPrevUnprotectedField(int pos)
+int DisplayScreen::findPrevUnprotectedField(int pos)
 {
  /*----------------------------------------------------------------------------------
   | Find the previous field that is unprotected. This incorporates two field start  |
@@ -859,7 +859,7 @@ int DisplayData::findPrevUnprotectedField(int pos)
     return 0;
 }
 
-void DisplayData::getModifiedFields(Buffer *buffer)
+void DisplayScreen::getModifiedFields(Buffer *buffer)
 {
     for(int i = 0; i < screenPos_max; i++)
     {
@@ -918,7 +918,7 @@ void DisplayData::getModifiedFields(Buffer *buffer)
     }
 }
 
-void DisplayData::dumpFields()
+void DisplayScreen::dumpFields()
 {
     printf("Screen_X = %d, screen_y =%d\n", screen_x, screen_y);
     fflush(stdout);
@@ -936,7 +936,7 @@ void DisplayData::dumpFields()
 }
 
 
-void DisplayData::dumpDisplay()
+void DisplayScreen::dumpDisplay()
 {
     printf("---- SCREEN ----");
     for (int i = 0; i < screenPos_max; i++)
@@ -951,7 +951,7 @@ void DisplayData::dumpDisplay()
     fflush(stdout);
 }
 
-void DisplayData::dumpAttrs(int pos)
+void DisplayScreen::dumpAttrs(int pos)
 {
     printf("   Attrs: Prot:%d Ext:%d Start:%d Skip:%d Display:%d Uscore:%d Rev:%d Blnk:%d Intens:%d Num:%d Pen:%d\n",
            attrs[pos].prot, attrs[pos].extended, attrs[pos].fieldStart, attrs[pos].askip, attrs[pos].display, attrs[pos].uscore, attrs[pos].reverse, attrs[pos].blink, attrs[pos].intensify, attrs[pos].num, attrs[pos].pen);
