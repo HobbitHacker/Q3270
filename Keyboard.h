@@ -66,6 +66,7 @@ class Keyboard : public QObject
         void functionKey(int k);
         void programaccessKey(int k);
         void attn();
+        void clear();
 
         void ruler();
 

@@ -981,6 +981,15 @@ void ProcessDataStream::processAID(int aid, bool shortRead)
         respBuffer->dump();
     }
 
+    if (aid == IBM3270_AID_CLEAR)
+    {
+        cursor_pos = 0;
+        cursor_x = 0;
+        cursor_y = 0;
+        screen->setCursor(cursor_pos);
+        screen->clear();
+    }
+
     emit bufferReady(respBuffer);
 }
 

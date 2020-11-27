@@ -103,6 +103,8 @@
 #define IBM3270_AID_PA2   0x6E
 #define IBM3270_AID_PA3   0x6B
 
+#define IBM3270_AID_CLEAR 0x6D
+
 enum Indicators {
     Unlocked,
     SystemLock,

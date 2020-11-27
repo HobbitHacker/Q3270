@@ -72,6 +72,9 @@ void Keyboard::setMap()
     functionMap.insert(std::pair<QString, doSomething>("PA2",&Keyboard::paKey2));
     functionMap.insert(std::pair<QString, doSomething>("PA3",&Keyboard::paKey3));
 
+    functionMap.insert(std::pair<QString, doSomething>("Clear",&Keyboard::clear));
+
+
     functionMap.insert(std::pair<QString, doSomething>("ToggleRuler",&Keyboard::ruler));
 
     setFactoryMaps();
@@ -719,9 +722,16 @@ void Keyboard::setFactoryMaps()
     setMapping("PageDown", "F8");
 
     setMapping("Ctrl+Home", "ToggleRuler");
+
+    setMapping("Pause", "Clear");
 }
 
 void Keyboard::ruler()
 {
     datastream->toggleRuler();
+}
+
+void Keyboard::clear()
+{
+    datastream->processAID(IBM3270_AID_CLEAR, true);
 }
