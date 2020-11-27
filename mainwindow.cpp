@@ -103,7 +103,6 @@ void MainWindow::menuDisconnect()
 
     ui->verticalLayout->removeWidget(display);
 
-    delete c;
     delete d;
     gs->clear();
     delete gs;
@@ -122,7 +121,7 @@ void MainWindow::menuSetFont()
     QFont font = QFontDialog::getFont(&ok, QFont("ibm3270", 12), this);
     if (ok)
     {
-        d->screen->setFont(font);
+        d->setFont(font);
     }
 }
 

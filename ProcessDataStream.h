@@ -66,6 +66,7 @@ class ProcessDataStream : public QObject
         void deleteChar();
         void newline();
         void toggleRuler();
+        void setFont(QFont font);
 
         void showFields();
 

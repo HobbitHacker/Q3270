@@ -35,8 +35,6 @@ ProcessDataStream::ProcessDataStream(QGraphicsScene* parent, DisplayView *dv, Te
 
     default_screen = new DisplayScreen(parent, 80, 24);
     alternate_screen = new DisplayScreen(parent, t->width(), t->height());
-    printf("Alternate screen size %dx%d\n",t->width(), t->height());
-    fflush(stdout);
 
     setScreen();
 }
@@ -60,6 +58,12 @@ void ProcessDataStream::setScreen(bool alternate)
     screen_y = screen->height();
 
     screenSize = screen_x * screen_y;
+}
+
+void ProcessDataStream::setFont(QFont font)
+{
+    default_screen->setFont(font);
+    alternate_screen->setFont(font);
 }
 
 void ProcessDataStream::processStream(Buffer *b)

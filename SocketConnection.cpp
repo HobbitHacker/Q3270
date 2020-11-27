@@ -12,7 +12,7 @@ SocketConnection::SocketConnection(QObject *parent)
     // connect readyRead() to the slot that will take care of reading the data in
     connect(dataSocket, &QTcpSocket::readyRead, this, &SocketConnection::onReadyRead);
     // Forward the error signal, QOverload is necessary as error() is overloaded, see the Qt docs
-    connect(dataSocket, QOverload<QAbstractSocket::SocketError>::of(&QAbstractSocket::error), this, &SocketConnection::error);
+    connect(dataSocket, QOverload<QAbstractSocket::SocketError>::of(&QAbstractSocket::errorOccurred), this, &SocketConnection::error);
     // Reset the m_loggedIn variable when we disconnec. Since the operation is trivial we use a lambda instead of creating another slot
 
     incomingData = new Buffer();

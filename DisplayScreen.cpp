@@ -15,9 +15,6 @@ DisplayScreen::DisplayScreen(QGraphicsScene *parent, int screen_x, int screen_y)
 
     screenPos_max = screen_x * screen_y;
 
-    printf("Screen size: %d x %d - gridsize: %lf x %lf\n", d->width(), d->height(), gridSize_X, gridSize_Y);
-    fflush(stdout);
-
     QPen p;
     p.setCosmetic(false);
     p.setWidth(0);
