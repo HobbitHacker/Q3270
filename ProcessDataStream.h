@@ -25,6 +25,7 @@
 #include <QHostInfo>
 #include <QGuiApplication>
 #include <QScreen>
+#include <QTimer>
 
 #include <stdlib.h>
 #include <QObject>
@@ -90,6 +91,7 @@ class ProcessDataStream : public QObject
         void bufferReady(Buffer *buffer);
         void keyboardUnlocked();
         void cursorMoved(int x, int y);
+        void blink();
 
 	private:
 
@@ -100,6 +102,8 @@ class ProcessDataStream : public QObject
 
         DisplayScreen *default_screen;
         DisplayScreen *alternate_screen;
+
+        QTimer *blinker;
 
         uchar *buffer;
         uchar *bufferCurrentPos;
@@ -163,10 +167,6 @@ class ProcessDataStream : public QObject
 
         void removeCursor();
         void addCursor();
-
-        // FIXME: Not used?
-//        FieldIterator findNextUnprotected();
-//        FieldIterator findFirstUnprotected();
 
         bool wsfProcessing;
         int wsfLen;
