@@ -1,6 +1,8 @@
 #include "ui_mainwindow.h"
 #include "mainwindow.h"
 
+//NOTE: SocketConnect will need to be created multiple times for multi-session support.
+
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), c(new(SocketConnection)), ui(new(Ui::MainWindow))
 {
     ui->setupUi(this);
