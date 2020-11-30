@@ -6,14 +6,17 @@
 #include <QGraphicsView>
 #include <QString>
 #include <QDebug>
+#include <QTimer>
 
 #include "text.h"
 #include "Buffer.h"
 #include "3270.h"
 #include "DisplayView.h"
 
-class DisplayScreen
+class DisplayScreen : public QObject
 {
+    Q_OBJECT
+
     public:
         DisplayScreen(QGraphicsScene *parent, int screen_x, int screen_y);
         ~DisplayScreen();
@@ -64,6 +67,10 @@ class DisplayScreen
         void dumpFields();
         void dumpDisplay();
         void dumpAttrs(int pos);
+
+    public slots:
+
+        void blink();
 
     private:
 
@@ -206,6 +213,9 @@ class DisplayScreen
         Text **glyph;                /* Character on screen */
         QGraphicsRectItem **cell;    /* Screen slot */
         QGraphicsLineItem **uscore;  /* Underscores */
+
+        QTimer *blinker;             /* Blinking timer */
+        bool blinkShow;              /* Whether the character is shown or not for a given blink event */
 
         int size;
 

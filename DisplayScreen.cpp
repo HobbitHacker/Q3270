@@ -2,7 +2,6 @@
 
 DisplayScreen::DisplayScreen(QGraphicsScene *parent, int screen_x, int screen_y)
 {
-
     DisplayView *d = (DisplayView *)parent->views().first();
 
     screen = new QGraphicsScene(0, 0, parent->width(), parent->height());
@@ -71,6 +70,16 @@ DisplayScreen::DisplayScreen(QGraphicsScene *parent, int screen_x, int screen_y)
     crosshair_Y->hide();
 
     ruler = false;
+
+    blinker = new QTimer(parent);
+    connect(blinker, &QTimer::timeout, this, &DisplayScreen::blink);
+    blinker->start(1000);
+
+    blinkShow = false;
+}
+
+DisplayScreen::~DisplayScreen()
+{
 }
 
 int DisplayScreen::width()
@@ -755,6 +764,26 @@ void DisplayScreen::drawRuler(int x, int y)
     {
        crosshair_X->setLine(x * gridSize_X, 0, x * gridSize_X, screen_y * gridSize_Y);
        crosshair_Y->setLine(0 , (y + 1) * gridSize_Y - 1, screen_x * gridSize_X, (y + 1) * gridSize_Y - 1);
+    }
+}
+
+void DisplayScreen::blink()
+{
+    blinkShow = !blinkShow;
+
+    for (int i = 0; i < screenPos_max; i++)
+    {
+        if (attrs[i].blink)
+        {
+            if (blinkShow)
+            {
+                glyph[i]->setBrush(palette[attrs[i].colNum]);
+            }
+            else
+            {
+                glyph[i]->setBrush(palette[0]);
+            }
+        }
     }
 }
 
