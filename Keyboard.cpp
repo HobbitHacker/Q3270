@@ -87,13 +87,12 @@ void Keyboard::clearBufferEntry()
     kbBuffer[bufferEnd].mustMap = false;
     kbBuffer[bufferEnd].isMapped = false;
     kbBuffer[bufferEnd].key = 0;
-
 }
 
 void Keyboard::lockKeyboard()
 {
     lock = true;
-    printf("Keyboard locked\n");
+    printf("Keyboard        : Keyboard locked\n");
     fflush(stdout);
     emit setLock(Indicators::SystemLock);
 }
@@ -101,7 +100,7 @@ void Keyboard::lockKeyboard()
 void Keyboard::unlockKeyboard()
 {
     lock = false;
-    printf("Keyboard unlocked\n");
+    printf("Keyboard        : Keyboard unlocked\n");
     fflush(stdout);
     emit setLock(Indicators::Unlocked);
     nextKey();
@@ -117,7 +116,7 @@ bool Keyboard::eventFilter( QObject *dist, QEvent *event )
 
     QKeyEvent *keyEvent = static_cast<QKeyEvent *>(event);
 
-    printf("Keyboard: Type: %s   Count: %d   Key: %d   Native: %d Modifiers: %d   nativeModifiers: %d   nativeVirtualKey: %d    text: %s (%2.2X)    Mapped:%d\n", event->type() == QEvent::KeyPress ? "Press" : "Release", keyEvent->count(), keyEvent->key(), keyEvent->nativeScanCode(), keyEvent->modifiers(), keyEvent->nativeModifiers(), keyEvent->nativeVirtualKey(), keyEvent->text().toLatin1().data(), keyEvent->text().toLatin1().data()[0], kbBuffer[bufferEnd].isMapped);
+    printf("Keyboard        : Type: %s   Count: %d   Key: %d   Native: %d Modifiers: %d   nativeModifiers: %d   nativeVirtualKey: %d    text: %s (%2.2X)    Mapped:%d\n", event->type() == QEvent::KeyPress ? "Press" : "Release", keyEvent->count(), keyEvent->key(), keyEvent->nativeScanCode(), keyEvent->modifiers(), keyEvent->nativeModifiers(), keyEvent->nativeVirtualKey(), keyEvent->text().toLatin1().data(), keyEvent->text().toLatin1().data()[0], kbBuffer[bufferEnd].isMapped);
     fflush(stdout);
 
     // If we need to wait for a key to be released (from a previous key press)
@@ -129,51 +128,23 @@ bool Keyboard::eventFilter( QObject *dist, QEvent *event )
 
     if (keyEvent->type() == QEvent::KeyPress)
     {
-        printf("%s\n", QKeySequence(keyEvent->key()).toString().toLatin1().data());
         waitRelease = needtoWait(keyEvent);
-    }
-
-    if (waitRelease)
-    {
-        printf("Waiting for release\n");
-        fflush(stdout);
-        if  (event->type() == QEvent::KeyPress && kbBuffer[bufferEnd].key != 0)
+        if (!waitRelease)
         {
-            printf("Processing key - KeyPress or key stored\n");
-            fflush(stdout);
-            waitRelease = false;
-            keyUsed = processKey();
-        } else if (event->type() == QEvent::KeyRelease)
-        {
-            printf("Processing key - KeyRelease\n");
-            fflush(stdout);
-            waitRelease = false;
-            keyUsed = processKey();
-        } else
-        {
-            printf("Not a KeyPress or no key stored\n");
-            fflush(stdout);
-        }
-    }
-    else if (event->type() == QEvent::KeyPress)
-    {
-        printf("KeyPress\n");
-        fflush(stdout);
-        if (kbBuffer[bufferEnd].key == 0)
-        {
-            printf("Set Waiting for release - no key stored\n");
-            fflush(stdout);
-            waitRelease = true;
-            keyUsed = true;
-        }
-        else
-        {
-            printf("Processing Key - key stored or no need to wait\n");
+            printf("Keyboard        : Processing Key - No need to wait\n");
             fflush(stdout);
             keyUsed = processKey();
         }
 
     }
+    else if (waitRelease)
+    {
+        printf("Keyboard        : Processing key - KeyRelease\n");
+        fflush(stdout);
+        waitRelease = false;
+        keyUsed = processKey();
+    }
+
     if (keyUsed)
     {
         return true;
@@ -185,10 +156,6 @@ bool Keyboard::eventFilter( QObject *dist, QEvent *event )
 
 bool Keyboard::processKey()
 {
-
-    printf("Searching for %d in map %ld\n", kbBuffer[bufferEnd].key, kbBuffer[bufferEnd].map);
-    fflush(stdout);
-
     kbMap::const_iterator got;
 
     kbBuffer[bufferEnd].isMapped = false;
@@ -197,7 +164,7 @@ bool Keyboard::processKey()
 
     kbBuffer[bufferEnd].isMapped = (got != kbBuffer[bufferEnd].map->end());
 
-    printf("Mapped: %d\n", kbBuffer[bufferEnd].isMapped);
+    printf("Keyboard        : Key is mapped: %d\n", kbBuffer[bufferEnd].isMapped);
 
     if (!kbBuffer[bufferEnd].isMapped)
     {
@@ -207,8 +174,12 @@ bool Keyboard::processKey()
         }
         got = kbBuffer[bufferEnd].map->find(kbBuffer[bufferEnd].nativeKey);
         kbBuffer[bufferEnd].isMapped = (got != kbBuffer[bufferEnd].map->end());
-        printf(" - Modifier Mapped: %d\n", kbBuffer[bufferEnd].isMapped);
+        printf("Keyboard        : Modifier key is mapped: %d\n", kbBuffer[bufferEnd].isMapped);
     }
+    fflush(stdout);
+
+    keyCount++;
+    printf("Keyboard        : Keycount incremented. Key: %d isMapped: %d, mustMap: %d\n", kbBuffer[bufferEnd].key, kbBuffer[bufferEnd].isMapped, kbBuffer[bufferEnd].mustMap);
     fflush(stdout);
 
     if (kbBuffer[bufferEnd].key != 0  || kbBuffer[bufferEnd].isMapped)
@@ -218,8 +189,6 @@ bool Keyboard::processKey()
         if (kbBuffer[bufferEnd].isMapped) {
             kbBuffer[bufferEnd].mapped = got->second;
         }
-
-        keyCount++;
 
         if (kbBuffer[bufferEnd].mapped == &Keyboard::attn)
         {
@@ -233,33 +202,38 @@ bool Keyboard::processKey()
         {
            if (kbBuffer[bufferEnd].mustMap && kbBuffer[bufferEnd].isMapped)
            {
+               printf("Keyboard        : Processing nextKey (mapped and mustMap set)\n");
+               fflush(stdout);
                nextKey();
            }
            else if (!kbBuffer[bufferEnd].mustMap)
            {
+               printf("Keyboard        : Processing nextKey (not mapped, and mustMap not set)\n");
+               fflush(stdout);
                nextKey();
            }
            else
            {
-               printf("Dropping key");
+               printf("Keyboard        : Ignoring key\n");
                fflush(stdout);
+               keyCount--;
                clearBufferEntry();
                return false;
            }
         }
         else
         {
-            printf("Keyboard: locked, cannot process, buffering\n");
+            printf("Keyboard        : Locked, cannot process, buffering\n");
             fflush(stdout);
+
+            bufferEnd++;
+
+            if (bufferEnd > 1023) {
+                bufferEnd = 0;
+            }
+
+            clearBufferEntry();
         }
-
-        bufferEnd++;
-
-        if (bufferEnd > 1023) {
-            bufferEnd = 0;
-        }
-
-        clearBufferEntry();
     }
 
     return true;
@@ -278,13 +252,13 @@ bool Keyboard::needtoWait(QKeyEvent *event)
         case Qt::Key_Alt:
         case Qt::Key_AltGr:
         case Qt::Key_Meta:
-            printf("Storing modifiers %8.8x\n", event->modifiers());
+//            printf("Keyboard        : Storing modifiers %8.8x\n", event->modifiers());
             kbBuffer[bufferEnd].modifiers = event->modifiers();
             kbBuffer[bufferEnd].nativeKey = event->nativeVirtualKey();
             wait = true;
             break;
         default:
-            printf("Storing %d\n", event->key());
+//            printf("Keyboard        : Storing %d\n", event->key());
             kbBuffer[bufferEnd].modifiers = event->modifiers();
             kbBuffer[bufferEnd].key = event->key();
             kbBuffer[bufferEnd].keyChar = event->text();
@@ -295,30 +269,42 @@ bool Keyboard::needtoWait(QKeyEvent *event)
     switch(kbBuffer[bufferEnd].modifiers)
     {
         case Qt::ControlModifier:
-            printf("Switching to CTRL map\n");
+            printf("Keyboard        : Switching to CTRL map\n");
             fflush(stdout);
             kbBuffer[bufferEnd].map = &ctrlMap;
             kbBuffer[bufferEnd].mustMap = true;
             break;
 
         case Qt::AltModifier:
-            printf("Switching to ALT map\n");
+            printf("Keyboard        : Switching to ALT map\n");
             fflush(stdout);
             kbBuffer[bufferEnd].map = &altMap;
             kbBuffer[bufferEnd].mustMap = true;
             break;
 
         case Qt::ShiftModifier:
-            printf("Switching to SHIFT map\n");
+            printf("Keyboard        : Switching to SHIFT map\n");
             fflush(stdout);
             kbBuffer[bufferEnd].map = &shiftMap;
+            kbBuffer[bufferEnd].mustMap = false;
             break;
 
         default:
-            printf("Switching to default map\n");
+            printf("Keyboard        : Switching to default map\n");
             fflush(stdout);
+            kbBuffer[bufferEnd].mustMap = false;
             kbBuffer[bufferEnd].map = &defaultMap;
             break;
+    }
+
+    if (!wait && kbBuffer[bufferEnd].key == 0)
+    {
+        return true;
+    }
+
+    if (wait && kbBuffer[bufferEnd].key !=0)
+    {
+        return false;
     }
 
     return wait;
@@ -328,6 +314,9 @@ void Keyboard::nextKey()
 {
     if (keyCount > 0)
     {
+        printf("Keyboard        : Keycount now %d (buffer pos %d, buffer end %d)\n", keyCount, bufferPos, bufferEnd);
+        fflush(stdout);
+        keyCount--;
         if (kbBuffer[bufferPos].isMapped)
         {
             (this->*kbBuffer[bufferPos].mapped)();
@@ -337,15 +326,19 @@ void Keyboard::nextKey()
             // TODO: Might break
             datastream->insertChar(kbBuffer[bufferPos].keyChar.toUtf8()[0], insMode);
         }
-        bufferPos++;
-        if (bufferPos > 1023)
+        if (bufferEnd != bufferPos)
         {
-            bufferPos = 0;
-        }
-        keyCount--;
-        if (!lock && keyCount > 0)
-        {
-            nextKey();
+            bufferPos++;
+            if (bufferPos > 1023)
+            {
+                bufferPos = 0;
+            }
+            if (!lock && keyCount > 0)
+            {
+                printf("Keyboard        : processing next key (more stored)\n", keyCount);
+                fflush(stdout);
+                nextKey();
+            }
         }
     }
 }
