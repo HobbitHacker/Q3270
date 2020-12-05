@@ -83,7 +83,7 @@ void Keyboard::setMap()
 void Keyboard::clearBufferEntry()
 {
     kbBuffer[bufferEnd].modifiers = Qt::NoModifier;
-    kbBuffer[bufferEnd].keyChar = "";
+    kbBuffer[bufferEnd].keyChar = QChar(00);
     kbBuffer[bufferEnd].mustMap = false;
     kbBuffer[bufferEnd].isMapped = false;
     kbBuffer[bufferEnd].key = 0;
@@ -144,6 +144,11 @@ bool Keyboard::eventFilter( QObject *dist, QEvent *event )
         waitRelease = false;
         keyUsed = processKey();
     }
+    else
+    {
+        printf("Keyboard        : Ignoring KeyRelease (already processed press)\n");
+        fflush(stdout);
+    }
 
     if (keyUsed)
     {
@@ -164,11 +169,11 @@ bool Keyboard::processKey()
 
     kbBuffer[bufferEnd].isMapped = (got != kbBuffer[bufferEnd].map->end());
 
-    printf("Keyboard        : Key is mapped: %d\n", kbBuffer[bufferEnd].isMapped);
+    printf("Keyboard        : isSimpleText: %d - Key is mapped: %d\n", kbBuffer[bufferEnd].keyChar,kbBuffer[bufferEnd].isMapped);
 
     if (!kbBuffer[bufferEnd].isMapped)
     {
-        if (kbBuffer[bufferEnd].keyChar == "")
+        if (!kbBuffer[bufferEnd].keyChar.isPrint())
         {
             kbBuffer[bufferEnd].mustMap = true;
         }
@@ -192,7 +197,7 @@ bool Keyboard::processKey()
 
         if (kbBuffer[bufferEnd].mapped == &Keyboard::attn)
         {
-            attn();
+            attn();   
         }
         else if (kbBuffer[bufferEnd].mapped == &Keyboard::reset)
         {
@@ -234,6 +239,13 @@ bool Keyboard::processKey()
 
             clearBufferEntry();
         }
+    } else
+    {
+        printf("Keyboard        : Ignoring key\n");
+        fflush(stdout);
+        keyCount--;
+        clearBufferEntry();
+        return false;
     }
 
     return true;
@@ -261,7 +273,10 @@ bool Keyboard::needtoWait(QKeyEvent *event)
 //            printf("Keyboard        : Storing %d\n", event->key());
             kbBuffer[bufferEnd].modifiers = event->modifiers();
             kbBuffer[bufferEnd].key = event->key();
-            kbBuffer[bufferEnd].keyChar = event->text();
+            if (event->text().length() > 0)
+            {
+                kbBuffer[bufferEnd].keyChar = event->text().at(0);
+            }
             wait = false;
     }
     fflush(stdout);
@@ -297,16 +312,6 @@ bool Keyboard::needtoWait(QKeyEvent *event)
             break;
     }
 
-    if (!wait && kbBuffer[bufferEnd].key == 0)
-    {
-        return true;
-    }
-
-    if (wait && kbBuffer[bufferEnd].key !=0)
-    {
-        return false;
-    }
-
     return wait;
 }
 
@@ -324,8 +329,9 @@ void Keyboard::nextKey()
         else
         {
             // TODO: Might break
-            datastream->insertChar(kbBuffer[bufferPos].keyChar.toUtf8()[0], insMode);
+            datastream->insertChar(kbBuffer[bufferPos].keyChar.toLatin1(), insMode);
         }
+        clearBufferEntry();
         if (bufferEnd != bufferPos)
         {
             bufferPos++;
@@ -335,7 +341,7 @@ void Keyboard::nextKey()
             }
             if (!lock && keyCount > 0)
             {
-                printf("Keyboard        : processing next key (more stored)\n", keyCount);
+                printf("Keyboard        : processing next key (more stored)\n");
                 fflush(stdout);
                 nextKey();
             }
@@ -545,7 +551,7 @@ void Keyboard::attn()
 
     insMode = false;
 
-    printf("ATTN pressed\n");
+    printf("Keyboard        : ATTN pressed\n");
 }
 
 void Keyboard::programaccessKey(int aidKey)
@@ -580,7 +586,7 @@ void Keyboard::reset()
     //TODO: Proper PWAIT/TWAIT handling
     insMode = false;
     lock = false;
-    printf("Keyboard unlocked\n");
+    printf("Keyboard        : Keyboard unlocked\n");
     fflush(stdout);
     emit setLock(Indicators::Unlocked);
     emit setLock(Indicators::OvertypeMode);
@@ -645,7 +651,7 @@ void Keyboard::setMapping(QString key, QString function)
 
     if (setIterator == functionMap.end())
     {
-        printf("ERROR: Function %s unknown - ignored\n", function.toLatin1().data());
+        printf("Keyboard        : ERROR: Function %s unknown - ignored\n", function.toLatin1().data());
         fflush(stdout);
     }
 

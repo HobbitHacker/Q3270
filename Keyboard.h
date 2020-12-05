@@ -119,7 +119,7 @@ class Keyboard : public QObject
             int key;
             int modifiers;
             int nativeKey;
-            QString keyChar;
+            QChar keyChar;
             kbMap *map;
             bool isMapped;
             bool mustMap;
