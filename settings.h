@@ -14,6 +14,7 @@ class Settings : public QDialog
         Q_OBJECT
 
     public:
+
         explicit Settings(QWidget *parent, Terminal *t);
         ~Settings();
 

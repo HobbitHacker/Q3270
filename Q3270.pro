@@ -19,6 +19,7 @@ SOURCES += \
     Buffer.cpp \
     DisplayScreen.cpp \
     DisplayView.cpp \
+    FontSelection.cpp \
     Keyboard.cpp \
     ProcessDataStream.cpp \
     Terminal.cpp \
@@ -33,6 +34,7 @@ HEADERS += \
     DisplayScreen.h \
     DisplayView.h \
     3270.h \
+    FontSelection.h \
     Keyboard.h \
     ProcessDataStream.h \
     Terminal.h \
@@ -42,6 +44,7 @@ HEADERS += \
     text.h
 
 FORMS += \
+    FontSelection.ui \
     mainwindow.ui \
     set.ui \
     settings.ui
