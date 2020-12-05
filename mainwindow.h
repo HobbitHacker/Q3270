@@ -23,6 +23,7 @@
 #include "DisplayView.h"
 #include "Terminal.h"
 #include "settings.h"
+#include "FontSelection.h"
 #include "3270.h"
 
 QT_BEGIN_NAMESPACE

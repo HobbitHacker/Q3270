@@ -64,6 +64,9 @@
    </property>
   </action>
   <action name="actionSet_Font">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="text">
     <string>Set Font</string>
    </property>
@@ -74,6 +77,11 @@
    </property>
    <property name="text">
     <string>Disconnect</string>
+   </property>
+  </action>
+  <action name="actionSet_Font_2">
+   <property name="text">
+    <string>Set Font 2</string>
    </property>
   </action>
  </widget>
@@ -166,5 +174,6 @@
   <slot>menuTerminalSettings()</slot>
   <slot>menuSetFont()</slot>
   <slot>menuDisconnect()</slot>
+  <slot>menuSetFont2()</slot>
  </slots>
 </ui>

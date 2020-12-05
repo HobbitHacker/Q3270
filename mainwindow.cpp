@@ -9,7 +9,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), c(new(SocketConne
 
     QCoreApplication::setOrganizationDomain("styles.homeip.net");
     QCoreApplication::setApplicationName("Q3270");
-    QCoreApplication::setOrganizationName("'andyWare");
+    QCoreApplication::setOrganizationName("andyWare");
 
     applicationSettings = new QSettings();
 
@@ -73,12 +73,24 @@ void MainWindow::menuConnect()
 //    c->connectMainframe(hi.addresses().first(), 23, d);
 
     display = new DisplayView();
+
+    if (applicationSettings->contains("font/scale"))
+    {
+        (applicationSettings->value("font/scale").toString() == "true") ? display->scaleFont(true) : display->scaleFont(false);
+    }
     ui->verticalLayout->addWidget(display);
 
     gs = new QGraphicsScene();
     display->setScene(gs);
 
     d = new ProcessDataStream(gs, display, t);
+
+    if(applicationSettings->contains("font/name"))
+    {
+        QFontDatabase *fd = new QFontDatabase();
+        QFont f = fd->font(applicationSettings->value("font/name").toString(), applicationSettings->value("font/style").toString(), applicationSettings->value("font/size").toInt());
+        d->setFont(f);
+    }
     connect(d, &ProcessDataStream::cursorMoved, this, &MainWindow::showCursorAddress);
 
     Keyboard *kbd = new Keyboard(d);
@@ -90,11 +102,15 @@ void MainWindow::menuConnect()
 
     display->installEventFilter(kbd);
 
-    QHostInfo hi = QHostInfo::fromName("127.0.0.1");
-    c->connectMainframe(hi.addresses().first(), 3271, d, t);
+//    QHostInfo hi = QHostInfo::fromName("127.0.0.1");
+    QHostInfo hi = QHostInfo::fromName("192.168.200.1");
+
+//    c->connectMainframe(hi.addresses().first(), 3271, d, t);
+    c->connectMainframe(hi.addresses().first(), 23,d,t);
 
     ui->actionDisconnect->setEnabled(true);
     ui->actionConnect->setDisabled(true);
+    ui->actionSet_Font->setEnabled(true);
 
 }
 
@@ -113,18 +129,30 @@ void MainWindow::menuDisconnect()
 
     ui->actionDisconnect->setDisabled(true);
     ui->actionConnect->setEnabled(true);
+    ui->actionSet_Font->setDisabled(true);
 }
 
 void MainWindow::menuSetFont()
 {
+    FontSelection *fs;
 
-    // TODO: breaks if non connected
-    bool ok;
-    QFont font = QFontDialog::getFont(&ok, QFont("ibm3270", 12), this);
-    if (ok)
+    if (applicationSettings->contains("font/name"))
     {
-        d->setFont(font);
+        fs = new FontSelection(this,applicationSettings->value("font/name").toString(),applicationSettings->value("font/style").toString(),applicationSettings->value("font/size").toInt());
     }
+    else
+    {
+        fs = new FontSelection(this,"ibm3270","Regular",8);
+    }
+
+    connect(fs, &FontSelection::setFont, this, &MainWindow::setSetting);
+
+    if (fs->exec() == QDialog::Accepted)
+    {
+        d->setFont(fs->getFont());
+    }
+
+    delete fs;
 }
 
 void MainWindow::menuTerminalSettings()
@@ -150,6 +178,6 @@ void MainWindow::menuQuit()
 void MainWindow::setSetting(QString key, QString value)
 {
     applicationSettings->setValue(key, value);
-    printf("Saving %s as %s/n", key.toLatin1().data(), value.toLatin1().data());
+    printf("Saving %s as %s\n", key.toLatin1().data(), value.toLatin1().data());
     fflush(stdout);
 }
