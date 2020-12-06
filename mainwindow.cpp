@@ -15,6 +15,12 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), c(new(SocketConne
 
     t = new Terminal();
 
+    if (applicationSettings->contains("terminal/model"))
+    {
+        t->setType(applicationSettings->value("terminal/model").toString());
+        t->setSize(applicationSettings->value("terminal/width").toInt(), applicationSettings->value("terminal/height").toInt());
+    }
+
     cursorAddress = new QLabel("0,0");
     syslock = new QLabel(" ");
     insMode = new QLabel(" ");
@@ -158,15 +164,14 @@ void MainWindow::menuSetFont()
 void MainWindow::menuTerminalSettings()
 {
     Settings *s = new Settings(this, t);
-    bool ok = s->exec();
-    if (ok == QDialog::Accepted)
+
+    if (s->exec() == QDialog::Accepted)
     {
-        printf("Yay, new settings");
+        setSetting("terminal/model", t->name());
+        setSetting("terminal/height",QString::number(t->height()));
+        setSetting("terminal/width", QString::number(t->width()));
     }
-    else
-    {
-        printf("Nope, as you were");
-    }
+
     fflush(stdout);
 }
 
