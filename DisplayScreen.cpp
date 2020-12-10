@@ -70,12 +70,16 @@ DisplayScreen::DisplayScreen(QGraphicsScene *parent, int screen_x, int screen_y)
     crosshair_Y->hide();
 
     ruler = false;
+    blinkShow = false;
+    cursorShow = true;
 
     blinker = new QTimer(parent);
     connect(blinker, &QTimer::timeout, this, &DisplayScreen::blink);
     blinker->start(1000);
 
-    blinkShow = false;
+    cursorBlinker = new QTimer(parent);
+    connect(cursorBlinker, &QTimer::timeout, this, &DisplayScreen::cursorBlink);
+    cursorBlinker->start(800);
 }
 
 DisplayScreen::~DisplayScreen()
@@ -739,6 +743,7 @@ void DisplayScreen::eraseUnprotected(int start, int end)
 void DisplayScreen::setCursor(int pos)
 {
     cursor->setParentItem(cell[pos]);
+    cursor->setBrush(palette[attrs[pos].colNum]);
     cursor->setPos(cell[pos]->boundingRect().left(), cell[pos]->boundingRect().top());
 }
 
@@ -784,6 +789,20 @@ void DisplayScreen::blink()
                 glyph[i]->setBrush(palette[0]);
             }
         }
+    }
+}
+
+void DisplayScreen::cursorBlink()
+{
+    cursorShow = !cursorShow;
+
+    if (!cursorShow)
+    {
+        cursor->hide();
+    }
+    else
+    {
+        cursor->show();
     }
 }
 

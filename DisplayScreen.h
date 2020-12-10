@@ -71,6 +71,7 @@ class DisplayScreen : public QObject
     public slots:
 
         void blink();
+        void cursorBlink();
 
     private:
 
@@ -215,7 +216,10 @@ class DisplayScreen : public QObject
         QGraphicsLineItem **uscore;  /* Underscores */
 
         QTimer *blinker;             /* Blinking timer */
-        bool blinkShow;              /* Whether the character is shown or not for a given blink event */
+        QTimer *cursorBlinker;       /* Cursor Blink */
+
+        bool blinkShow;              /* Whether the character is shown/hidden for a given blink event */
+        bool cursorShow;            /* Whether the cursor is shown/hidden for a given blink event */
 
         int size;
 
