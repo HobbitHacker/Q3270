@@ -156,6 +156,8 @@ void MainWindow::menuSetFont()
     if (fs->exec() == QDialog::Accepted)
     {
         d->setFont(fs->getFont());
+        display->scaleFont(fs->getScaling());
+        ui->verticalLayout->update();
     }
 
     delete fs;

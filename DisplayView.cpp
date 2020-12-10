@@ -22,6 +22,9 @@ void DisplayView::resizeEvent(QResizeEvent *event)
 
 void DisplayView::scaleFont(bool scale)
 {
-    resizeFont = scale;
+    if(resizeFont != scale)
+    {
+        resizeFont = scale;
+    }
 }
 

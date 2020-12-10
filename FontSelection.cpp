@@ -1,8 +1,10 @@
 #include "FontSelection.h"
 
-FontSelection::FontSelection(QWidget *parent, QString fontName, QString fontStyle, int fontSize) : QDialog(parent), ui(new Ui::FontSelection)
+FontSelection::FontSelection(QWidget *parent, QString fontName, QString fontStyle, int fontSize, bool scaling) : QDialog(parent), ui(new Ui::FontSelection)
 {
     ui->setupUi(this);
+
+    this->scaling = scaling;
 
     initFontList();
 
@@ -109,11 +111,37 @@ void FontSelection::fontnameSelected()
         }
     }
 
-    if (ui->FontNameList->selectedItems().count() > 0 && ui->FontSizeList->selectedItems().count() > 0 && ui->FontStyleList->selectedItems().count() > 0)
+    updateSample();
+}
+
+void FontSelection::fontstyleSelected()
+{
+    updateSample();
+}
+
+void FontSelection::fontsizeSelected()
+{
+    updateSample();
+}
+
+void FontSelection::fontscalingChanged()
+{
+    scaling = ui->FontScaling->checkState() == Qt::Checked;
+}
+
+bool FontSelection::getScaling()
+{
+    return scaling;
+}
+
+
+void FontSelection::updateSample()
+{
+    if (ui->FontNameList->selectedItems().size() > 0 && ui->FontSizeList->selectedItems().size() > 0 && ui->FontStyleList->selectedItems().size() > 0)
     {
         chosenFont = fd->font(ui->FontNameList->selectedItems().first()->text(), ui->FontStyleList->selectedItems().first()->text(), (ui->FontSizeList->selectedItems().first()->text().toInt()));
+        ui->SampleTextBox->setFont(chosenFont);
     }
-
 }
 
 void FontSelection::accept()

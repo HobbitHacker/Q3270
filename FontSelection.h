@@ -16,10 +16,11 @@ class FontSelection : public QDialog
 
     public:
 
-        FontSelection(QWidget *parent, QString fontName, QString fontStyle, int fontSize);
+        FontSelection(QWidget *parent, QString fontName, QString fontStyle, int fontSize, bool scaling = false);
         FontSelection(QWidget *parent);
         ~FontSelection();
         QFont getFont();
+        bool getScaling();
 
     signals:
 
@@ -28,18 +29,23 @@ class FontSelection : public QDialog
     private slots:
 
         void fontnameSelected();
+        void fontstyleSelected();
+        void fontsizeSelected();
+        void fontscalingChanged();
         void accept();
-
 
     private:
 
         void initFontList();
         void initFontDetails(QString fontname);
+        void updateSample();
 
         Ui::FontSelection *ui;
 
         QFontDatabase *fd;
         QFont chosenFont;
+
+        bool scaling;
 };
 
 #endif // FONTSELECTION_H
