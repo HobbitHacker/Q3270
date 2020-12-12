@@ -31,6 +31,10 @@ class Terminal : public QGraphicsView
         int getBlinkSpeed();
         bool getBlink();
 
+    signals:
+
+        void cursorBlinkChange();
+
     private:
 
         struct termTypes

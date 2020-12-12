@@ -1,8 +1,10 @@
 #include "DisplayScreen.h"
 
-DisplayScreen::DisplayScreen(QGraphicsScene *parent, int screen_x, int screen_y)
+DisplayScreen::DisplayScreen(QGraphicsScene *parent, Terminal *term, int screen_x, int screen_y)
 {
     Terminal *d = (Terminal *)parent->views().first();
+
+    this->term = term;
 
     screen = new QGraphicsScene(0, 0, parent->width(), parent->height());
 
@@ -79,6 +81,7 @@ DisplayScreen::DisplayScreen(QGraphicsScene *parent, int screen_x, int screen_y)
 
     cursorBlinker = new QTimer(parent);
     connect(cursorBlinker, &QTimer::timeout, this, &DisplayScreen::cursorBlink);
+    connect(term, &Terminal::cursorBlinkChange, this, &DisplayScreen::cursorBlinkChange);
     cursorBlinker->start(800);
 }
 
@@ -804,6 +807,12 @@ void DisplayScreen::cursorBlink()
     {
         cursor->show();
     }
+}
+
+void DisplayScreen::cursorBlinkChange()
+{
+    cursorBlinker->stop();
+    cursorBlinker->start((5 - term->getBlinkSpeed())*250);
 }
 
 int DisplayScreen::findField(int pos)

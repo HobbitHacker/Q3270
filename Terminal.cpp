@@ -78,6 +78,7 @@ void Terminal::setBlinkSpeed(int speed)
     }
 
     blinkSpeed = speed;
+    emit cursorBlinkChange();
 }
 
 bool Terminal::getBlink()

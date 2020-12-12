@@ -33,8 +33,8 @@ ProcessDataStream::ProcessDataStream(QGraphicsScene* parent, Terminal *t)
 
     lastAID = IBM3270_AID_NOAID;
 
-    default_screen = new DisplayScreen(parent, 80, 24);
-    alternate_screen = new DisplayScreen(parent, t->terminalWidth(), t->terminalHeight());
+    default_screen = new DisplayScreen(parent, t, 80, 24);
+    alternate_screen = new DisplayScreen(parent, t, t->terminalWidth(), t->terminalHeight());
 
     setScreen();
 }

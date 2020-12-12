@@ -9,7 +9,9 @@ Settings::Settings(QWidget *parent, Terminal *t) :
     ui->setupUi(this);
     changeModel(t->getType());
     ui->cursorBlink->setChecked(t->getBlink());
-    ui->cursorBlinkSpeed->setSliderPosition(t->getBlinkSpeed()/250);
+    printf("Settings        : Blink speed from terminal: %d\n", t->getBlinkSpeed());
+    fflush(stdout);
+    ui->cursorBlinkSpeed->setSliderPosition(t->getBlinkSpeed());
 
 //    setFixedSize(size());
 }

@@ -20,6 +20,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), c(new(SocketConne
     statusBar()->addPermanentWidget(syslock, 50);
     statusBar()->addPermanentWidget(insMode, 50);
     statusBar()->addPermanentWidget(cursorAddress, 50);
+
+    //TODO will need a new Terminal() for each tab
+    t = new Terminal();
 }
 
 MainWindow::~MainWindow()
@@ -67,8 +70,6 @@ void MainWindow::setIndicators(Indicators ind)
 
 void MainWindow::menuConnect()
 {
-    //TODO will need a new Terminal() for each tab
-    t = new Terminal();
 
     if (applicationSettings->contains("terminal/model"))
     {

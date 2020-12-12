@@ -18,7 +18,7 @@ class DisplayScreen : public QObject
     Q_OBJECT
 
     public:
-        DisplayScreen(QGraphicsScene *parent, int screen_x, int screen_y);
+        DisplayScreen(QGraphicsScene *parent, Terminal *term, int screen_x, int screen_y);
         ~DisplayScreen();
 
         int width();
@@ -72,6 +72,7 @@ class DisplayScreen : public QObject
 
         void blink();
         void cursorBlink();
+        void cursorBlinkChange();
 
     private:
 
@@ -247,6 +248,8 @@ class DisplayScreen : public QObject
 
         QGraphicsLineItem *crosshair_X;
         QGraphicsLineItem *crosshair_Y;
+
+        Terminal *term;
 
         qreal gridSize_X;
         qreal gridSize_Y;
