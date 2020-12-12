@@ -13,14 +13,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), c(new(SocketConne
 
     applicationSettings = new QSettings();
 
-    t = new Terminal();
-
-    if (applicationSettings->contains("terminal/model"))
-    {
-        t->setType(applicationSettings->value("terminal/model").toString());
-        t->setSize(applicationSettings->value("terminal/width").toInt(), applicationSettings->value("terminal/height").toInt());
-    }
-
     cursorAddress = new QLabel("0,0");
     syslock = new QLabel(" ");
     insMode = new QLabel(" ");
@@ -43,7 +35,7 @@ void MainWindow::setupDisplay()
 
 void MainWindow::processDataStream(Buffer *b)
 {
-    d->processStream(b);
+    datastream->processStream(b);
 	fflush(stdout);
 }
 
@@ -75,44 +67,52 @@ void MainWindow::setIndicators(Indicators ind)
 
 void MainWindow::menuConnect()
 {
-//    QHostInfo hi = QHostInfo::fromName("fandezhi.efglobe.com");
-//    c->connectMainframe(hi.addresses().first(), 23, d);
+    //TODO will need a new Terminal() for each tab
+    t = new Terminal();
 
-    display = new DisplayView();
+    if (applicationSettings->contains("terminal/model"))
+    {
+        t->setType(applicationSettings->value("terminal/model").toString());
+        t->setSize(applicationSettings->value("terminal/width").toInt(), applicationSettings->value("terminal/height").toInt());
+        t->setBlink(applicationSettings->value("terminal/cursorblink").toBool());
+        t->setBlinkSpeed(applicationSettings->value("terminal/cursorblinkspeed").toInt());
+    }
 
     if (applicationSettings->contains("font/scale"))
     {
-        (applicationSettings->value("font/scale").toString() == "true") ? display->scaleFont(true) : display->scaleFont(false);
+        (applicationSettings->value("font/scale").toString() == "true") ? t->setScaleFont(true) : t->setScaleFont(false);
     }
-    ui->verticalLayout->addWidget(display);
+
+    ui->verticalLayout->addWidget(t);
 
     gs = new QGraphicsScene();
-    display->setScene(gs);
+    t->setScene(gs);
 
-    d = new ProcessDataStream(gs, display, t);
+    datastream = new ProcessDataStream(gs, t);
 
     if(applicationSettings->contains("font/name"))
     {
         QFontDatabase *fd = new QFontDatabase();
         QFont f = fd->font(applicationSettings->value("font/name").toString(), applicationSettings->value("font/style").toString(), applicationSettings->value("font/size").toInt());
-        d->setFont(f);
+        datastream->setFont(f);
     }
-    connect(d, &ProcessDataStream::cursorMoved, this, &MainWindow::showCursorAddress);
+    connect(datastream, &ProcessDataStream::cursorMoved, this, &MainWindow::showCursorAddress);
 
-    Keyboard *kbd = new Keyboard(d);
+    Keyboard *kbd = new Keyboard(datastream);
 
     connect(kbd, &Keyboard::setLock, this, &MainWindow::setIndicators);
     connect(kbd, &Keyboard::saveKeyboardMapping, this, &MainWindow::setSetting);
 
     kbd->setMap();
 
-    display->installEventFilter(kbd);
+    t->installEventFilter(kbd);
 
+    //TODO most-recently-used list and dialog for connect
 //    QHostInfo hi = QHostInfo::fromName("127.0.0.1");
     QHostInfo hi = QHostInfo::fromName("192.168.200.1");
 
 //    c->connectMainframe(hi.addresses().first(), 3271, d, t);
-    c->connectMainframe(hi.addresses().first(), 23,d,t);
+    c->connectMainframe(hi.addresses().first(), 23,datastream,t);
 
     ui->actionDisconnect->setEnabled(true);
     ui->actionConnect->setDisabled(true);
@@ -122,16 +122,15 @@ void MainWindow::menuConnect()
 
 void MainWindow::menuDisconnect()
 {
-
     c->disconnectMainframe();
 
-    ui->verticalLayout->removeWidget(display);
+    ui->verticalLayout->removeWidget(t);
 
-    delete d;
+    delete datastream;
     gs->clear();
     delete gs;
 
-    delete display;
+    delete t;
 
     ui->actionDisconnect->setDisabled(true);
     ui->actionConnect->setEnabled(true);
@@ -155,8 +154,8 @@ void MainWindow::menuSetFont()
 
     if (fs->exec() == QDialog::Accepted)
     {
-        d->setFont(fs->getFont());
-        display->scaleFont(fs->getScaling());
+        datastream->setFont(fs->getFont());
+        t->setScaleFont(fs->getScaling());
         ui->verticalLayout->update();
     }
 
@@ -170,8 +169,10 @@ void MainWindow::menuTerminalSettings()
     if (s->exec() == QDialog::Accepted)
     {
         setSetting("terminal/model", t->name());
-        setSetting("terminal/height",QString::number(t->height()));
-        setSetting("terminal/width", QString::number(t->width()));
+        setSetting("terminal/height",QString::number(t->terminalHeight()));
+        setSetting("terminal/width", QString::number(t->terminalWidth()));
+        setSetting("terminal/cursorblink", QString::number(t->getBlink()));
+        setSetting("terminal/cursorblinkspeed", QString::number(t->getBlinkSpeed()));
     }
 
     fflush(stdout);

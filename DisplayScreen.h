@@ -11,7 +11,7 @@
 #include "text.h"
 #include "Buffer.h"
 #include "3270.h"
-#include "DisplayView.h"
+#include "Terminal.h"
 
 class DisplayScreen : public QObject
 {

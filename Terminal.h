@@ -2,14 +2,18 @@
 #define TERMINAL_H
 
 #include <QString>
+#include <QGraphicsView>
 
-class Terminal
+class Terminal : public QGraphicsView
 {
+    Q_OBJECT
     public:
-        Terminal(QString type = "IBM-3279-2-E", int termX = 0, int termY = 0);
+        Terminal();
 
-        int width();
-        int height();
+        void resizeEvent(QResizeEvent *r);
+
+        int terminalWidth();
+        int terminalHeight();
         char *name();
 
         void setWidth(int w);
@@ -17,7 +21,15 @@ class Terminal
 
         void setType(QString type);
         void setType(int type);
+
         void setSize(int x, int y);
+        void setBlink(bool b);
+        void setBlinkSpeed(int s);
+        void setScaleFont(bool scale);
+
+        int getType();
+        int getBlinkSpeed();
+        bool getBlink();
 
     private:
 
@@ -36,6 +48,9 @@ class Terminal
         };
 
         int termType;
+        bool blink;
+        int blinkSpeed;
+        bool resizeFont;
 
 };
 

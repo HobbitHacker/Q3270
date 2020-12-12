@@ -16,12 +16,12 @@
 
 #include "ProcessDataStream.h"
 
-ProcessDataStream::ProcessDataStream(QGraphicsScene* parent, DisplayView *dv, Terminal *t)
+ProcessDataStream::ProcessDataStream(QGraphicsScene* parent, Terminal *t)
 {
-    //TODO: screen sizes
+    //TODO: some of this stuff belongs in Terminal()
 
     scene = parent;
-    view = dv;
+    terminal = t;
 
     primary_x = 0;
     primary_y = 0;
@@ -34,7 +34,7 @@ ProcessDataStream::ProcessDataStream(QGraphicsScene* parent, DisplayView *dv, Te
     lastAID = IBM3270_AID_NOAID;
 
     default_screen = new DisplayScreen(parent, 80, 24);
-    alternate_screen = new DisplayScreen(parent, t->width(), t->height());
+    alternate_screen = new DisplayScreen(parent, t->terminalWidth(), t->terminalHeight());
 
     setScreen();
 }
@@ -43,12 +43,12 @@ void ProcessDataStream::setScreen(bool alternate)
 {
     if (alternate)
     {
-        view->setScene(alternate_screen->getScene());
+        terminal->setScene(alternate_screen->getScene());
         screen = alternate_screen;
     }
     else
     {
-        view->setScene(default_screen->getScene());
+        terminal->setScene(default_screen->getScene());
         screen = default_screen;
     }
 

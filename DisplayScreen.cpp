@@ -2,7 +2,7 @@
 
 DisplayScreen::DisplayScreen(QGraphicsScene *parent, int screen_x, int screen_y)
 {
-    DisplayView *d = (DisplayView *)parent->views().first();
+    Terminal *d = (Terminal *)parent->views().first();
 
     screen = new QGraphicsScene(0, 0, parent->width(), parent->height());
 

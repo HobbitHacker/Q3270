@@ -51,7 +51,7 @@ class ProcessDataStream : public QObject
 	
 	public:
 	
-        ProcessDataStream(QGraphicsScene *parent, DisplayView *dv, Terminal *t);
+        ProcessDataStream(QGraphicsScene *parent, Terminal *t);
         QString EBCDICtoASCII();
         void processStream(Buffer *b);
         bool processing;
@@ -96,7 +96,7 @@ class ProcessDataStream : public QObject
 	private:
 
         QGraphicsScene *scene;
-        QGraphicsView *view;
+        QGraphicsView *terminal;
 
         Terminal *term;
 

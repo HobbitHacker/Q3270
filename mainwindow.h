@@ -20,7 +20,6 @@
 #include "SocketConnection.h"
 #include "ProcessDataStream.h"
 #include "Keyboard.h"
-#include "DisplayView.h"
 #include "Terminal.h"
 #include "settings.h"
 #include "FontSelection.h"
@@ -62,11 +61,10 @@ class MainWindow : public QMainWindow
 
     Terminal *t;
 	SocketConnection *c;
-    ProcessDataStream *d;
+    ProcessDataStream *datastream;
     Ui::MainWindow *ui;    
     QTextEdit *te;
     QGraphicsScene *gs;
-    DisplayView *display;
 
     QSettings *applicationSettings;
 

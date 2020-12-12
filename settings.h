@@ -18,8 +18,13 @@ class Settings : public QDialog
         explicit Settings(QWidget *parent, Terminal *t);
         ~Settings();
 
+        bool getBlink();
+        int getSpeed();
+        bool getInherit();
+
     private slots:
         void changeModel(int m);
+
 
     private:
 //        using QDialog::accept;
@@ -30,6 +35,8 @@ class Settings : public QDialog
         Ui::Settings *ui;
 
         int termType;
+        int blinkSpeed;
+        bool blink;
 
 };
 

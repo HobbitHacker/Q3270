@@ -7,7 +7,9 @@ Settings::Settings(QWidget *parent, Terminal *t) :
 {
     this->t = t;
     ui->setupUi(this);
-    changeModel(0);
+    changeModel(t->getType());
+    ui->cursorBlink->setChecked(t->getBlink());
+    ui->cursorBlinkSpeed->setSliderPosition(t->getBlinkSpeed()/250);
 
 //    setFixedSize(size());
 }
@@ -61,6 +63,8 @@ void Settings::accept()
     t->setType(ui->terminalType->currentIndex());
 
     t->setSize(ui->terminalCols->value(), ui->terminalRows->value());
+    t->setBlink(ui->cursorBlink);
+    t->setBlinkSpeed(ui->cursorBlinkSpeed->sliderPosition());
 
     QDialog::accept();
 
