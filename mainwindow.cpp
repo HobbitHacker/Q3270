@@ -30,12 +30,6 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-void MainWindow::setupDisplay()
-{
-    connect(c, &SocketConnection::dataStreamComplete, this, &MainWindow::processDataStream);
-}
-
-
 void MainWindow::processDataStream(Buffer *b)
 {
     datastream->processStream(b);
@@ -114,6 +108,8 @@ void MainWindow::menuConnect()
 
 //    c->connectMainframe(hi.addresses().first(), 3271, d, t);
     c->connectMainframe(hi.addresses().first(), 23,datastream,t);
+
+    connect(c, &SocketConnection::dataStreamComplete, this, &MainWindow::processDataStream);
 
     ui->actionDisconnect->setEnabled(true);
     ui->actionConnect->setDisabled(true);
