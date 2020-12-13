@@ -110,6 +110,7 @@ void MainWindow::menuConnect()
     c->connectMainframe(hi.addresses().first(), 23,datastream,t);
 
     connect(c, &SocketConnection::dataStreamComplete, this, &MainWindow::processDataStream);
+    connect(c, &SocketConnection::disconnected, this, &MainWindow::menuDisconnect);
 
     ui->actionDisconnect->setEnabled(true);
     ui->actionConnect->setDisabled(true);
@@ -132,6 +133,7 @@ void MainWindow::menuDisconnect()
     ui->actionDisconnect->setDisabled(true);
     ui->actionConnect->setEnabled(true);
     ui->actionSet_Font->setDisabled(true);
+    setIndicators(Indicators::Unlocked);
 }
 
 void MainWindow::menuSetFont()

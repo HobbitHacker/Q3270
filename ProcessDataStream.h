@@ -92,6 +92,7 @@ class ProcessDataStream : public QObject
         void keyboardUnlocked();
         void cursorMoved(int x, int y);
         void blink();
+        void disconnected();
 
 	private:
 

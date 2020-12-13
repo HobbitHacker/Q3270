@@ -65,65 +65,66 @@ class SocketConnection : public QObject
     Q_DISABLE_COPY(SocketConnection)
 
     public:
-    explicit SocketConnection(QObject *parent = nullptr);
+        explicit SocketConnection(QObject *parent = nullptr);
 
-    void sendResponse(Buffer *b);
+        void sendResponse(Buffer *b);
 
     public slots:
-    void connectMainframe(const QHostAddress &address, quint16 port, ProcessDataStream *d, Terminal *t);
-    void disconnectMainframe();
+        void connectMainframe(const QHostAddress &address, quint16 port, ProcessDataStream *d, Terminal *t);
+        void disconnectMainframe();
 
-private slots:
-    void onReadyRead();
+    private slots:
+        void onReadyRead();
 
-signals:
-    void connected();
-    void dataStreamComplete(Buffer *b);
-    void disconnected();
-    void error(QAbstractSocket::SocketError socketError);
 
-private:
-	enum TelnetState {
-		TELNET_STATE_DATA, 
-		TELNET_STATE_IAC,
-		TELNET_STATE_IAC_DO,
-		TELNET_STATE_IAC_DONT,
-		TELNET_STATE_IAC_WILL,		
-		TELNET_STATE_IAC_WONT,
-		TELNET_STATE_IAC_SB,
-        TELNET_STATE_SB,
-		TELNET_STATE_SB_IAC,
-		TELNET_STATE_SB_TTYPE,
-		TELNET_STATE_SB_TTYPE_SEND,
-        TELNET_STATE_SB_TTYPE_SEND_IAC,
-        TELNET_STATE_SB_TN3270E,
-        TELNET_STATE_SB_TN3270E_SEND,
-        TELNET_STATE_SB_TN3270E_SEND_DEVICE_TYPE
-    };
+    signals:
+        void connected();
+        void dataStreamComplete(Buffer *b);
+        void disconnected();
+        void error(QAbstractSocket::SocketError socketError);
 
-    bool tn3270e_Mode;
+    private:
+        enum TelnetState {
+            TELNET_STATE_DATA,
+            TELNET_STATE_IAC,
+            TELNET_STATE_IAC_DO,
+            TELNET_STATE_IAC_DONT,
+            TELNET_STATE_IAC_WILL,
+            TELNET_STATE_IAC_WONT,
+            TELNET_STATE_IAC_SB,
+            TELNET_STATE_SB,
+            TELNET_STATE_SB_IAC,
+            TELNET_STATE_SB_TTYPE,
+            TELNET_STATE_SB_TTYPE_SEND,
+            TELNET_STATE_SB_TTYPE_SEND_IAC,
+            TELNET_STATE_SB_TN3270E,
+            TELNET_STATE_SB_TN3270E_SEND,
+            TELNET_STATE_SB_TN3270E_SEND_DEVICE_TYPE
+        };
 
-    TelnetState telnetState;
-    QTcpSocket *dataSocket;
-    QDataStream dataStream;
-	ProcessDataStream *displayDataStream;
+        bool tn3270e_Mode;
 
-    Terminal *term;
+        TelnetState telnetState;
+        QTcpSocket *dataSocket;
+        QDataStream dataStream;
+        ProcessDataStream *displayDataStream;
 
-    Buffer *incomingData;
-    Buffer *subNeg;
+        Terminal *term;
 
-    void sendData();
+        Buffer *incomingData;
+        Buffer *subNeg;
 
-    void datastreamReceived(const QJsonObject &doc);
+        void sendData();
 
-    //TODO - do we need to pass these buffers? They're class-wide
-    void processSubNegotiation(Buffer *buf);
-    void processBuffer(Buffer *buf);
+        void datastreamReceived(const QJsonObject &doc);
 
-    const char *tn3270e_functions_strings[5] = {"BIND_IMAGE", "DATA_STREAM_CTL", "RESPONSES", "SCS_CTL_CODES", "SYSREQ"};
+        //TODO - do we need to pass these buffers? They're class-wide
+        void processSubNegotiation(Buffer *buf);
+        void processBuffer(Buffer *buf);
 
-    char tn32703_functions_flags[5];
+        const char *tn3270e_functions_strings[5] = {"BIND_IMAGE", "DATA_STREAM_CTL", "RESPONSES", "SCS_CTL_CODES", "SYSREQ"};
+
+        char tn32703_functions_flags[5];
 };
 
 #endif // SOCKETCONNECTION_H

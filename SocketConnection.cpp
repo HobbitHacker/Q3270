@@ -50,12 +50,8 @@ void SocketConnection::onReadyRead()
     dataStream.setVersion(QDataStream::Qt_5_7);
 
 //    printf("SocketConnection : Buffer allocated %ld\n", incomingData->address());
-    fflush(stdout);
+//    fflush(stdout);
 
-//    incomingData->reset();
-//    TelnetState oldtelnetState = telnetState;
-
-    // prepare a container to hold the UTF-8 encoded JSON we receive from the socket
     uchar socketByte;
 	char data3270; 
 	char response[50];
@@ -387,7 +383,7 @@ void SocketConnection::processBuffer(Buffer *buf)
 
     if (dataType == TN3270E_DATATYPE_3270_DATA)
     {
-        emit(dataStreamComplete(buf->nextByte()));
+        emit dataStreamComplete(buf->nextByte());
         buf->reset();
     }
 }
