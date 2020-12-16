@@ -161,9 +161,11 @@ void DisplayScreen::clear()
 
     }
     resetCharAttr();
+
+    geActive = false;
 }
 
-void DisplayScreen::setChar(int pos, unsigned char c, bool move)
+void DisplayScreen::setChar(int pos, QChar c, bool move)
 {
 
     int lastField;
@@ -180,7 +182,11 @@ void DisplayScreen::setChar(int pos, unsigned char c, bool move)
 
     attrs[pos].charAttr = useCharAttr;
 
-    glyph[pos]->setText(QString(EBCDICtoASCIImap[c]));
+
+    printf("[pos %d set to (%c) (0x%2X)]", pos,c,c);
+    glyph[pos]->setText(EBCDICtoASCIImap[c.unicode()]);
+
+    geActive = false;
 
     if (!move)
     {
@@ -270,7 +276,7 @@ void DisplayScreen::setChar(int pos, unsigned char c, bool move)
         uscore[pos]->setVisible(false);
     }
 
-    if (c != IBM3270_CHAR_NULL)
+/*    if (c != IBM3270_CHAR_NULL)
     {
         printf("%c", EBCDICtoASCIImap[c]);
     }
@@ -279,7 +285,7 @@ void DisplayScreen::setChar(int pos, unsigned char c, bool move)
         printf("0x00");
     }
 
-    fflush(stdout);
+*/    fflush(stdout);
 }
 
 unsigned char DisplayScreen::getChar(int pos)
@@ -370,6 +376,11 @@ void DisplayScreen::resetCharAttr()
     charAttr.reverse_default = true;
     charAttr.uscore_default = true;
     charAttr.colour_default = true;
+}
+
+void DisplayScreen::setGraphicEscape()
+{
+    geActive = true;
 }
 
 void DisplayScreen::setField(int pos, unsigned char c, bool sfe)
@@ -658,7 +669,7 @@ bool DisplayScreen::insertChar(int pos, unsigned char c, bool insertMode)
             printf("Moving %c to %d\n", glyph[offsetPrev]->toUChar(), offset);
             fflush(stdout);
             attrs[offset] = attrs[offsetPrev];
-            setChar(offset, ASCIItoEBCDICmap[glyph[offsetPrev]->toUChar()], true);
+            setChar(offset, glyph[offsetPrev]->text()[0], true);
         }
     }
 
@@ -955,7 +966,7 @@ void DisplayScreen::getModifiedFields(Buffer *buffer)
                         uchar b = glyph[thisField++]->toUChar();
                         if (b != IBM3270_CHAR_NULL)
                         {
-                            buffer->add(ASCIItoEBCDICmap[b]);
+                            buffer->add(ASCIItoEBCDICmap[b].toLatin1());
                             printf("%c", b);
                         }
                         thisField = thisField % screenPos_max;

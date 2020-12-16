@@ -20,15 +20,16 @@ void Text::paint(QPainter *painter, const QStyleOptionGraphicsItem * option, QWi
 
 uchar Text::toUChar()
 {
-    return this->text().toStdString()[0];
+    return this->text().toLatin1()[0];
 }
 
 void Text::setText(const QString &text)
 {
     if (text.size()>0)
     {
-//        qDebug() << text;
-        if (text == '\u0000')
+        printf("Text: (%c)\n",text.toLatin1().data()[0]);
+        fflush(stdout);
+        if (text == '\u0000' || text == '\u001A')
         {
             QGraphicsSimpleTextItem::setText(0x00);
         }

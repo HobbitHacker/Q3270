@@ -161,6 +161,7 @@ class ProcessDataStream : public QObject
         void processIC();
         void processRA(Buffer *b);
         void processEUA(Buffer *b);
+        void processGE(Buffer *b);
 
 
         int extractBufferAddress(Buffer *b);

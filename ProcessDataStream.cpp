@@ -175,6 +175,9 @@ void ProcessDataStream::processOrders(Buffer *b)
         case IBM3270_EUA:
             processEUA(b);
             break;
+        case IBM3270_GE:
+            processGE(b);
+            break;
         default:
             placeChar(b->getByte());
     }
@@ -445,6 +448,11 @@ void ProcessDataStream::processEUA(Buffer *b)
 
     screen->eraseUnprotected(primary_pos, stopAddress);
     resetKB = true;
+}
+
+void ProcessDataStream::processGE(Buffer *b)
+{
+    screen->setGraphicEscape();
 }
 
 void ProcessDataStream::WSFoutbound3270DS(Buffer *b)

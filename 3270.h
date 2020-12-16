@@ -31,6 +31,7 @@
 #define IBM3270_RA   0x3C   /* Repeat to Address */
 #define IBM3270_SA   0x28   /* Set Attribute */
 #define IBM3270_EUA  0x12   /* Erase Unprotected to Address */
+#define IBM3270_GE   0x08   /* Graphic Escape */
 
 /* Constants for some EBCDIC chars */
 #define IBM3270_CHAR_NULL  0x00

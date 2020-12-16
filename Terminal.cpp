@@ -19,7 +19,7 @@ void Terminal::setType(QString type)
 {
     for (int i = 0; i < 5; i++)
     {
-        if (type == terms->term[i])
+        if (type == terms[i].term)
         {
             termType = i;
             return;
