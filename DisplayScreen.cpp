@@ -183,10 +183,18 @@ void DisplayScreen::setChar(int pos, QChar c, bool move)
     attrs[pos].charAttr = useCharAttr;
 
 
-    printf("[pos %d set to (%c) (0x%2X)]", pos,c,c);
-    glyph[pos]->setText(EBCDICtoASCIImap[c.unicode()]);
+//    printf("[pos %d set to (%c) (0x%2X)]", pos,c,c);
 
-    geActive = false;
+    if(!geActive)
+    {
+        glyph[pos]->setText(EBCDICtoASCIImap[c.unicode()]);
+    }
+    else
+    {
+        printf("%d\n", c.unicode());
+        glyph[pos]->setText(EBCDICtoASCIImapge[c.unicode()]);
+        geActive = false;
+    }
 
     if (!move)
     {

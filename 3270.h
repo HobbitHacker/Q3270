@@ -50,6 +50,7 @@
 #define IBM3270_SF_QUERYREPLY_HIGHLIGHT  0x87
 #define IBM3270_SF_QUERYREPLY_COLOUR     0x86
 #define IBM3270_SF_QUERYREPLY_IMPPARTS   0xA6 /* Implicit Partitions */
+#define IBM3270_SF_QUERYREPLY_CHARSETS   0x85 /* Graphic Escape supported for example */
 
 /* Extended Attributes */
 #define IBM3270_EXT_DEFAULT       0x00

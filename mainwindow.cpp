@@ -103,11 +103,11 @@ void MainWindow::menuConnect()
     t->installEventFilter(kbd);
 
     //TODO most-recently-used list and dialog for connect
-//    QHostInfo hi = QHostInfo::fromName("127.0.0.1");
-    QHostInfo hi = QHostInfo::fromName("192.168.200.1");
+    QHostInfo hi = QHostInfo::fromName("127.0.0.1");
+//    QHostInfo hi = QHostInfo::fromName("192.168.200.1");
 
-//    c->connectMainframe(hi.addresses().first(), 3271, d, t);
-    c->connectMainframe(hi.addresses().first(), 23,datastream,t);
+    c->connectMainframe(hi.addresses().first(), 3271, datastream, t);
+//    c->connectMainframe(hi.addresses().first(), 23,datastream,t);
 
     connect(c, &SocketConnection::dataStreamComplete, this, &MainWindow::processDataStream);
     connect(c, &SocketConnection::disconnected, this, &MainWindow::menuDisconnect);

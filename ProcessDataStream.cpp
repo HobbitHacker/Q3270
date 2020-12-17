@@ -453,6 +453,7 @@ void ProcessDataStream::processEUA(Buffer *b)
 void ProcessDataStream::processGE(Buffer *b)
 {
     screen->setGraphicEscape();
+    placeChar(b->nextByte());
 }
 
 void ProcessDataStream::WSFoutbound3270DS(Buffer *b)
@@ -553,17 +554,42 @@ void ProcessDataStream::replySummary(Buffer *buffer)
 0070   00 1b - length
        81 - query reply
        85 - character sets
-       82 - graphic escape, no multiple LCIDs, no LOAD PS, no LOAD PS EXTENDED, one char size only, no DBCS, not CGCSID
+       82 - 10000010
+         1  ALT         graphic escape
+         0  MULTID   no multiple LCIDs
+         0  LOADABLE no LOAD PS
+         0  EXT      no LOAD PS EXTENDED
+         0  MS       no more than one char size only
+         0  CH2      no DBCS
+         1  GF          CGCSID present
+         0  - reserved -
        00 - LOAD PS slot size required
        09 - default width
        0c - default height
        00 00 00 00 - LOAD PS format types supported (none)
-          07  - char set 7
-          00 -  non-loadable, single plane, single byte char set, LCID compare
-          10 - local char set id
-          00
-0080      02 - char set 2
-          b9 00 25 01 10 f1 03 c3 01 36
+       07 - length of each descriptor
+
+          00 - SET  - char set
+          10 - Flags
+              00010000
+                 0 - LOAD    Non-loadable
+                 0 - TRIPLE  Not triple plane
+                 0 - CHAR    Single-byte character set
+                 1 - CB      No LCID compare
+                 0000 - reserved
+          00 LCID - Local character set id
+          [ bytes SW and SH missing as MS is zero ]
+          [ bytes SUBSN and SUBSN missing as CH2 is zero ]
+
+          CGCSID - present as GF set to one
+0080      02 b9 - character set number - 697
+          00 25 - code page - 037
+
+          01 - char set
+          10 - No LCID compare
+          f1 - Local character set id
+          03 c3 - character set 963
+          01 36 - code page 310
 
        00 26 - length (38)
        81  - query reply
@@ -624,7 +650,8 @@ void ProcessDataStream::replySummary(Buffer *buffer)
                             IBM3270_SF_QUERYREPLY_SUMMARY,
                             IBM3270_SF_QUERYREPLY_COLOUR,
                             IBM3270_SF_QUERYREPLY_IMPPARTS,
-                            IBM3270_SF_QUERYREPLY_USABLE
+                            IBM3270_SF_QUERYREPLY_USABLE,
+                            IBM3270_SF_QUERYREPLY_CHARSETS
                           };
 
     unsigned char qrcolour[] = {
@@ -688,10 +715,59 @@ void ProcessDataStream::replySummary(Buffer *buffer)
                                     0x00, 0x00  /* 21 & 22 - Screen buffer size */
                                   };
 
-    buffer->add(0x00);    //(char*)qrt)>>8);
-    buffer->add(0x06);    //strlen((char*)qrt)&0xFF);
+    unsigned char qcharsets[] = {
+                                IBM3270_SF_QUERYREPLY,
+                                IBM3270_SF_QUERYREPLY_CHARSETS,
+                                0x80,            /* GE supported only */
+                                                 /* x....... - ALT */
+                                                 /*            0 - Graphic Escape not supported */
+                                                 /*            1 - Graphic Escape not supported */
+                                                 /* .x...... - MULTID */
+                                                 /*            0 - Multiple LCIDs are not supported */
+                                                 /*            1 - Multiple LCIDs are supported */
+                                                 /* ..x..... - LOADABLE */
+                                                 /*            0 - LOAD PS are not supported */
+                                                 /*            1 - LOAD PS are supported */
+                                                 /* ...x.... - EXT */
+                                                 /*            0 - LOAD PS EXTENDED is not supported */
+                                                 /*            1 - LOAD PS EXTENDED is supported */
+                                                 /* ....x... - MS */
+                                                 /*            0 - Only one character slot size is supported */
+                                                 /*            1 - More than one size of character slot is supported */
+                                                 /* .....x.. - CH2 */
+                                                 /*            0 - 2-byte coded character sets are not supported */
+                                                 /*            1 - 2 byte coded character sets are supported */
+                                                 /* .......x - GF */
+                                                 /*            0 - CGCSGID is not present */
+                                                 /*            1 - CGCSGID is present */
 
-    for(int i = 0; (unsigned long)i < 4; i++)
+                                0x00,            /* x.xxxxxx - reserved */
+                                                 /*  x       - Programmed Symbols Character Slot */
+                                                 /*             0 = Load PS slot size must match */
+                                                 /*             1 = Load PS slot size match not required */
+                                0x04, 0x03,      /* Default character slot width, height */
+                                0x00, 0x00, 0x00, 0x00,   /* LOAD PS format types supported - none */
+                                    0x07,   /* length of descriptor areas   */
+
+                                      // Descriptor set 1
+                                      0x00, /* char set 0 */
+                                      0x10, /* flags: no LCID compare */
+                                      0x00, /* local character set id */
+                                      0x02, 0xB9, /* character set number */
+                                      0x00, 0x25,  /* code page 037 */
+
+                                      // Descriptor set 2
+                                      0x01, /* char set 1 */
+                                      0x10, /* flags: no LCID compare */
+                                      0xF1, /* local character set id */
+                                      0x03, 0xC3, /* character set number */
+                                      0x01, 0x36  /* code page 310 */
+    };
+
+    buffer->add(0x00);    //(char*)qrt)>>8);
+    buffer->add(0x07);    //strlen((char*)qrt)&0xFF);
+
+    for(int i = 0; (unsigned long)i < 5; i++)
     {
         buffer->add(qrt[i]);
     }
@@ -710,6 +786,14 @@ void ProcessDataStream::replySummary(Buffer *buffer)
     for(int i = 0; (unsigned long)i < 15; i++)
     {
         buffer->add(qpart[i]);
+    }
+
+    buffer->add(00);
+    buffer->add(27);
+
+    for(int i = 0; (unsigned long)i < 27; i++)
+    {
+        buffer->add(qcharsets[i]);
     }
 
     buffer->add(0x00);

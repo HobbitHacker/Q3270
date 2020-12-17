@@ -27,8 +27,8 @@ void Text::setText(const QString &text)
 {
     if (text.size()>0)
     {
-        printf("Text: (%c)\n",text.toLatin1().data()[0]);
-        fflush(stdout);
+//        printf("Text: (%c)\n",text.toLatin1().data()[0]);
+//        fflush(stdout);
         if (text == '\u0000' || text == '\u001A')
         {
             QGraphicsSimpleTextItem::setText(0x00);
