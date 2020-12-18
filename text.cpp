@@ -18,28 +18,29 @@ void Text::paint(QPainter *painter, const QStyleOptionGraphicsItem * option, QWi
     QGraphicsSimpleTextItem::paint(painter, option, widget);
 }
 
-uchar Text::toUChar()
+uchar Text::getEBCDIC()
 {
-    return this->text().toLatin1()[0];
+    return ebcdic;
 }
 
-void Text::setText(const QString &text)
+void Text::setText(const QString text, unsigned char ebcdic, bool graphic)
 {
-    if (text.size()>0)
-    {
-//        printf("Text: (%c)\n",text.toLatin1().data()[0]);
-//        fflush(stdout);
-        if (text == '\u0000' || text == '\u001A')
-        {
-            QGraphicsSimpleTextItem::setText(0x00);
-        }
-        else
-        {
-            QGraphicsSimpleTextItem::setText(text);
-        }
-    }
-    else
+    if (ebcdic == 0x00)
     {
         QGraphicsSimpleTextItem::setText(0x00);
     }
+    else
+    {
+        QGraphicsSimpleTextItem::setText(text);
+    }
+
+    this->graphic = graphic;
+    this->ebcdic = ebcdic;
+}
+
+void Text::copyTextFrom(Text *source)
+{
+    QGraphicsSimpleTextItem::setText(source->text());
+    graphic = source->getGraphic();
+    ebcdic = source->getEBCDIC();
 }

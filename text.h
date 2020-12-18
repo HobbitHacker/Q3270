@@ -18,8 +18,16 @@ class Text : public QObject, public QGraphicsSimpleTextItem
         Text(QGraphicsItem* parent = 0);
         QRectF boundingRect() const;
         void paint(QPainter *painter, const QStyleOptionGraphicsItem * option, QWidget * widget = 0);
-        uchar toUChar();
-        void setText(const QString &text);
+        uchar getEBCDIC();
+        bool getGraphic();
+        void setText(const QString text, uchar ebcdic, bool graphic);
+        void copyTextFrom(Text *source);
+
+   private:
+
+        QString contents;
+        uchar ebcdic;
+        bool graphic;
 };
 
 #endif // TEXT_H
