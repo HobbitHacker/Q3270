@@ -937,7 +937,7 @@ int DisplayScreen::findPrevUnprotectedField(int pos)
     }
     printf("No unprotected field found: start = %d, end = %d\n", pos, pos + screenPos_max);
     fflush(stdout);
-    return 0;
+    return pos - 1;
 }
 
 void DisplayScreen::getModifiedFields(Buffer *buffer)
