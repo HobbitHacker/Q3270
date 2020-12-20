@@ -23,6 +23,11 @@ uchar Text::getEBCDIC()
     return ebcdic;
 }
 
+bool Text::getGraphic()
+{
+    return graphic;
+}
+
 void Text::setText(const QString text, unsigned char ebcdic, bool graphic)
 {
     if (ebcdic == 0x00)

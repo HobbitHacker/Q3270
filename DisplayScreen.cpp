@@ -8,6 +8,8 @@ DisplayScreen::DisplayScreen(QGraphicsScene *parent, Terminal *term, int screen_
 
     screen = new QGraphicsScene(0, 0, parent->width(), parent->height());
 
+    screen->setBackgroundBrush(palette[0]);
+
     this->screen_x = screen_x;
     this->screen_y = screen_y;
 
@@ -136,7 +138,7 @@ void DisplayScreen::clear()
         uscore[i]->setVisible(false);
 
         glyph[i]->setBrush(palette[1]);
-        glyph[i]->setText(0x00);
+        glyph[i]->setText(0x00, 0x00, false);
 
         attrs[i].colNum = 1;
 
@@ -165,7 +167,7 @@ void DisplayScreen::clear()
     geActive = false;
 }
 
-void DisplayScreen::setChar(int pos, QChar c, bool move)
+void DisplayScreen::setChar(int pos, short unsigned int c, bool move)
 {
 
     int lastField;
@@ -187,12 +189,11 @@ void DisplayScreen::setChar(int pos, QChar c, bool move)
 
     if(!geActive)
     {
-        glyph[pos]->setText(EBCDICtoASCIImap[c.unicode()]);
+        glyph[pos]->setText(EBCDICtoASCIImap[c], c, false);
     }
     else
     {
-        printf("%d\n", c.unicode());
-        glyph[pos]->setText(EBCDICtoASCIImapge[c.unicode()]);
+        glyph[pos]->setText(EBCDICtoASCIImapge[c], c, true);
         geActive = false;
     }
 
@@ -551,7 +552,8 @@ void DisplayScreen::setFieldAttrs(int start)
 
     resetFieldAttrs(start);
 
-    glyph[start]->setText(IBM3270_CHAR_NULL);
+    //TODO should store the field attributes?
+    glyph[start]->setText(IBM3270_CHAR_NULL, IBM3270_CHAR_NULL, false);
     uscore[start]->setVisible(false);
 }
 
@@ -669,16 +671,20 @@ bool DisplayScreen::insertChar(int pos, unsigned char c, bool insertMode)
         }
         printf("Field length: %d, starting at %d, ending at %d\n", endPos - pos, pos, endPos);
         fflush(stdout);
+        //FIXME: Is this needed?
+        bool tmpGE = geActive;
         for(int fld = endPos; fld > pos; fld--)
         {
             int offset = fld % screenPos_max;
             int offsetPrev = (fld - 1) % screenPos_max;
 
-            printf("Moving %c to %d\n", glyph[offsetPrev]->toUChar(), offset);
-            fflush(stdout);
+//            printf("Moving %c to %d\n", glyph[offsetPrev]->getEBCDIC(), offset);
+//            fflush(stdout);
             attrs[offset] = attrs[offsetPrev];
-            setChar(offset, glyph[offsetPrev]->text()[0], true);
+            geActive = glyph[offsetPrev]->getGraphic();
+            setChar(offset, glyph[offsetPrev]->getEBCDIC(), true);
         }
+        geActive = tmpGE;
     }
 
     printf("MDT set for %d\n", thisField);
@@ -711,10 +717,12 @@ void DisplayScreen::deleteChar(int pos)
         int offsetNext = (fld + 1) % screenPos_max;
 
         attrs[offset] = attrs[offsetNext];
-        setChar(offset, ASCIItoEBCDICmap[glyph[offsetNext]->toUChar()], true);
+        bool tmpGE = geActive;
+        setChar(offset, glyph[offsetNext]->getEBCDIC(), true);
+        geActive = tmpGE;
     }
 
-    glyph[endPos - 1]->setText(IBM3270_CHAR_NULL);
+    glyph[endPos - 1]->setText(IBM3270_CHAR_NULL, IBM3270_CHAR_NULL, false);
     attrs[findField(pos)].mdt = true;
 }
 
@@ -730,7 +738,7 @@ void DisplayScreen::eraseEOF(int pos)
     /* Blank field */
     for(int i = pos; i < nextField; i++)
     {
-        glyph[i % screenPos_max]->setText(0x00);
+        glyph[i % screenPos_max]->setText(0x00, 0x00, false);
     }
 
     attrs[findField(pos)].mdt = true;
@@ -757,7 +765,7 @@ void DisplayScreen::eraseUnprotected(int start, int end)
         }
         else
         {
-                glyph[i]->setText(" ");
+                glyph[i]->setText(" ", IBM3270_CHAR_SPACE, false);
         }
     }
 }
@@ -971,10 +979,10 @@ void DisplayScreen::getModifiedFields(Buffer *buffer)
 
                     do
                     {
-                        uchar b = glyph[thisField++]->toUChar();
+                        uchar b = glyph[thisField++]->getEBCDIC();
                         if (b != IBM3270_CHAR_NULL)
                         {
-                            buffer->add(ASCIItoEBCDICmap[b].toLatin1());
+                            buffer->add(b);
                             printf("%c", b);
                         }
                         thisField = thisField % screenPos_max;
@@ -1018,7 +1026,7 @@ void DisplayScreen::dumpDisplay()
         {
             printf("\n");
         }
-        printf("%2.2X ", glyph[i]->toUChar());
+        printf("%2.2X ", glyph[i]->getEBCDIC());
     }
     printf("\n---- SCREEN ----\n");
     fflush(stdout);
