@@ -125,7 +125,6 @@ bool Keyboard::eventFilter( QObject *dist, QEvent *event )
     // an F-key to wait for its press.
 
     bool keyUsed = false;
-
     if (keyEvent->type() == QEvent::KeyPress)
     {
         waitRelease = needtoWait(keyEvent);
@@ -209,7 +208,7 @@ bool Keyboard::processKey()
            {
                printf("Keyboard        : Processing nextKey (mapped and mustMap set)\n");
                fflush(stdout);
-               nextKey();
+               nextKey();int a = 0x01000002;
            }
            else if (!kbBuffer[bufferEnd].mustMap)
            {
@@ -616,31 +615,36 @@ void Keyboard::setMapping(QString key, QString function)
     } else
     {
         const auto keyList = key.split('+');
-        for (const auto &keyPart: keyList)
+
+        // Extract last key of sequence (the actual key)
+        const QKeySequence keys(keyList.constLast());
+        keyCode = keys[0];
+
+        // Extract any modifiers
+        if (keyList.count() > 1)
         {
-            if (!keyPart.compare("Alt", Qt::CaseInsensitive))
+            // Build a string of modifiers - Alt+Ctrl
+            QString keyMods;
+            for(int j = 0; j < keyList.count() - 1; j++)
+            {
+                j == 0 ? keyMods = keyMods + keyList[j] :  keyMods = keyMods + "+" + keyList[j];
+            }
+            //TODO Ctrl+Alt type maps.
+            if (!keyMods.compare("Alt", Qt::CaseInsensitive))
             {
                 setMap = &altMap;
             }
-            else if (!keyPart.compare("Ctrl", Qt::CaseInsensitive))
+            else if (!keyMods.compare("Ctrl", Qt::CaseInsensitive))
             {
                 setMap = &ctrlMap;
             }
-            else if (!keyPart.compare("Shift", Qt::CaseInsensitive))
+            else if (!keyMods.compare("Shift", Qt::CaseInsensitive))
             {
-                setMap =&shiftMap;
+                setMap = &shiftMap;
             }
-            else if (!keyPart.compare("Meta", Qt::CaseInsensitive))
+            else if (!keyMods.compare("Meta", Qt::CaseInsensitive))
             {
                 setMap = &metaMap;
-            }
-            else
-            {
-                const QKeySequence keySeq(keyPart);
-                if (keySeq.count() == 1)
-                {
-                    keyCode = keySeq[0];
-                }
             }
         }
     }
@@ -680,6 +684,7 @@ void Keyboard::setFactoryMaps()
     setMapping("Tab", "Tab");
     setMapping("Backtab", "Backtab");
     setMapping("Shift+Tab", "Backtab");
+    setMapping("Shift+Backtab", "Backtab");
 
     setMapping("Home", "Home");
     setMapping("End", "EraseEOF");
@@ -717,8 +722,8 @@ void Keyboard::setFactoryMaps()
 
     setMapping("Escape", "Attn");
 
-    setMapping("PageUp", "F7");
-    setMapping("PageDown", "F8");
+    setMapping("PgUp", "F7");
+    setMapping("PgDown", "F8");
 
     setMapping("Ctrl+Home", "ToggleRuler");
 
