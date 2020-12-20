@@ -13,6 +13,7 @@ class Buffer
         ~Buffer();
         int size();
         void add(char b);
+        void addBlock(unsigned char *b, int length);
         Buffer *nextByte();
         unsigned char getByte();
         bool moreBytes();

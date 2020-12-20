@@ -141,3 +141,11 @@ void Buffer::dump(bool send)
     fflush(stdout);
 }
 
+void Buffer::addBlock(unsigned char *bytes, int length)
+{
+    for (int i = 0; i < length; i++)
+    {
+        add(bytes[i]);
+    }
+}
+
