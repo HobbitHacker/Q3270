@@ -420,6 +420,16 @@ void ProcessDataStream::processRA(Buffer *b)
     b->nextByte();
     uchar newChar = b->getByte();
 
+    bool geRA = false;
+
+    // Check to see if it's <RA><GE><CHAR>
+    if (newChar == 0x08)
+    {
+        geRA = true;
+        b->nextByte();
+        newChar = b->getByte();
+    }
+
     printf("[RepeatToAddress %d to %d (0x%2.2X)]", primary_pos, endPos, newChar);
     fflush(stdout);
 
@@ -432,6 +442,10 @@ void ProcessDataStream::processRA(Buffer *b)
     {
         int offset = i % screenSize;
 
+        if (geRA)
+        {
+            screen->setGraphicEscape();
+        }
         screen->setChar(offset, newChar, false);
     }
 
@@ -452,8 +466,11 @@ void ProcessDataStream::processEUA(Buffer *b)
 
 void ProcessDataStream::processGE(Buffer *b)
 {
+    printf("[GraphicEscape ");
     screen->setGraphicEscape();
     placeChar(b->nextByte());
+    printf("]");
+    fflush(stdout);
 }
 
 void ProcessDataStream::WSFoutbound3270DS(Buffer *b)
@@ -646,15 +663,18 @@ void ProcessDataStream::replySummary(Buffer *buffer)
      */
 //    unsigned char qrt[] = { 0x81, 0x80, 0x86, 0x87, 0xA6 0x87 };
     unsigned char qrt[] = {
+                            0x00, 0x09,    /* Length */
                             IBM3270_SF_QUERYREPLY,
                             IBM3270_SF_QUERYREPLY_SUMMARY,
                             IBM3270_SF_QUERYREPLY_COLOUR,
                             IBM3270_SF_QUERYREPLY_IMPPARTS,
                             IBM3270_SF_QUERYREPLY_USABLE,
-                            IBM3270_SF_QUERYREPLY_CHARSETS
-                          };
+                            IBM3270_SF_QUERYREPLY_CHARSETS,
+                            IBM3270_SF_QUERYREPLY_HIGHLIGHT
+                   };
 
     unsigned char qrcolour[] = {
+                                 0x00, 0x16,
                                  IBM3270_SF_QUERYREPLY,
                                  IBM3270_SF_QUERYREPLY_COLOUR,
                                  0x00,        /* Flags:  x.xxxxxx - Reserved
@@ -673,6 +693,7 @@ void ProcessDataStream::replySummary(Buffer *buffer)
                                };
 
     unsigned char qpart[] = {
+                              0x00, 0x11,
                               IBM3270_SF_QUERYREPLY,
                               IBM3270_SF_QUERYREPLY_IMPPARTS,
                               0x00, 0x00,  /* Reserved */
@@ -685,10 +706,8 @@ void ProcessDataStream::replySummary(Buffer *buffer)
                               0x00, 0x00   /* Alternate Height in characters */
                             };
 
-    qpart[12] = alternate_screen->width();
-    qpart[14] = alternate_screen->height();
-
     unsigned char qhighlight[] = {
+                                    0x00, 0x0D,
                                     IBM3270_SF_QUERYREPLY,
                                     IBM3270_SF_QUERYREPLY_HIGHLIGHT,
                                     0x04,  /* Number of pairs */
@@ -699,6 +718,7 @@ void ProcessDataStream::replySummary(Buffer *buffer)
                                  };
 
     unsigned char qusablearea[] = {
+                                    0x00, 0x19,
                                     IBM3270_SF_QUERYREPLY,
                                     IBM3270_SF_QUERYREPLY_USABLE,
                                     0x01,       /* 12/14 bit addressing */
@@ -716,9 +736,10 @@ void ProcessDataStream::replySummary(Buffer *buffer)
                                   };
 
     unsigned char qcharsets[] = {
+                                0x00, 0x1B,
                                 IBM3270_SF_QUERYREPLY,
                                 IBM3270_SF_QUERYREPLY_CHARSETS,
-                                0x80,            /* GE supported only */
+                                0x82,            /* GE supported only */
                                                  /* x....... - ALT */
                                                  /*            0 - Graphic Escape not supported */
                                                  /*            1 - Graphic Escape not supported */
@@ -764,51 +785,14 @@ void ProcessDataStream::replySummary(Buffer *buffer)
                                       0x01, 0x36  /* code page 310 */
     };
 
-    buffer->add(0x00);    //(char*)qrt)>>8);
-    buffer->add(0x07);    //strlen((char*)qrt)&0xFF);
-
-    for(int i = 0; (unsigned long)i < 5; i++)
-    {
-        buffer->add(qrt[i]);
-    }
-
-    buffer->add(0x00);
-    buffer->add(22);
-
-    for(int i = 0; (unsigned long)i < 20; i++)
-    {
-        buffer->add(qrcolour[i]);
-    }
-
-    buffer->add(0x00);
-    buffer->add(17);
-
-    for(int i = 0; (unsigned long)i < 15; i++)
-    {
-        buffer->add(qpart[i]);
-    }
-
-    buffer->add(00);
-    buffer->add(27);
-
-    for(int i = 0; (unsigned long)i < 27; i++)
-    {
-        buffer->add(qcharsets[i]);
-    }
-
-    buffer->add(0x00);
-    buffer->add(13);
-
-    for(int i = 0; (unsigned long)i < 11; i++)
-    {
-        buffer->add(qhighlight[i]);
-    }
-
-    qusablearea[4] = 0x00;
-    qusablearea[5] = alternate_screen->width();
+    qpart[14] = alternate_screen->width();
+    qpart[16] = alternate_screen->height();
 
     qusablearea[6] = 0x00;
-    qusablearea[7] = alternate_screen->height();
+    qusablearea[7] = alternate_screen->width();
+
+    qusablearea[8] = 0x00;
+    qusablearea[9] = alternate_screen->height();
 
     QSizeF screenSizeMM = QGuiApplication::primaryScreen()->physicalSize();
     QSizeF screenSizePix = QGuiApplication::primaryScreen()->size();
@@ -816,39 +800,37 @@ void ProcessDataStream::replySummary(Buffer *buffer)
     int xmm = screenSizeMM.width();
     int ymm = screenSizeMM.height();
 
-    qusablearea[9]  = (xmm & 0xFF00) >> 8;
-    qusablearea[10] = (xmm & 0xFF);
+    qusablearea[11]  = (xmm & 0xFF00) >> 8;
+    qusablearea[12] = (xmm & 0xFF);
 
-    qusablearea[13] = (ymm & 0xFF00) >> 8;
-    qusablearea[14] = (ymm & 0xFF);
+    qusablearea[15] = (ymm & 0xFF00) >> 8;
+    qusablearea[16] = (ymm & 0xFF);
 
     int x = screenSizePix.width();
     int y = screenSizePix.height();
 
-    qusablearea[11] = (x & 0xFF00) >> 8;
-    qusablearea[12] = (x & 0xFF);
+    qusablearea[13] = (x & 0xFF00) >> 8;
+    qusablearea[14] = (x & 0xFF);
 
-    qusablearea[15] = (y & 0xFF00) >> 8;
-    qusablearea[16] = (y & 0xFF);
+    qusablearea[17] = (y & 0xFF00) >> 8;
+    qusablearea[18] = (y & 0xFF);
 
-    qusablearea[17] = (default_screen->gridWidth() & 0xFF00) >> 8;
-    qusablearea[18] = (default_screen->gridWidth() & 0xFF);
+    qusablearea[19] = (default_screen->gridWidth() & 0xFF00) >> 8;
+    qusablearea[20] = (default_screen->gridWidth() & 0xFF);
 
-    qusablearea[19] = (default_screen->gridHeight() & 0xFF00) >> 8;
-    qusablearea[20] = (default_screen->gridHeight() & 0xFF);
+    qusablearea[21] = (default_screen->gridHeight() & 0xFF00) >> 8;
+    qusablearea[22] = (default_screen->gridHeight() & 0xFF);
 
-    qusablearea[21] = ((qusablearea[5] * qusablearea[7]) & 0xFF00) >> 8;
-    qusablearea[22] = ((qusablearea[5] * qusablearea[7]) & 0xFF);
-
-    buffer->add(0x00);
-    buffer->add(25);
-
-    for(int i = 0; (unsigned long)i < 23; i++)
-    {
-        buffer->add(qusablearea[i]);
-    }
+    qusablearea[23] = ((qusablearea[5] * qusablearea[7]) & 0xFF00) >> 8;
+    qusablearea[24] = ((qusablearea[5] * qusablearea[7]) & 0xFF);
 
 
+    buffer->addBlock(qrt, 9);
+    buffer->addBlock(qrcolour, 22);
+    buffer->addBlock(qpart, 17);
+    buffer->addBlock(qhighlight, 13);
+    buffer->addBlock(qusablearea, 25);
+    buffer->addBlock(qcharsets, 27);
 }
 
 int ProcessDataStream::extractBufferAddress(Buffer *b)
@@ -881,7 +863,6 @@ int ProcessDataStream::extractBufferAddress(Buffer *b)
 void ProcessDataStream::placeChar(Buffer *b)
 {
     int ebcdic = (int)(b->getByte());
-
     placeChar(ebcdic);
 }
 
@@ -890,6 +871,7 @@ void ProcessDataStream::placeChar(int ebcdic)
 
 //    glyph[pos]->setBrush(fieldAttr);
 
+    printf("(%02x)", ebcdic);
     switch(ebcdic)
     {
         case IBM3270_CHAR_NULL:
