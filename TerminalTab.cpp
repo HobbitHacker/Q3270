@@ -112,8 +112,7 @@ void TerminalTab::setBlinkSpeed(int speed)
 
     blinkSpeed = speed;
 
-    cursorBlinker->stop();
-    cursorBlinker->start((5 - blinkSpeed) * 250);
+    term->setBlinkSpeed(speed);
 }
 
 bool TerminalTab::getBlink()
@@ -171,25 +170,6 @@ void TerminalTab::openConnection()
     term->installEventFilter(kbd);
 
     connected = true;
-
-    blinker = new QTimer(this);
-    connect(blinker, &QTimer::timeout, this, &TerminalTab::blinkText);
-    blinker->start(1000);
-
-    cursorBlinker = new QTimer(this);
-    connect(cursorBlinker, &QTimer::timeout, this, &TerminalTab::blinkCursor);
-    cursorBlinker->start(800);
-
-}
-
-void TerminalTab::blinkText()
-{
-
-}
-
-void TerminalTab::blinkCursor()
-{
-
 }
 
 void TerminalTab::showCursorAddress(int x, int y)

@@ -52,12 +52,6 @@ class TerminalTab : public QObject
 
     private:
 
-        void blinkText();
-        void blinkCursor();
-
-        QTimer *blinker;             /* Blinking timer */
-        QTimer *cursorBlinker;       /* Cursor Blink */
-
         QVBoxLayout *vbl;
 
         QStatusBar *statusBar;

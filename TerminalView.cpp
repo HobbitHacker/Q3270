@@ -10,6 +10,9 @@
 TerminalView::TerminalView()
 {
     resizeFont = false;
+    blinker = new QTimer(this);
+    cursorBlinker = new QTimer(this);
+    blinkSpeed = 1;
 }
 
 
@@ -52,5 +55,33 @@ DisplayScreen *TerminalView::setScreen(bool alt)
         this->setScene(primary->getScene());
         current = primary;
     }
+
+    connect(blinker, &QTimer::timeout, current, &DisplayScreen::blink);
+    blinker->start(1000);
+
+    connect(cursorBlinker, &QTimer::timeout, current, &DisplayScreen::cursorBlink);
+    setBlinkSpeed(blinkSpeed);
+
     return current;
 }
+
+void TerminalView::blinkText()
+{
+    current->blink();
+}
+
+void TerminalView::blinkCursor()
+{
+    current->cursorBlink();
+}
+
+void TerminalView::setBlinkSpeed(int speed)
+{
+    blinkSpeed = speed;
+    cursorBlinker->stop();
+    if (blinkSpeed > 0)
+    {
+        cursorBlinker->start((5 - blinkSpeed) * 250);
+    }
+}
+
