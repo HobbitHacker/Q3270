@@ -56,6 +56,7 @@ class DisplayScreen : public QObject
         void eraseUnprotected(int start, int end);
 
         void setCursor(int pos);
+        void showCursor();
         void setFieldAttrs(int startPos);
         int resetFieldAttrs(int start);
 

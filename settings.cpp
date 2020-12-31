@@ -8,10 +8,10 @@ Settings::Settings(QWidget *parent, TerminalTab *t) :
     this->t = t;
     ui->setupUi(this);
     changeModel(t->getType());
-    ui->cursorBlink->setChecked(t->term->getBlink());
-    printf("Settings        : Blink speed from terminal: %d\n", t->term->getBlinkSpeed());
+    ui->cursorBlink->setChecked(t->view->getBlink());
+    printf("Settings        : Blink speed from terminal: %d\n", t->view->getBlinkSpeed());
     fflush(stdout);
-    ui->cursorBlinkSpeed->setSliderPosition(t->term->getBlinkSpeed());
+    ui->cursorBlinkSpeed->setSliderPosition(t->view->getBlinkSpeed());
 
 //    setFixedSize(size());
 }
@@ -66,8 +66,8 @@ void Settings::accept()
     t->setType(ui->terminalType->currentIndex());
 
     t->setSize(ui->terminalCols->value(), ui->terminalRows->value());
-    t->term->setBlink(ui->cursorBlink);
-    t->term->setBlinkSpeed(ui->cursorBlinkSpeed->sliderPosition());
+    t->view->setBlink(ui->cursorBlink->checkState() == Qt::Checked);
+    t->view->setBlinkSpeed(ui->cursorBlinkSpeed->sliderPosition());
 
     QDialog::accept();
 

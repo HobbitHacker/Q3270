@@ -19,6 +19,8 @@ class TerminalView : public QGraphicsView
         bool getBlink();
         void setBlink(bool blink);
         void setScenes(DisplayScreen *primary, DisplayScreen *alternate);
+        void setConnected();
+        void setDisconnected();
 
         DisplayScreen *setScreen(bool alt);
 
@@ -27,6 +29,9 @@ class TerminalView : public QGraphicsView
 
         DisplayScreen *current;
 
+        bool connected;
+        bool scaleFont;
+
     private slots:
 
         void blinkText();
@@ -34,7 +39,7 @@ class TerminalView : public QGraphicsView
 
     private:
 
-        bool resizeFont;
+        bool stretch;
 
         int blinkSpeed;         // Cursor blink speed
         bool blink;             // Whether cursor blinks

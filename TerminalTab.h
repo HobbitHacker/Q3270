@@ -35,10 +35,11 @@ class TerminalTab : public QObject
         void setSize(int x, int y);
 
         void setFont(QFont f);
+        void setScaleFont(bool scale);
 
         int getType();
 
-        TerminalView *term;
+        TerminalView *view;
 
     public slots:
 
@@ -81,8 +82,6 @@ class TerminalTab : public QObject
             { "IBM-3279-5-E", 132, 27 },
             { "IBM-DYNAMIC", 0, 0}
         };
-
-        bool connected;
 
         int termType;
         bool resizeFont;

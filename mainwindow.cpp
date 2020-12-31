@@ -61,7 +61,7 @@ void MainWindow::menuSetFont()
     if (fs->exec() == QDialog::Accepted)
     {
         t->setFont(fs->getFont());
-        //t->setScaleFont(fs->getScaling());
+        t->setScaleFont(fs->getScaling());
         //ui->verticalLayout->update();
     }
 }
@@ -75,8 +75,8 @@ void MainWindow::menuTerminalSettings()
         setSetting("terminal/model", t->name());
         setSetting("terminal/height",QString::number(t->terminalHeight()));
         setSetting("terminal/width", QString::number(t->terminalWidth()));
-        setSetting("terminal/cursorblink", QString::number(t->term->getBlink()));
-        setSetting("terminal/cursorblinkspeed", QString::number(t->term->getBlinkSpeed()));
+        setSetting("terminal/cursorblink", QString::number(t->view->getBlink()));
+        setSetting("terminal/cursorblinkspeed", QString::number(t->view->getBlinkSpeed()));
     }
 
     fflush(stdout);

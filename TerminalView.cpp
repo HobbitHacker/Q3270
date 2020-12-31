@@ -9,18 +9,19 @@
 
 TerminalView::TerminalView()
 {
-    resizeFont = false;
+    stretch = false;
     blinker = new QTimer(this);
     cursorBlinker = new QTimer(this);
     blinkSpeed = 1;
     blink = true;
+    connected = false;
 }
 
 
 void TerminalView::resizeEvent(QResizeEvent *event)
 {
 
-    if (resizeFont)
+    if (stretch)
     {
         fitInView(this->scene()->itemsBoundingRect(), Qt::IgnoreAspectRatio);
     }
@@ -34,7 +35,7 @@ void TerminalView::resizeEvent(QResizeEvent *event)
 
 void TerminalView::setScaleFont(bool scale)
 {
-    resizeFont = scale;
+    scaleFont = scale;
 }
 
 void TerminalView::setScenes(DisplayScreen *primary, DisplayScreen *alternate)
@@ -97,6 +98,10 @@ void TerminalView::setBlink(bool blink)
     if (!blink)
     {
         cursorBlinker->stop();
+        if (connected)
+        {
+            current->showCursor();
+        }
     }
 }
 
@@ -105,3 +110,12 @@ bool TerminalView::getBlink()
     return blink;
 }
 
+void TerminalView::setConnected()
+{
+    connected = true;
+}
+
+void TerminalView::setDisconnected()
+{
+    connected = false;
+}

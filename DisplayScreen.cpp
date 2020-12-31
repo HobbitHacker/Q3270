@@ -25,7 +25,7 @@ DisplayScreen::DisplayScreen(int view_x, int view_y, int screen_x, int screen_y)
     QPen p1;
     p1.setWidth(0);
     p1.setCosmetic(true);
-    p1.setBrush(Qt::lightGray);
+//    p1.setBrush(Qt::lightGray);
 
     attrs = new Attributes[screenPos_max];
     glyph = new Text*[screenPos_max];
@@ -802,6 +802,11 @@ void DisplayScreen::setCursor(int pos)
     cursor->setParentItem(cell[pos]);
     cursor->setBrush(palette[attrs[pos].colNum]);
     cursor->setPos(cell[pos]->boundingRect().left(), cell[pos]->boundingRect().top());
+}
+
+void DisplayScreen::showCursor()
+{
+    cursor->show();
 }
 
 void DisplayScreen::toggleRuler()

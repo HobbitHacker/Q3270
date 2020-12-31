@@ -2,7 +2,7 @@
 
 TerminalTab::TerminalTab(QVBoxLayout *vbl, QSettings *applicationSettings)
 {
-    term = new TerminalView();
+    view = new TerminalView();
 
     statusBar = new QStatusBar(vbl->parentWidget());
 
@@ -13,11 +13,11 @@ TerminalTab::TerminalTab(QVBoxLayout *vbl, QSettings *applicationSettings)
     statusBar->addPermanentWidget(cursorAddress, 50);
 */
     this->vbl = vbl;
-    vbl->addWidget(term);
+    vbl->addWidget(view);
 
     gs = new QGraphicsScene();
 
-    term->setScene(gs);
+    view->setScene(gs);
 
     setType("IBM-3279-2-E");
 
@@ -25,9 +25,9 @@ TerminalTab::TerminalTab(QVBoxLayout *vbl, QSettings *applicationSettings)
     {
         setType(applicationSettings->value("terminal/model").toString());
         setSize(applicationSettings->value("terminal/width").toInt(), applicationSettings->value("terminal/height").toInt());
-        term->setBlink(applicationSettings->value("terminal/cursorblink").toBool());
-        term->setBlinkSpeed(applicationSettings->value("terminal/cursorblinkspeed").toInt());
-        (applicationSettings->value("font/scale").toString() == "true") ? term->setScaleFont(true) : term->setScaleFont(false);
+        view->setBlink(applicationSettings->value("terminal/cursorblink").toBool());
+        view->setBlinkSpeed(applicationSettings->value("terminal/cursorblinkspeed").toInt());
+        (applicationSettings->value("font/scale").toString() == "true") ? view->setScaleFont(true) : view->setScaleFont(false);
     }
 
     if (applicationSettings->contains("font/name"))
@@ -38,7 +38,7 @@ TerminalTab::TerminalTab(QVBoxLayout *vbl, QSettings *applicationSettings)
     }
     else
     {
-        termFont.setFamily("ibm32702");
+        termFont.setFamily("ibm3270");
         termFont.setStyleName("Regular");
         termFont.setPointSize(8);
     }
@@ -97,25 +97,37 @@ char * TerminalTab::name()
 
 void TerminalTab::setFont(QFont f)
 {
-    if (connected)
+    if (view->connected)
     {
-        term->primary->setFont(f);
-        term->alternate->setFont(f);
+        view->primary->setFont(f);
+        view->alternate->setFont(f);
     }
     termFont = f;
 }
 
+void TerminalTab::setScaleFont(bool scale)
+{
+    if (view->connected)
+    {
+        primary->setFontScaling(scale);
+        alternate->setFontScaling(scale);
+    }
+}
+
 void TerminalTab::openConnection()
 {
-    primary = new DisplayScreen(term->geometry().width(), term->geometry().height(), 80, 24);
-    alternate = new DisplayScreen(term->geometry().width(), term->geometry().height(), terms[termType].x, terms[termType].y);
+    primary = new DisplayScreen(view->geometry().width(), view->geometry().height(), 80, 24);
+    alternate = new DisplayScreen(view->geometry().width(), view->geometry().height(), terms[termType].x, terms[termType].y);
 
-    term->setScenes(primary, alternate);
+    view->setScenes(primary, alternate);
+
+    primary->setFontScaling(view->scaleFont);
+    alternate->setFontScaling(view->scaleFont);
 
     primary->setFont(termFont);
     alternate->setFont(termFont);
 
-    datastream = new ProcessDataStream(term);
+    datastream = new ProcessDataStream(view);
     socket = new SocketConnection(terms[termType].term);
 
     connect(datastream, &ProcessDataStream::cursorMoved, this, &TerminalTab::showCursorAddress);
@@ -137,9 +149,9 @@ void TerminalTab::openConnection()
 
     kbd->setMap();
 
-    term->installEventFilter(kbd);
+    view->installEventFilter(kbd);
 
-    connected = true;
+    view->setConnected();
 }
 
 void TerminalTab::showCursorAddress(int x, int y)
@@ -172,13 +184,13 @@ void TerminalTab::closeConnection()
 {
     socket->disconnectMainframe();
 
-    vbl->removeWidget(term);
+    vbl->removeWidget(view);
 
     delete datastream;
     gs->clear();
     delete gs;
 
-    delete term;
+    delete view;
 
-    connected = false;
+    view->setDisconnected();
 }
