@@ -1,10 +1,11 @@
 #include "SocketConnection.h"
 
-SocketConnection::SocketConnection(QObject *parent)
-    : QObject(parent)
-    , dataSocket(new QTcpSocket(this))
+SocketConnection::SocketConnection(QString termName)
 {
+    dataSocket = new QTcpSocket(this);
 	telnetState = TELNET_STATE_DATA;
+
+    this->termName = termName;
 	
     // Forward the connected and disconnected signals
     connect(dataSocket, &QTcpSocket::connected, this, &SocketConnection::connected);
@@ -26,11 +27,10 @@ void SocketConnection::disconnectMainframe()
     dataSocket->disconnectFromHost();
 }
 
-void SocketConnection::connectMainframe(const QHostAddress &address, quint16 port, ProcessDataStream *d, Terminal *t)
+void SocketConnection::connectMainframe(const QHostAddress &address, quint16 port, ProcessDataStream *d)
 {
     dataSocket->connectToHost(address, port);
     displayDataStream = d;
-    term = t;
     connect(displayDataStream, &ProcessDataStream::bufferReady, this, &SocketConnection::sendResponse);
 }
 
@@ -294,9 +294,9 @@ void SocketConnection::processSubNegotiation(Buffer *buf)
             {
                 printf("SocketConnection :    SB TTYPE SEND\n");
                 fflush(stdout);
-                sprintf(response, "%c%c%c%c%s%c%c", (char) IAC, (char) SB, (char) TELOPT_TTYPE, (char) TELQUAL_IS, term->name(), (char) IAC, (char) SE);
-                dataStream.writeRawData(response, 6 + strlen(term->name()));
-                printf("SocketConnection : (%s)\n",term->name());
+                sprintf(response, "%c%c%c%c%s%c%c", (char) IAC, (char) SB, (char) TELOPT_TTYPE, (char) TELQUAL_IS, termName.toLatin1().data(), (char) IAC, (char) SE);
+                dataStream.writeRawData(response, 6 + strlen(termName.toLatin1().data()));
+                printf("SocketConnection : (%s)\n",termName.toLatin1().data());
                 fflush(stdout);
             }
             else
@@ -309,19 +309,19 @@ void SocketConnection::processSubNegotiation(Buffer *buf)
             if (buf->byteEquals(1, TN3270E_SEND) && buf->byteEquals(2, TN3270E_DEVICE_TYPE))
             {
                 printf("SocketConnection :     SB TN3270E SEND DEVICE_TYPE IAC SE seen - good!\n");
-                sprintf(response, "%c%c%c%c%c%s%c%c", (char) IAC, (char) SB, (char) TELOPT_TN3270E, (char) TN3270E_DEVICE_TYPE, (char) TN3270E_REQUEST, term->name(), (char) IAC, (char) SE);
+                sprintf(response, "%c%c%c%c%c%s%c%c", (char) IAC, (char) SB, (char) TELOPT_TN3270E, (char) TN3270E_DEVICE_TYPE, (char) TN3270E_REQUEST, termName.toLatin1().data(), (char) IAC, (char) SE);
                 sprintf(response,"%s%c%c%c%c%c%c%c", response, (char) IAC, (char) SB, (char) TELOPT_TN3270E, (char) TN3270E_FUNCTIONS, (char) TN3270E_REQUEST, (char) IAC, (char) SE);
-                int rc = dataStream.writeRawData(response, 14 + strlen(term->name()));
-                printf("SocketConnection : (%s) - length %ld: RC=%d. Error=\n", response, 14 + strlen(term->name()), rc);
+                int rc = dataStream.writeRawData(response, 14 + strlen(termName.toLatin1().data()));
+                printf("SocketConnection : (%s) - length %ld: RC=%d. Error=\n", response, 14 + strlen(termName.toLatin1().data()), rc);
                 fflush(stdout);
                 break;
             }
             if (buf->byteEquals(1, TN3270E_DEVICE_TYPE) && buf->byteEquals(2, TN3270E_IS))
             {
-                if (buf->compare(3,term->name()) && buf->byteEquals(3+strlen(term->name()), TN3270E_CONNECT))
+                if (buf->compare(3,termName.toLatin1().data()) && buf->byteEquals(3+strlen(termName.toLatin1().data()), TN3270E_CONNECT))
                 {
                     printf("SocketConnection : Received device-name: '");
-                    for(int i = 4+strlen(term->name()); i < buf->size(); i++)
+                    for(int i = 4+strlen(termName.toLatin1().data()); i < buf->size(); i++)
                     {
                         printf("%c", buf->getByte(i));
                     }

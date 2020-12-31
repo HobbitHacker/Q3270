@@ -21,7 +21,8 @@ SOURCES += \
     FontSelection.cpp \
     Keyboard.cpp \
     ProcessDataStream.cpp \
-    Terminal.cpp \
+    TerminalTab.cpp \
+    TerminalView.cpp \
     main.cpp \
     mainwindow.cpp \
     SocketConnection.cpp \
@@ -35,7 +36,8 @@ HEADERS += \
     FontSelection.h \
     Keyboard.h \
     ProcessDataStream.h \
-    Terminal.h \
+    TerminalTab.h \
+    TerminalView.h \
     mainwindow.h \
     SocketConnection.h \
     settings.h \

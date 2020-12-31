@@ -1,20 +1,16 @@
 #include "DisplayScreen.h"
 
-DisplayScreen::DisplayScreen(QGraphicsScene *parent, Terminal *term, int screen_x, int screen_y)
+DisplayScreen::DisplayScreen(int view_x, int view_y, int screen_x, int screen_y)
 {
-    Terminal *d = (Terminal *)parent->views().first();
-
-    this->term = term;
-
-    screen = new QGraphicsScene(0, 0, parent->width(), parent->height());
+    screen = new QGraphicsScene(0, 0, view_x, view_y);
 
     screen->setBackgroundBrush(palette[0]);
 
     this->screen_x = screen_x;
     this->screen_y = screen_y;
 
-    gridSize_X = ((qreal) d->width()) / (qreal) screen_x;
-    gridSize_Y = ((qreal) d->height()) / (qreal) screen_y;
+    gridSize_X = (qreal) view_x / (qreal) screen_x;
+    gridSize_Y = (qreal) view_y / (qreal) screen_y;
 
     screenPos_max = screen_x * screen_y;
 
@@ -26,10 +22,17 @@ DisplayScreen::DisplayScreen(QGraphicsScene *parent, Terminal *term, int screen_
     u.setWidth(8);
     u.setBrush(Qt::green);
 
+    QPen p1;
+    p1.setWidth(0);
+    p1.setCosmetic(true);
+    p1.setBrush(Qt::lightGray);
+
     attrs = new Attributes[screenPos_max];
     glyph = new Text*[screenPos_max];
     cell = new QGraphicsRectItem*[screenPos_max];
     uscore = new QGraphicsLineItem*[screenPos_max];
+
+    fontScaling = true;
 
     for(int y = 0; y < screen_y; y++)
     {
@@ -41,19 +44,23 @@ DisplayScreen::DisplayScreen(QGraphicsScene *parent, Terminal *term, int screen_
 
             qreal x_pos = x * gridSize_X;
 
-            cell[pos] = new QGraphicsRectItem(x_pos/2, y_pos/2, gridSize_X, gridSize_Y);
+            cell[pos] = new QGraphicsRectItem(0, 0, gridSize_X, gridSize_Y);
             uscore[pos] = new QGraphicsLineItem(cell[pos]->boundingRect().left() + 1, cell[pos]->boundingRect().bottom() - 1, cell[pos]->boundingRect().right(), cell[pos]->boundingRect().bottom() -1, cell[pos]);
+            cell[pos]->setPen(p1);
 
-            cell[pos]->setPos(x_pos/2, y_pos/2);
+            screen->addItem(cell[pos]);
+
+            cell[pos]->setPos(x_pos, y_pos);
 
             glyph[pos] = new Text(cell[pos]);
 
-            screen->addItem(cell[pos]);
+//            glyph[pos]->setPos(0,0);
+//            glyph[pos]->setScale(1.5);
         }
     }
 
     clear();
-    setFont(QFont("Hack", 11));
+    setFont(QFont("ibm3270", 11));
 
     cursor = new QGraphicsRectItem(cell[0]);
     cursor->setRect(cell[0]->rect());
@@ -77,14 +84,6 @@ DisplayScreen::DisplayScreen(QGraphicsScene *parent, Terminal *term, int screen_
     blinkShow = false;
     cursorShow = true;
 
-    blinker = new QTimer(parent);
-    connect(blinker, &QTimer::timeout, this, &DisplayScreen::blink);
-    blinker->start(1000);
-
-    cursorBlinker = new QTimer(parent);
-    connect(cursorBlinker, &QTimer::timeout, this, &DisplayScreen::cursorBlink);
-    connect(term, &Terminal::cursorBlinkChange, this, &DisplayScreen::cursorBlinkChange);
-    cursorBlinker->start(800);
 }
 
 DisplayScreen::~DisplayScreen()
@@ -123,9 +122,37 @@ QGraphicsScene *DisplayScreen::getScene()
 
 void DisplayScreen::setFont(QFont font)
 {
+    termFont = font;
+    QTransform tr;
+
+    if (fontScaling)
+    {
+        QFontMetrics *fm = new QFontMetrics(font);
+        QRectF boxRect = fm->boundingRect("┼");
+        printf("DisplayScreen   : FontMetrics: %d x %d    Box char %f x %f   GridSize: %f x %f\n", fm->averageCharWidth(), fm->height(), boxRect.width(), boxRect.height(), gridSize_X, gridSize_Y);
+        //    int pos_x = (gridSize_X / 2) - boxRect
+        fflush(stdout);
+        tr.scale(gridSize_X / boxRect.width(), gridSize_Y / boxRect.height());
+    }
+    else
+    {
+        tr.scale(1,1);
+    }
+
     for (int i = 0; i < screenPos_max; i++)
     {
         glyph[i]->setFont(QFont(font));
+        glyph[i]->setTransform(tr);
+//        glyph[i]->setPos()
+    }
+}
+
+void DisplayScreen::setFontScaling(bool fontScaling)
+{
+    if (this->fontScaling != fontScaling)
+    {
+        this->fontScaling = fontScaling;
+        setFont(termFont);
     }
 }
 
@@ -836,11 +863,6 @@ void DisplayScreen::cursorBlink()
     }
 }
 
-void DisplayScreen::cursorBlinkChange()
-{
-    cursorBlinker->stop();
-    cursorBlinker->start((5 - term->getBlinkSpeed())*250);
-}
 
 int DisplayScreen::findField(int pos)
 {

@@ -11,14 +11,13 @@
 #include "text.h"
 #include "Buffer.h"
 #include "3270.h"
-#include "Terminal.h"
 
 class DisplayScreen : public QObject
 {
     Q_OBJECT
 
     public:
-        DisplayScreen(QGraphicsScene *parent, Terminal *term, int screen_x, int screen_y);
+        DisplayScreen(int view_x, int view_y, int screen_x, int screen_y);
         ~DisplayScreen();
 
         int width();
@@ -64,6 +63,7 @@ class DisplayScreen : public QObject
 
         void clear();
         void setFont(QFont font);
+        void setFontScaling(bool fontScaling);
         void toggleRuler();
         void drawRuler(int x, int y);
 
@@ -75,7 +75,6 @@ class DisplayScreen : public QObject
 
         void blink();
         void cursorBlink();
-        void cursorBlinkChange();
 
     private:
 
@@ -99,7 +98,7 @@ class DisplayScreen : public QObject
                 "\u00F8", "\u00C9", "\u00CA", "\u00CB", "\u00C8", "\u00CD", "\u00CE", "\u00CF", /* 70 to 77 */
                 "\u00CC", "\u0060", "\u003A", "\u0023", "\u0040", "\u0027", "\u003D", "\u0022", /* 78 to 7F */
                 "\u00D8", "\u0061", "\u0062", "\u0063", "\u0064", "\u0065", "\u0066", "\u0067", /* 80 to 87 */
-                "\u0068", "\u0069", "\u00AB", "\u00BB", "\u00F0", "\u00FD", "\u00FE", "\u00B1", /* 88 to 8F */
+                "\u0068", "\u0069", "\uC2AB", "\u00BB", "\u00F0", "\u00FD", "\u00FE", "\u00B1", /* 88 to 8F */
                 "\u00B0", "\u006A", "\u006B", "\u006C", "\u006D", "\u006E", "\u006F", "\u0070", /* 90 to 97 */
                 "\u0071", "\u0072", "\u00AA", "\u00BA", "\u00E6", "\u00B8", "\u00C6", "\u00A4", /* 98 to 9F */
                 "\u00B5", "\u007E", "\u0073", "\u0074", "\u0075", "\u0076", "\u0077", "\u0078", /* A0 to A7 */
@@ -236,7 +235,7 @@ class DisplayScreen : public QObject
   /* 68 - 6F */    "𝑌̲", "𝑍̲", 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
   /* 70 - 77 */   "⋄", "∧", "¨", "⌻", "⍸", "⍷", "⊢", "⊣",
   /* 78 - 7F */   "∨", 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-  /* 80 - 87 */   "∼", "║", "═", "⎸", "⎹", "│", 0x00, 0x00,
+  /* 80 - 87 */   "∼", "║", "═", "⎸", "⎹", "│", /* "│" */ 0x00, 0x00,
   /* 88 - 8F */   0x00, 0x00, "↑", "↓", "≤", "⌈", "⌊", "→",
   /* 90 - 97 */   "⎕", "▌", "▐", "▀", "▄", "█", 0x00, 0x00,
   /* 98 - 9F */   0x00, 0x00, "⊃", "⊂", "⌑", "○", "±", "←",
@@ -316,7 +315,7 @@ class DisplayScreen : public QObject
         int screen_y;                /* Max Rows */
         int screenPos_max;           /* Max position on screen */
 
-        Attributes *field;            /* Temporary field attrbute */
+//        Attributes *field;            /* Temporary field attrbute */
 
         Attributes *attrs;           /* Attributes */
         Attributes extAttr;          /* Extended Field Attributes */
@@ -325,9 +324,6 @@ class DisplayScreen : public QObject
         Text **glyph;                /* Character on screen */
         QGraphicsRectItem **cell;    /* Screen slot */
         QGraphicsLineItem **uscore;  /* Underscores */
-
-        QTimer *blinker;             /* Blinking timer */
-        QTimer *cursorBlinker;       /* Cursor Blink */
 
         bool blinkShow;             /* Whether the character is shown/hidden for a given blink event */
         bool cursorShow;            /* Whether the cursor is shown/hidden for a given blink event */
@@ -362,7 +358,8 @@ class DisplayScreen : public QObject
         QGraphicsLineItem *crosshair_X;
         QGraphicsLineItem *crosshair_Y;
 
-        Terminal *term;
+        QFont termFont;
+        bool fontScaling;            // Font scales with cell size
 
         qreal gridSize_X;
         qreal gridSize_Y;

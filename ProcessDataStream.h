@@ -37,10 +37,12 @@
 #include "Buffer.h"
 #include "DisplayScreen.h"
 #include "3270.h"
-#include "Terminal.h"
+#include "TerminalView.h"
 #include <arpa/telnet.h>
 
 #include <map>
+
+class TerminalTab;
 
 /**
  * TODO write docs
@@ -51,7 +53,7 @@ class ProcessDataStream : public QObject
 	
 	public:
 	
-        ProcessDataStream(QGraphicsScene *parent, Terminal *t);
+        ProcessDataStream(TerminalView *t);
         QString EBCDICtoASCII();
         void processStream(Buffer *b);
         bool processing;
@@ -67,7 +69,7 @@ class ProcessDataStream : public QObject
         void deleteChar();
         void newline();
         void toggleRuler();
-        void setFont(QFont font);
+//        void setFont(QFont font);
 
         void showFields();
 
@@ -97,12 +99,8 @@ class ProcessDataStream : public QObject
 	private:
 
         QGraphicsScene *scene;
-        QGraphicsView *terminal;
 
-        Terminal *term;
-
-        DisplayScreen *default_screen;
-        DisplayScreen *alternate_screen;
+        TerminalView *terminal;
 
         QTimer *blinker;
 

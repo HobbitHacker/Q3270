@@ -55,7 +55,6 @@
 #endif
 
 #include "ProcessDataStream.h"
-#include "Terminal.h"
 
 class QHostAddress;
 
@@ -65,12 +64,12 @@ class SocketConnection : public QObject
     Q_DISABLE_COPY(SocketConnection)
 
     public:
-        explicit SocketConnection(QObject *parent = nullptr);
+        explicit SocketConnection(QString termName);
 
         void sendResponse(Buffer *b);
 
     public slots:
-        void connectMainframe(const QHostAddress &address, quint16 port, ProcessDataStream *d, Terminal *t);
+        void connectMainframe(const QHostAddress &address, quint16 port, ProcessDataStream *d);
         void disconnectMainframe();
 
     private slots:
@@ -109,7 +108,7 @@ class SocketConnection : public QObject
         QDataStream dataStream;
         ProcessDataStream *displayDataStream;
 
-        Terminal *term;
+        QString termName;
 
         Buffer *incomingData;
         Buffer *subNeg;

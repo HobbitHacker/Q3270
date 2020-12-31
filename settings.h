@@ -3,7 +3,7 @@
 
 #include <QDialog>
 
-#include <Terminal.h>
+#include <TerminalTab.h>
 
 namespace Ui {
     class Settings;
@@ -15,7 +15,7 @@ class Settings : public QDialog
 
     public:
 
-        explicit Settings(QWidget *parent, Terminal *t);
+        explicit Settings(QWidget *parent, TerminalTab *t);
         ~Settings();
 
         bool getBlink();
@@ -30,7 +30,7 @@ class Settings : public QDialog
 //        using QDialog::accept;
         void accept();
 
-        Terminal *t;
+        TerminalTab *t;
 
         Ui::Settings *ui;
 

@@ -20,10 +20,11 @@
 #include "SocketConnection.h"
 #include "ProcessDataStream.h"
 #include "Keyboard.h"
-#include "Terminal.h"
+#include "TerminalView.h"
 #include "settings.h"
 #include "FontSelection.h"
 #include "3270.h"
+#include "TerminalTab.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -38,8 +39,6 @@ class MainWindow : public QMainWindow
     ~MainWindow();
 
   public slots:
-    void showCursorAddress(int x, int y);
-    void setIndicators(Indicators i);
     void setSetting(QString k, QString v);
 	
   private slots:
@@ -52,24 +51,16 @@ class MainWindow : public QMainWindow
     void menuTerminalSettings();
 
   private:
-	void setupActions();
-    void processDataStream(Buffer *b);        
+	void setupActions(); 
 
     bool xSystem;
     bool xClock;
 
-    Terminal *t;
-	SocketConnection *c;
-    ProcessDataStream *datastream;
+    TerminalTab *t;
     Ui::MainWindow *ui;    
     QTextEdit *te;
-    QGraphicsScene *gs;
 
     QSettings *applicationSettings;
-
-    QLabel *cursorAddress;
-    QLabel *syslock;
-    QLabel *insMode;
 
     struct {
             int termType;

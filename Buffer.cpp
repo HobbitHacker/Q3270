@@ -131,11 +131,11 @@ void Buffer::dump(bool send)
     unsigned char *c = buffer;
     for(int i = 0; i < size(); i++)
     {
-        if (i%16 == 0)
+        if (i%32 == 0)
         {
             printf("\n%04.4X : ", i);
         }
-        printf("%02.2X ", *c++);
+        printf("%02.2X", *c++);
     }
     printf("\n---------------- Buffer (size = %d) ------------------\n\n", size());
     fflush(stdout);

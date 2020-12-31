@@ -16,11 +16,8 @@
 
 #include "ProcessDataStream.h"
 
-ProcessDataStream::ProcessDataStream(QGraphicsScene* parent, Terminal *t)
+ProcessDataStream::ProcessDataStream(TerminalView *t)
 {
-    //TODO: some of this stuff belongs in Terminal()
-
-    scene = parent;
     terminal = t;
 
     primary_x = 0;
@@ -32,25 +29,13 @@ ProcessDataStream::ProcessDataStream(QGraphicsScene* parent, Terminal *t)
     cursor_pos = 0;
 
     lastAID = IBM3270_AID_NOAID;
-
-    default_screen = new DisplayScreen(parent, t, 80, 24);
-    alternate_screen = new DisplayScreen(parent, t, t->terminalWidth(), t->terminalHeight());
-
     setScreen();
 }
 
 void ProcessDataStream::setScreen(bool alternate)
 {
-    if (alternate)
-    {
-        terminal->setScene(alternate_screen->getScene());
-        screen = alternate_screen;
-    }
-    else
-    {
-        terminal->setScene(default_screen->getScene());
-        screen = default_screen;
-    }
+
+    screen = terminal->setScreen(alternate);
 
     alternate_size = alternate;
 
@@ -60,12 +45,12 @@ void ProcessDataStream::setScreen(bool alternate)
     screenSize = screen_x * screen_y;
 }
 
-void ProcessDataStream::setFont(QFont font)
+/*void ProcessDataStream::setFont(QFont font)
 {
     default_screen->setFont(font);
     alternate_screen->setFont(font);
 }
-
+*/
 void ProcessDataStream::processStream(Buffer *b)
 {
     //FIXME: buffer size 0 shouldn't happen!
@@ -785,14 +770,14 @@ void ProcessDataStream::replySummary(Buffer *buffer)
                                       0x01, 0x36  /* code page 310 */
     };
 
-    qpart[14] = alternate_screen->width();
-    qpart[16] = alternate_screen->height();
+    qpart[14] = terminal->alternate->width();
+    qpart[16] = terminal->alternate->height();
 
     qusablearea[6] = 0x00;
-    qusablearea[7] = alternate_screen->width();
+    qusablearea[7] = qpart[14];
 
     qusablearea[8] = 0x00;
-    qusablearea[9] = alternate_screen->height();
+    qusablearea[9] = qpart[16];
 
     QSizeF screenSizeMM = QGuiApplication::primaryScreen()->physicalSize();
     QSizeF screenSizePix = QGuiApplication::primaryScreen()->size();
@@ -815,11 +800,11 @@ void ProcessDataStream::replySummary(Buffer *buffer)
     qusablearea[17] = (y & 0xFF00) >> 8;
     qusablearea[18] = (y & 0xFF);
 
-    qusablearea[19] = (default_screen->gridWidth() & 0xFF00) >> 8;
-    qusablearea[20] = (default_screen->gridWidth() & 0xFF);
+    qusablearea[19] = (terminal->primary->gridWidth() & 0xFF00) >> 8;
+    qusablearea[20] = (terminal->primary->gridWidth() & 0xFF);
 
-    qusablearea[21] = (default_screen->gridHeight() & 0xFF00) >> 8;
-    qusablearea[22] = (default_screen->gridHeight() & 0xFF);
+    qusablearea[21] = (terminal->primary->gridHeight() & 0xFF00) >> 8;
+    qusablearea[22] = (terminal->primary->gridHeight() & 0xFF);
 
     qusablearea[23] = ((qusablearea[5] * qusablearea[7]) & 0xFF00) >> 8;
     qusablearea[24] = ((qusablearea[5] * qusablearea[7]) & 0xFF);
