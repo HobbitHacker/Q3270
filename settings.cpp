@@ -8,10 +8,10 @@ Settings::Settings(QWidget *parent, TerminalTab *t) :
     this->t = t;
     ui->setupUi(this);
     changeModel(t->getType());
-    ui->cursorBlink->setChecked(t->getBlink());
-    printf("Settings        : Blink speed from terminal: %d\n", t->getBlinkSpeed());
+    ui->cursorBlink->setChecked(t->term->getBlink());
+    printf("Settings        : Blink speed from terminal: %d\n", t->term->getBlinkSpeed());
     fflush(stdout);
-    ui->cursorBlinkSpeed->setSliderPosition(t->getBlinkSpeed());
+    ui->cursorBlinkSpeed->setSliderPosition(t->term->getBlinkSpeed());
 
 //    setFixedSize(size());
 }
@@ -29,6 +29,9 @@ void Settings::changeModel(int model)
 
     termType = model;
     int termX, termY;
+
+    ui->terminalCols->setDisabled(true);
+    ui->terminalRows->setDisabled(true);
 
     switch(model)
     {
@@ -56,8 +59,6 @@ void Settings::changeModel(int model)
 
     ui->terminalCols->setValue(termX);
     ui->terminalRows->setValue(termY);
-    ui->terminalCols->setDisabled(true);
-    ui->terminalRows->setDisabled(true);
 }
 
 void Settings::accept()
@@ -65,8 +66,8 @@ void Settings::accept()
     t->setType(ui->terminalType->currentIndex());
 
     t->setSize(ui->terminalCols->value(), ui->terminalRows->value());
-    t->setBlink(ui->cursorBlink);
-    t->setBlinkSpeed(ui->cursorBlinkSpeed->sliderPosition());
+    t->term->setBlink(ui->cursorBlink);
+    t->term->setBlinkSpeed(ui->cursorBlinkSpeed->sliderPosition());
 
     QDialog::accept();
 

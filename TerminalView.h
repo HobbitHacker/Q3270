@@ -14,7 +14,10 @@ class TerminalView : public QGraphicsView
         void resizeEvent(QResizeEvent *r);
 
         void setScaleFont(bool scale);
+        int  getBlinkSpeed();
         void setBlinkSpeed(int speed);
+        bool getBlink();
+        void setBlink(bool blink);
         void setScenes(DisplayScreen *primary, DisplayScreen *alternate);
 
         DisplayScreen *setScreen(bool alt);
@@ -33,7 +36,8 @@ class TerminalView : public QGraphicsView
 
         bool resizeFont;
 
-        int blinkSpeed;
+        int blinkSpeed;         // Cursor blink speed
+        bool blink;             // Whether cursor blinks
 
         QTimer *blinker;
         QTimer *cursorBlinker;

@@ -21,15 +21,12 @@ TerminalTab::TerminalTab(QVBoxLayout *vbl, QSettings *applicationSettings)
 
     setType("IBM-3279-2-E");
 
-    blink = true;
-    blinkSpeed = 1000;
-
     if (applicationSettings->contains("terminal/model"))
     {
         setType(applicationSettings->value("terminal/model").toString());
         setSize(applicationSettings->value("terminal/width").toInt(), applicationSettings->value("terminal/height").toInt());
-        blink = applicationSettings->value("terminal/cursorblink").toBool();
-        blinkSpeed = applicationSettings->value("terminal/cursorblinkspeed").toInt();
+        term->setBlink(applicationSettings->value("terminal/cursorblink").toBool());
+        term->setBlinkSpeed(applicationSettings->value("terminal/cursorblinkspeed").toInt());
         (applicationSettings->value("font/scale").toString() == "true") ? term->setScaleFont(true) : term->setScaleFont(false);
     }
 
@@ -96,33 +93,6 @@ int TerminalTab::getType()
 char * TerminalTab::name()
 {
     return terms[termType].term.toLatin1().data();
-}
-
-void TerminalTab::setBlink(bool b)
-{
-    blink = b;
-}
-
-void TerminalTab::setBlinkSpeed(int speed)
-{
-    if (blinkSpeed > 1000 || blinkSpeed < 0)
-    {
-        return;
-    }
-
-    blinkSpeed = speed;
-
-    term->setBlinkSpeed(speed);
-}
-
-bool TerminalTab::getBlink()
-{
-    return blink;
-}
-
-int TerminalTab::getBlinkSpeed()
-{
-    return blinkSpeed;
 }
 
 void TerminalTab::setFont(QFont f)

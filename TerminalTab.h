@@ -33,14 +33,10 @@ class TerminalTab : public QObject
         void setType(int type);
 
         void setSize(int x, int y);
-        void setBlink(bool b);
-        void setBlinkSpeed(int s);
 
         void setFont(QFont f);
 
         int getType();
-        int getBlinkSpeed();
-        bool getBlink();
 
         TerminalView *term;
 
@@ -87,9 +83,8 @@ class TerminalTab : public QObject
         };
 
         bool connected;
+
         int termType;
-        bool blink;
-        int blinkSpeed;
         bool resizeFont;
 
 };

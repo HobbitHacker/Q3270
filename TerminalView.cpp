@@ -13,6 +13,7 @@ TerminalView::TerminalView()
     blinker = new QTimer(this);
     cursorBlinker = new QTimer(this);
     blinkSpeed = 1;
+    blink = true;
 }
 
 
@@ -79,9 +80,28 @@ void TerminalView::setBlinkSpeed(int speed)
 {
     blinkSpeed = speed;
     cursorBlinker->stop();
-    if (blinkSpeed > 0)
+    if (blinkSpeed > 0 && blink)
     {
         cursorBlinker->start((5 - blinkSpeed) * 250);
     }
+}
+
+int TerminalView::getBlinkSpeed()
+{
+    return blinkSpeed;
+}
+
+void TerminalView::setBlink(bool blink)
+{
+    this->blink = blink;
+    if (!blink)
+    {
+        cursorBlinker->stop();
+    }
+}
+
+bool TerminalView::getBlink()
+{
+    return blink;
 }
 
