@@ -5,6 +5,7 @@ FontSelection::FontSelection(QWidget *parent, QString fontName, QString fontStyl
     ui->setupUi(this);
 
     this->scaling = scaling;
+    ui->FontScaling->setCheckState(scaling ? Qt::Checked : Qt::Unchecked);
 
     initFontList();
 

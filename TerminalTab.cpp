@@ -6,8 +6,6 @@ TerminalTab::TerminalTab(QVBoxLayout *vbl, QSettings *applicationSettings)
 
     statusBar = new QStatusBar(vbl->parentWidget());
 
-
-
 /*    statusBar->addPermanentWidget(syslock, 50);
     statusBar->addPermanentWidget(insMode, 50);
     statusBar->addPermanentWidget(cursorAddress, 50);
@@ -35,6 +33,7 @@ TerminalTab::TerminalTab(QVBoxLayout *vbl, QSettings *applicationSettings)
         termFont.setFamily(applicationSettings->value("font/name").toString());
         termFont.setStyleName(applicationSettings->value("font/style").toString());
         termFont.setPointSize(applicationSettings->value("font/size").toInt());
+        (applicationSettings->value("font/scale").toInt() == 0) ? view->setScaleFont(false) : view->setScaleFont(true);
     }
     else
     {

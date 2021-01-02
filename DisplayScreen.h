@@ -61,6 +61,7 @@ class DisplayScreen : public QObject
         int resetFieldAttrs(int start);
 
         unsigned char getChar(int pos);
+        bool isAskip(int pos);
 
         void clear();
         void setFont(QFont font);

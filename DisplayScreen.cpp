@@ -698,7 +698,6 @@ bool DisplayScreen::insertChar(int pos, unsigned char c, bool insertMode)
         }
         printf("Field length: %d, starting at %d, ending at %d\n", endPos - pos, pos, endPos);
         fflush(stdout);
-        //FIXME: Is this needed?
         bool tmpGE = geActive;
         for(int fld = endPos; fld > pos; fld--)
         {
@@ -719,6 +718,11 @@ bool DisplayScreen::insertChar(int pos, unsigned char c, bool insertMode)
     setChar(pos, ASCIItoEBCDICmap[c], false);
 
     return true;
+}
+
+bool DisplayScreen::isAskip(int pos)
+{
+    return attrs[pos].askip;
 }
 
 void DisplayScreen::deleteChar(int pos)

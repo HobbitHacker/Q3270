@@ -49,7 +49,7 @@ void MainWindow::menuSetFont()
 
     if (applicationSettings->contains("font/name"))
     {
-        fs = new FontSelection(this,applicationSettings->value("font/name").toString(),applicationSettings->value("font/style").toString(),applicationSettings->value("font/size").toInt());
+        fs = new FontSelection(this,applicationSettings->value("font/name").toString(),applicationSettings->value("font/style").toString(),applicationSettings->value("font/size").toInt(), applicationSettings->value("font/scale").toBool());
     }
     else
     {
@@ -62,6 +62,7 @@ void MainWindow::menuSetFont()
     {
         t->setFont(fs->getFont());
         t->setScaleFont(fs->getScaling());
+        setSetting("font/scale", QString::number(fs->getScaling()));
         //ui->verticalLayout->update();
     }
 }

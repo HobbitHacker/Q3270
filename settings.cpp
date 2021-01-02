@@ -13,7 +13,12 @@ Settings::Settings(QWidget *parent, TerminalTab *t) :
     fflush(stdout);
     ui->cursorBlinkSpeed->setSliderPosition(t->view->getBlinkSpeed());
 
-//    setFixedSize(size());
+    if (t->view->connected)
+    {
+        ui->terminalCols->setDisabled(true);
+        ui->terminalRows->setDisabled(true);
+        ui->terminalType->setDisabled(true);
+    }
 }
 
 Settings::~Settings()
@@ -36,9 +41,11 @@ void Settings::changeModel(int model)
     switch(model)
     {
         case 4:
+            termX = t->terminalWidth();
+            termY = t->terminalHeight();
             ui->terminalCols->setEnabled(true);
             ui->terminalRows->setEnabled(true);
-            return;
+            break;
         case 0:
             termX = 80;
             termY = 24;
@@ -56,6 +63,8 @@ void Settings::changeModel(int model)
             termY = 27;
             break;
     }
+
+    ui->terminalType->setCurrentIndex(model);
 
     ui->terminalCols->setValue(termX);
     ui->terminalRows->setValue(termY);

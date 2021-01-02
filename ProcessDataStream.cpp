@@ -408,7 +408,7 @@ void ProcessDataStream::processRA(Buffer *b)
     bool geRA = false;
 
     // Check to see if it's <RA><GE><CHAR>
-    if (newChar == 0x08)
+    if (newChar == IBM3270_GE)
     {
         geRA = true;
         b->nextByte();
@@ -743,9 +743,10 @@ void ProcessDataStream::replySummary(Buffer *buffer)
                                                  /* .....x.. - CH2 */
                                                  /*            0 - 2-byte coded character sets are not supported */
                                                  /*            1 - 2 byte coded character sets are supported */
-                                                 /* .......x - GF */
+                                                 /* ......x. - GF */
                                                  /*            0 - CGCSGID is not present */
                                                  /*            1 - CGCSGID is present */
+                                                 /* .......x - reserved */
 
                                 0x00,            /* x.xxxxxx - reserved */
                                                  /*  x       - Programmed Symbols Character Slot */
@@ -894,6 +895,10 @@ void ProcessDataStream::insertChar(unsigned char keycode, bool insMode)
     if (screen->insertChar(cursor_pos, keycode, insMode))
     {
         moveCursor(1, 0);
+        if (screen->isAskip(cursor_pos))
+        {
+            tab();
+        }
     }
 }
 
@@ -1023,12 +1028,14 @@ void ProcessDataStream::processAID(int aid, bool shortRead)
 
     if (!shortRead)
     {
-        if (cursor_pos < 4096) // 12 bit
+        if (screenSize < 4096) // 12 bit
         {
+            printf("12 bit buffer address: %02X %02X\n", 0xC0|((cursor_pos>>6)&63), cursor_pos&63);
+            fflush(stdout);
             respBuffer->add(0xC0|((cursor_pos>>6)&63));
             respBuffer->add(cursor_pos&63);
         }
-        else if (cursor_pos < 16384) // 14 bit
+        else if (screenSize < 16384) // 14 bit
         {
             respBuffer->add((cursor_pos>>8)&63);
             respBuffer->add(cursor_pos&0xFF);
