@@ -720,6 +720,11 @@ bool DisplayScreen::insertChar(int pos, unsigned char c, bool insertMode)
     return true;
 }
 
+/**
+ * \class DisplayScreen::isAskip
+ *
+ * \brief isAskip returns a boolean indicating whether the supplied screen position contains askip.
+ */
 bool DisplayScreen::isAskip(int pos)
 {
     return attrs[pos].askip;
