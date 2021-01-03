@@ -565,7 +565,7 @@ void ProcessDataStream::replySummary(Buffer *buffer)
          0  CH2      no DBCS
          1  GF          CGCSID present
          0  - reserved -
-       00 - LOAD PS slot size required
+       00 - no LOAD PS slot size required
        09 - default width
        0c - default height
        00 00 00 00 - LOAD PS format types supported (none)
@@ -724,7 +724,7 @@ void ProcessDataStream::replySummary(Buffer *buffer)
                                 0x00, 0x1B,
                                 IBM3270_SF_QUERYREPLY,
                                 IBM3270_SF_QUERYREPLY_CHARSETS,
-                                0x82,            /* GE supported only */
+                                0x82,            /* GE, CGCSGID supported only - 10000010 */
                                                  /* x....... - ALT */
                                                  /*            0 - Graphic Escape not supported */
                                                  /*            1 - Graphic Escape not supported */
