@@ -32,6 +32,7 @@ void MainWindow::menuNew()
     TerminalTab *t = new TerminalTab(applicationSettings);
     ui->mdiArea->addSubWindow(t);
     t->show();
+    menuConnect();
 
 }
 
@@ -58,7 +59,9 @@ void MainWindow::mruConnect()
         port = menuText.section(":", 1, 1).toInt();
     }
 
-    TerminalTab *t = (TerminalTab *)(ui->mdiArea->activeSubWindow());
+    TerminalTab *t = new TerminalTab(applicationSettings);
+    ui->mdiArea->addSubWindow(t);
+    t->show();
     t->openConnection(host, port, luname);
 
     ui->actionDisconnect->setEnabled(true);
@@ -171,6 +174,12 @@ void MainWindow::updateMenuEntries()
             ui->actionSet_Font->setDisabled(true);
         }
     }
+    else
+    {
+        ui->actionDisconnect->setDisabled(true);
+        ui->actionConnect->setDisabled(true);
+        ui->actionSet_Font->setDisabled(true);
+    }
 }
 
 void MainWindow::updateMRUlist(QString address)
@@ -186,19 +195,18 @@ void MainWindow::updateMRUlist(QString address)
 
     mruList.prepend(address);
 
-    for(int i = 0; i < mruList.size(); i++)
+    for(int i = 0; i <= mruList.size(); i++)
     {
         ui->menuRecentSessions->addAction(mruList.at(i), this, [this]() { mruConnect(); } );
     }
 
     applicationSettings->beginWriteArray("mrulist");
-    for(int i = 0; i < mruList.size(); i++)
+    for(int i = 0; i <= mruList.size(); i++)
     {
         applicationSettings->setArrayIndex(i);
         applicationSettings->setValue("address", mruList.at(i));
     }
     applicationSettings->endArray();
-//    setSetting("mrulist/mrucount", QString::number(mruCount));
 }
 
 void MainWindow::menuQuit()
