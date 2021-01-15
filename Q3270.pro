@@ -24,7 +24,6 @@ SOURCES += \
     ProcessDataStream.cpp \
     TerminalTab.cpp \
     TerminalView.cpp \
-    UScore.cpp \
     main.cpp \
     mainwindow.cpp \
     SocketConnection.cpp \
@@ -41,7 +40,6 @@ HEADERS += \
     ProcessDataStream.h \
     TerminalTab.h \
     TerminalView.h \
-    UScore.h \
     mainwindow.h \
     SocketConnection.h \
     settings.h \

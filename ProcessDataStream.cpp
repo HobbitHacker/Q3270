@@ -45,12 +45,6 @@ void ProcessDataStream::setScreen(bool alternate)
     screenSize = screen_x * screen_y;
 }
 
-/*void ProcessDataStream::setFont(QFont font)
-{
-    default_screen->setFont(font);
-    alternate_screen->setFont(font);
-}
-*/
 void ProcessDataStream::processStream(Buffer *b)
 {
     //FIXME: buffer size 0 shouldn't happen!
@@ -254,8 +248,6 @@ void ProcessDataStream::processEW(Buffer *buf, bool alternate)
     cursor_x = 0;
     cursor_y = 0;
     cursor_pos = 0;
-
-//    display->setBackgroundBrush(Qt::black);
 
     screen->clear();
 
@@ -855,8 +847,6 @@ void ProcessDataStream::placeChar(Buffer *b)
 void ProcessDataStream::placeChar(int ebcdic)
 {
 
-//    glyph[pos]->setBrush(fieldAttr);
-
     printf("(%02x)", ebcdic);
     switch(ebcdic)
     {
@@ -864,13 +854,7 @@ void ProcessDataStream::placeChar(int ebcdic)
             screen->setChar(primary_pos, 0x00, false);
             break;
         default:
-/*            if (extended.on)
-            {
-                glyph[pos]->setBrush(palette[extended.foreground]);
-                cells[pos]->setBrush(palette[extended.background]);
-            }*/
             screen->setChar(primary_pos, ebcdic, false);
-//            attributes[pos].prot = prot;
     }
 
     incPos();

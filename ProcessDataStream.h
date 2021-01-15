@@ -151,7 +151,7 @@ class ProcessDataStream : public QObject
 
 
         /* 3270 Orders */
-        /* TODO: 3270 Orders MF, PT and GE */
+        /* TODO: 3270 Orders MF, PT */
         void processSF(Buffer *b);
         void processSFE(Buffer *b);
         void processSBA(Buffer *b);

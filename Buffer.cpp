@@ -21,7 +21,7 @@ const char* Buffer::address()
     return (char *)buffer;
 }
 
-void Buffer::add(char b)
+void Buffer::add(unsigned char b)
 {
     *bufferEnd++ = b;
 }

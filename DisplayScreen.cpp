@@ -2,6 +2,8 @@
 
 DisplayScreen::DisplayScreen(int view_x, int view_y, int screen_x, int screen_y)
 {
+    // Create scene based on the view.
+    // TODO: Should this be an arbitrary size (480x1600 eg or based on screen_x, screen_y) that can then be scaled?
     screen = new QGraphicsScene(0, 0, view_x, view_y);
 
     screen->setBackgroundBrush(palette[0]);
@@ -16,15 +18,6 @@ DisplayScreen::DisplayScreen(int view_x, int view_y, int screen_x, int screen_y)
 
     line.setCosmetic(true);
     line.setWidth(1);
-
-    QPen u;
-    u.setWidth(8);
-    u.setBrush(Qt::green);
-
-    QPen p1;
-    p1.setWidth(0);
-    p1.setCosmetic(true);
-    p1.setBrush(Qt::lightGray);
 
     attrs = new Attributes[screenPos_max];
     glyph = new Text*[screenPos_max];
@@ -138,9 +131,10 @@ void DisplayScreen::setFont(QFont font)
     {
         QFontMetrics *fm = new QFontMetrics(font);
         QRectF boxRect = fm->boundingRect("┼");
+
         printf("DisplayScreen   : FontMetrics: %d x %d    Box char %f x %f   GridSize: %f x %f\n", fm->averageCharWidth(), fm->height(), boxRect.width(), boxRect.height(), gridSize_X, gridSize_Y);
-        //    int pos_x = (gridSize_X / 2) - boxRect
         fflush(stdout);
+
         tr.scale(gridSize_X / boxRect.width(), gridSize_Y / boxRect.height());
     }
     else
@@ -152,7 +146,6 @@ void DisplayScreen::setFont(QFont font)
     {
         glyph[i]->setFont(QFont(font));
         glyph[i]->setTransform(tr);
-//        glyph[i]->setPos()
     }
 }
 
@@ -170,7 +163,7 @@ void DisplayScreen::clear()
     for(int i = 0; i < screenPos_max; i++)
     {
         cell[i]->setBrush(palette[0]);
-//        uscore[i]->setBrush(Qt::NoBrush);
+
         uscore[i]->setVisible(false);
 
         glyph[i]->setBrush(palette[1]);
@@ -219,9 +212,6 @@ void DisplayScreen::setChar(int pos, short unsigned int c, bool move)
     }
 
     attrs[pos].charAttr = useCharAttr;
-
-
-//    printf("[pos %d set to (%c) (0x%2X)]", pos,c,c);
 
     if(!geActive)
     {
@@ -321,19 +311,7 @@ void DisplayScreen::setChar(int pos, short unsigned int c, bool move)
     else
     {
         uscore[pos]->setVisible(false);
-//        uscore[pos]->setBrush(Qt::NoBrush);
     }
-
-/*    if (c != IBM3270_CHAR_NULL)
-    {
-        printf("%c", EBCDICtoASCIImap[c]);
-    }
-    else
-    {
-        printf("0x00");
-    }
-
-*/    fflush(stdout);
 }
 
 unsigned char DisplayScreen::getChar(int pos)
@@ -344,15 +322,8 @@ unsigned char DisplayScreen::getChar(int pos)
 
 void DisplayScreen::setCharAttr(unsigned char extendedType, unsigned char extendedValue)
 {
-/*    if (!useCharAttr)
-    {
-        charAttr.blink = attrs[pos].blink;
-        charAttr.colour = attrs[pos].colour;
-        charAttr.uscore = attrs[pos].uscore;
-        charAttr.reverse = attrs[pos].reverse;
-
-    } */
     printf("[SetAttribute ");
+
     switch(extendedType)
     {
         case IBM3270_EXT_DEFAULT:
@@ -398,7 +369,6 @@ void DisplayScreen::setCharAttr(unsigned char extendedType, unsigned char extend
             charAttr.colour = palette[extendedValue&7];
             charAttr.colNum = extendedValue&7;
             charAttr.colour_default = false;
-//            extAttr.reverse = false;
             printf("fg colour %s", colName[charAttr.colNum]);
             break;
         case IBM3270_EXT_BG_COLOUR:
@@ -406,7 +376,6 @@ void DisplayScreen::setCharAttr(unsigned char extendedType, unsigned char extend
             charAttr.colNum = extendedValue&7;
             charAttr.colour_default = false;
             printf("bg colour %s", colName[charAttr.colNum]);
-            //            extAttr.reverse = true;
             break;
         default:
             printf(" ** Not implemented **");
@@ -442,16 +411,7 @@ void DisplayScreen::setField(int pos, unsigned char c, bool sfe)
     attrs[pos].intensify = ((c >> 2) & 3) == 2;
     attrs[pos].mdt = c & 1;
     attrs[pos].extended = sfe;
-/*
-    if (!useCharAttr)
-    {
-        attrs[pos].charAttr = false;
-    }
-    else
-    {
-        attrs[pos].charAttr = true;
-    }
-*/
+
     attrs[pos].charAttr = false;
     attrs[pos].askip = (attrs[pos].prot & attrs[pos].num);
 
@@ -475,8 +435,7 @@ void DisplayScreen::setField(int pos, unsigned char c, bool sfe)
         {
             attrs[pos].colNum = 2;    /* Red */
         }
-        //uscore[pos]->hide();
-        //attrs[pos].uscore = false;
+
         attrs[pos].uscore = false;
         attrs[pos].reverse = false;
         attrs[pos].blink = false;
@@ -516,9 +475,6 @@ void DisplayScreen::setField(int pos, unsigned char c, bool sfe)
     }
     printf(")");
     fflush(stdout);
-
-//    int py = pos / SCREENX;
-//    int px = pos - (py * SCREENX);
 
     if (!sfe)
     {
@@ -608,7 +564,6 @@ int DisplayScreen::resetFieldAttrs(int start)
     for(int i = start; i < endPos; i++)
     {
         int offset = i % screenPos_max;
-//        bool uscore = attrs[offset].uscore;
 
         if (attrs[offset].fieldStart && i > start)
         {
@@ -623,48 +578,34 @@ int DisplayScreen::resetFieldAttrs(int start)
         attrs[offset].pen = attrs[lastField].pen;
         attrs[offset].display = attrs[lastField].display;
 
-//        if (!useCharAttr)
-  //      {
-            attrs[offset].colNum = attrs[lastField].colNum;
-            attrs[offset].uscore = attrs[lastField].uscore;
-            attrs[offset].blink = attrs[lastField].blink;
-            attrs[offset].reverse = attrs[lastField].reverse;
-            attrs[offset].charAttr = false;
-    //    }
-
-        //        attrs[offset] = attrs[start];
-//        attrs[offset].fieldStart = false;
+        attrs[offset].colNum = attrs[lastField].colNum;
+        attrs[offset].uscore = attrs[lastField].uscore;
+        attrs[offset].blink = attrs[lastField].blink;
+        attrs[offset].reverse = attrs[lastField].reverse;
+        attrs[offset].charAttr = false;
 
         if (attrs[offset].display)
         {
-//            if (!attrs[offset].charAttr)
-//            {
-                if (attrs[offset].reverse)
-                {
-                    cell[offset]->setBrush(palette[attrs[offset].colNum]);
-                    glyph[offset]->setBrush(palette[0]);
-                }
-                else
-                {
-                    cell[offset]->setBrush(palette[0]);
-                    glyph[offset]->setBrush(palette[attrs[offset].colNum]);
-                }
-                if (attrs[offset].uscore)
-                {
-                    uscore[offset]->setPen(QPen(palette[attrs[offset].colNum],0));
-                    uscore[offset]->pen().setCosmetic(true);
-                    uscore[offset]->pen().setColor(palette[attrs[offset].colNum]);
-/*
-                    uscore[offset]->pen().setColor(palette[attrs[offset].colNum]);
-                    uscore[offset]->setVisible(true);*/
-//                    uscore[offset]->setBrush(QBrush(palette[attrs[offset].colNum]));
-                }
-                else
-                {
-//                    uscore[offset]->setBrush(Qt::NoBrush);
-                  uscore[offset]->setVisible(false);
-                }
-  //          }
+            if (attrs[offset].reverse)
+            {
+                cell[offset]->setBrush(palette[attrs[offset].colNum]);
+                glyph[offset]->setBrush(palette[0]);
+            }
+            else
+            {
+                cell[offset]->setBrush(palette[0]);
+                glyph[offset]->setBrush(palette[attrs[offset].colNum]);
+            }
+            if (attrs[offset].uscore)
+            {
+                uscore[offset]->setPen(QPen(palette[attrs[offset].colNum],0));
+                uscore[offset]->pen().setCosmetic(true);
+                uscore[offset]->pen().setColor(palette[attrs[offset].colNum]);
+            }
+            else
+            {
+                uscore[offset]->setVisible(false);
+            }
         }
         else
         {
@@ -981,7 +922,7 @@ int DisplayScreen::findPrevUnprotectedField(int pos)
         {
             tmpPos = screenPos_max + i;
         }
-        // Check this position for unprotected and fieldStart and check the position for
+        // Check this position for unprotected and fieldStart and check the next position for
         // fieldStart - an unprotected field cannot start where two fieldStarts are adajacent
         tmpNxt = (tmpPos + 1) % screenPos_max;
         if (attrs[tmpPos].fieldStart && !attrs[tmpPos].prot && !attrs[tmpNxt].fieldStart)
