@@ -14,9 +14,8 @@ DisplayScreen::DisplayScreen(int view_x, int view_y, int screen_x, int screen_y)
 
     screenPos_max = screen_x * screen_y;
 
-    QPen p;
-    p.setCosmetic(false);
-    p.setWidth(0);
+    line.setCosmetic(true);
+    line.setWidth(1);
 
     QPen u;
     u.setWidth(8);
@@ -25,7 +24,7 @@ DisplayScreen::DisplayScreen(int view_x, int view_y, int screen_x, int screen_y)
     QPen p1;
     p1.setWidth(0);
     p1.setCosmetic(true);
-//    p1.setBrush(Qt::lightGray);
+    p1.setBrush(Qt::lightGray);
 
     attrs = new Attributes[screenPos_max];
     glyph = new Text*[screenPos_max];
@@ -45,14 +44,20 @@ DisplayScreen::DisplayScreen(int view_x, int view_y, int screen_x, int screen_y)
             qreal x_pos = x * gridSize_X;
 
             cell[pos] = new QGraphicsRectItem(0, 0, gridSize_X, gridSize_Y);
-            uscore[pos] = new QGraphicsLineItem(cell[pos]->boundingRect().left() + 1, cell[pos]->boundingRect().bottom() - 1, cell[pos]->boundingRect().right(), cell[pos]->boundingRect().bottom() -1, cell[pos]);
-            cell[pos]->setPen(p1);
+            cell[pos]->setPen(Qt::NoPen);
 
             screen->addItem(cell[pos]);
 
             cell[pos]->setPos(x_pos, y_pos);
 
             glyph[pos] = new Text(cell[pos]);
+
+            uscore[pos] = new QGraphicsLineItem(0, 0, gridSize_X, 0);
+
+            screen->addItem(uscore[pos]);
+
+            uscore[pos]->setZValue(1);
+            uscore[pos]->setPos(x_pos, y_pos + gridSize_Y);
 
 //            glyph[pos]->setPos(0,0);
 //            glyph[pos]->setScale(1.5);
@@ -67,12 +72,16 @@ DisplayScreen::DisplayScreen(int view_x, int view_y, int screen_x, int screen_y)
     cursor->setPos(cell[0]->boundingRect().left(), cell[0]->boundingRect().top());
     cursor->setBrush(Qt::lightGray);
     cursor->setOpacity(0.5);
+    cursor->setPen(Qt::NoPen);
 
     crosshair_X = new QGraphicsLineItem(0, 0, 0, screen->height());
     crosshair_Y = new QGraphicsLineItem(0, 0, screen->width(), 0);
 
-    crosshair_X->setPen(QPen(Qt::white));
-    crosshair_Y->setPen(QPen(Qt::white));
+    crosshair_X->setPen(QPen(Qt::white, 0));
+    crosshair_Y->setPen(QPen(Qt::white, 0));
+
+    crosshair_X->pen().setCosmetic(true);
+    crosshair_Y->pen().setCosmetic(true);
 
     screen->addItem(crosshair_X);
     screen->addItem(crosshair_Y);
@@ -161,7 +170,7 @@ void DisplayScreen::clear()
     for(int i = 0; i < screenPos_max; i++)
     {
         cell[i]->setBrush(palette[0]);
-        uscore[i]->setPen(uscore_pen[0]);
+//        uscore[i]->setBrush(Qt::NoBrush);
         uscore[i]->setVisible(false);
 
         glyph[i]->setBrush(palette[1]);
@@ -303,13 +312,16 @@ void DisplayScreen::setChar(int pos, short unsigned int c, bool move)
     if (attrs[pos].uscore)
     {
         uscore[pos]->setVisible(true);
-        uscore[pos]->setPen(QPen(palette[attrs[pos].colNum], 2));
+        uscore[pos]->setPen(QPen(palette[attrs[pos].colNum],0));
+        uscore[pos]->pen().setCosmetic(true);
+        uscore[pos]->pen().setColor(palette[attrs[pos].colNum]);
 
-        printf("<uscore>");
+        printf("<uscore %d>", attrs[pos].colNum);
     }
     else
     {
         uscore[pos]->setVisible(false);
+//        uscore[pos]->setBrush(Qt::NoBrush);
     }
 
 /*    if (c != IBM3270_CHAR_NULL)
@@ -639,11 +651,17 @@ int DisplayScreen::resetFieldAttrs(int start)
                 }
                 if (attrs[offset].uscore)
                 {
-                    uscore[offset]->setPen(QPen(palette[attrs[offset].colNum], 2));
-                    uscore[offset]->setVisible(true);
+                    uscore[offset]->setPen(QPen(palette[attrs[offset].colNum],0));
+                    uscore[offset]->pen().setCosmetic(true);
+                    uscore[offset]->pen().setColor(palette[attrs[offset].colNum]);
+/*
+                    uscore[offset]->pen().setColor(palette[attrs[offset].colNum]);
+                    uscore[offset]->setVisible(true);*/
+//                    uscore[offset]->setBrush(QBrush(palette[attrs[offset].colNum]));
                 }
                 else
                 {
+//                    uscore[offset]->setBrush(Qt::NoBrush);
                   uscore[offset]->setVisible(false);
                 }
   //          }
@@ -838,8 +856,8 @@ void DisplayScreen::drawRuler(int x, int y)
 {
     if (ruler)
     {
-       crosshair_X->setLine(x * gridSize_X, 0, x * gridSize_X, screen_y * gridSize_Y);
-       crosshair_Y->setLine(0 , (y + 1) * gridSize_Y - 1, screen_x * gridSize_X, (y + 1) * gridSize_Y - 1);
+       crosshair_X->setLine((qreal) x * gridSize_X, 0, (qreal) x * gridSize_X, screen->height());
+       crosshair_Y->setLine(0 , (qreal) (y + 1) * gridSize_Y, screen->width(), (qreal) (y + 1) * gridSize_Y);
     }
 }
 

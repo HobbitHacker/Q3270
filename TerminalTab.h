@@ -7,19 +7,20 @@
 #include "SocketConnection.h"
 #include "Keyboard.h"
 
-#include <QVBoxLayout>
+#include <QMdiArea>
+#include <QMdiSubWindow>
 #include <QSettings>
 #include <QStatusBar>
 
-class TerminalTab : public QObject
+class TerminalTab : public QMdiSubWindow
 {
 
     Q_OBJECT
 
     public:
-        TerminalTab(QVBoxLayout *vbl, QSettings *applicationSettings);
+        TerminalTab(QSettings *applicationSettings);
 
-        void openConnection();
+        void openConnection(QString host, int port, QString luName);
         void closeConnection();
 
         int terminalWidth();
@@ -48,8 +49,6 @@ class TerminalTab : public QObject
 //        void processDataStream(Buffer *b);
 
     private:
-
-        QVBoxLayout *vbl;
 
         QStatusBar *statusBar;
         QGraphicsScene *gs;

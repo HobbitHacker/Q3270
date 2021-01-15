@@ -1,21 +1,20 @@
 #include "TerminalTab.h"
 
-TerminalTab::TerminalTab(QVBoxLayout *vbl, QSettings *applicationSettings)
+TerminalTab::TerminalTab(QSettings *applicationSettings)
 {
     view = new TerminalView();
 
-    statusBar = new QStatusBar(vbl->parentWidget());
+//    statusBar = new QStatusBar(vbl->parentWidget());
 
 /*    statusBar->addPermanentWidget(syslock, 50);
     statusBar->addPermanentWidget(insMode, 50);
-    statusBar->addPermanentWidget(cursorAddress, 50);
-*/
-    this->vbl = vbl;
-    vbl->addWidget(view);
+    vbl->parentWidget()-addPermanentWidget(cursorAddress, 50);*/
 
     gs = new QGraphicsScene();
 
     view->setScene(gs);
+
+    this->setWidget(view);
 
     setType("IBM-3279-2-E");
 
@@ -113,7 +112,7 @@ void TerminalTab::setScaleFont(bool scale)
     }
 }
 
-void TerminalTab::openConnection()
+void TerminalTab::openConnection(QString host, int port, QString luName)
 {
     primary = new DisplayScreen(view->geometry().width(), view->geometry().height(), 80, 24);
     alternate = new DisplayScreen(view->geometry().width(), view->geometry().height(), terms[termType].x, terms[termType].y);
@@ -132,11 +131,9 @@ void TerminalTab::openConnection()
     connect(datastream, &ProcessDataStream::cursorMoved, this, &TerminalTab::showCursorAddress);
 
     //TODO most-recently-used list and dialog for connect
-    QHostInfo hi = QHostInfo::fromName("127.0.0.1");
-//    QHostInfo hi = QHostInfo::fromName("192.168.200.1");
+    QHostInfo hi = QHostInfo::fromName(host);
 
-    socket->connectMainframe(hi.addresses().first(), 3271, datastream);
-//    c->connectMainframe(hi.addresses().first(), 23,datastream,t);
+    socket->connectMainframe(hi.addresses().first(), port, datastream);
 
     connect(socket, &SocketConnection::dataStreamComplete, datastream, &ProcessDataStream::processStream);
     connect(socket, &SocketConnection::disconnected, this, &TerminalTab::closeConnection);
@@ -144,7 +141,6 @@ void TerminalTab::openConnection()
     Keyboard *kbd = new Keyboard(datastream);
 
     connect(kbd, &Keyboard::setLock, this, &TerminalTab::setIndicators);
-//    connect(kbd, &Keyboard::saveKeyboardMapping, this, &MainWindow::setSetting);
 
     kbd->setMap();
 
@@ -181,15 +177,17 @@ void TerminalTab::setIndicators(Indicators ind)
 
 void TerminalTab::closeConnection()
 {
+
     socket->disconnectMainframe();
 
-    vbl->removeWidget(view);
+    delete socket;
 
     delete datastream;
-    gs->clear();
-    delete gs;
 
-    delete view;
+    delete primary;
+    delete alternate;
+
+    view->setScene(gs);
 
     view->setDisconnected();
 }

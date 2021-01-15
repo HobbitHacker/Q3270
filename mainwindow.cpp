@@ -1,8 +1,6 @@
 #include "ui_mainwindow.h"
 #include "mainwindow.h"
 
-//NOTE: SocketConnect will need to be created multiple times for multi-session support.
-
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new(Ui::MainWindow))
 {
     ui->setupUi(this);
@@ -13,8 +11,59 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new(Ui::MainWi
 
     applicationSettings = new QSettings();
 
-    //TODO will need a new Terminal() for each tab
-    t = new TerminalTab(ui->verticalLayout, applicationSettings);
+    int mruCount = applicationSettings->beginReadArray("mrulist");
+
+    for(int i = 0; i < mruCount; i++)
+    {
+        applicationSettings->setArrayIndex(i);
+
+        QString address = applicationSettings->value("address").toString();
+        mruList.append(address);
+        ui->menuRecentSessions->addAction(address, this, &MainWindow::mruConnect);
+    }
+
+    applicationSettings->endArray();
+
+    connect(ui->mdiArea, &QMdiArea::subWindowActivated, this, &MainWindow::updateMenuEntries);
+}
+
+void MainWindow::menuNew()
+{
+    TerminalTab *t = new TerminalTab(applicationSettings);
+    ui->mdiArea->addSubWindow(t);
+    t->show();
+
+}
+
+void MainWindow::mruConnect()
+{
+    QAction *sender = (QAction *)QObject::sender();
+
+    QString menuText = sender->text();
+
+    QString host;
+    int port;
+    QString luname;
+
+    if (menuText.contains("@"))
+    {
+       luname = menuText.section("@", 0, 0);
+       host = menuText.section("@", 1, 1).section(":", 0, 0);
+       port = menuText.section(":", 1, 1).toInt();
+    }
+    else
+    {
+        luname = "";
+        host = menuText.section(":", 0, 0);
+        port = menuText.section(":", 1, 1).toInt();
+    }
+
+    TerminalTab *t = (TerminalTab *)(ui->mdiArea->activeSubWindow());
+    t->openConnection(host, port, luname);
+
+    ui->actionDisconnect->setEnabled(true);
+    ui->actionConnect->setDisabled(true);
+    ui->actionSet_Font->setEnabled(true);
 }
 
 MainWindow::~MainWindow()
@@ -25,17 +74,23 @@ MainWindow::~MainWindow()
 
 void MainWindow::menuConnect()
 {
+    Host *h = new Host();
 
-    t->openConnection();
-
-    ui->actionDisconnect->setEnabled(true);
-    ui->actionConnect->setDisabled(true);
-    ui->actionSet_Font->setEnabled(true);
-
+    if (h->exec() == QDialog::Accepted)
+    {
+        TerminalTab *t = (TerminalTab *)(ui->mdiArea->activeSubWindow());
+        t->openConnection(h->hostName, h->port, h->luName);
+        updateMRUlist(h->luName.compare("") ? h->luName + "@" : "" + h->hostName + ":" + QString::number(h->port));
+        ui->actionDisconnect->setEnabled(true);
+        ui->actionConnect->setDisabled(true);
+        ui->actionSet_Font->setEnabled(true);
+    }
 }
 
 void MainWindow::menuDisconnect()
 {
+    TerminalTab *t = (TerminalTab *)(ui->mdiArea->activeSubWindow());
+
     t->closeConnection();
 
     ui->actionDisconnect->setDisabled(true);
@@ -60,6 +115,7 @@ void MainWindow::menuSetFont()
 
     if (fs->exec() == QDialog::Accepted)
     {
+        TerminalTab *t = (TerminalTab *)(ui->mdiArea->activeSubWindow());
         t->setFont(fs->getFont());
         t->setScaleFont(fs->getScaling());
         setSetting("font/scale", QString::number(fs->getScaling()));
@@ -69,6 +125,8 @@ void MainWindow::menuSetFont()
 
 void MainWindow::menuTerminalSettings()
 {
+    TerminalTab *t = (TerminalTab *)(ui->mdiArea->activeSubWindow());
+
     Settings *s = new Settings(this, t);
 
     if (s->exec() == QDialog::Accepted)
@@ -81,6 +139,66 @@ void MainWindow::menuTerminalSettings()
     }
 
     fflush(stdout);
+}
+
+void MainWindow::menuTabbedView(bool tabView)
+{
+    if (tabView)
+    {
+        ui->mdiArea->setViewMode(QMdiArea::TabbedView);
+    }
+    else
+    {
+        ui->mdiArea->setViewMode(QMdiArea::SubWindowView);
+    }
+}
+
+void MainWindow::updateMenuEntries()
+{
+    if(TerminalTab *t = (TerminalTab *)(ui->mdiArea->activeSubWindow()))
+    {
+
+        if (t->view->connected)
+        {
+            ui->actionDisconnect->setEnabled(true);
+            ui->actionConnect->setDisabled(true);
+            ui->actionSet_Font->setEnabled(true);
+        }
+        else
+        {
+            ui->actionDisconnect->setDisabled(true);
+            ui->actionConnect->setEnabled(true);
+            ui->actionSet_Font->setDisabled(true);
+        }
+    }
+}
+
+void MainWindow::updateMRUlist(QString address)
+{
+    ui->menuRecentSessions->clear();
+
+    int x = mruList.indexOf(address);
+
+    if (x != -1)
+    {
+        mruList.removeAt(x);
+    }
+
+    mruList.prepend(address);
+
+    for(int i = 0; i < mruList.size(); i++)
+    {
+        ui->menuRecentSessions->addAction(mruList.at(i), this, [this]() { mruConnect(); } );
+    }
+
+    applicationSettings->beginWriteArray("mrulist");
+    for(int i = 0; i < mruList.size(); i++)
+    {
+        applicationSettings->setArrayIndex(i);
+        applicationSettings->setValue("address", mruList.at(i));
+    }
+    applicationSettings->endArray();
+//    setSetting("mrulist/mrucount", QString::number(mruCount));
 }
 
 void MainWindow::menuQuit()

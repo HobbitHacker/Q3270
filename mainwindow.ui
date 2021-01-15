@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
+ <author>Andy Styles</author>
  <class>MainWindow</class>
  <widget class="QMainWindow" name="MainWindow">
   <property name="enabled">
@@ -17,7 +18,11 @@
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QVBoxLayout" name="verticalLayout"/>
+   <layout class="QVBoxLayout" name="verticalLayout">
+    <item>
+     <widget class="QMdiArea" name="mdiArea"/>
+    </item>
+   </layout>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
@@ -25,7 +30,7 @@
      <x>0</x>
      <y>0</y>
      <width>1644</width>
-     <height>29</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuConnect">
@@ -44,13 +49,36 @@
     <addaction name="actionSet_Font"/>
     <addaction name="actionTerminalSettings"/>
    </widget>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>File</string>
+    </property>
+    <widget class="QMenu" name="menuRecentSessions">
+     <property name="title">
+      <string>Recent Sessions</string>
+     </property>
+    </widget>
+    <addaction name="actionNew"/>
+    <addaction name="menuRecentSessions"/>
+   </widget>
+   <widget class="QMenu" name="menuWindow">
+    <property name="title">
+     <string>Window</string>
+    </property>
+    <addaction name="actionTabs"/>
+    <addaction name="actionTile"/>
+    <addaction name="actionGrid"/>
+    <addaction name="separator"/>
+    <addaction name="separator"/>
+   </widget>
+   <addaction name="menuFile"/>
    <addaction name="menuConnect"/>
    <addaction name="menuFont_Settings"/>
+   <addaction name="menuWindow"/>
   </widget>
-  <widget class="QStatusBar" name="statusBar"/>
   <action name="actionConnect">
    <property name="text">
-    <string>Connect..</string>
+    <string>Connect...</string>
    </property>
   </action>
   <action name="actionQuit">
@@ -79,9 +107,29 @@
     <string>Disconnect</string>
    </property>
   </action>
-  <action name="actionSet_Font_2">
+  <action name="actionNew">
    <property name="text">
-    <string>Set Font 2</string>
+    <string>New Session...</string>
+   </property>
+  </action>
+  <action name="actionTabs">
+   <property name="text">
+    <string>Tabs</string>
+   </property>
+  </action>
+  <action name="actionTile">
+   <property name="text">
+    <string>Tile</string>
+   </property>
+  </action>
+  <action name="actionGrid">
+   <property name="text">
+    <string>Cascade</string>
+   </property>
+  </action>
+  <action name="actiond">
+   <property name="text">
+    <string>d</string>
    </property>
   </action>
  </widget>
@@ -167,6 +215,70 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>actionNew</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>menuNew()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>66</x>
+     <y>58</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>821</x>
+     <y>518</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionTabs</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>menuTabbedView(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>821</x>
+     <y>518</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionTile</sender>
+   <signal>triggered()</signal>
+   <receiver>mdiArea</receiver>
+   <slot>tileSubWindows()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>821</x>
+     <y>529</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionGrid</sender>
+   <signal>triggered()</signal>
+   <receiver>mdiArea</receiver>
+   <slot>cascadeSubWindows()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>821</x>
+     <y>529</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>menuConnect()</slot>
@@ -174,6 +286,7 @@
   <slot>menuTerminalSettings()</slot>
   <slot>menuSetFont()</slot>
   <slot>menuDisconnect()</slot>
-  <slot>menuSetFont2()</slot>
+  <slot>menuNew()</slot>
+  <slot>menuTabbedView(bool)</slot>
  </slots>
 </ui>

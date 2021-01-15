@@ -23,7 +23,12 @@ SocketConnection::SocketConnection(QString termName)
 
 
 void SocketConnection::disconnectMainframe()
-{
+{    
+    disconnect(displayDataStream, &ProcessDataStream::bufferReady, this, &SocketConnection::sendResponse);
+    disconnect(dataSocket, &QTcpSocket::connected, this, &SocketConnection::connected);
+    disconnect(dataSocket, &QTcpSocket::disconnected, this, &SocketConnection::disconnected);
+    disconnect(dataSocket, &QTcpSocket::readyRead, this, &SocketConnection::onReadyRead);
+
     dataSocket->disconnectFromHost();
 }
 

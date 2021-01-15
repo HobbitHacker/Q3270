@@ -47,6 +47,11 @@ void TerminalView::setScenes(DisplayScreen *primary, DisplayScreen *alternate)
 
 DisplayScreen *TerminalView::setScreen(bool alt)
 {
+    blinker->stop();
+    cursorBlinker->stop();
+    disconnect(blinker, &QTimer::timeout, current, &DisplayScreen::blink);
+    disconnect(cursorBlinker, &QTimer::timeout, current, &DisplayScreen::cursorBlink);
+
     if (alt)
     {
         this->setScene(alternate->getScene());

@@ -11,6 +11,7 @@
 #include "text.h"
 #include "Buffer.h"
 #include "3270.h"
+#include "UScore.h"
 
 class DisplayScreen : public QObject
 {
@@ -270,7 +271,7 @@ class DisplayScreen : public QObject
             0xF8, 0xF9, 0x7A, 0x7B, 0x7C, 0x7D, 0x7E, 0x7F,  /* 11 0100 to 11 1111 */
         };
 
-        const QBrush palette[8] = {
+        QColor palette[8] = {
             QColor(0,0,0),          /* Black */
             QColor(128,128,255),    /* Blue */
             QColor(255,0,0),        /* Red */
@@ -281,15 +282,7 @@ class DisplayScreen : public QObject
             QColor(255,255,255)     /* White */
         };
 
-        const QPen uscore_pen[8] = {
-            QPen(QColor(000, 000, 000), 2),
-            QPen(QColor(128, 128, 255), 2),
-            QPen(QColor(255, 000, 000), 2),
-            QPen(QColor(255, 000, 255), 2),
-            QPen(QColor(000, 255, 255), 2),
-            QPen(QColor(255, 255, 000), 2),
-            QPen(QColor(255, 255, 255), 2)
-        };
+        QPen line;
 
         const char *colName[8] = { "black", "blue", "red", "magenta", "green", "cyan", "yellow", "neutral"};
 
@@ -317,10 +310,7 @@ class DisplayScreen : public QObject
         int screen_y;                /* Max Rows */
         int screenPos_max;           /* Max position on screen */
 
-//        Attributes *field;            /* Temporary field attrbute */
-
         Attributes *attrs;           /* Attributes */
-        Attributes extAttr;          /* Extended Field Attributes */
 
         QGraphicsScene *screen;      /* Graphical display */
         Text **glyph;                /* Character on screen */

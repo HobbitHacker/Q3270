@@ -1,5 +1,8 @@
 #include "Buffer.h"
 
+
+
+
 Buffer::Buffer(int bytes)
 {
     buffer = (unsigned char *)malloc(bytes);

@@ -19,10 +19,12 @@ SOURCES += \
     Buffer.cpp \
     DisplayScreen.cpp \
     FontSelection.cpp \
+    Host.cpp \
     Keyboard.cpp \
     ProcessDataStream.cpp \
     TerminalTab.cpp \
     TerminalView.cpp \
+    UScore.cpp \
     main.cpp \
     mainwindow.cpp \
     SocketConnection.cpp \
@@ -34,10 +36,12 @@ HEADERS += \
     DisplayScreen.h \
     3270.h \
     FontSelection.h \
+    Host.h \
     Keyboard.h \
     ProcessDataStream.h \
     TerminalTab.h \
     TerminalView.h \
+    UScore.h \
     mainwindow.h \
     SocketConnection.h \
     settings.h \
@@ -45,6 +49,7 @@ HEADERS += \
 
 FORMS += \
     FontSelection.ui \
+    Host.ui \
     mainwindow.ui \
     set.ui \
     settings.ui
