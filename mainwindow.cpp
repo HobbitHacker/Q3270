@@ -67,6 +67,7 @@ void MainWindow::mruConnect()
     ui->actionDisconnect->setEnabled(true);
     ui->actionConnect->setDisabled(true);
     ui->actionSet_Font->setEnabled(true);
+    updateMRUlist(menuText);
 }
 
 MainWindow::~MainWindow()
@@ -83,7 +84,7 @@ void MainWindow::menuConnect()
     {
         TerminalTab *t = (TerminalTab *)(ui->mdiArea->activeSubWindow());
         t->openConnection(h->hostName, h->port, h->luName);
-        updateMRUlist(h->luName.compare("") ? h->luName + "@" : "" + h->hostName + ":" + QString::number(h->port));
+        updateMRUlist((h->luName.compare("") ? h->luName + "@" : "") + h->hostName + ":" + QString::number(h->port));
         ui->actionDisconnect->setEnabled(true);
         ui->actionConnect->setDisabled(true);
         ui->actionSet_Font->setEnabled(true);
@@ -195,13 +196,13 @@ void MainWindow::updateMRUlist(QString address)
 
     mruList.prepend(address);
 
-    for(int i = 0; i <= mruList.size(); i++)
+    for(int i = 0; i < mruList.size(); i++)
     {
         ui->menuRecentSessions->addAction(mruList.at(i), this, [this]() { mruConnect(); } );
     }
 
     applicationSettings->beginWriteArray("mrulist");
-    for(int i = 0; i <= mruList.size(); i++)
+    for(int i = 0; i < mruList.size(); i++)
     {
         applicationSettings->setArrayIndex(i);
         applicationSettings->setValue("address", mruList.at(i));

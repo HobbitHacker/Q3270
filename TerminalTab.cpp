@@ -133,7 +133,7 @@ void TerminalTab::openConnection(QString host, int port, QString luName)
     //TODO most-recently-used list and dialog for connect
     QHostInfo hi = QHostInfo::fromName(host);
 
-    socket->connectMainframe(hi.addresses().first(), port, datastream);
+    socket->connectMainframe(hi.addresses().first(), port, luName, datastream);
 
     connect(socket, &SocketConnection::dataStreamComplete, datastream, &ProcessDataStream::processStream);
     connect(socket, &SocketConnection::disconnected, this, &TerminalTab::closeConnection);

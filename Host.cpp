@@ -38,6 +38,11 @@ void Host::fieldsChanged()
         }
     }
 
+    if (ui->HostLU->text().length() > 0)
+    {
+        luName = ui->HostLU->text();
+    }
+
     if (nameok && portok)
     {
         ui->connectButton->setEnabled(true);

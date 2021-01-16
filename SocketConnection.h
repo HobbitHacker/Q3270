@@ -69,7 +69,7 @@ class SocketConnection : public QObject
         void sendResponse(Buffer *b);
 
     public slots:
-        void connectMainframe(const QHostAddress &address, quint16 port, ProcessDataStream *d);
+        void connectMainframe(const QHostAddress &address, quint16 port, QString luName, ProcessDataStream *d);
         void disconnectMainframe();
 
     private slots:
@@ -109,6 +109,7 @@ class SocketConnection : public QObject
         ProcessDataStream *displayDataStream;
 
         QString termName;
+        QString luName;
 
         Buffer *incomingData;
         Buffer *subNeg;

@@ -32,11 +32,12 @@ void SocketConnection::disconnectMainframe()
     dataSocket->disconnectFromHost();
 }
 
-void SocketConnection::connectMainframe(const QHostAddress &address, quint16 port, ProcessDataStream *d)
+void SocketConnection::connectMainframe(const QHostAddress &address, quint16 port, QString luName, ProcessDataStream *d)
 {
     dataSocket->connectToHost(address, port);
     displayDataStream = d;
     connect(displayDataStream, &ProcessDataStream::bufferReady, this, &SocketConnection::sendResponse);
+    this->luName = luName;
 }
 
 void SocketConnection::onReadyRead()
@@ -287,7 +288,8 @@ void SocketConnection::processSubNegotiation(Buffer *buf)
 {
     QDataStream dataStream(dataSocket);
 
-    char response[50];
+    Buffer *response = new Buffer();
+
 
     printf("SocketConnection : -- SubNegotiation --\n");
     buf->dump();
@@ -299,10 +301,24 @@ void SocketConnection::processSubNegotiation(Buffer *buf)
             {
                 printf("SocketConnection :    SB TTYPE SEND\n");
                 fflush(stdout);
-                sprintf(response, "%c%c%c%c%s%c%c", (char) IAC, (char) SB, (char) TELOPT_TTYPE, (char) TELQUAL_IS, termName.toLatin1().data(), (char) IAC, (char) SE);
-                dataStream.writeRawData(response, 6 + strlen(termName.toLatin1().data()));
+                response->add(IAC);
+                response->add(SB);
+                response->add(TELOPT_TTYPE);
+                response->add(TELQUAL_IS);
+                response->addBlock((unsigned char *)termName.toLatin1().data(), strlen(termName.toLatin1().data()));
+
+                // Pass LU name if one was requested
+                if (luName.compare(""))
+                {
+                    response->add('@');
+                    response->addBlock((unsigned char *)luName.toLatin1().data(), strlen(luName.toLatin1().data()));
+                }
+
+                response->add(IAC);
+                response->add(SE);
                 printf("SocketConnection : (%s)\n",termName.toLatin1().data());
                 fflush(stdout);
+                dataStream.writeRawData(response->address(), response->size());
             }
             else
             {
@@ -314,10 +330,25 @@ void SocketConnection::processSubNegotiation(Buffer *buf)
             if (buf->byteEquals(1, TN3270E_SEND) && buf->byteEquals(2, TN3270E_DEVICE_TYPE))
             {
                 printf("SocketConnection :     SB TN3270E SEND DEVICE_TYPE IAC SE seen - good!\n");
-                sprintf(response, "%c%c%c%c%c%s%c%c", (char) IAC, (char) SB, (char) TELOPT_TN3270E, (char) TN3270E_DEVICE_TYPE, (char) TN3270E_REQUEST, termName.toLatin1().data(), (char) IAC, (char) SE);
-                sprintf(response,"%s%c%c%c%c%c%c%c", response, (char) IAC, (char) SB, (char) TELOPT_TN3270E, (char) TN3270E_FUNCTIONS, (char) TN3270E_REQUEST, (char) IAC, (char) SE);
-                int rc = dataStream.writeRawData(response, 14 + strlen(termName.toLatin1().data()));
-                printf("SocketConnection : (%s) - length %ld: RC=%d. Error=\n", response, 14 + strlen(termName.toLatin1().data()), rc);
+
+                response->add(IAC);
+                response->add(SB);
+                response->add(TELOPT_TN3270E);
+                response->add(TN3270E_DEVICE_TYPE);
+                response->add(TN3270E_REQUEST);
+                response->addBlock((unsigned char *)termName.toLatin1().data(), strlen(termName.toLatin1().data()));
+                response->add(IAC);
+                response->add(SE);
+
+                response->add(IAC);
+                response->add(SB);
+                response->add(TELOPT_TN3270E);
+                response->add(TN3270E_FUNCTIONS);
+                response->add(TN3270E_REQUEST);
+                response->add(IAC);
+                response->add(SE);
+                dataStream.writeRawData(response->address(), response->size());
+
                 fflush(stdout);
                 break;
             }
@@ -346,17 +377,24 @@ void SocketConnection::processSubNegotiation(Buffer *buf)
             }
             if (buf->byteEquals(1, TN3270E_FUNCTIONS) && buf->byteEquals(2, TN3270E_REQUEST))
             {
-                sprintf(response, "%c%c%c%c%c", (char) IAC, (char) SB, (char) TELOPT_TN3270E, (char) TN3270E_FUNCTIONS, (char) TN3270E_IS);
+                response->add(IAC);
+                response->add(SB);
+                response->add(TELOPT_TN3270E);
+                response->add(TN3270E_FUNCTIONS);
+                response->add(TN3270E_IS);
+
                 printf("SocketConnection : Requested functions:");
                 for(int i = 3; i < buf->size(); i++)
                 {
                     printf("%s ", tn3270e_functions_strings[buf->getByte(i)]);
-                    sprintf(response, "%s%c", response, buf->getByte());
+                    response->add(buf->getByte());
                 }
-                sprintf(response, "%s%c%c", response, (char) IAC, (char) SE);
+
+                response->add(IAC);
+                response->add(SE);
+
                 printf("\n");
-                int rc = dataStream.writeRawData(response, buf->size()-2 + strlen(response));
-                printf("SocketConnection : (%s) - length %ld: RC=%d. Error=\n", response, buf->size()-2 + strlen(response), rc);
+                dataStream.writeRawData(response->address(), response->size());
                 break;
             }
             printf("SocketConnection : Unknown TN3270E request %2.2X\n", buf->getByte(1));
@@ -366,6 +404,7 @@ void SocketConnection::processSubNegotiation(Buffer *buf)
             break;
     }
     telnetState = TELNET_STATE_DATA;
+    //FIXME Is reset() an error here? Will data appear asynchronously in the buffer?
     buf->reset();
 }
 

@@ -77,6 +77,9 @@
    <addaction name="menuWindow"/>
   </widget>
   <action name="actionConnect">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="text">
     <string>Connect...</string>
    </property>
@@ -222,8 +225,8 @@
    <slot>menuNew()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>66</x>
-     <y>58</y>
+     <x>-1</x>
+     <y>-1</y>
     </hint>
     <hint type="destinationlabel">
      <x>821</x>
