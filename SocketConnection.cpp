@@ -290,7 +290,6 @@ void SocketConnection::processSubNegotiation(Buffer *buf)
 
     Buffer *response = new Buffer();
 
-
     printf("SocketConnection : -- SubNegotiation --\n");
     buf->dump();
 

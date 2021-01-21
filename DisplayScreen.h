@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <QGraphicsView>
+#include <QGraphicsSceneMouseEvent>
 #include <QString>
 #include <QDebug>
 #include <QTimer>
@@ -12,7 +13,7 @@
 #include "Buffer.h"
 #include "3270.h"
 
-class DisplayScreen : public QObject
+class DisplayScreen : public QGraphicsScene
 {
     Q_OBJECT
 
@@ -22,11 +23,9 @@ class DisplayScreen : public QObject
 
         int width();
         int height();
-        int gridWidth();
-        int gridHeight();
+        qreal gridWidth();
+        qreal gridHeight();
 
-        void setParent(QGraphicsScene* scene);
-        QGraphicsScene* getScene();
         void setChar(int pos, short unsigned int c, bool move);
         void setCharAttr(unsigned char c, unsigned char d);
 
@@ -281,6 +280,9 @@ class DisplayScreen : public QObject
             QColor(255,255,255)     /* White */
         };
 
+        QRubberBand *rubberBand;
+        QPointF origin;
+
         QPen line;
 
         const char *colName[8] = { "black", "blue", "red", "magenta", "green", "cyan", "yellow", "neutral"};
@@ -311,7 +313,6 @@ class DisplayScreen : public QObject
 
         Attributes *attrs;           /* Attributes */
 
-        QGraphicsScene *screen;      /* Graphical display */
         Text **glyph;                /* Character on screen */
         QGraphicsRectItem **cell;    /* Screen slot */
         QGraphicsLineItem **uscore;  /* Underscores */

@@ -16,8 +16,11 @@ class Text : public QObject, public QGraphicsSimpleTextItem
 
     public:
         Text(QGraphicsItem* parent = 0);
-        QRectF boundingRect() const;
-        void paint(QPainter *painter, const QStyleOptionGraphicsItem * option, QWidget * widget = 0);
+
+        enum { Type = UserType + 1 };
+
+        int type() const;
+
         uchar getEBCDIC();
         bool getGraphic();
         void setText(const QString text, uchar ebcdic, bool graphic);

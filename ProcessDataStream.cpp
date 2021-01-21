@@ -793,11 +793,11 @@ void ProcessDataStream::replySummary(Buffer *buffer)
     qusablearea[17] = (y & 0xFF00) >> 8;
     qusablearea[18] = (y & 0xFF);
 
-    qusablearea[19] = (terminal->primary->gridWidth() & 0xFF00) >> 8;
-    qusablearea[20] = (terminal->primary->gridWidth() & 0xFF);
+    qusablearea[19] = ((int)terminal->primary->gridWidth() & 0xFF00) >> 8;
+    qusablearea[20] = ((int)terminal->primary->gridWidth() & 0xFF);
 
-    qusablearea[21] = (terminal->primary->gridHeight() & 0xFF00) >> 8;
-    qusablearea[22] = (terminal->primary->gridHeight() & 0xFF);
+    qusablearea[21] = ((int)terminal->primary->gridHeight() & 0xFF00) >> 8;
+    qusablearea[22] = ((int)terminal->primary->gridHeight() & 0xFF);
 
     qusablearea[23] = ((qusablearea[5] * qusablearea[7]) & 0xFF00) >> 8;
     qusablearea[24] = ((qusablearea[5] * qusablearea[7]) & 0xFF);

@@ -118,6 +118,7 @@ void TerminalTab::openConnection(QString host, int port, QString luName)
     alternate = new DisplayScreen(view->geometry().width(), view->geometry().height(), terms[termType].x, terms[termType].y);
 
     view->setScenes(primary, alternate);
+    view->setScreen(false);
 
     primary->setFontScaling(view->scaleFont);
     alternate->setFontScaling(view->scaleFont);

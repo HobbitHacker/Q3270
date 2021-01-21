@@ -2,6 +2,7 @@
 #define TERMINALVIEW_H
 
 #include <QGraphicsView>
+#include <QMouseEvent>
 #include "DisplayScreen.h"
 
 class TerminalView : public QGraphicsView
@@ -12,6 +13,10 @@ class TerminalView : public QGraphicsView
         TerminalView();
 
         void resizeEvent(QResizeEvent *r);
+
+        void mousePressEvent(QMouseEvent *mEvent);
+        void mouseMoveEvent(QMouseEvent *mEvent);
+        void mouseReleaseEvent(QMouseEvent *mEvent);
 
         void setScaleFont(bool scale);
         int  getBlinkSpeed();
@@ -31,6 +36,9 @@ class TerminalView : public QGraphicsView
 
         bool connected;
         bool scaleFont;
+
+        QPoint origin;
+        QRubberBand *rubberBand;
 
     private slots:
 

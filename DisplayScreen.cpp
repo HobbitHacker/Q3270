@@ -4,9 +4,9 @@ DisplayScreen::DisplayScreen(int view_x, int view_y, int screen_x, int screen_y)
 {
     // Create scene based on the view.
     // TODO: Should this be an arbitrary size (480x1600 eg or based on screen_x, screen_y) that can then be scaled?
-    screen = new QGraphicsScene(0, 0, view_x, view_y);
+//    screen = new QGraphicsScene(0, 0, view_x, view_y);
 
-    screen->setBackgroundBrush(palette[0]);
+    setBackgroundBrush(palette[0]);
 
     this->screen_x = screen_x;
     this->screen_y = screen_y;
@@ -38,16 +38,23 @@ DisplayScreen::DisplayScreen(int view_x, int view_y, int screen_x, int screen_y)
 
             cell[pos] = new QGraphicsRectItem(0, 0, gridSize_X, gridSize_Y);
             cell[pos]->setPen(Qt::NoPen);
+//            cell[pos]->setFlag(QGraphicsItem::ItemIsSelectable, true);
 
-            screen->addItem(cell[pos]);
+            addItem(cell[pos]);
 
             cell[pos]->setPos(x_pos, y_pos);
-
+            if (pos < 10)
+            {
+                printf("%d at %f,%f\n",pos,x_pos,y_pos);
+                fflush(stdout);
+            }
+//            cell[pos]->setFlag(QGraphicsItem::ItemIsSelectable);
             glyph[pos] = new Text(cell[pos]);
+            glyph[pos]->setFlag(QGraphicsItem::ItemIsSelectable);
 
             uscore[pos] = new QGraphicsLineItem(0, 0, gridSize_X, 0);
 
-            screen->addItem(uscore[pos]);
+            addItem(uscore[pos]);
 
             uscore[pos]->setZValue(1);
             uscore[pos]->setPos(x_pos, y_pos + gridSize_Y);
@@ -67,8 +74,8 @@ DisplayScreen::DisplayScreen(int view_x, int view_y, int screen_x, int screen_y)
     cursor->setOpacity(0.5);
     cursor->setPen(Qt::NoPen);
 
-    crosshair_X = new QGraphicsLineItem(0, 0, 0, screen->height());
-    crosshair_Y = new QGraphicsLineItem(0, 0, screen->width(), 0);
+    crosshair_X = new QGraphicsLineItem(0, 0, 0, height());
+    crosshair_Y = new QGraphicsLineItem(0, 0, width(), 0);
 
     crosshair_X->setPen(QPen(Qt::white, 0));
     crosshair_Y->setPen(QPen(Qt::white, 0));
@@ -76,8 +83,8 @@ DisplayScreen::DisplayScreen(int view_x, int view_y, int screen_x, int screen_y)
     crosshair_X->pen().setCosmetic(true);
     crosshair_Y->pen().setCosmetic(true);
 
-    screen->addItem(crosshair_X);
-    screen->addItem(crosshair_Y);
+    addItem(crosshair_X);
+    addItem(crosshair_Y);
 
     crosshair_X->hide();
     crosshair_Y->hide();
@@ -85,7 +92,6 @@ DisplayScreen::DisplayScreen(int view_x, int view_y, int screen_x, int screen_y)
     ruler = false;
     blinkShow = false;
     cursorShow = true;
-
 }
 
 DisplayScreen::~DisplayScreen()
@@ -102,24 +108,14 @@ int DisplayScreen::height()
     return screen_y;
 }
 
-int DisplayScreen::gridWidth()
+qreal DisplayScreen::gridWidth()
 {
     return gridSize_X;
 }
 
-int DisplayScreen::gridHeight()
+qreal DisplayScreen::gridHeight()
 {
     return gridSize_Y;
-}
-
-void DisplayScreen::setParent(QGraphicsScene *scene)
-{
-    screen->setParent(scene);
-}
-
-QGraphicsScene *DisplayScreen::getScene()
-{
-    return screen;
 }
 
 void DisplayScreen::setFont(QFont font)
@@ -797,8 +793,8 @@ void DisplayScreen::drawRuler(int x, int y)
 {
     if (ruler)
     {
-       crosshair_X->setLine((qreal) x * gridSize_X, 0, (qreal) x * gridSize_X, screen->height());
-       crosshair_Y->setLine(0 , (qreal) (y + 1) * gridSize_Y, screen->width(), (qreal) (y + 1) * gridSize_Y);
+       crosshair_X->setLine((qreal) x * gridSize_X, 0, (qreal) x * gridSize_X, height());
+       crosshair_Y->setLine(0 , (qreal) (y + 1) * gridSize_Y, width(), (qreal) (y + 1) * gridSize_Y);
     }
 }
 
