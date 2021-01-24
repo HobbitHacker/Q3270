@@ -114,8 +114,10 @@ void TerminalTab::setScaleFont(bool scale)
 
 void TerminalTab::openConnection(QString host, int port, QString luName)
 {
-    primary = new DisplayScreen(view->geometry().width(), view->geometry().height(), 80, 24);
-    alternate = new DisplayScreen(view->geometry().width(), view->geometry().height(), terms[termType].x, terms[termType].y);
+//    primary = new DisplayScreen(view->geometry().width(), view->geometry().height(), 80, 24);
+    primary = new DisplayScreen(80, 24);
+//    alternate = new DisplayScreen(view->geometry().width(), view->geometry().height(), terms[termType].x, terms[termType].y);
+    alternate = new DisplayScreen(terms[termType].x, terms[termType].y);
 
     view->setScenes(primary, alternate);
     view->setScreen(false);
@@ -139,7 +141,7 @@ void TerminalTab::openConnection(QString host, int port, QString luName)
     connect(socket, &SocketConnection::dataStreamComplete, datastream, &ProcessDataStream::processStream);
     connect(socket, &SocketConnection::disconnected, this, &TerminalTab::closeConnection);
 
-    Keyboard *kbd = new Keyboard(datastream);
+    Keyboard *kbd = new Keyboard(datastream, view);
 
     connect(kbd, &Keyboard::setLock, this, &TerminalTab::setIndicators);
 

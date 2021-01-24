@@ -1,6 +1,6 @@
 #include "Keyboard.h"
 
-Keyboard::Keyboard(ProcessDataStream *d)
+Keyboard::Keyboard(ProcessDataStream *d, TerminalView *view)
 {    
     datastream = d;
 
@@ -11,6 +11,8 @@ Keyboard::Keyboard(ProcessDataStream *d)
     bufferEnd = 0;
     keyCount  = 0;
     waitRelease = false;
+
+    this->view = view;
 
     clearBufferEntry();
 
@@ -74,8 +76,9 @@ void Keyboard::setMap()
 
     functionMap.insert(std::pair<QString, doSomething>("Clear",&Keyboard::clear));
 
-
     functionMap.insert(std::pair<QString, doSomething>("ToggleRuler",&Keyboard::ruler));
+
+    functionMap.insert(std::pair<QString, doSomething>("Copy",&Keyboard::copy));
 
     setFactoryMaps();
 }
@@ -591,6 +594,11 @@ void Keyboard::reset()
     emit setLock(Indicators::OvertypeMode);
 }
 
+void Keyboard::copy()
+{
+    view->copyText();
+}
+
 void Keyboard::setMapping(QString key, QString function)
 {
     int keyCode;
@@ -728,6 +736,8 @@ void Keyboard::setFactoryMaps()
     setMapping("Ctrl+Home", "ToggleRuler");
 
     setMapping("Pause", "Clear");
+
+    setMapping("Ctrl+C", "Copy");
 }
 
 void Keyboard::ruler()

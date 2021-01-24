@@ -1,6 +1,6 @@
 #include "DisplayScreen.h"
 
-DisplayScreen::DisplayScreen(int view_x, int view_y, int screen_x, int screen_y)
+DisplayScreen::DisplayScreen(int screen_x, int screen_y)
 {
     // Create scene based on the view.
     // TODO: Should this be an arbitrary size (480x1600 eg or based on screen_x, screen_y) that can then be scaled?
@@ -11,8 +11,11 @@ DisplayScreen::DisplayScreen(int view_x, int view_y, int screen_x, int screen_y)
     this->screen_x = screen_x;
     this->screen_y = screen_y;
 
-    gridSize_X = (qreal) view_x / (qreal) screen_x;
-    gridSize_Y = (qreal) view_y / (qreal) screen_y;
+    //gridSize_X = (qreal) view_x / (qreal) screen_x;
+    //gridSize_Y = (qreal) view_y / (qreal) screen_y;
+
+    gridSize_X = 50;
+    gridSize_Y = 50;
 
     screenPos_max = screen_x * screen_y;
 
@@ -37,6 +40,7 @@ DisplayScreen::DisplayScreen(int view_x, int view_y, int screen_x, int screen_y)
             qreal x_pos = x * gridSize_X;
 
             cell[pos] = new QGraphicsRectItem(0, 0, gridSize_X, gridSize_Y);
+//            cell[pos]->setPen(QPen(Qt::red,0));
             cell[pos]->setPen(Qt::NoPen);
 //            cell[pos]->setFlag(QGraphicsItem::ItemIsSelectable, true);
 
@@ -49,7 +53,7 @@ DisplayScreen::DisplayScreen(int view_x, int view_y, int screen_x, int screen_y)
                 fflush(stdout);
             }
 //            cell[pos]->setFlag(QGraphicsItem::ItemIsSelectable);
-            glyph[pos] = new Text(cell[pos]);
+            glyph[pos] = new Text(x, y, cell[pos]);
             glyph[pos]->setFlag(QGraphicsItem::ItemIsSelectable);
 
             uscore[pos] = new QGraphicsLineItem(0, 0, gridSize_X, 0);
@@ -639,7 +643,7 @@ bool DisplayScreen::insertChar(int pos, unsigned char c, bool insertMode)
             {
                 break;
             }
-            if (glyph[offset]->text()[0] == IBM3270_CHAR_NULL)
+            if (glyph[offset]->getEBCDIC() == IBM3270_CHAR_NULL)
             {
                 endPos = i;
                 break;

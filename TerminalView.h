@@ -2,6 +2,8 @@
 #define TERMINALVIEW_H
 
 #include <QGraphicsView>
+#include <QClipboard>
+#include <QApplication>
 #include <QMouseEvent>
 #include "DisplayScreen.h"
 
@@ -18,6 +20,8 @@ class TerminalView : public QGraphicsView
         void mouseMoveEvent(QMouseEvent *mEvent);
         void mouseReleaseEvent(QMouseEvent *mEvent);
 
+        void copyText();
+
         void setScaleFont(bool scale);
         int  getBlinkSpeed();
         void setBlinkSpeed(int speed);
@@ -26,6 +30,7 @@ class TerminalView : public QGraphicsView
         void setScenes(DisplayScreen *primary, DisplayScreen *alternate);
         void setConnected();
         void setDisconnected();
+        void clearSelection();
 
         DisplayScreen *setScreen(bool alt);
 
@@ -54,6 +59,7 @@ class TerminalView : public QGraphicsView
 
         QTimer *blinker;
         QTimer *cursorBlinker;
+        QList <Text *> *selection;
 
 };
 

@@ -10,6 +10,7 @@
 #include "ProcessDataStream.h"
 #include "SocketConnection.h"
 #include "Buffer.h"
+#include "TerminalView.h"
 #include "3270.h"
 
 //#define CALL_MEMBER_FN(object,ptrToMember)  ((object).*(ptrToMember))
@@ -25,7 +26,7 @@ class Keyboard : public QObject
     typedef void (Keyboard::*doSomething)();
 
     public:
-        Keyboard(ProcessDataStream *d = 0);
+        Keyboard(ProcessDataStream *d, TerminalView *v);
         void setMap();
         bool processKey();
 
@@ -99,6 +100,8 @@ class Keyboard : public QObject
         void paKey2();
         void paKey3();
 
+        void copy();
+
         void nextKey();
         bool needtoWait(QKeyEvent *q);
 
@@ -127,6 +130,8 @@ class Keyboard : public QObject
         } keyStruct;
 
         keyStruct kbBuffer[1024];
+
+        TerminalView *view;
 
         int bufferPos;
         int bufferEnd;

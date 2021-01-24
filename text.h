@@ -15,7 +15,8 @@ class Text : public QObject, public QGraphicsSimpleTextItem
     Q_OBJECT
 
     public:
-        Text(QGraphicsItem* parent = 0);
+        Text(int x, int y, QGraphicsItem* parent);
+        QRectF boundingRect() const;
 
         enum { Type = UserType + 1 };
 
@@ -26,8 +27,13 @@ class Text : public QObject, public QGraphicsSimpleTextItem
         void setText(const QString text, uchar ebcdic, bool graphic);
         void copyTextFrom(Text *source);
 
+        int getX();
+        int getY();
+
    private:
 
+        int pos_x;              // 3270 screen position x
+        int pos_y;              // 3270 screen position y
         QString contents;
         uchar ebcdic;
         bool graphic;

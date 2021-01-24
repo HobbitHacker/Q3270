@@ -18,7 +18,7 @@ class DisplayScreen : public QGraphicsScene
     Q_OBJECT
 
     public:
-        DisplayScreen(int view_x, int view_y, int screen_x, int screen_y);
+        DisplayScreen(int screen_x, int screen_y);
         ~DisplayScreen();
 
         int width();
