@@ -19,21 +19,19 @@
 
 #include <qglobal.h>
 #include <qobject.h>
-#include <QGraphicsScene>
-#include <QGraphicsRectItem>
-#include <QLabel>
-#include <QHostInfo>
+#//include <QGraphicsScene>
+//#include <QGraphicsRectItem>
+//#include <QLabel>
+//#include <QHostInfo>
 #include <QGuiApplication>
 #include <QScreen>
-#include <QTimer>
+//#include <QTimer>
 
 #include <stdlib.h>
 #include <QObject>
 #include <QDebug>
-#include <chrono>
-#include <thread>
 
-#include "text.h"
+//#include "text.h"
 #include "Buffer.h"
 #include "DisplayScreen.h"
 #include "3270.h"
@@ -69,7 +67,6 @@ class ProcessDataStream : public QObject
         void deleteChar();
         void newline();
         void toggleRuler();
-//        void setFont(QFont font);
 
         void showFields();
 
@@ -77,16 +74,6 @@ class ProcessDataStream : public QObject
 
         void processAID(int aid, bool shortRead);
         void interruptProcess();
-
-        int getCursorAddress(int offset = 0);
-
-        typedef struct {
-            bool askip;
-            bool prot;
-            bool mdt;
-        } FieldFlags;
-
-        DisplayScreen *screen;
 
     signals:
 
@@ -98,18 +85,12 @@ class ProcessDataStream : public QObject
 
 	private:
 
-        QGraphicsScene *scene;
+        DisplayScreen *screen;
 
         TerminalView *terminal;
 
-        QTimer *blinker;
-
         uchar *buffer;
         uchar *bufferCurrentPos;
-
-        typedef std::map<int, FieldFlags>::iterator FieldIterator;
-
-        int bufferLength;
 
         /* Which screen size we're currently using */
         bool alternate_size;
@@ -131,8 +112,6 @@ class ProcessDataStream : public QObject
         bool resetKB;
         bool alarm;
         int lastAID;    // Last AID encountered
-
-        QLabel *cursorAddress;
 
         void setScreen(bool alternate = false);
 
