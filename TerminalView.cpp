@@ -181,7 +181,6 @@ void TerminalView::copyText()
     fflush(stdout);
 }
 
-
 void TerminalView::setBlink(bool blink)
 {
     this->blink = blink;
