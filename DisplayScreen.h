@@ -280,9 +280,6 @@ class DisplayScreen : public QGraphicsScene
             QColor(255,255,255)     /* White */
         };
 
-        QRubberBand *rubberBand;
-        QPointF origin;
-
         QPen line;
 
         const char *colName[8] = { "black", "blue", "red", "magenta", "green", "cyan", "yellow", "neutral"};
@@ -321,8 +318,6 @@ class DisplayScreen : public QGraphicsScene
         bool cursorShow;            /* Whether the cursor is shown/hidden for a given blink event */
 
         bool geActive;              // Next character is Graphic Escape
-
-        int size;
 
         // TODO Implement different sorts of crosshairs
         bool ruler;                  /* Whether the crosshairs are shown. */

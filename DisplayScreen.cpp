@@ -2,17 +2,10 @@
 
 DisplayScreen::DisplayScreen(int screen_x, int screen_y)
 {
-    // Create scene based on the view.
-    // TODO: Should this be an arbitrary size (480x1600 eg or based on screen_x, screen_y) that can then be scaled?
-//    screen = new QGraphicsScene(0, 0, view_x, view_y);
-
     setBackgroundBrush(palette[0]);
 
     this->screen_x = screen_x;
     this->screen_y = screen_y;
-
-    //gridSize_X = (qreal) view_x / (qreal) screen_x;
-    //gridSize_Y = (qreal) view_y / (qreal) screen_y;
 
     gridSize_X = 50;
     gridSize_Y = 50;
@@ -84,8 +77,8 @@ DisplayScreen::DisplayScreen(int screen_x, int screen_y)
     crosshair_X->setPen(QPen(Qt::white, 0));
     crosshair_Y->setPen(QPen(Qt::white, 0));
 
-    crosshair_X->pen().setCosmetic(true);
-    crosshair_Y->pen().setCosmetic(true);
+//    crosshair_X->pen().setCosmetic(true);
+//    crosshair_Y->pen().setCosmetic(true);
 
     addItem(crosshair_X);
     addItem(crosshair_Y);
@@ -96,6 +89,17 @@ DisplayScreen::DisplayScreen(int screen_x, int screen_y)
     ruler = false;
     blinkShow = false;
     cursorShow = true;
+
+    QGraphicsLineItem *s = new QGraphicsLineItem(0, 0, screen_x * gridSize_X, 0);
+    s->setPos(0, screen_y * gridSize_Y);
+    s->setPen(QPen(QColor(0x80, 0x80, 0xFF), 0));
+    addItem(s);
+    QGraphicsSimpleTextItem *st = new QGraphicsSimpleTextItem("4-A");
+    st->setPos(0, screen_y * gridSize_Y);
+    st->setFont(QFont("ibm3270", 32));
+    st->setPen(QPen(QColor(0x80, 0x80, 0xFF), 2));
+    addItem(st);
+
 }
 
 DisplayScreen::~DisplayScreen()
@@ -303,8 +307,8 @@ void DisplayScreen::setChar(int pos, short unsigned int c, bool move)
     {
         uscore[pos]->setVisible(true);
         uscore[pos]->setPen(QPen(palette[attrs[pos].colNum],0));
-        uscore[pos]->pen().setCosmetic(true);
-        uscore[pos]->pen().setColor(palette[attrs[pos].colNum]);
+ //       uscore[pos]->pen().setCosmetic(true);
+ //       uscore[pos]->pen().setColor(palette[attrs[pos].colNum]);
 
         printf("<uscore %d>", attrs[pos].colNum);
     }
@@ -599,8 +603,8 @@ int DisplayScreen::resetFieldAttrs(int start)
             if (attrs[offset].uscore)
             {
                 uscore[offset]->setPen(QPen(palette[attrs[offset].colNum],0));
-                uscore[offset]->pen().setCosmetic(true);
-                uscore[offset]->pen().setColor(palette[attrs[offset].colNum]);
+//                uscore[offset]->pen().setCosmetic(true);
+//                uscore[offset]->pen().setColor(palette[attrs[offset].colNum]);
             }
             else
             {
@@ -698,15 +702,9 @@ void DisplayScreen::deleteChar(int pos)
         return;
     }
 
-    int nextField = findNextField(pos);
-    int endPos = nextField;
+    int endPos = findNextField(pos);
 
-    if (nextField < pos)
-    {
-        nextField += screenPos_max;
-    }
-
-    for(int fld = pos; fld < endPos - 1 && glyph[fld % screenPos_max]->text() != IBM3270_CHAR_NULL; fld++)
+    for(int fld = pos; fld < endPos - 1 && glyph[fld % screenPos_max]->getEBCDIC() != IBM3270_CHAR_NULL; fld++)
     {
         int offset = fld % screenPos_max;
         int offsetNext = (fld + 1) % screenPos_max;
