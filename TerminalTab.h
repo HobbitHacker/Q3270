@@ -10,7 +10,9 @@
 #include <QMdiArea>
 #include <QMdiSubWindow>
 #include <QSettings>
+#include <QHostInfo>
 #include <QStatusBar>
+#include <QLabel>
 
 class TerminalTab : public QMdiSubWindow
 {
@@ -46,7 +48,6 @@ class TerminalTab : public QMdiSubWindow
 
         void showCursorAddress(int x, int y);
         void setIndicators(Indicators i);
-//        void processDataStream(Buffer *b);
 
     private:
 

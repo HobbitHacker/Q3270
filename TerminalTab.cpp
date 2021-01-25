@@ -4,12 +4,6 @@ TerminalTab::TerminalTab(QSettings *applicationSettings)
 {
     view = new TerminalView();
 
-//    statusBar = new QStatusBar(vbl->parentWidget());
-
-/*    statusBar->addPermanentWidget(syslock, 50);
-    statusBar->addPermanentWidget(insMode, 50);
-    vbl->parentWidget()-addPermanentWidget(cursorAddress, 50);*/
-
     gs = new QGraphicsScene();
 
     view->setScene(gs);
