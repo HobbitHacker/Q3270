@@ -51,12 +51,8 @@ void SocketConnection::onReadyRead()
 
     // create a QDataStream operating on the socket
     QDataStream dataStream(dataSocket);
-    //FIXME: What's this used for?
     // set the version so that programs compiled with different versions of Qt can agree on how to serialise
-    dataStream.setVersion(QDataStream::Qt_5_7);
-
-//    printf("SocketConnection : Buffer allocated %ld\n", incomingData->address());
-//    fflush(stdout);
+    dataStream.setVersion(QDataStream::Qt_5_15);
 
     uchar socketByte;
 	char data3270; 
@@ -70,7 +66,7 @@ void SocketConnection::onReadyRead()
     for (;;) {
         // we start a transaction so we can revert to the previous state in case we try to read more data than is available on the socket
         dataStream.startTransaction();
-        // we try to read the JSON data
+        // we try to read the incoming data
         dataStream.readRawData(&data3270, 1);
         socketByte = (uchar) data3270;
 
@@ -144,7 +140,7 @@ void SocketConnection::onReadyRead()
                             if (readingSB)
                             {
                                fflush(stdout);
-                               processSubNegotiation(subNeg);
+                               processSubNegotiation();
                             }
                             else
                             {
@@ -158,7 +154,7 @@ void SocketConnection::onReadyRead()
                             printf("SocketConnection :   EOR\n");
                             fflush(stdout);
                             telnetState = TELNET_STATE_DATA;
-                            processBuffer(incomingData);
+                            processBuffer();
 							break;
 						default:
                             printf("SocketConnection : IAC Not sure: %02X\n", socketByte);
@@ -253,11 +249,11 @@ void SocketConnection::onReadyRead()
            break;
        }
     }
-    if(byteCount != 0)
+/*    if(byteCount != 0)
     {
   //      printf("\n (hopefully we processed these!)");
         byteCount = 0;
-    }
+    }*/
     fflush(stdout);
 }
 
@@ -284,19 +280,19 @@ void SocketConnection::sendResponse(Buffer *b)
     dataStream.writeRawData(response, 2);
 }
 
-void SocketConnection::processSubNegotiation(Buffer *buf)
+void SocketConnection::processSubNegotiation()
 {
     QDataStream dataStream(dataSocket);
 
     Buffer *response = new Buffer();
 
     printf("SocketConnection : -- SubNegotiation --\n");
-    buf->dump();
+    subNeg->dump();
 
-    switch(buf->getByte())
+    switch(subNeg->getByte())
     {
         case TELOPT_TTYPE:
-            if (buf->byteEquals(1, TELQUAL_SEND))
+            if (subNeg->byteEquals(1, TELQUAL_SEND))
             {
                 printf("SocketConnection :    SB TTYPE SEND\n");
                 fflush(stdout);
@@ -321,12 +317,12 @@ void SocketConnection::processSubNegotiation(Buffer *buf)
             }
             else
             {
-                printf("SocketConnection : Unknown TTYPE subnegotiation: %2.2X\n", buf->getByte(1));
+                printf("SocketConnection : Unknown TTYPE subnegotiation: %2.2X\n", subNeg->getByte(1));
                 fflush(stdout);
             }
             break;
         case TELOPT_TN3270E:
-            if (buf->byteEquals(1, TN3270E_SEND) && buf->byteEquals(2, TN3270E_DEVICE_TYPE))
+            if (subNeg->byteEquals(1, TN3270E_SEND) && subNeg->byteEquals(2, TN3270E_DEVICE_TYPE))
             {
                 printf("SocketConnection :     SB TN3270E SEND DEVICE_TYPE IAC SE seen - good!\n");
 
@@ -351,30 +347,30 @@ void SocketConnection::processSubNegotiation(Buffer *buf)
                 fflush(stdout);
                 break;
             }
-            if (buf->byteEquals(1, TN3270E_DEVICE_TYPE) && buf->byteEquals(2, TN3270E_IS))
+            if (subNeg->byteEquals(1, TN3270E_DEVICE_TYPE) && subNeg->byteEquals(2, TN3270E_IS))
             {
-                if (buf->compare(3,termName.toLatin1().data()) && buf->byteEquals(3+strlen(termName.toLatin1().data()), TN3270E_CONNECT))
+                if (subNeg->compare(3,termName.toLatin1().data()) && subNeg->byteEquals(3+strlen(termName.toLatin1().data()), TN3270E_CONNECT))
                 {
                     printf("SocketConnection : Received device-name: '");
-                    for(int i = 4+strlen(termName.toLatin1().data()); i < buf->size(); i++)
+                    for(int i = 4+strlen(termName.toLatin1().data()); i < subNeg->size(); i++)
                     {
-                        printf("%c", buf->getByte(i));
+                        printf("%c", subNeg->getByte(i));
                     }
                     printf("'\n");
                     break;
                 }
             }
-            if (buf->byteEquals(1, TN3270E_FUNCTIONS) && buf->byteEquals(2, TN3270E_IS))
+            if (subNeg->byteEquals(1, TN3270E_FUNCTIONS) && subNeg->byteEquals(2, TN3270E_IS))
             {
                 printf("SocketConnection : Supported functions: ");
-                for(int i = 3; i < buf->size(); i++)
+                for(int i = 3; i < subNeg->size(); i++)
                 {
-                    printf("%s ", tn3270e_functions_strings[buf->getByte(i)]);
+                    printf("%s ", tn3270e_functions_strings[subNeg->getByte(i)]);
                 }
                 printf("\n");
                 break;
             }
-            if (buf->byteEquals(1, TN3270E_FUNCTIONS) && buf->byteEquals(2, TN3270E_REQUEST))
+            if (subNeg->byteEquals(1, TN3270E_FUNCTIONS) && subNeg->byteEquals(2, TN3270E_REQUEST))
             {
                 response->add(IAC);
                 response->add(SB);
@@ -383,10 +379,10 @@ void SocketConnection::processSubNegotiation(Buffer *buf)
                 response->add(TN3270E_IS);
 
                 printf("SocketConnection : Requested functions:");
-                for(int i = 3; i < buf->size(); i++)
+                for(int i = 3; i < subNeg->size(); i++)
                 {
-                    printf("%s ", tn3270e_functions_strings[buf->getByte(i)]);
-                    response->add(buf->getByte());
+                    printf("%s ", tn3270e_functions_strings[subNeg->getByte(i)]);
+                    response->add(subNeg->getByte());
                 }
 
                 response->add(IAC);
@@ -396,37 +392,37 @@ void SocketConnection::processSubNegotiation(Buffer *buf)
                 dataStream.writeRawData(response->address(), response->size());
                 break;
             }
-            printf("SocketConnection : Unknown TN3270E request %2.2X\n", buf->getByte(1));
+            printf("SocketConnection : Unknown TN3270E request %2.2X\n", subNeg->getByte(1));
             break;
         default:
-            printf("SocketConnection : Unknown Subnegotiation option: %2.2X\n", buf->getByte(0));
+            printf("SocketConnection : Unknown Subnegotiation option: %2.2X\n", subNeg->getByte(0));
             break;
     }
     telnetState = TELNET_STATE_DATA;
     //FIXME Is reset() an error here? Will data appear asynchronously in the buffer?
-    buf->reset();
+    subNeg->reset();
 }
 
-void SocketConnection::processBuffer(Buffer *buf)
+void SocketConnection::processBuffer()
 {
     if (!tn3270e_Mode)
     {
-        emit dataStreamComplete(buf);
-        buf->reset();
+        emit dataStreamComplete(incomingData);
+        incomingData->reset();
         return;
     }
 
-    unsigned char dataType = buf->getByte();
-    unsigned char requestFlag = buf->nextByte()->getByte();
-    unsigned char responseFlag = buf->nextByte()->getByte();
-    unsigned char seqNumber = (buf->nextByte()->getByte()<<16) + buf->nextByte()->getByte();
+    unsigned char dataType = incomingData->getByte();
+    unsigned char requestFlag = incomingData->nextByte()->getByte();
+    unsigned char responseFlag = incomingData->nextByte()->getByte();
+    unsigned char seqNumber = (incomingData->nextByte()->getByte()<<16) + incomingData->nextByte()->getByte();
 
     printf("SocketConnection : TN3270E Header:\nSocketConnection :    Data Type:      %2.2X\nSocketConnection :    Request Flag:   %2.2X\nSocketConnection :    Response Flag:  %2.2X\nSocketConnection :    Sequence Number: %2.2X\n",
                     dataType, requestFlag, responseFlag, seqNumber);
 
     if (dataType == TN3270E_DATATYPE_3270_DATA)
     {
-        emit dataStreamComplete(buf->nextByte());
-        buf->reset();
+        emit dataStreamComplete(incomingData->nextByte());
+        incomingData->reset();
     }
 }

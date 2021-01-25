@@ -118,9 +118,8 @@ class SocketConnection : public QObject
 
         void datastreamReceived(const QJsonObject &doc);
 
-        //TODO - do we need to pass these buffers? They're class-wide
-        void processSubNegotiation(Buffer *buf);
-        void processBuffer(Buffer *buf);
+        void processSubNegotiation();
+        void processBuffer();
 
         const char *tn3270e_functions_strings[5] = {"BIND_IMAGE", "DATA_STREAM_CTL", "RESPONSES", "SCS_CTL_CODES", "SYSREQ"};
 
