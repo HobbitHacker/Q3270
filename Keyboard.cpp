@@ -79,6 +79,7 @@ void Keyboard::setMap()
     functionMap.insert(std::pair<QString, doSomething>("ToggleRuler",&Keyboard::ruler));
 
     functionMap.insert(std::pair<QString, doSomething>("Copy",&Keyboard::copy));
+    functionMap.insert(std::pair<QString, doSomething>("Paste",&Keyboard::paste));
 
     setFactoryMaps();
 }
@@ -599,6 +600,28 @@ void Keyboard::copy()
     view->copyText();
 }
 
+void Keyboard::paste()
+{
+    clip = QApplication::clipboard();
+
+    QString clipText = clip->text();
+    int clipWidth = 0;
+
+    for(int i = 0; i < clipText.length(); i++)
+    {
+        if (clipText.at(i) == '\n')
+        {
+            datastream->moveCursor(0 - clipWidth, 1);
+            clipWidth = 0;
+        }
+        else
+        {
+            datastream->insertChar(clipText.at(i).toLatin1(), insMode);
+            clipWidth++;
+        }
+    }
+}
+
 void Keyboard::setMapping(QString key, QString function)
 {
     int keyCode;
@@ -738,6 +761,7 @@ void Keyboard::setFactoryMaps()
     setMapping("Pause", "Clear");
 
     setMapping("Ctrl+C", "Copy");
+    setMapping("Ctrl+V", "Paste");
 }
 
 void Keyboard::ruler()

@@ -2,8 +2,11 @@
 #define KEYBOARD_H
 
 #include <QApplication>
+#include <QClipboard>
 #include <QLineEdit>
 #include <QKeyEvent>
+
+//TODO: Change to QMap / QList
 #include <unordered_map>
 #include <functional>
 
@@ -101,6 +104,7 @@ class Keyboard : public QObject
         void paKey3();
 
         void copy();
+        void paste();
 
         void nextKey();
         bool needtoWait(QKeyEvent *q);
@@ -136,6 +140,8 @@ class Keyboard : public QObject
         int bufferPos;
         int bufferEnd;
         int keyCount;
+
+        QClipboard *clip;       // Clipboard
 
         std::unordered_map<QString, doSomething> functionMap;
 };
