@@ -53,7 +53,6 @@ class ProcessDataStream : public QObject
 	
         ProcessDataStream(TerminalView *t);
         QString EBCDICtoASCII();
-        void processStream(Buffer *b);
         bool processing;
 
         void insertChar(unsigned char keycode, bool insMode);
@@ -75,6 +74,10 @@ class ProcessDataStream : public QObject
         void processAID(int aid, bool shortRead);
         void interruptProcess();
 
+    public slots:
+
+        void processStream(Buffer *b);
+
     signals:
 
         void bufferReady(Buffer *buffer);
@@ -83,7 +86,7 @@ class ProcessDataStream : public QObject
         void blink();
         void disconnected();
 
-	private:
+    private:
 
         DisplayScreen *screen;
 

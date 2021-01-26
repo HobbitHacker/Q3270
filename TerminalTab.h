@@ -46,7 +46,6 @@ class TerminalTab : public QMdiSubWindow
 
     public slots:
 
-        void showCursorAddress(int x, int y);
         void setIndicators(Indicators i);
 
     private:

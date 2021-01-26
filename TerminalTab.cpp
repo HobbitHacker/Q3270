@@ -108,9 +108,7 @@ void TerminalTab::setScaleFont(bool scale)
 
 void TerminalTab::openConnection(QString host, int port, QString luName)
 {
-//    primary = new DisplayScreen(view->geometry().width(), view->geometry().height(), 80, 24);
     primary = new DisplayScreen(80, 24);
-//    alternate = new DisplayScreen(view->geometry().width(), view->geometry().height(), terms[termType].x, terms[termType].y);
     alternate = new DisplayScreen(terms[termType].x, terms[termType].y);
 
     view->setScenes(primary, alternate);
@@ -125,7 +123,8 @@ void TerminalTab::openConnection(QString host, int port, QString luName)
     datastream = new ProcessDataStream(view);
     socket = new SocketConnection(terms[termType].term);
 
-    connect(datastream, &ProcessDataStream::cursorMoved, this, &TerminalTab::showCursorAddress);
+    connect(datastream, &ProcessDataStream::cursorMoved, primary, &DisplayScreen::showCursorPosition);
+    connect(datastream, &ProcessDataStream::cursorMoved, alternate, &DisplayScreen::showCursorPosition);
 
     //TODO most-recently-used list and dialog for connect
     QHostInfo hi = QHostInfo::fromName(host);
@@ -145,12 +144,12 @@ void TerminalTab::openConnection(QString host, int port, QString luName)
 
     view->setConnected();
 }
-
+/*
 void TerminalTab::showCursorAddress(int x, int y)
 {
 //    cursorAddress->setText(QString("%1,%2").arg(x + 1).arg(y + 1));
 }
-
+*/
 void TerminalTab::setIndicators(Indicators ind)
 {
 /*

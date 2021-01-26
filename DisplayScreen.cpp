@@ -98,8 +98,20 @@ DisplayScreen::DisplayScreen(int screen_x, int screen_y)
     st->setPos(0, screen_y * gridSize_Y);
     st->setFont(QFont("ibm3270", 32));
     st->setPen(QPen(QColor(0x80, 0x80, 0xFF), 2));
-    addItem(st);
 
+    xSystem = new QGraphicsSimpleTextItem("- none -");
+    xSystem->setPos(gridSize_X * 6, screen_y * gridSize_Y);
+    xSystem->setFont(QFont("ibm3270", 32));
+    xSystem->setPen(QPen(QColor(0x80, 0x80, 0xFF), 2));
+
+    cursorPosition = new QGraphicsSimpleTextItem("000,000");
+    cursorPosition->setPos(gridSize_X * 60, screen_y * gridSize_Y);
+    cursorPosition->setFont(QFont("ibm3270", 32));
+    cursorPosition->setPen(QPen(QColor(0x80, 0x80, 0xFF), 2));
+
+    addItem(st);
+    addItem(xSystem);
+    addItem(cursorPosition);
 }
 
 DisplayScreen::~DisplayScreen()
@@ -770,9 +782,19 @@ void DisplayScreen::setCursor(int pos)
     cursor->setPos(cell[pos]->boundingRect().left(), cell[pos]->boundingRect().top());
 }
 
+void DisplayScreen::showCursorPosition(int x, int y)
+{
+    cursorPosition->setText(QString("%1,%2").arg(x + 1, 3).arg(y + 1, -3));
+}
+
 void DisplayScreen::showCursor()
 {
     cursor->show();
+}
+
+void DisplayScreen::setXSystem(QString text)
+{
+    xSystem->setText(text);
 }
 
 void DisplayScreen::toggleRuler()

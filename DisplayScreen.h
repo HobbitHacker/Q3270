@@ -76,6 +76,8 @@ class DisplayScreen : public QGraphicsScene
 
         void blink();
         void cursorBlink();
+        void setXSystem(QString text);
+        void showCursorPosition(int x,int y);
 
     private:
 
@@ -344,6 +346,9 @@ class DisplayScreen : public QGraphicsScene
 
         QGraphicsLineItem *crosshair_X;
         QGraphicsLineItem *crosshair_Y;
+
+        QGraphicsSimpleTextItem *xSystem;
+        QGraphicsSimpleTextItem *cursorPosition;
 
         QFont termFont;
         bool fontScaling;            // Font scales with cell size
