@@ -121,7 +121,7 @@ void ProcessDataStream::processStream(Buffer *b)
     if (resetKB)
     {
         printf("WCC reset keyboard - ");
-        emit(keyboardUnlocked());
+        emit keyboardUnlocked();
     }
     screen->dumpFields();
 //    screen->dumpDisplay();

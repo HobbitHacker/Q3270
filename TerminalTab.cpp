@@ -123,8 +123,8 @@ void TerminalTab::openConnection(QString host, int port, QString luName)
     datastream = new ProcessDataStream(view);
     socket = new SocketConnection(terms[termType].term);
 
-    connect(datastream, &ProcessDataStream::cursorMoved, primary, &DisplayScreen::showCursorPosition);
-    connect(datastream, &ProcessDataStream::cursorMoved, alternate, &DisplayScreen::showCursorPosition);
+    connect(datastream, &ProcessDataStream::cursorMoved, primary, &DisplayScreen::showStatusCursorPosition);
+    connect(datastream, &ProcessDataStream::cursorMoved, alternate, &DisplayScreen::showStatusCursorPosition);
 
     //TODO most-recently-used list and dialog for connect
     QHostInfo hi = QHostInfo::fromName(host);
@@ -136,39 +136,14 @@ void TerminalTab::openConnection(QString host, int port, QString luName)
 
     Keyboard *kbd = new Keyboard(datastream, view);
 
-    connect(kbd, &Keyboard::setLock, this, &TerminalTab::setIndicators);
+    connect(kbd, &Keyboard::setLock, primary, &DisplayScreen::setStatusXSystem);
+    connect(kbd, &Keyboard::setLock, alternate, &DisplayScreen::setStatusXSystem);
 
     kbd->setMap();
 
     view->installEventFilter(kbd);
 
     view->setConnected();
-}
-/*
-void TerminalTab::showCursorAddress(int x, int y)
-{
-//    cursorAddress->setText(QString("%1,%2").arg(x + 1).arg(y + 1));
-}
-*/
-void TerminalTab::setIndicators(Indicators ind)
-{
-/*
-    switch(ind) {
-        case Indicators::InsertMode:
-            insMode->setText(QString("^"));
-            break;
-        case Indicators::OvertypeMode:
-            insMode->setText(QString(" "));
-            break;
-        case Indicators::SystemLock:
-            syslock->setText(QString("X SYSTEM"));
-            break;
-        case Indicators::Unlocked:
-            syslock->setText(QString(""));
-            break;
-        default:
-            break;
-    }*/
 }
 
 void TerminalTab::closeConnection()

@@ -90,28 +90,40 @@ DisplayScreen::DisplayScreen(int screen_x, int screen_y)
     blinkShow = false;
     cursorShow = true;
 
+    int statusPos = (screen_y * gridSize_Y) + gridSize_Y;
+
     QGraphicsLineItem *s = new QGraphicsLineItem(0, 0, screen_x * gridSize_X, 0);
-    s->setPos(0, screen_y * gridSize_Y);
+    s->setPos(0, statusPos++);
     s->setPen(QPen(QColor(0x80, 0x80, 0xFF), 0));
     addItem(s);
+
+    QFont statusBar = QFont("ibm3270");
+    statusBar.setPixelSize(gridSize_Y * .75);
+
     QGraphicsSimpleTextItem *st = new QGraphicsSimpleTextItem("4-A");
-    st->setPos(0, screen_y * gridSize_Y);
-    st->setFont(QFont("ibm3270", 32));
-    st->setPen(QPen(QColor(0x80, 0x80, 0xFF), 2));
+    st->setPos(0, statusPos);
+    st->setFont(statusBar);
+    st->setBrush(QBrush(QColor(0x80, 0x80, 0xFF)));
 
-    xSystem = new QGraphicsSimpleTextItem("- none -");
-    xSystem->setPos(gridSize_X * 6, screen_y * gridSize_Y);
-    xSystem->setFont(QFont("ibm3270", 32));
-    xSystem->setPen(QPen(QColor(0x80, 0x80, 0xFF), 2));
+    statusXSystem = new QGraphicsSimpleTextItem("");
+    statusXSystem->setPos(gridSize_X * (screen_x * .2), statusPos);
+    statusXSystem->setFont(statusBar);
+    statusXSystem->setBrush(QBrush(QColor(0x80, 0x80, 0xFF)));
 
-    cursorPosition = new QGraphicsSimpleTextItem("000,000");
-    cursorPosition->setPos(gridSize_X * 60, screen_y * gridSize_Y);
-    cursorPosition->setFont(QFont("ibm3270", 32));
-    cursorPosition->setPen(QPen(QColor(0x80, 0x80, 0xFF), 2));
+    statusInsert = new QGraphicsSimpleTextItem("");
+    statusInsert->setPos(gridSize_X * (screen_x * .2), statusPos);
+    statusInsert->setFont(statusBar);
+    statusInsert->setBrush(QBrush(QColor(0x80, 0x80, 0xFF)));
+
+    statusCursor = new QGraphicsSimpleTextItem("000,000");
+    statusCursor->setPos(gridSize_X * (screen_x * .75), statusPos);
+    statusCursor->setFont(statusBar);
+    statusCursor->setBrush(QBrush(QColor(0x80, 0x80, 0xFF)));
 
     addItem(st);
-    addItem(xSystem);
-    addItem(cursorPosition);
+    addItem(statusXSystem);
+    addItem(statusCursor);
+    addItem(statusInsert);
 }
 
 DisplayScreen::~DisplayScreen()
@@ -782,19 +794,31 @@ void DisplayScreen::setCursor(int pos)
     cursor->setPos(cell[pos]->boundingRect().left(), cell[pos]->boundingRect().top());
 }
 
-void DisplayScreen::showCursorPosition(int x, int y)
-{
-    cursorPosition->setText(QString("%1,%2").arg(x + 1, 3).arg(y + 1, -3));
-}
-
 void DisplayScreen::showCursor()
 {
     cursor->show();
 }
 
-void DisplayScreen::setXSystem(QString text)
+void DisplayScreen::setStatusXSystem(QString text)
 {
-    xSystem->setText(text);
+    statusXSystem->setText(text);
+}
+
+void DisplayScreen::showStatusCursorPosition(int x, int y)
+{
+    statusCursor->setText(QString("%1,%2").arg(x + 1, 3).arg(y + 1, -3));
+}
+
+void DisplayScreen::showStatusInsertMode(bool ins)
+{
+    if (ins)
+    {
+        statusInsert->setText("^");
+    }
+    else
+    {
+        statusInsert->setText("");
+    }
 }
 
 void DisplayScreen::toggleRuler()

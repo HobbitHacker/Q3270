@@ -44,10 +44,6 @@ class TerminalTab : public QMdiSubWindow
 
         TerminalView *view;
 
-    public slots:
-
-        void setIndicators(Indicators i);
-
     private:
 
         QStatusBar *statusBar;

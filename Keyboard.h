@@ -34,7 +34,8 @@ class Keyboard : public QObject
         bool processKey();
 
     signals:
-        void setLock(Indicators i);
+        void setLock(QString xsystem);
+        void setInsert(bool ins);
         void saveKeyboardMapping(QString k, QString v);
 
     public slots:

@@ -98,7 +98,7 @@ void Keyboard::lockKeyboard()
     lock = true;
     printf("Keyboard        : Keyboard locked\n");
     fflush(stdout);
-    emit setLock(Indicators::SystemLock);
+    emit setLock("X System");
 }
 
 void Keyboard::unlockKeyboard()
@@ -106,7 +106,7 @@ void Keyboard::unlockKeyboard()
     lock = false;
     printf("Keyboard        : Keyboard unlocked\n");
     fflush(stdout);
-    emit setLock(Indicators::Unlocked);
+    emit setLock("");
     nextKey();
 }
 
@@ -379,6 +379,7 @@ void Keyboard::enter()
     datastream->processAID(IBM3270_AID_ENTER, false);
 
     insMode = false;
+    emit setInsert(false);
 }
 
 void Keyboard::tab()
@@ -406,9 +407,9 @@ void Keyboard::insert()
     insMode = !(insMode);
 
     if (insMode) {
-        emit setLock(Indicators::InsertMode);
+        emit setInsert(false);
     } else {
-        emit setLock(Indicators::OvertypeMode);
+        emit setInsert(true);
     }
 
 }
@@ -425,6 +426,7 @@ void Keyboard::functionKey(int key)
     datastream->processAID(key, false);
 
     insMode = false;
+    emit setInsert(false);
 }
 
 void Keyboard::fKey1()
@@ -553,6 +555,7 @@ void Keyboard::attn()
     datastream->interruptProcess();
 
     insMode = false;
+    emit setInsert(false);
 
     printf("Keyboard        : ATTN pressed\n");
 }
@@ -562,6 +565,7 @@ void Keyboard::programaccessKey(int aidKey)
     datastream->processAID(aidKey, true);
 
     insMode = false;
+    emit setInsert(false);
 }
 
 void Keyboard::paKey1()
@@ -591,8 +595,8 @@ void Keyboard::reset()
     lock = false;
     printf("Keyboard        : Keyboard unlocked\n");
     fflush(stdout);
-    emit setLock(Indicators::Unlocked);
-    emit setLock(Indicators::OvertypeMode);
+    emit setLock("");
+    emit setInsert(false);
 }
 
 void Keyboard::copy()

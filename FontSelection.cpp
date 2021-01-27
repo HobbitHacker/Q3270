@@ -51,7 +51,6 @@ void FontSelection::initFontDetails(QString fontname)
     {
         ui->FontStyleList->addItem(style);
 
-        QString sizes;
         const QList<int> smoothSizes = fd->smoothSizes(fontname, style);
 
         for (int points : smoothSizes)

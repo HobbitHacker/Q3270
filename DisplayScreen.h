@@ -76,8 +76,9 @@ class DisplayScreen : public QGraphicsScene
 
         void blink();
         void cursorBlink();
-        void setXSystem(QString text);
-        void showCursorPosition(int x,int y);
+        void setStatusXSystem(QString text);
+        void showStatusCursorPosition(int x,int y);
+        void showStatusInsertMode(bool ins);
 
     private:
 
@@ -347,8 +348,9 @@ class DisplayScreen : public QGraphicsScene
         QGraphicsLineItem *crosshair_X;
         QGraphicsLineItem *crosshair_Y;
 
-        QGraphicsSimpleTextItem *xSystem;
-        QGraphicsSimpleTextItem *cursorPosition;
+        QGraphicsSimpleTextItem *statusXSystem;
+        QGraphicsSimpleTextItem *statusCursor;
+        QGraphicsSimpleTextItem *statusInsert;
 
         QFont termFont;
         bool fontScaling;            // Font scales with cell size
