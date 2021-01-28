@@ -407,9 +407,9 @@ void Keyboard::insert()
     insMode = !(insMode);
 
     if (insMode) {
-        emit setInsert(false);
-    } else {
         emit setInsert(true);
+    } else {
+        emit setInsert(false);
     }
 
 }
