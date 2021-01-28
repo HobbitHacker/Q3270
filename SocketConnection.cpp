@@ -284,8 +284,6 @@ void SocketConnection::processSubNegotiation()
 {
     QDataStream dataStream(dataSocket);
 
-    Buffer *response = new Buffer();
-
     printf("SocketConnection : -- SubNegotiation --\n");
     subNeg->dump();
 
@@ -296,6 +294,7 @@ void SocketConnection::processSubNegotiation()
             {
                 printf("SocketConnection :    SB TTYPE SEND\n");
                 fflush(stdout);
+                Buffer *response = new Buffer();
                 response->add(IAC);
                 response->add(SB);
                 response->add(TELOPT_TTYPE);
@@ -325,6 +324,7 @@ void SocketConnection::processSubNegotiation()
             if (subNeg->byteEquals(1, TN3270E_SEND) && subNeg->byteEquals(2, TN3270E_DEVICE_TYPE))
             {
                 printf("SocketConnection :     SB TN3270E SEND DEVICE_TYPE IAC SE seen - good!\n");
+                Buffer *response = new Buffer();
 
                 response->add(IAC);
                 response->add(SB);
@@ -372,6 +372,8 @@ void SocketConnection::processSubNegotiation()
             }
             if (subNeg->byteEquals(1, TN3270E_FUNCTIONS) && subNeg->byteEquals(2, TN3270E_REQUEST))
             {
+                Buffer *response = new Buffer();
+
                 response->add(IAC);
                 response->add(SB);
                 response->add(TELOPT_TN3270E);

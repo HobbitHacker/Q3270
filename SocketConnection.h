@@ -77,6 +77,7 @@ class SocketConnection : public QObject
 
 
     signals:
+
         void connected();
         void dataStreamComplete(Buffer *b);
         void disconnected();
