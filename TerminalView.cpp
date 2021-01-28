@@ -19,23 +19,15 @@ TerminalView::TerminalView()
 //    QGraphicsView::setDragMode(QGraphicsView::RubberBandDrag);
     QGraphicsView::setInteractive(true);
     selection = new QList<Text *>();
-
+    setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContents);
 }
 
 
 void TerminalView::resizeEvent(QResizeEvent *event)
 {
-
-    if (stretch)
-    {
-        fitInView(this->scene()->itemsBoundingRect(), Qt::IgnoreAspectRatio);
-    }
-    else
-    {
-//        fitInView(this->scene()->itemsBoundingRect(), Qt::KeepAspectRatio);
-        fitInView(this->scene()->itemsBoundingRect(), Qt::IgnoreAspectRatio);
-    }
-
+    fit();
     QGraphicsView::resizeEvent(event);
 }
 
@@ -78,7 +70,22 @@ DisplayScreen *TerminalView::setScreen(bool alt)
     connect(cursorBlinker, &QTimer::timeout, current, &DisplayScreen::cursorBlink);
     setBlinkSpeed(blinkSpeed);
 
+    fit();
+
     return current;
+}
+
+void TerminalView::fit()
+{
+    if (stretch)
+    {
+        fitInView(this->scene()->itemsBoundingRect(), Qt::IgnoreAspectRatio);
+    }
+    else
+    {
+//        fitInView(this->scene()->itemsBoundingRect(), Qt::KeepAspectRatio);
+        fitInView(this->scene()->itemsBoundingRect(), Qt::IgnoreAspectRatio);
+    }
 }
 
 void TerminalView::blinkText()

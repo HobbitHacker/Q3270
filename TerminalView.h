@@ -52,6 +52,8 @@ class TerminalView : public QGraphicsView
 
     private:
 
+        void fit();
+
         bool stretch;
 
         int blinkSpeed;         // Cursor blink speed
