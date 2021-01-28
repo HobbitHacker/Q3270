@@ -84,7 +84,9 @@ int TerminalTab::getType()
 
 char * TerminalTab::name()
 {
-    return terms[termType].term.toLatin1().data();
+    char *ttype = terms[termType].term.toLatin1().data();
+
+    return ttype;
 }
 
 void TerminalTab::setFont(QFont f)
@@ -138,6 +140,9 @@ void TerminalTab::openConnection(QString host, int port, QString luName)
 
     connect(kbd, &Keyboard::setLock, primary, &DisplayScreen::setStatusXSystem);
     connect(kbd, &Keyboard::setLock, alternate, &DisplayScreen::setStatusXSystem);
+
+    connect(kbd, &Keyboard::setInsert, primary, &DisplayScreen::setStatusInsert);
+    connect(kbd, &Keyboard::setInsert, alternate, &DisplayScreen::setStatusInsert);
 
     kbd->setMap();
 

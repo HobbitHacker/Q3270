@@ -49,12 +49,12 @@ DisplayScreen::DisplayScreen(int screen_x, int screen_y)
             glyph[pos] = new Text(x, y, cell[pos]);
             glyph[pos]->setFlag(QGraphicsItem::ItemIsSelectable);
 
-            uscore[pos] = new QGraphicsLineItem(0, 0, gridSize_X, 0);
+            uscore[pos] = new QGraphicsLineItem(0, 0, (gridSize_X * .80), 0);
 
             addItem(uscore[pos]);
 
             uscore[pos]->setZValue(1);
-            uscore[pos]->setPos(x_pos, y_pos + gridSize_Y);
+            uscore[pos]->setPos(x_pos + (gridSize_X * .10), y_pos + gridSize_Y);
 
 //            glyph[pos]->setPos(0,0);
 //            glyph[pos]->setScale(1.5);
@@ -90,7 +90,7 @@ DisplayScreen::DisplayScreen(int screen_x, int screen_y)
     blinkShow = false;
     cursorShow = true;
 
-    int statusPos = (screen_y * gridSize_Y) + gridSize_Y;
+    int statusPos = (screen_y * gridSize_Y);
 
     QGraphicsLineItem *s = new QGraphicsLineItem(0, 0, screen_x * gridSize_X, 0);
     s->setPos(0, statusPos++);
@@ -105,16 +105,19 @@ DisplayScreen::DisplayScreen(int screen_x, int screen_y)
     st->setFont(statusBar);
     st->setBrush(QBrush(QColor(0x80, 0x80, 0xFF)));
 
+    // XSystem 20% across status bar
     statusXSystem = new QGraphicsSimpleTextItem("");
-    statusXSystem->setPos(gridSize_X * (screen_x * .2), statusPos);
+    statusXSystem->setPos(gridSize_X * (screen_x * .20), statusPos);
     statusXSystem->setFont(statusBar);
     statusXSystem->setBrush(QBrush(QColor(0x80, 0x80, 0xFF)));
 
+    // Insert 50% across status bar
     statusInsert = new QGraphicsSimpleTextItem("");
-    statusInsert->setPos(gridSize_X * (screen_x * .2), statusPos);
+    statusInsert->setPos(gridSize_X * (screen_x * .50), statusPos);
     statusInsert->setFont(statusBar);
     statusInsert->setBrush(QBrush(QColor(0x80, 0x80, 0xFF)));
 
+    // Cursor 75% across status bar
     statusCursor = new QGraphicsSimpleTextItem("000,000");
     statusCursor->setPos(gridSize_X * (screen_x * .75), statusPos);
     statusCursor->setFont(statusBar);
@@ -809,11 +812,11 @@ void DisplayScreen::showStatusCursorPosition(int x, int y)
     statusCursor->setText(QString("%1,%2").arg(x + 1, 3).arg(y + 1, -3));
 }
 
-void DisplayScreen::showStatusInsertMode(bool ins)
+void DisplayScreen::setStatusInsert(bool ins)
 {
     if (ins)
     {
-        statusInsert->setText("^");
+        statusInsert->setText("\uFF3E");
     }
     else
     {

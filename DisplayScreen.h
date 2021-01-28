@@ -78,7 +78,7 @@ class DisplayScreen : public QGraphicsScene
         void cursorBlink();
         void setStatusXSystem(QString text);
         void showStatusCursorPosition(int x,int y);
-        void showStatusInsertMode(bool ins);
+        void setStatusInsert(bool ins);
 
     private:
 
