@@ -57,7 +57,10 @@ void FontSelection::initFontDetails(QString fontname)
         {
             printf("FontSelection   : Name %s, StyleName %s, Size %d\n", fontname.toLatin1().data(), style.toLatin1().data(), points);
             fflush(stdout);
-            ui->FontSizeList->addItem(QString::number(points));
+            if (ui->FontSizeList->findItems(QString::number(points), Qt::MatchExactly).size() == 0)
+            {
+                ui->FontSizeList->addItem(QString::number(points));
+            }
         }
     }
 }
@@ -93,12 +96,22 @@ void FontSelection::fontnameSelected()
 
     initFontDetails(selectedName.first()->text());
 
+    ui->FontStyleList->setCurrentItem(ui->FontStyleList->item(0));
+
     if(selectedStyle != "")
     {
         ql = ui->FontStyleList->findItems(selectedStyle, Qt::MatchExactly);
         if (ql.size() > 0)
         {
             ui->FontStyleList->setCurrentItem(ql.first());
+        }
+    }
+
+    for (int i = 0; i < ui->FontSizeList->count(); i++)
+    {
+        if (ui->FontSizeList->item(i)->text() <= selectedSize)
+        {
+            ui->FontSizeList->setCurrentItem(ui->FontSizeList->item(i));
         }
     }
 
