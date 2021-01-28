@@ -497,7 +497,7 @@ void ProcessDataStream::WSFreadPartition(Buffer *b)
 
     replySummary(queryReply);
 
-    emit(bufferReady(queryReply));
+    emit bufferReady(queryReply);
 
 }
 
