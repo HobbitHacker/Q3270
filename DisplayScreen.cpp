@@ -12,9 +12,6 @@ DisplayScreen::DisplayScreen(int screen_x, int screen_y)
 
     screenPos_max = screen_x * screen_y;
 
-    line.setCosmetic(true);
-    line.setWidth(1);
-
     attrs = new Attributes[screenPos_max];
     glyph = new Text*[screenPos_max];
     cell = new QGraphicsRectItem*[screenPos_max];
@@ -33,31 +30,21 @@ DisplayScreen::DisplayScreen(int screen_x, int screen_y)
             qreal x_pos = x * gridSize_X;
 
             cell[pos] = new QGraphicsRectItem(0, 0, gridSize_X, gridSize_Y);
-//            cell[pos]->setPen(QPen(Qt::red,0));
             cell[pos]->setPen(Qt::NoPen);
-//            cell[pos]->setFlag(QGraphicsItem::ItemIsSelectable, true);
 
             addItem(cell[pos]);
 
             cell[pos]->setPos(x_pos, y_pos);
-            if (pos < 10)
-            {
-                printf("%d at %f,%f\n",pos,x_pos,y_pos);
-                fflush(stdout);
-            }
-//            cell[pos]->setFlag(QGraphicsItem::ItemIsSelectable);
             glyph[pos] = new Text(x, y, cell[pos]);
             glyph[pos]->setFlag(QGraphicsItem::ItemIsSelectable);
 
-            uscore[pos] = new QGraphicsLineItem(0, 0, (gridSize_X * .80), 0);
+            uscore[pos] = new QGraphicsLineItem(0, 0, gridSize_X, 0);
 
             addItem(uscore[pos]);
 
             uscore[pos]->setZValue(1);
-            uscore[pos]->setPos(x_pos + (gridSize_X * .10), y_pos + gridSize_Y);
+            uscore[pos]->setPos(x_pos, y_pos + gridSize_Y);
 
-//            glyph[pos]->setPos(0,0);
-//            glyph[pos]->setScale(1.5);
         }
     }
 
@@ -161,7 +148,7 @@ void DisplayScreen::setFont(QFont font)
     if (fontScaling)
     {
         QFontMetrics *fm = new QFontMetrics(font);
-        QRectF boxRect = fm->boundingRect("┼");
+        QRectF boxRect = QRectF(1, 1, fm->maxWidth() - 1, fm->height());
 
         printf("DisplayScreen   : FontMetrics: %d x %d    Box char %f x %f   GridSize: %f x %f\n", fm->averageCharWidth(), fm->height(), boxRect.width(), boxRect.height(), gridSize_X, gridSize_Y);
         fflush(stdout);

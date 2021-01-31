@@ -283,8 +283,6 @@ class DisplayScreen : public QGraphicsScene
             QColor(255,255,255)     /* White */
         };
 
-        QPen line;
-
         const char *colName[8] = { "black", "blue", "red", "magenta", "green", "cyan", "yellow", "neutral"};
 
         struct Attributes {
