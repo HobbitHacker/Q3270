@@ -8,29 +8,33 @@ SocketConnection::SocketConnection(QString termName)
     this->termName = termName;
 	
     // Forward the connected and disconnected signals
-    connect(dataSocket, &QTcpSocket::connected, this, &SocketConnection::connected);
-    connect(dataSocket, &QTcpSocket::disconnected, this, &SocketConnection::disconnected);
+//    connect(dataSocket, &QTcpSocket::connected, this, &SocketConnection::connected);
+    connect(dataSocket, &QTcpSocket::disconnected, this, &SocketConnection::closed);
     // connect readyRead() to the slot that will take care of reading the data in
     connect(dataSocket, &QTcpSocket::readyRead, this, &SocketConnection::onReadyRead);
     // Forward the error signal, QOverload is necessary as error() is overloaded, see the Qt docs
     connect(dataSocket, QOverload<QAbstractSocket::SocketError>::of(&QAbstractSocket::errorOccurred), this, &SocketConnection::error);
-    // Reset the m_loggedIn variable when we disconnec. Since the operation is trivial we use a lambda instead of creating another slot
 
     incomingData = new Buffer();
     subNeg = new Buffer();
     tn3270e_Mode = false;
 }
 
+void SocketConnection::closed()
+{
+    emit disconnected();
+}
 
 void SocketConnection::disconnectMainframe()
 {    
     disconnect(displayDataStream, &ProcessDataStream::bufferReady, this, &SocketConnection::sendResponse);
-    disconnect(dataSocket, &QTcpSocket::connected, this, &SocketConnection::connected);
-    disconnect(dataSocket, &QTcpSocket::disconnected, this, &SocketConnection::disconnected);
+//    disconnect(dataSocket, &QTcpSocket::connected, this, &SocketConnection::connected);
+//    disconnect(dataSocket, &QTcpSocket::disconnected, this, &SocketConnection::disconnected);
     disconnect(dataSocket, &QTcpSocket::readyRead, this, &SocketConnection::onReadyRead);
 
     dataSocket->disconnectFromHost();
 }
+
 
 void SocketConnection::connectMainframe(const QHostAddress &address, quint16 port, QString luName, ProcessDataStream *d)
 {
@@ -104,12 +108,14 @@ void SocketConnection::onReadyRead()
 						case IAC: // double IAC means a data byte 0xFF
                             if (readingSB)
                             {
-                                subNeg->add(socketByte);
+                                // socketByte is 0xFF here, so we don't double up the incoming buffer
+                                subNeg->add(socketByte, true);
                                 telnetState = TELNET_STATE_SB;
                             }
                             else
                             {
-                                incomingData->add(socketByte);
+                                // socketByte is 0xFF here, so we don't double up the incoming buffer
+                                incomingData->add(socketByte, true);
                                 telnetState = TELNET_STATE_DATA;
                             }
                             printf("SocketConnection : Double 0xFF - stored 0xFF in buffer\n");
@@ -295,7 +301,7 @@ void SocketConnection::processSubNegotiation()
                 printf("SocketConnection :    SB TTYPE SEND\n");
                 fflush(stdout);
                 Buffer *response = new Buffer();
-                response->add(IAC);
+                response->add(IAC, true);
                 response->add(SB);
                 response->add(TELOPT_TTYPE);
                 response->add(TELQUAL_IS);
@@ -308,7 +314,7 @@ void SocketConnection::processSubNegotiation()
                     response->addBlock((unsigned char *)luName.toLatin1().data(), strlen(luName.toLatin1().data()));
                 }
 
-                response->add(IAC);
+                response->add(IAC, true);
                 response->add(SE);
                 printf("SocketConnection : (%s)\n",termName.toLatin1().data());
                 fflush(stdout);
@@ -326,21 +332,21 @@ void SocketConnection::processSubNegotiation()
                 printf("SocketConnection :     SB TN3270E SEND DEVICE_TYPE IAC SE seen - good!\n");
                 Buffer *response = new Buffer();
 
-                response->add(IAC);
+                response->add(IAC, true);
                 response->add(SB);
                 response->add(TELOPT_TN3270E);
                 response->add(TN3270E_DEVICE_TYPE);
                 response->add(TN3270E_REQUEST);
                 response->addBlock((unsigned char *)termName.toLatin1().data(), strlen(termName.toLatin1().data()));
-                response->add(IAC);
+                response->add(IAC, true);
                 response->add(SE);
 
-                response->add(IAC);
+                response->add(IAC, true);
                 response->add(SB);
                 response->add(TELOPT_TN3270E);
                 response->add(TN3270E_FUNCTIONS);
                 response->add(TN3270E_REQUEST);
-                response->add(IAC);
+                response->add(IAC, true);
                 response->add(SE);
                 dataStream.writeRawData(response->address(), response->size());
 
@@ -374,7 +380,7 @@ void SocketConnection::processSubNegotiation()
             {
                 Buffer *response = new Buffer();
 
-                response->add(IAC);
+                response->add(IAC, true);
                 response->add(SB);
                 response->add(TELOPT_TN3270E);
                 response->add(TN3270E_FUNCTIONS);
@@ -387,7 +393,7 @@ void SocketConnection::processSubNegotiation()
                     response->add(subNeg->getByte());
                 }
 
-                response->add(IAC);
+                response->add(IAC, true);
                 response->add(SE);
 
                 printf("\n");

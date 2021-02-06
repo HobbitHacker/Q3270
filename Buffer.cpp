@@ -21,9 +21,14 @@ const char* Buffer::address()
     return (char *)buffer;
 }
 
-void Buffer::add(unsigned char b)
+void Buffer::add(unsigned char b, bool isIAC)
 {
     *bufferEnd++ = b;
+
+    if (b == 0xFF && !isIAC)
+    {
+        *bufferEnd++ = b;
+    }
 }
 
 void Buffer::reset()

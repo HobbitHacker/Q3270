@@ -12,7 +12,7 @@ class Buffer
         Buffer(int bytes = MAX_SIZE);
         ~Buffer();
         int size();
-        void add(unsigned char b);
+        void add(unsigned char b, bool isIAC = false);
         void addBlock(unsigned char *b, int length);
         Buffer *nextByte();
         unsigned char getByte();

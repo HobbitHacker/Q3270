@@ -71,16 +71,14 @@ class SocketConnection : public QObject
     public slots:
         void connectMainframe(const QHostAddress &address, quint16 port, QString luName, ProcessDataStream *d);
         void disconnectMainframe();
+        void closed();
 
     private slots:
         void onReadyRead();
 
-
     signals:
-
-        void connected();
-        void dataStreamComplete(Buffer *b);
         void disconnected();
+        void dataStreamComplete(Buffer *b);
         void error(QAbstractSocket::SocketError socketError);
 
     private:

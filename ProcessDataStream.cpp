@@ -1052,7 +1052,7 @@ void ProcessDataStream::interruptProcess()
 
     Buffer *b = new Buffer();
 
-    b->add(IAC);
+    b->add(IAC, true);
     b->add(IP);
 
     emit bufferReady(b);
