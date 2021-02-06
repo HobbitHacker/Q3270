@@ -128,10 +128,11 @@ void TerminalTab::openConnection(QString host, int port, QString luName)
     connect(datastream, &ProcessDataStream::cursorMoved, primary, &DisplayScreen::showStatusCursorPosition);
     connect(datastream, &ProcessDataStream::cursorMoved, alternate, &DisplayScreen::showStatusCursorPosition);
 
-    //TODO most-recently-used list and dialog for connect
     QHostInfo hi = QHostInfo::fromName(host);
 
-    socket->connectMainframe(hi.addresses().first(), port, luName, datastream);
+    //TODO clazy warnings
+    QList<QHostAddress> addresses = hi.addresses();
+    socket->connectMainframe(addresses.first(), port, luName, datastream);
 
     connect(socket, &SocketConnection::dataStreamComplete, datastream, &ProcessDataStream::processStream);
     connect(socket, &SocketConnection::disconnected, this, &TerminalTab::closeConnection);
