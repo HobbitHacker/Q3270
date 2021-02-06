@@ -58,11 +58,14 @@ DisplayScreen::DisplayScreen(int screen_x, int screen_y)
     cursor->setOpacity(0.5);
     cursor->setPen(Qt::NoPen);
 
-    crosshair_X = new QGraphicsLineItem(0, 0, 0, height());
-    crosshair_Y = new QGraphicsLineItem(0, 0, width(), 0);
+    crosshair_X = new QGraphicsLineItem(0, 0, 0, screen_y * gridSize_Y);
+    crosshair_Y = new QGraphicsLineItem(0, 0, screen_x * gridSize_X, 0);
 
     crosshair_X->setPen(QPen(Qt::white, 0));
     crosshair_Y->setPen(QPen(Qt::white, 0));
+
+    crosshair_X->setZValue(2);
+    crosshair_Y->setZValue(2);
 
 //    crosshair_X->pen().setCosmetic(true);
 //    crosshair_Y->pen().setCosmetic(true);
@@ -831,8 +834,8 @@ void DisplayScreen::drawRuler(int x, int y)
 {
     if (ruler)
     {
-       crosshair_X->setLine((qreal) x * gridSize_X, 0, (qreal) x * gridSize_X, height());
-       crosshair_Y->setLine(0 , (qreal) (y + 1) * gridSize_Y, width(), (qreal) (y + 1) * gridSize_Y);
+       crosshair_X->setPos((qreal) x * gridSize_X, 0);
+       crosshair_Y->setPos(0 , (qreal) (y + 1) * gridSize_Y);
     }
 }
 
