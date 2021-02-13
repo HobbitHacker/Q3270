@@ -35,6 +35,23 @@ TerminalTab::TerminalTab(QSettings *applicationSettings)
         termFont.setPointSize(8);
     }
 
+    if (applicationSettings->beginReadArray("colours") > 0)
+    {
+        for (int i = 0; i < 8; i++)
+        {
+            applicationSettings->setArrayIndex(i);
+            palette[i] = QColor(applicationSettings->value("colour").toString());
+        }
+        applicationSettings->endArray();
+    }
+    else
+    {
+        for (int i = 0;i < 8; i++)
+        {
+            palette[i] = default_palette[i];
+        }
+    }
+
 }
 
 void TerminalTab::setType(int type)
@@ -108,10 +125,35 @@ void TerminalTab::setScaleFont(bool scale)
     }
 }
 
+void TerminalTab::setColours(QColor *colours)
+{
+    primary->setColourPalette(colours);
+    alternate->setColourPalette(colours);
+
+    primary->resetColours();
+    alternate->resetColours();
+
+    QSettings *set = new QSettings();
+    set->beginWriteArray("colours");
+    for (int i = 0; i < 8; i++)
+    {
+        set->setArrayIndex(i);
+        set->setValue("colour", colours[i].name(QColor::HexRgb));
+        palette[i] = colours[i];
+    }
+    set->endArray();
+}
+
 void TerminalTab::openConnection(QString host, int port, QString luName)
 {
     primary = new DisplayScreen(80, 24);
     alternate = new DisplayScreen(terms[termType].x, terms[termType].y);
+
+    primary->setColourPalette(palette);
+    alternate->setColourPalette(palette);
+
+    primary->resetColours();
+    alternate->resetColours();
 
     view->setScenes(primary, alternate);
     view->setScreen(false);

@@ -39,10 +39,13 @@ class TerminalTab : public QMdiSubWindow
 
         void setFont(QFont f);
         void setScaleFont(bool scale);
+        void setColours(QColor colours[8]);
 
         int getType();
 
         TerminalView *view;
+
+        QColor palette[8];
 
     private:
 

@@ -64,6 +64,8 @@ class DisplayScreen : public QGraphicsScene
 
         void clear();
         void setFont(QFont font);
+        void setColourPalette(QColor c[8]);
+        void resetColours();
         void setFontScaling(bool fontScaling);
         void toggleRuler();
         void drawRuler(int x, int y);
@@ -272,16 +274,7 @@ class DisplayScreen : public QGraphicsScene
             0xF8, 0xF9, 0x7A, 0x7B, 0x7C, 0x7D, 0x7E, 0x7F,  /* 11 0100 to 11 1111 */
         };
 
-        QColor palette[8] = {
-            QColor(0,0,0),          /* Black */
-            QColor(128,128,255),    /* Blue */
-            QColor(255,0,0),        /* Red */
-            QColor(255,0, 255),     /* Magenta */
-            QColor(0,255,0),        /* Green */
-            QColor(0,255,255),      /* Cyan */
-            QColor(255,255,0),      /* Yellow */
-            QColor(255,255,255)     /* White */
-        };
+        QColor palette[8];
 
         const char *colName[8] = { "black", "blue", "red", "magenta", "green", "cyan", "yellow", "neutral"};
 

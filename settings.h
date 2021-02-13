@@ -2,6 +2,7 @@
 #define SETTINGS_H
 
 #include <QDialog>
+#include <QColorDialog>
 
 #include <TerminalTab.h>
 
@@ -24,7 +25,7 @@ class Settings : public QDialog
 
     private slots:
         void changeModel(int m);
-
+        void setColour();
 
     private:
 //        using QDialog::accept;
@@ -33,6 +34,8 @@ class Settings : public QDialog
         TerminalTab *t;
 
         Ui::Settings *ui;
+
+        QColor palette[8];
 
         int termType;
         int blinkSpeed;

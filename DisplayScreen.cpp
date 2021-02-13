@@ -2,6 +2,8 @@
 
 DisplayScreen::DisplayScreen(int screen_x, int screen_y)
 {
+    setColourPalette(default_palette);
+
     setBackgroundBrush(palette[0]);
 
     this->screen_x = screen_x;
@@ -151,7 +153,7 @@ void DisplayScreen::setFont(QFont font)
     if (fontScaling)
     {
         QFontMetrics *fm = new QFontMetrics(font);
-        QRectF boxRect = QRectF(1, 1, fm->maxWidth() - 1, fm->height());
+        QRectF boxRect = QRectF(1, 1, fm->maxWidth() - 1, fm->lineSpacing() * 0.99);
 
         printf("DisplayScreen   : FontMetrics: %d x %d    Box char %f x %f   GridSize: %f x %f\n", fm->averageCharWidth(), fm->height(), boxRect.width(), boxRect.height(), gridSize_X, gridSize_Y);
         fflush(stdout);
@@ -167,6 +169,36 @@ void DisplayScreen::setFont(QFont font)
     {
         glyph[i]->setFont(QFont(font));
         glyph[i]->setTransform(tr);
+    }
+}
+
+void DisplayScreen::setColourPalette(QColor *c)
+{
+    for (int i = 0; i < 8; i++)
+    {
+        palette[i] = c[i];
+    }
+}
+
+void DisplayScreen::resetColours()
+{
+    for (int i = 0; i < screenPos_max; i++)
+    {
+        if (attrs[i].reverse)
+        {
+            cell[i]->setBrush(palette[attrs[i].colNum]);
+            glyph[i]->setBrush(palette[0]);
+            printf("<reverse>");
+        }
+        else
+        {
+            glyph[i]->setBrush(palette[attrs[i].colNum]);
+            cell[i]->setBrush(palette[0]);
+        }
+        if (!attrs[i].display)
+        {
+            glyph[i]->setBrush(cell[i]->brush());
+        }
     }
 }
 

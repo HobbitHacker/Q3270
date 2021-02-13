@@ -1,6 +1,8 @@
 #ifndef N3270_H
 #define N3270_H
 
+#include <QColor>
+
 /* 3270 Write Commands */
 #define IBM3270_W    0xF1  /* Write */
 #define IBM3270_EW   0xF5  /* Erase Write */
@@ -114,6 +116,17 @@ enum Indicators {
     OvertypeMode,
     InsertMode,
     GoElsewhere
+};
+
+static QColor default_palette[8] = {
+    QColor(0,0,0),          /* Black */
+    QColor(128,128,255),    /* Blue */
+    QColor(255,0,0),        /* Red */
+    QColor(255,0, 255),     /* Magenta */
+    QColor(0,255,0),        /* Green */
+    QColor(0,255,255),      /* Cyan */
+    QColor(255,255,0),      /* Yellow */
+    QColor(255,255,255)     /* White */
 };
 
 
