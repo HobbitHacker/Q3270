@@ -15,13 +15,15 @@ TerminalView::TerminalView()
     cursorBlinker = new QTimer(this);
     blinkSpeed = 1;
     blink = true;
-    connected = false;
-//    QGraphicsView::setDragMode(QGraphicsView::RubberBandDrag);
+
     QGraphicsView::setInteractive(true);
     selection = new QList<Text *>();
+
     setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContents);
+    setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContents);    
+
+    setDisconnected();
 }
 
 
@@ -128,37 +130,46 @@ void TerminalView::clearSelection()
 
 void TerminalView::mousePressEvent(QMouseEvent *event)
 {
-    origin = event->pos();
+    if (connected)
+    {
+        origin = event->pos();
 
-    rubberBand->setGeometry(QRect(origin, QSize()));
+        rubberBand->setGeometry(QRect(origin, QSize()));
 
-    rubberBand->show();
+        rubberBand->show();
 
-    clearSelection();
+        clearSelection();
+    }
 }
 
 void TerminalView::mouseMoveEvent(QMouseEvent *event)
 {
-    QPoint thisPoint = event->pos();
-    rubberBand->setGeometry(QRect(origin, thisPoint).normalized());
+    if (connected)
+    {
+        QPoint thisPoint = event->pos();
+        rubberBand->setGeometry(QRect(origin, thisPoint).normalized());
+    }
 }
 
 void TerminalView::mouseReleaseEvent(QMouseEvent *event)
 {
-    rubberBand->hide();
-    QRect rect = rubberBand->geometry();
-    QList<QGraphicsItem *>cells = current->items(mapToScene(rect), Qt::IntersectsItemShape, Qt::AscendingOrder);
-    for(int i = 0; i < cells.size(); i++)
+    if (connected)
     {
-        if (cells.at(i)->type() == Text::Type)
+        rubberBand->hide();
+        QRect rect = rubberBand->geometry();
+        QList<QGraphicsItem *>cells = current->items(mapToScene(rect), Qt::IntersectsItemShape, Qt::AscendingOrder);
+        for(int i = 0; i < cells.size(); i++)
         {
-            Text *a = dynamic_cast<Text *>(cells.at(i));
-            selection->append(a);
-            a->setSelected(true);
+            if (cells.at(i)->type() == Text::Type)
+            {
+                Text *a = dynamic_cast<Text *>(cells.at(i));
+                selection->append(a);
+                a->setSelected(true);
+            }
         }
+        printf("Selected items: %d\n", selection->count());
+        fflush(stdout);
     }
-    printf("Selected items: %d\n", selection->count());
-    fflush(stdout);
 }
 
 void TerminalView::copyText()
@@ -209,9 +220,11 @@ bool TerminalView::getBlink()
 void TerminalView::setConnected()
 {
     connected = true;
+    setInteractive(true);
 }
 
 void TerminalView::setDisconnected()
 {
     connected = false;
+    setInteractive(false);
 }
