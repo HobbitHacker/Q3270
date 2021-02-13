@@ -141,6 +141,9 @@
       <property name="text">
        <string>Cancel</string>
       </property>
+      <property name="autoDefault">
+       <bool>false</bool>
+      </property>
      </widget>
     </item>
     <item>
@@ -150,6 +153,9 @@
       </property>
       <property name="text">
        <string>Connect</string>
+      </property>
+      <property name="default">
+       <bool>true</bool>
       </property>
      </widget>
     </item>
