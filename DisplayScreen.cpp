@@ -123,6 +123,7 @@ DisplayScreen::DisplayScreen(int screen_x, int screen_y)
 
 DisplayScreen::~DisplayScreen()
 {
+    clear();
 }
 
 int DisplayScreen::width()
