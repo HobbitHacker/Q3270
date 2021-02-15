@@ -23,7 +23,9 @@ class TerminalTab : public QMdiSubWindow
         TerminalTab(QSettings *applicationSettings);
 
         void openConnection(QString host, int port, QString luName);
+        void connectSession();
         void closeConnection();
+        void connectionClosed();
 
         int terminalWidth();
         int terminalHeight();
@@ -47,6 +49,10 @@ class TerminalTab : public QMdiSubWindow
 
         QColor palette[8];
 
+    private slots:
+
+        void closeEvent(QCloseEvent *closeEvent);
+
     private:
 
         QStatusBar *statusBar;
@@ -64,6 +70,10 @@ class TerminalTab : public QMdiSubWindow
         QLabel *cursorAddress;
         QLabel *syslock;
         QLabel *insMode;
+
+        QString tabHost;
+        int tabPort;
+        QString tabLU;
 
         QFont termFont;
 

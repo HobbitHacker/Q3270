@@ -146,6 +146,15 @@ void TerminalTab::setColours(QColor *colours)
 
 void TerminalTab::openConnection(QString host, int port, QString luName)
 {
+    tabHost = host;
+    tabPort = port;
+    tabLU = luName;
+
+    connectSession();
+}
+
+void TerminalTab::connectSession()
+{
     primary = new DisplayScreen(80, 24);
     alternate = new DisplayScreen(terms[termType].x, terms[termType].y);
 
@@ -170,14 +179,14 @@ void TerminalTab::openConnection(QString host, int port, QString luName)
     connect(datastream, &ProcessDataStream::cursorMoved, primary, &DisplayScreen::showStatusCursorPosition);
     connect(datastream, &ProcessDataStream::cursorMoved, alternate, &DisplayScreen::showStatusCursorPosition);
 
-    QHostInfo hi = QHostInfo::fromName(host);
+    QHostInfo hi = QHostInfo::fromName(tabHost);
 
     //TODO clazy warnings
     QList<QHostAddress> addresses = hi.addresses();
-    socket->connectMainframe(addresses.first(), port, luName, datastream);
+    socket->connectMainframe(addresses.first(), tabPort, tabLU, datastream);
 
     connect(socket, &SocketConnection::dataStreamComplete, datastream, &ProcessDataStream::processStream);
-    connect(socket, &SocketConnection::disconnected, this, &TerminalTab::closeConnection);
+    connect(socket, &SocketConnection::disconnected3270, this, &TerminalTab::closeConnection);
 
     Keyboard *kbd = new Keyboard(datastream, view);
 
@@ -196,17 +205,38 @@ void TerminalTab::openConnection(QString host, int port, QString luName)
 
 void TerminalTab::closeConnection()
 {
+    disconnect(socket, &SocketConnection::dataStreamComplete, datastream, &ProcessDataStream::processStream);
+    disconnect(socket, &SocketConnection::disconnected3270, this, &TerminalTab::closeConnection);
+
+//  disconnect(datastream, &ProcessDataStream::cursorMoved, primary, &DisplayScreen::showStatusCursorPosition);
+//    disconnect(datastream, &ProcessDataStream::cursorMoved, alternate, &DisplayScreen::showStatusCursorPosition);
+
+//    disconnect(kbd, &Keyboard::setLock, primary, &DisplayScreen::setStatusXSystem);
+//    disconnect(kbd, &Keyboard::setLock, alternate, &DisplayScreen::setStatusXSystem);
+
+//    disconnect(kbd, &Keyboard::setInsert, primary, &DisplayScreen::setStatusInsert);
+//    disconnect(kbd, &Keyboard::setInsert, alternate, &DisplayScreen::setStatusInsert);
 
     socket->disconnectMainframe();
 
+    view->stopTimers();
+
     delete socket;
 
-    delete datastream;
+    datastream->deleteLater();
+
+    view->setScene(gs);
+    view->setDisconnected();
 
     delete primary;
     delete alternate;
+}
 
-    view->setScene(gs);
-
-    view->setDisconnected();
+void TerminalTab::closeEvent(QCloseEvent *closeEvent)
+{
+    if (view->connected)
+    {
+        closeConnection();
+    }
+    QMdiSubWindow::closeEvent(closeEvent);
 }
