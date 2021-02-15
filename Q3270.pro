@@ -22,12 +22,12 @@ SOURCES += \
     Host.cpp \
     Keyboard.cpp \
     ProcessDataStream.cpp \
+    Settings.cpp \
     TerminalTab.cpp \
     TerminalView.cpp \
     main.cpp \
     mainwindow.cpp \
     SocketConnection.cpp \
-    settings.cpp \
     text.cpp
 
 HEADERS += \
@@ -38,19 +38,18 @@ HEADERS += \
     Host.h \
     Keyboard.h \
     ProcessDataStream.h \
+    Settings.h \
     TerminalTab.h \
     TerminalView.h \
     mainwindow.h \
     SocketConnection.h \
-    settings.h \
     text.h
 
 FORMS += \
     FontSelection.ui \
     Host.ui \
-    mainwindow.ui \
-    set.ui \
-    settings.ui
+    Settings.ui \
+    mainwindow.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
