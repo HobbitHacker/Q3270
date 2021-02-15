@@ -9,7 +9,7 @@ SocketConnection::SocketConnection(QString termName)
 	
     // Forward the connected and disconnected signals
 //    connect(dataSocket, &QTcpSocket::connected, this, &SocketConnection::connected);
-    connect(dataSocket, &QTcpSocket::disconnected, this, &SocketConnection::closed);
+//    connect(dataSocket, &QTcpSocket::disconnected, this, &SocketConnection::closed);
     // connect readyRead() to the slot that will take care of reading the data in
     connect(dataSocket, &QTcpSocket::readyRead, this, &SocketConnection::onReadyRead);
     // Forward the error signal, QOverload is necessary as error() is overloaded, see the Qt docs
@@ -22,11 +22,14 @@ SocketConnection::SocketConnection(QString termName)
 
 void SocketConnection::closed()
 {
-    emit disconnected();
+    emit disconnected3270();
 }
 
 void SocketConnection::disconnectMainframe()
-{    
+{
+    printf("called disconnect\n");
+    fflush(stdout);
+    //TODO: This is called twice when disconnecting
     disconnect(displayDataStream, &ProcessDataStream::bufferReady, this, &SocketConnection::sendResponse);
 //    disconnect(dataSocket, &QTcpSocket::connected, this, &SocketConnection::connected);
 //    disconnect(dataSocket, &QTcpSocket::disconnected, this, &SocketConnection::disconnected);

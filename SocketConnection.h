@@ -73,13 +73,13 @@ class SocketConnection : public QObject
         void disconnectMainframe();
         void closed();
 
-    private slots:
-        void onReadyRead();
-
     signals:
-        void disconnected();
+        void disconnected3270();
         void dataStreamComplete(Buffer *b);
         void error(QAbstractSocket::SocketError socketError);
+
+    private slots:
+        void onReadyRead();
 
     private:
         enum TelnetState {
