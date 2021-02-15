@@ -48,10 +48,7 @@ void TerminalView::setScenes(DisplayScreen *primary, DisplayScreen *alternate)
 
 DisplayScreen *TerminalView::setScreen(bool alt)
 {
-    blinker->stop();
-    cursorBlinker->stop();
-    disconnect(blinker, &QTimer::timeout, current, &DisplayScreen::blink);
-    disconnect(cursorBlinker, &QTimer::timeout, current, &DisplayScreen::cursorBlink);
+    stopTimers();
 
     rubberBand->hide();
 
@@ -77,6 +74,14 @@ DisplayScreen *TerminalView::setScreen(bool alt)
     return current;
 }
 
+void TerminalView::stopTimers()
+{
+    blinker->stop();
+    cursorBlinker->stop();
+    disconnect(blinker, &QTimer::timeout, current, &DisplayScreen::blink);
+    disconnect(cursorBlinker, &QTimer::timeout, current, &DisplayScreen::cursorBlink);
+}
+
 void TerminalView::fit()
 {
     if (stretch)
@@ -92,12 +97,18 @@ void TerminalView::fit()
 
 void TerminalView::blinkText()
 {
-    current->blink();
+    if (connected)
+    {
+        current->blink();
+    }
 }
 
 void TerminalView::blinkCursor()
 {
-    current->cursorBlink();
+    if (connected)
+    {
+        current->cursorBlink();
+    }
 }
 
 void TerminalView::setBlinkSpeed(int speed)

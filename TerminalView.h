@@ -32,6 +32,8 @@ class TerminalView : public QGraphicsView
         void setDisconnected();
         void clearSelection();
 
+        void stopTimers();
+
         DisplayScreen *setScreen(bool alt);
 
         DisplayScreen *primary;
