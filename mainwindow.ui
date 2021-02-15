@@ -38,9 +38,9 @@
      <string>Connect</string>
     </property>
     <addaction name="actionConnect"/>
+    <addaction name="actionReconnect"/>
     <addaction name="actionDisconnect"/>
     <addaction name="separator"/>
-    <addaction name="actionQuit"/>
    </widget>
    <widget class="QMenu" name="menuFont_Settings">
     <property name="title">
@@ -60,6 +60,9 @@
     </widget>
     <addaction name="actionNew"/>
     <addaction name="menuRecentSessions"/>
+    <addaction name="separator"/>
+    <addaction name="actionQuit"/>
+    <addaction name="separator"/>
    </widget>
    <widget class="QMenu" name="menuWindow">
     <property name="title">
@@ -82,11 +85,6 @@
    </property>
    <property name="text">
     <string>Connect...</string>
-   </property>
-  </action>
-  <action name="actionQuit">
-   <property name="text">
-    <string>Quit</string>
    </property>
   </action>
   <action name="actionTerminalSettings">
@@ -130,9 +128,17 @@
     <string>Cascade</string>
    </property>
   </action>
-  <action name="actiond">
+  <action name="actionReconnect">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="text">
-    <string>d</string>
+    <string>Reconnect</string>
+   </property>
+  </action>
+  <action name="actionQuit">
+   <property name="text">
+    <string>Quit</string>
    </property>
   </action>
  </widget>
@@ -282,6 +288,22 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>actionReconnect</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>menuReconnect()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>821</x>
+     <y>518</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>menuConnect()</slot>
@@ -291,5 +313,6 @@
   <slot>menuDisconnect()</slot>
   <slot>menuNew()</slot>
   <slot>menuTabbedView(bool)</slot>
+  <slot>menuReconnect()</slot>
  </slots>
 </ui>

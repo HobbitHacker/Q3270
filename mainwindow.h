@@ -21,7 +21,7 @@
 #include "ProcessDataStream.h"
 #include "Keyboard.h"
 #include "TerminalView.h"
-#include "settings.h"
+#include "Settings.h"
 #include "FontSelection.h"
 #include "3270.h"
 #include "TerminalTab.h"
@@ -50,6 +50,7 @@ class MainWindow : public QMainWindow
     void mruConnect();
     // Connect menu
     void menuConnect();
+    void menuReconnect();
     void menuDisconnect();
     void menuQuit();
     // Settings menu

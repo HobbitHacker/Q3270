@@ -32,8 +32,8 @@ void MainWindow::menuNew()
     TerminalTab *t = new TerminalTab(applicationSettings);
     ui->mdiArea->addSubWindow(t);
     t->show();
+    ui->actionTerminalSettings->setEnabled(true);
     menuConnect();
-
 }
 
 void MainWindow::mruConnect()
@@ -87,8 +87,20 @@ void MainWindow::menuConnect()
         updateMRUlist((h->luName.compare("") ? h->luName + "@" : "") + h->hostName + ":" + QString::number(h->port));
         ui->actionDisconnect->setEnabled(true);
         ui->actionConnect->setDisabled(true);
+        ui->actionReconnect->setDisabled(true);
         ui->actionSet_Font->setEnabled(true);
     }
+}
+
+void MainWindow::menuReconnect()
+{
+    TerminalTab *t = (TerminalTab *)(ui->mdiArea->activeSubWindow());
+
+    t->connectSession();
+
+    ui->actionConnect->setDisabled(true);
+    ui->actionDisconnect->setEnabled(true);
+    ui->actionReconnect->setDisabled(true);
 }
 
 void MainWindow::menuDisconnect()
@@ -99,6 +111,7 @@ void MainWindow::menuDisconnect()
 
     ui->actionDisconnect->setDisabled(true);
     ui->actionConnect->setEnabled(true);
+    ui->actionReconnect->setEnabled(true);
     ui->actionSet_Font->setDisabled(true);
 }
 
