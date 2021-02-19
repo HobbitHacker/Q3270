@@ -1,41 +1,105 @@
 #include "ui_Settings.h"
 #include "Settings.h"
 
-Settings::Settings(QWidget *parent, TerminalTab *t) :
-    QDialog(parent),
-    ui(new Ui::Settings)
+Settings::Settings(QWidget *parent) : QDialog(parent), ui(new Ui::Settings)
 {
-    this->t = t;
+    // All initial settings moved to here, extracted from QSettings, or set to default as needed.
+    // Other classes refer to this as needed.
+    // Separate option to Save Settings
 
     ui->setupUi(this);
 
-    changeModel(t->getType());
+    QSettings *applicationSettings = new QSettings();
 
-    ui->cursorBlink->setChecked(t->view->getBlink());
-    ui->cursorBlinkSpeed->setSliderPosition(t->view->getBlinkSpeed());
-
-    if (t->view->connected)
+    // Model type
+    if (applicationSettings->contains("terminal/model"))
     {
-        ui->terminalCols->setDisabled(true);
-        ui->terminalRows->setDisabled(true);
-        ui->terminalType->setDisabled(true);
+        termX = applicationSettings->value("terminal/width").toInt();
+        termY = applicationSettings->value("terminal/height").toInt();
+        changeModel(applicationSettings->value("terminal/model").toString());
+    }
+    else
+    {
+        changeModel(2);
     }
 
-    for(int i = 0; i < 8; i++)
+    // Cursor blink enabled & speed
+    if (applicationSettings->contains("terminal/cursorblink"))
     {
-        palette[i] = t->palette[i];
-        printf("%d = %s\n", i, t->palette[i].name(QColor::HexRgb).toLatin1().data());
-    }
-    fflush(stdout);
+        blink = applicationSettings->value("terminal/cursorblink").toBool();
+        blinkSpeed = applicationSettings->value("terminal/cursorblinkspeed").toInt();
+        ui->cursorBlink->setEnabled(blink);
+        ui->cursorBlinkSpeed->setSliderPosition(blinkSpeed);
 
-    ui->colourBlack->setStyleSheet(QString("background-color: %1;").arg(t->palette[0].name(QColor::HexRgb)));
-    ui->colourBlue->setStyleSheet(QString("background-color: %1;").arg(t->palette[1].name(QColor::HexRgb)));
-    ui->colourRed->setStyleSheet(QString("background-color: %1;").arg(t->palette[2].name(QColor::HexRgb)));
-    ui->colourPink->setStyleSheet(QString("background-color: %1;").arg(t->palette[3].name(QColor::HexRgb)));
-    ui->colourGreen->setStyleSheet(QString("background-color: %1;").arg(t->palette[4].name(QColor::HexRgb)));
-    ui->colourTurq->setStyleSheet(QString("background-color: %1;").arg(t->palette[5].name(QColor::HexRgb)));
-    ui->colourYellow->setStyleSheet(QString("background-color: %1;").arg(t->palette[6].name(QColor::HexRgb)));
-    ui->colourWhite->setStyleSheet(QString("background-color: %1;").arg(t->palette[7].name(QColor::HexRgb)));
+    }
+    else
+    {
+        blink = true;
+        blinkSpeed = 5;
+        ui->cursorBlink->setChecked(true);
+        ui->cursorBlinkSpeed->setSliderPosition(5);
+    }
+
+    termFont = QFont("ibm3270", 8);
+
+    // Font
+    if (applicationSettings->contains("font/name"))
+    {
+        printf("%s\n%s\n%d\n", applicationSettings->value("font/name").toString().toLatin1().data(), applicationSettings->value("font/style").toString().toLatin1().data(), applicationSettings->value("font/size").toInt());
+        fflush(stdout);
+        termFont.setFamily(applicationSettings->value("font/name").toString());
+        termFont.setStyleName(applicationSettings->value("font/style").toString());
+        termFont.setPointSize(applicationSettings->value("font/size").toInt());
+    }
+    else
+    {
+        termFont.setFamily("ibm3270");
+        termFont.setStyleName("Regular");
+        termFont.setPointSize(8);
+    }
+
+    // Font scaling
+    if (applicationSettings->contains("font/scale"))
+    {
+        ui->FontScaling->setCheckState(applicationSettings->value("font/scale").toString() == "true" ?  Qt::Checked : Qt::Unchecked);
+    }
+    else
+    {
+        ui->FontScaling->setCheckState(Qt::Checked);
+    }
+
+    // Colours
+    if (applicationSettings->beginReadArray("colours") > 0)
+    {
+        for (int i = 0; i < 8; i++)
+        {
+            applicationSettings->setArrayIndex(i);
+            palette[i] = QColor(applicationSettings->value("colour").toString());
+        }
+        applicationSettings->endArray();
+    }
+    else
+    {
+        for(int i = 0; i < 8; i++)
+        {
+            palette[i] = default_palette[i];
+        }
+    }
+
+    // Not connected to start with
+    ui->terminalCols->setEnabled(true);
+    ui->terminalRows->setEnabled(true);
+    ui->terminalType->setEnabled(true);
+
+
+    ui->colourBlack->setStyleSheet(QString("background-color: %1;").arg(palette[0].name(QColor::HexRgb)));
+    ui->colourBlue->setStyleSheet(QString("background-color: %1;").arg(palette[1].name(QColor::HexRgb)));
+    ui->colourRed->setStyleSheet(QString("background-color: %1;").arg(palette[2].name(QColor::HexRgb)));
+    ui->colourPink->setStyleSheet(QString("background-color: %1;").arg(palette[3].name(QColor::HexRgb)));
+    ui->colourGreen->setStyleSheet(QString("background-color: %1;").arg(palette[4].name(QColor::HexRgb)));
+    ui->colourTurq->setStyleSheet(QString("background-color: %1;").arg(palette[5].name(QColor::HexRgb)));
+    ui->colourYellow->setStyleSheet(QString("background-color: %1;").arg(palette[6].name(QColor::HexRgb)));
+    ui->colourWhite->setStyleSheet(QString("background-color: %1;").arg(palette[7].name(QColor::HexRgb)));
 
     connect(ui->colourBlack, &QPushButton::clicked, this, &Settings::setColour);
     connect(ui->colourBlue, &QPushButton::clicked, this, &Settings::setColour);
@@ -56,6 +120,26 @@ Settings::Settings(QWidget *parent, TerminalTab *t) :
 Settings::~Settings()
 {
     delete ui;
+}
+
+void Settings::showForm(bool connected)
+{
+    if (connected)
+    {
+        ui->terminalCols->setDisabled(true);
+        ui->terminalRows->setDisabled(true);
+        ui->terminalType->setDisabled(true);
+    }
+    else
+    {
+        ui->terminalCols->setEnabled(true);
+        ui->terminalRows->setEnabled(true);
+        ui->terminalType->setEnabled(true);
+    }
+
+    paletteChanged = false;
+
+    this->exec();
 }
 
 void Settings::changeModel(int model)
@@ -85,8 +169,8 @@ void Settings::changeModel(int model)
             termY = 27;
             break;
         case 4:
-            termX = t->terminalWidth();
-            termY = t->terminalHeight();
+            termX = this->termX;
+            termY = this->termY;
             ui->terminalCols->setEnabled(true);
             ui->terminalRows->setEnabled(true);
             break;
@@ -102,15 +186,53 @@ void Settings::changeModel(int model)
     ui->terminalRows->setValue(termY);
 }
 
+void Settings::changeModel(QString type)
+{
+    for (int i = 0; i < 5; i++)
+    {
+        if (type == terms[i].term)
+        {
+            termType = i;
+            return;
+        }
+    }
+
+    termType = 0;
+}
+
+void Settings::changeSize(int x, int y)
+{
+    if (termType != 4)
+    {
+        return;
+    }
+
+    terms[4].x = x;
+    terms[4].y = y;
+}
+
+
 void Settings::accept()
 {
-    t->setType(ui->terminalType->currentIndex());
+    if (ui->terminalType->currentIndex() != termType || termX != ui->terminalCols->value() | termY != ui->terminalRows->value())
+    {
+        termType = ui->terminalType->currentIndex();
+        termX = ui->terminalCols->value();
+        termY = ui->terminalRows->value();
+        emit terminalChanged(termType, termX, termY);
+    }
 
-    t->setSize(ui->terminalCols->value(), ui->terminalRows->value());
-    t->view->setBlink(ui->cursorBlink->checkState() == Qt::Checked);
-    t->view->setBlinkSpeed(ui->cursorBlinkSpeed->sliderPosition());
+    if (ui->cursorBlink->QAbstractButton::isChecked() != blink || ui->cursorBlinkSpeed->value() != blinkSpeed)
+    {
+        blink = ui->cursorBlink->QAbstractButton::isChecked();
+        blinkSpeed = ui->cursorBlinkSpeed->value();
+        emit cursorBlinkChanged(blink, blinkSpeed);
+    }
 
-    t->setColours(palette);
+    if (paletteChanged)
+    {
+        emit coloursChanged(palette);
+    }
 
     QDialog::accept();
 
@@ -164,8 +286,38 @@ void Settings::setColour()
 
     if (color.isValid())
     {
-        buttonSender->setStyleSheet(QString("background-color: %1;").arg(color.name(QColor::HexRgb)));
-        palette[thisColour] = color;
+        if (palette[thisColour] != color)
+        {
+            paletteChanged = true;
+            buttonSender->setStyleSheet(QString("background-color: %1;").arg(color.name(QColor::HexRgb)));
+            palette[thisColour] = color;
+        }
     }
+}
 
+int Settings::getTermX()
+{
+    return termX;
+}
+
+int Settings::getTermY()
+{
+    return termY;
+}
+
+QFont Settings::getFont()
+{
+    printf("%s\n%s\n%d\n", termFont.family().toLatin1().data(), termFont.styleName().toLatin1().data(), termFont.pointSize());
+    fflush(stdout);
+    return termFont;
+}
+
+QString Settings::getTermName()
+{
+    return terms[termType].term;
+}
+
+QColor *Settings::getColours()
+{
+    return palette;
 }

@@ -6,6 +6,7 @@
 #include "3270.h"
 #include "SocketConnection.h"
 #include "Keyboard.h"
+#include "Settings.h"
 
 #include <QMdiArea>
 #include <QMdiSubWindow>
@@ -20,7 +21,7 @@ class TerminalTab : public QMdiSubWindow
     Q_OBJECT
 
     public:
-        TerminalTab(QSettings *applicationSettings);
+        TerminalTab();
 
         void openConnection(QString host, int port, QString luName);
         void connectSession();
@@ -37,13 +38,13 @@ class TerminalTab : public QMdiSubWindow
         void setType(QString type);
         void setType(int type);
 
-        void setSize(int x, int y);
-
         void setFont(QFont f);
         void setScaleFont(bool scale);
         void setColours(QColor colours[8]);
 
         int getType();
+
+        void showForm();
 
         TerminalView *view;
 
@@ -65,6 +66,8 @@ class TerminalTab : public QMdiSubWindow
         DisplayScreen *primary;
         DisplayScreen *alternate;
 
+        Settings *settings;
+
         bool altScreen;
 
         QLabel *cursorAddress;
@@ -75,23 +78,6 @@ class TerminalTab : public QMdiSubWindow
         int tabPort;
         QString tabLU;
 
-        QFont termFont;
-
-        struct termTypes
-        {
-            QString term;
-            int x, y;
-        };
-
-        termTypes terms[5] = {
-            { "IBM-3279-2-E", 80, 24 },
-            { "IBM-3279-3-E", 80, 32 },
-            { "IBM-3279-4-E", 80, 43 },
-            { "IBM-3279-5-E", 132, 27 },
-            { "IBM-DYNAMIC", 0, 0}
-        };
-
-        int termType;
         bool resizeFont;
 
 };

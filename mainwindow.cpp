@@ -3,11 +3,11 @@
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new(Ui::MainWindow))
 {
-    ui->setupUi(this);
-
     QCoreApplication::setOrganizationDomain("styles.homeip.net");
     QCoreApplication::setApplicationName("Q3270");
     QCoreApplication::setOrganizationName("andyWare");
+
+    ui->setupUi(this);
 
     applicationSettings = new QSettings();
 
@@ -29,7 +29,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new(Ui::MainWi
 
 void MainWindow::menuNew()
 {
-    TerminalTab *t = new TerminalTab(applicationSettings);
+    TerminalTab *t = new TerminalTab();
     ui->mdiArea->addSubWindow(t);
     t->show();
     ui->actionTerminalSettings->setEnabled(true);
@@ -59,14 +59,14 @@ void MainWindow::mruConnect()
         port = menuText.section(":", 1, 1).toInt();
     }
 
-    TerminalTab *t = new TerminalTab(applicationSettings);
+    TerminalTab *t = new TerminalTab();
     ui->mdiArea->addSubWindow(t);
     t->show();
     t->openConnection(host, port, luname);
 
     ui->actionDisconnect->setEnabled(true);
     ui->actionConnect->setDisabled(true);
-    ui->actionSet_Font->setEnabled(true);
+
     updateMRUlist(menuText);
 }
 
@@ -88,7 +88,6 @@ void MainWindow::menuConnect()
         ui->actionDisconnect->setEnabled(true);
         ui->actionConnect->setDisabled(true);
         ui->actionReconnect->setDisabled(true);
-        ui->actionSet_Font->setEnabled(true);
     }
 }
 
@@ -112,7 +111,6 @@ void MainWindow::menuDisconnect()
     ui->actionDisconnect->setDisabled(true);
     ui->actionConnect->setEnabled(true);
     ui->actionReconnect->setEnabled(true);
-    ui->actionSet_Font->setDisabled(true);
 }
 
 void MainWindow::menuSetFont()
@@ -144,15 +142,9 @@ void MainWindow::menuTerminalSettings()
 {
     TerminalTab *t = (TerminalTab *)(ui->mdiArea->activeSubWindow());
 
-    Settings *s = new Settings(this, t);
-
-    if (s->exec() == QDialog::Accepted)
+    if (t)
     {
-        setSetting("terminal/model", t->name());
-        setSetting("terminal/height",QString::number(t->terminalHeight()));
-        setSetting("terminal/width", QString::number(t->terminalWidth()));
-        setSetting("terminal/cursorblink", QString::number(t->view->getBlink()));
-        setSetting("terminal/cursorblinkspeed", QString::number(t->view->getBlinkSpeed()));
+        t->showForm();
     }
 
     fflush(stdout);
@@ -179,20 +171,17 @@ void MainWindow::updateMenuEntries()
         {
             ui->actionDisconnect->setEnabled(true);
             ui->actionConnect->setDisabled(true);
-            ui->actionSet_Font->setEnabled(true);
         }
         else
         {
             ui->actionDisconnect->setDisabled(true);
             ui->actionConnect->setEnabled(true);
-            ui->actionSet_Font->setDisabled(true);
         }
     }
     else
     {
         ui->actionDisconnect->setDisabled(true);
         ui->actionConnect->setDisabled(true);
-        ui->actionSet_Font->setDisabled(true);
     }
 }
 

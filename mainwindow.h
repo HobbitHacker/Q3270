@@ -70,6 +70,8 @@ class MainWindow : public QMainWindow
 
     QSettings *applicationSettings;
 
+    Settings *settings;
+
     QMap<QMdiSubWindow *, TerminalTab *> sessions;
 
     QList<QString> mruList;

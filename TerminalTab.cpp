@@ -1,7 +1,9 @@
 #include "TerminalTab.h"
 
-TerminalTab::TerminalTab(QSettings *applicationSettings)
+TerminalTab::TerminalTab()
 {
+    settings = new Settings(this->parentWidget());
+
     view = new TerminalView();
 
     gs = new QGraphicsScene();
@@ -10,110 +12,20 @@ TerminalTab::TerminalTab(QSettings *applicationSettings)
 
     this->setWidget(view);
 
-    setType("IBM-3279-2-E");
-
-    if (applicationSettings->contains("terminal/model"))
-    {
-        setType(applicationSettings->value("terminal/model").toString());
-        setSize(applicationSettings->value("terminal/width").toInt(), applicationSettings->value("terminal/height").toInt());
-        view->setBlink(applicationSettings->value("terminal/cursorblink").toBool());
-        view->setBlinkSpeed(applicationSettings->value("terminal/cursorblinkspeed").toInt());
-        (applicationSettings->value("font/scale").toString() == "true") ? view->setScaleFont(true) : view->setScaleFont(false);
-    }
-
-    if (applicationSettings->contains("font/name"))
-    {
-        termFont.setFamily(applicationSettings->value("font/name").toString());
-        termFont.setStyleName(applicationSettings->value("font/style").toString());
-        termFont.setPointSize(applicationSettings->value("font/size").toInt());
-        (applicationSettings->value("font/scale").toInt() == 0) ? view->setScaleFont(false) : view->setScaleFont(true);
-    }
-    else
-    {
-        termFont.setFamily("ibm3270");
-        termFont.setStyleName("Regular");
-        termFont.setPointSize(8);
-    }
-
-    if (applicationSettings->beginReadArray("colours") > 0)
-    {
-        for (int i = 0; i < 8; i++)
-        {
-            applicationSettings->setArrayIndex(i);
-            palette[i] = QColor(applicationSettings->value("colour").toString());
-        }
-        applicationSettings->endArray();
-    }
-    else
-    {
-        for (int i = 0;i < 8; i++)
-        {
-            palette[i] = default_palette[i];
-        }
-    }
-
 }
 
-void TerminalTab::setType(int type)
+void TerminalTab::showForm()
 {
-    termType = type;
-}
-
-void TerminalTab::setType(QString type)
-{
-    for (int i = 0; i < 5; i++)
-    {
-        if (type == terms[i].term)
-        {
-            termType = i;
-            return;
-        }
-    }
-
-    termType = 0;
-}
-
-int TerminalTab::terminalWidth()
-{
-    return terms[termType].x;
-}
-
-int TerminalTab::terminalHeight()
-{
-    return terms[termType].y;
-}
-
-void TerminalTab::setSize(int x, int y)
-{
-    if (termType != 4)
-    {
-        return;
-    }
-
-    terms[4].x = x;
-    terms[4].y = y;
-}
-
-int TerminalTab::getType()
-{
-    return termType;
-}
-
-char * TerminalTab::name()
-{
-    char *ttype = terms[termType].term.toLatin1().data();
-
-    return ttype;
+    settings->exec();
 }
 
 void TerminalTab::setFont(QFont f)
 {
     if (view->connected)
     {
-        view->primary->setFont(f);
-        view->alternate->setFont(f);
+        primary->setFont(f);
+        alternate->setFont(f);
     }
-    termFont = f;
 }
 
 void TerminalTab::setScaleFont(bool scale)
@@ -156,10 +68,10 @@ void TerminalTab::openConnection(QString host, int port, QString luName)
 void TerminalTab::connectSession()
 {
     primary = new DisplayScreen(80, 24);
-    alternate = new DisplayScreen(terms[termType].x, terms[termType].y);
+    alternate = new DisplayScreen(settings->getTermX(), settings->getTermY());
 
-    primary->setColourPalette(palette);
-    alternate->setColourPalette(palette);
+    primary->setColourPalette(settings->getColours());
+    alternate->setColourPalette(settings->getColours());
 
     primary->resetColours();
     alternate->resetColours();
@@ -170,11 +82,11 @@ void TerminalTab::connectSession()
     primary->setFontScaling(view->scaleFont);
     alternate->setFontScaling(view->scaleFont);
 
-    primary->setFont(termFont);
-    alternate->setFont(termFont);
+    primary->setFont(settings->getFont());
+    alternate->setFont(settings->getFont());
 
     datastream = new ProcessDataStream(view);
-    socket = new SocketConnection(terms[termType].term);
+    socket = new SocketConnection(settings->getTermName());
 
     connect(datastream, &ProcessDataStream::cursorMoved, primary, &DisplayScreen::showStatusCursorPosition);
     connect(datastream, &ProcessDataStream::cursorMoved, alternate, &DisplayScreen::showStatusCursorPosition);

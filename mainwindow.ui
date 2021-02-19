@@ -46,7 +46,6 @@
     <property name="title">
      <string>Settings</string>
     </property>
-    <addaction name="actionSet_Font"/>
     <addaction name="actionTerminalSettings"/>
    </widget>
    <widget class="QMenu" name="menuFile">
@@ -88,16 +87,11 @@
    </property>
   </action>
   <action name="actionTerminalSettings">
-   <property name="text">
-    <string>Terminal Settings</string>
-   </property>
-  </action>
-  <action name="actionSet_Font">
    <property name="enabled">
     <bool>false</bool>
    </property>
    <property name="text">
-    <string>Set Font</string>
+    <string>Terminal Settings</string>
    </property>
   </action>
   <action name="actionDisconnect">
@@ -189,22 +183,6 @@
     <hint type="destinationlabel">
      <x>822</x>
      <y>519</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>actionSet_Font</sender>
-   <signal>triggered()</signal>
-   <receiver>MainWindow</receiver>
-   <slot>menuSetFont()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>821</x>
-     <y>518</y>
     </hint>
    </hints>
   </connection>
