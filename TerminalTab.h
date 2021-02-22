@@ -38,7 +38,7 @@ class TerminalTab : public QMdiSubWindow
         void setType(QString type);
         void setType(int type);
 
-        void setFont(QFont f);
+        void setFont();
         void setScaleFont(bool scale);
         void setColours(QColor colours[8]);
 
@@ -53,6 +53,7 @@ class TerminalTab : public QMdiSubWindow
     private slots:
 
         void closeEvent(QCloseEvent *closeEvent);
+        void setCurrentFont(QFont f);
 
     private:
 

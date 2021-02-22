@@ -75,7 +75,6 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-
 void MainWindow::menuConnect()
 {
     Host *h = new Host();
@@ -115,7 +114,8 @@ void MainWindow::menuDisconnect()
 
 void MainWindow::menuSetFont()
 {
-    FontSelection *fs;
+/*    FontSelection *fs;
+
 
     if (applicationSettings->contains("font/name"))
     {
@@ -135,7 +135,7 @@ void MainWindow::menuSetFont()
         t->setScaleFont(fs->getScaling());
         setSetting("font/scale", QString::number(fs->getScaling()));
         //ui->verticalLayout->update();
-    }
+    }*/
 }
 
 void MainWindow::menuTerminalSettings()
@@ -167,6 +167,7 @@ void MainWindow::updateMenuEntries()
     if(TerminalTab *t = (TerminalTab *)(ui->mdiArea->activeSubWindow()))
     {
 
+        ui->actionTerminalSettings->setEnabled(true);
         if (t->view->connected)
         {
             ui->actionDisconnect->setEnabled(true);
@@ -182,6 +183,7 @@ void MainWindow::updateMenuEntries()
     {
         ui->actionDisconnect->setDisabled(true);
         ui->actionConnect->setDisabled(true);
+        ui->actionTerminalSettings->setDisabled(true);
     }
 }
 

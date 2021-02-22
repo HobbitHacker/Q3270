@@ -4,6 +4,10 @@ TerminalTab::TerminalTab()
 {
     settings = new Settings(this->parentWidget());
 
+    connect(settings, &Settings::coloursChanged, this, &TerminalTab::setColours);
+    connect(settings, &Settings::fontChanged, this, &TerminalTab::setFont);
+    connect(settings, &Settings::tempFontChange, this, &TerminalTab::setCurrentFont);
+
     view = new TerminalView();
 
     gs = new QGraphicsScene();
@@ -16,15 +20,23 @@ TerminalTab::TerminalTab()
 
 void TerminalTab::showForm()
 {
-    settings->exec();
+    settings->showForm(view->connected);
 }
 
-void TerminalTab::setFont(QFont f)
+void TerminalTab::setFont()
 {
     if (view->connected)
     {
-        primary->setFont(f);
-        alternate->setFont(f);
+        primary->setFont(settings->getFont());
+        alternate->setFont(settings->getFont());
+    }
+}
+
+void TerminalTab::setCurrentFont(QFont f)
+{
+    if (view->connected)
+    {
+        view->current->setFont(f);
     }
 }
 

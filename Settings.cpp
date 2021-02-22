@@ -110,9 +110,11 @@ Settings::Settings(QWidget *parent) : QDialog(parent), ui(new Ui::Settings)
     connect(ui->colourYellow, &QPushButton::clicked, this, &Settings::setColour);
     connect(ui->colourWhite, &QPushButton::clicked, this, &Settings::setColour);
 
-    QFontDialog *qfd = new QFontDialog();
+    qfd = new QFontDialog();
     qfd->setWindowFlags(Qt::Widget);
     qfd->setOption(QFontDialog::NoButtons);
+
+//    connect(qfd, &QFontDialog::currentFontChanged, this, &Settings::fontChanged);
 
     ui->verticalLayout_5->addWidget(qfd);
 }
@@ -138,6 +140,8 @@ void Settings::showForm(bool connected)
     }
 
     paletteChanged = false;
+
+    qfd->setCurrentFont(termFont);
 
     this->exec();
 }
@@ -211,6 +215,11 @@ void Settings::changeSize(int x, int y)
     terms[4].y = y;
 }
 
+void Settings::changeFont(QFont newFont)
+{
+    emit tempFontChange(newFont);
+}
+
 
 void Settings::accept()
 {
@@ -234,8 +243,28 @@ void Settings::accept()
         emit coloursChanged(palette);
     }
 
+    printf("Before: %s - %s - %d\n", termFont.family().toLatin1().data(), termFont.styleName().toLatin1().data(), termFont.pointSize());
+    printf("qfd selected: %s - %s - %d\n", qfd->selectedFont().family().toLatin1().data(), qfd->selectedFont().styleName().toLatin1().data(), qfd->selectedFont().pointSize());
+    printf("qfd current: %s - %s - %d\n", qfd->currentFont().family().toLatin1().data(), qfd->currentFont().styleName().toLatin1().data(), qfd->currentFont().pointSize());
+    fflush(stdout);
+
+    if (qfd->currentFont() != termFont)
+    {
+        termFont = qfd->currentFont();
+        printf("%s\n%s\n%d\n", termFont.family().toLatin1().data(), termFont.styleName().toLatin1().data(), termFont.pointSize());
+        fflush(stdout);
+        emit fontChanged();
+    }
+
     QDialog::accept();
 
+}
+
+void Settings::reject()
+{
+    emit tempFontChange(termFont);
+
+    QDialog::reject();
 }
 
 void Settings::setColour()

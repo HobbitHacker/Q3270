@@ -37,23 +37,30 @@ class Settings : public QDialog
         void terminalChanged(int type, int x, int y);
         void cursorBlinkChanged(bool blink, int blinkSpeed);
         void coloursChanged(QColor palette[8]);
+        void fontChanged();
+        void tempFontChange(QFont f);
 
     private slots:
 
+        void changeFont(QFont f);
         void changeModel(int m);
         void setColour();
 
     private:
 //        using QDialog::accept;
         void accept();
+        void reject();
 
         void changeModel(QString model);
         void changeSize(int x, int y);
 
         Ui::Settings *ui;
 
+        QFontDialog *qfd;
+
         QColor palette[8];
         QFont termFont;
+        QFont qfdFont;
 
         int termType;
         int termX;
