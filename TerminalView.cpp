@@ -46,7 +46,7 @@ void TerminalView::setScenes(DisplayScreen *primary, DisplayScreen *alternate)
     rubberBand = new QRubberBand(QRubberBand::Rectangle, this);
 }
 
-DisplayScreen *TerminalView::setScreen(bool alt)
+DisplayScreen *TerminalView::setAlternateScreen(bool alt)
 {
     stopTimers();
 

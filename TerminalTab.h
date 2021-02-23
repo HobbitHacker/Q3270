@@ -64,8 +64,7 @@ class TerminalTab : public QMdiSubWindow
         SocketConnection *socket;
         Keyboard *kbd;
 
-        DisplayScreen *primary;
-        DisplayScreen *alternate;
+        DisplayScreen *screen[2];
 
         Settings *settings;
 

@@ -22,7 +22,6 @@
 #include "Keyboard.h"
 #include "TerminalView.h"
 #include "Settings.h"
-#include "FontSelection.h"
 #include "3270.h"
 #include "TerminalTab.h"
 #include "Host.h"

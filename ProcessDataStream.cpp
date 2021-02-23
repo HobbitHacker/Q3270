@@ -35,7 +35,7 @@ ProcessDataStream::ProcessDataStream(TerminalView *t)
 void ProcessDataStream::setScreen(bool alternate)
 {
 
-    screen = terminal->setScreen(alternate);
+    screen = terminal->setAlternateScreen(alternate);
 
     alternate_size = alternate;
 

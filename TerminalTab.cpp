@@ -4,11 +4,14 @@ TerminalTab::TerminalTab()
 {
     settings = new Settings(this->parentWidget());
 
+    view = new TerminalView();
+
     connect(settings, &Settings::coloursChanged, this, &TerminalTab::setColours);
     connect(settings, &Settings::fontChanged, this, &TerminalTab::setFont);
     connect(settings, &Settings::tempFontChange, this, &TerminalTab::setCurrentFont);
 
-    view = new TerminalView();
+    connect(settings, &Settings::cursorBlinkChanged, view, &TerminalView::setBlink);
+    connect(settings, &Settings::cursorBlinkSpeedChanged, view, &TerminalView::setBlinkSpeed);
 
     gs = new QGraphicsScene();
 
@@ -27,8 +30,8 @@ void TerminalTab::setFont()
 {
     if (view->connected)
     {
-        primary->setFont(settings->getFont());
-        alternate->setFont(settings->getFont());
+        screen[0]->setFont(settings->getFont());
+        screen[1]->setFont(settings->getFont());
     }
 }
 
@@ -44,18 +47,18 @@ void TerminalTab::setScaleFont(bool scale)
 {
     if (view->connected)
     {
-        primary->setFontScaling(scale);
-        alternate->setFontScaling(scale);
+        screen[0]->setFontScaling(scale);
+        screen[1]->setFontScaling(scale);
     }
 }
 
 void TerminalTab::setColours(QColor *colours)
 {
-    primary->setColourPalette(colours);
-    alternate->setColourPalette(colours);
-
-    primary->resetColours();
-    alternate->resetColours();
+    for (int i = 0; i < 2; i++)
+    {
+        screen[i]->setColourPalette(colours);
+        screen[i]->resetColours();
+    }
 
     QSettings *set = new QSettings();
     set->beginWriteArray("colours");
@@ -79,29 +82,33 @@ void TerminalTab::openConnection(QString host, int port, QString luName)
 
 void TerminalTab::connectSession()
 {
-    primary = new DisplayScreen(80, 24);
-    alternate = new DisplayScreen(settings->getTermX(), settings->getTermY());
+    screen[0] = new DisplayScreen(80, 24);
+    screen[1] = new DisplayScreen(settings->getTermX(), settings->getTermY());
 
-    primary->setColourPalette(settings->getColours());
-    alternate->setColourPalette(settings->getColours());
-
-    primary->resetColours();
-    alternate->resetColours();
-
-    view->setScenes(primary, alternate);
-    view->setScreen(false);
-
-    primary->setFontScaling(view->scaleFont);
-    alternate->setFontScaling(view->scaleFont);
-
-    primary->setFont(settings->getFont());
-    alternate->setFont(settings->getFont());
+    view->setScenes(screen[0], screen[1]);
+    view->setAlternateScreen(false);
 
     datastream = new ProcessDataStream(view);
     socket = new SocketConnection(settings->getTermName());
 
-    connect(datastream, &ProcessDataStream::cursorMoved, primary, &DisplayScreen::showStatusCursorPosition);
-    connect(datastream, &ProcessDataStream::cursorMoved, alternate, &DisplayScreen::showStatusCursorPosition);
+    Keyboard *kbd = new Keyboard(datastream, view);
+
+    for (int i = 0; i < 2; i++)
+    {
+
+        screen[i]->setColourPalette(settings->getColours());
+        screen[i]->resetColours();
+        screen[i]->setFontScaling(view->scaleFont);
+        screen[i]->setFont(settings->getFont());
+
+        connect(datastream, &ProcessDataStream::cursorMoved, screen[i], &DisplayScreen::showStatusCursorPosition);
+
+        connect(kbd, &Keyboard::setLock, screen[i], &DisplayScreen::setStatusXSystem);
+        connect(kbd, &Keyboard::setInsert, screen[i], &DisplayScreen::setStatusInsert);
+    }
+
+    view->setBlink(settings->getBlink());
+    view->setBlinkSpeed(settings->getBlinkSpeed());
 
     QHostInfo hi = QHostInfo::fromName(tabHost);
 
@@ -111,14 +118,6 @@ void TerminalTab::connectSession()
 
     connect(socket, &SocketConnection::dataStreamComplete, datastream, &ProcessDataStream::processStream);
     connect(socket, &SocketConnection::disconnected3270, this, &TerminalTab::closeConnection);
-
-    Keyboard *kbd = new Keyboard(datastream, view);
-
-    connect(kbd, &Keyboard::setLock, primary, &DisplayScreen::setStatusXSystem);
-    connect(kbd, &Keyboard::setLock, alternate, &DisplayScreen::setStatusXSystem);
-
-    connect(kbd, &Keyboard::setInsert, primary, &DisplayScreen::setStatusInsert);
-    connect(kbd, &Keyboard::setInsert, alternate, &DisplayScreen::setStatusInsert);
 
     kbd->setMap();
 
@@ -152,8 +151,8 @@ void TerminalTab::closeConnection()
     view->setScene(gs);
     view->setDisconnected();
 
-    delete primary;
-    delete alternate;
+    delete screen[0];
+    delete screen[1];
 }
 
 void TerminalTab::closeEvent(QCloseEvent *closeEvent)

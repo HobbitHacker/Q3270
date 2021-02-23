@@ -24,7 +24,7 @@ class Settings : public QDialog
         void showForm(bool connected);
 
         bool getBlink();
-        int getSpeed();
+        int getBlinkSpeed();
         bool getInherit();
         int getTermX();
         int getTermY();
@@ -36,6 +36,7 @@ class Settings : public QDialog
 
         void terminalChanged(int type, int x, int y);
         void cursorBlinkChanged(bool blink, int blinkSpeed);
+        void cursorBlinkSpeedChanged(int blinkSpeed);
         void coloursChanged(QColor palette[8]);
         void fontChanged();
         void tempFontChange(QFont f);

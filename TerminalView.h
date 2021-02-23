@@ -34,7 +34,7 @@ class TerminalView : public QGraphicsView
 
         void stopTimers();
 
-        DisplayScreen *setScreen(bool alt);
+        DisplayScreen *setAlternateScreen(bool alt);
 
         DisplayScreen *primary;
         DisplayScreen *alternate;

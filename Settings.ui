@@ -686,6 +686,22 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>cursorBlink</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>cursorBlinkSpeed</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>735</x>
+     <y>130</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>393</x>
+     <y>179</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>changeModel(int)</slot>

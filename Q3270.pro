@@ -18,7 +18,6 @@ DEFINES += QT_DEPRECATED_WARNINGS QT_FLUSH_PAINT=1
 SOURCES += \
     Buffer.cpp \
     DisplayScreen.cpp \
-    FontSelection.cpp \
     Host.cpp \
     Keyboard.cpp \
     ProcessDataStream.cpp \
@@ -34,7 +33,6 @@ HEADERS += \
     Buffer.h \
     DisplayScreen.h \
     3270.h \
-    FontSelection.h \
     Host.h \
     Keyboard.h \
     ProcessDataStream.h \
@@ -46,7 +44,6 @@ HEADERS += \
     text.h
 
 FORMS += \
-    FontSelection.ui \
     Host.ui \
     Settings.ui \
     mainwindow.ui

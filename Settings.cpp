@@ -28,7 +28,7 @@ Settings::Settings(QWidget *parent) : QDialog(parent), ui(new Ui::Settings)
     {
         blink = applicationSettings->value("terminal/cursorblink").toBool();
         blinkSpeed = applicationSettings->value("terminal/cursorblinkspeed").toInt();
-        ui->cursorBlink->setEnabled(blink);
+        ui->cursorBlink->setChecked(blink);
         ui->cursorBlinkSpeed->setSliderPosition(blinkSpeed);
 
     }
@@ -139,6 +139,8 @@ void Settings::showForm(bool connected)
         ui->terminalType->setEnabled(true);
     }
 
+    ui->cursorBlinkSpeed->setEnabled(ui->cursorBlink->QAbstractButton::isChecked());
+
     paletteChanged = false;
 
     qfd->setCurrentFont(termFont);
@@ -223,7 +225,7 @@ void Settings::changeFont(QFont newFont)
 
 void Settings::accept()
 {
-    if (ui->terminalType->currentIndex() != termType || termX != ui->terminalCols->value() | termY != ui->terminalRows->value())
+    if (ui->terminalType->currentIndex() != termType || termX != ui->terminalCols->value() || termY != ui->terminalRows->value())
     {
         termType = ui->terminalType->currentIndex();
         termX = ui->terminalCols->value();
@@ -231,11 +233,17 @@ void Settings::accept()
         emit terminalChanged(termType, termX, termY);
     }
 
-    if (ui->cursorBlink->QAbstractButton::isChecked() != blink || ui->cursorBlinkSpeed->value() != blinkSpeed)
+    if (ui->cursorBlink->QAbstractButton::isChecked() != blink)
     {
         blink = ui->cursorBlink->QAbstractButton::isChecked();
         blinkSpeed = ui->cursorBlinkSpeed->value();
         emit cursorBlinkChanged(blink, blinkSpeed);
+    }
+
+    if (ui->cursorBlinkSpeed->value() != blinkSpeed)
+    {
+        blinkSpeed = ui->cursorBlinkSpeed->value();
+        emit cursorBlinkSpeedChanged(blinkSpeed);
     }
 
     if (paletteChanged)
@@ -349,4 +357,14 @@ QString Settings::getTermName()
 QColor *Settings::getColours()
 {
     return palette;
+}
+
+int Settings::getBlinkSpeed()
+{
+    return blinkSpeed;
+}
+
+bool Settings::getBlink()
+{
+    return blink;
 }
