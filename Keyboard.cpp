@@ -21,65 +21,65 @@ Keyboard::Keyboard(ProcessDataStream *d, TerminalView *view)
 
 void Keyboard::setMap()
 {
-    functionMap.insert(std::pair<QString, doSomething>("Enter",&Keyboard::enter));
-    functionMap.insert(std::pair<QString, doSomething>("Reset",&Keyboard::reset));
+    functionMap.insert("Enter",&Keyboard::enter);
+    functionMap.insert("Reset",&Keyboard::reset);
 
-    functionMap.insert(std::pair<QString, doSomething>("Up",&Keyboard::cursorUp));
-    functionMap.insert(std::pair<QString, doSomething>("Down",&Keyboard::cursorDown));
-    functionMap.insert(std::pair<QString, doSomething>("Left",&Keyboard::cursorLeft));
-    functionMap.insert(std::pair<QString, doSomething>("Right",&Keyboard::cursorRight));
+    functionMap.insert("Up",&Keyboard::cursorUp);
+    functionMap.insert("Down",&Keyboard::cursorDown);
+    functionMap.insert("Left",&Keyboard::cursorLeft);
+    functionMap.insert("Right",&Keyboard::cursorRight);
 
-    functionMap.insert(std::pair<QString, doSomething>("Backspace",&Keyboard::cursorLeft));
+    functionMap.insert("Backspace",&Keyboard::cursorLeft);
 
-    functionMap.insert(std::pair<QString, doSomething>("Tab",&Keyboard::tab));
-    functionMap.insert(std::pair<QString, doSomething>("Backtab",&Keyboard::backtab));
+    functionMap.insert("Tab",&Keyboard::tab);
+    functionMap.insert("Backtab",&Keyboard::backtab);
 
-    functionMap.insert(std::pair<QString, doSomething>("Newline",&Keyboard::newline));
-    functionMap.insert(std::pair<QString, doSomething>("Home",&Keyboard::home));
+    functionMap.insert("Newline",&Keyboard::newline);
+    functionMap.insert("Home",&Keyboard::home);
 
-    functionMap.insert(std::pair<QString, doSomething>("EraseEOF",&Keyboard::eraseEOF));
+    functionMap.insert("EraseEOF",&Keyboard::eraseEOF);
 
-    functionMap.insert(std::pair<QString, doSomething>("Insert",&Keyboard::insert));
-    functionMap.insert(std::pair<QString, doSomething>("Delete",&Keyboard::deleteKey));
+    functionMap.insert("Insert",&Keyboard::insert);
+    functionMap.insert("Delete",&Keyboard::deleteKey);
 
-    functionMap.insert(std::pair<QString, doSomething>("F1",&Keyboard::fKey1));
-    functionMap.insert(std::pair<QString, doSomething>("F2",&Keyboard::fKey2));
-    functionMap.insert(std::pair<QString, doSomething>("F3",&Keyboard::fKey3));
-    functionMap.insert(std::pair<QString, doSomething>("F4",&Keyboard::fKey4));
-    functionMap.insert(std::pair<QString, doSomething>("F5",&Keyboard::fKey5));
-    functionMap.insert(std::pair<QString, doSomething>("F6",&Keyboard::fKey6));
-    functionMap.insert(std::pair<QString, doSomething>("F7",&Keyboard::fKey7));
-    functionMap.insert(std::pair<QString, doSomething>("F8",&Keyboard::fKey8));
-    functionMap.insert(std::pair<QString, doSomething>("F9",&Keyboard::fKey9));
-    functionMap.insert(std::pair<QString, doSomething>("F10",&Keyboard::fKey10));
-    functionMap.insert(std::pair<QString, doSomething>("F11",&Keyboard::fKey11));
-    functionMap.insert(std::pair<QString, doSomething>("F12",&Keyboard::fKey12));
+    functionMap.insert("F1",&Keyboard::fKey1);
+    functionMap.insert("F2",&Keyboard::fKey2);
+    functionMap.insert("F3",&Keyboard::fKey3);
+    functionMap.insert("F4",&Keyboard::fKey4);
+    functionMap.insert("F5",&Keyboard::fKey5);
+    functionMap.insert("F6",&Keyboard::fKey6);
+    functionMap.insert("F7",&Keyboard::fKey7);
+    functionMap.insert("F8",&Keyboard::fKey8);
+    functionMap.insert("F9",&Keyboard::fKey9);
+    functionMap.insert("F10",&Keyboard::fKey10);
+    functionMap.insert("F11",&Keyboard::fKey11);
+    functionMap.insert("F12",&Keyboard::fKey12);
 
-    functionMap.insert(std::pair<QString, doSomething>("F13",&Keyboard::fKey13));
-    functionMap.insert(std::pair<QString, doSomething>("F14",&Keyboard::fKey14));
-    functionMap.insert(std::pair<QString, doSomething>("F15",&Keyboard::fKey15));
-    functionMap.insert(std::pair<QString, doSomething>("F16",&Keyboard::fKey16));
-    functionMap.insert(std::pair<QString, doSomething>("F17",&Keyboard::fKey17));
-    functionMap.insert(std::pair<QString, doSomething>("F18",&Keyboard::fKey18));
-    functionMap.insert(std::pair<QString, doSomething>("F19",&Keyboard::fKey19));
-    functionMap.insert(std::pair<QString, doSomething>("F20",&Keyboard::fKey20));
-    functionMap.insert(std::pair<QString, doSomething>("F21",&Keyboard::fKey21));
-    functionMap.insert(std::pair<QString, doSomething>("F22",&Keyboard::fKey22));
-    functionMap.insert(std::pair<QString, doSomething>("F23",&Keyboard::fKey23));
-    functionMap.insert(std::pair<QString, doSomething>("F24",&Keyboard::fKey24));
+    functionMap.insert("F13",&Keyboard::fKey13);
+    functionMap.insert("F14",&Keyboard::fKey14);
+    functionMap.insert("F15",&Keyboard::fKey15);
+    functionMap.insert("F16",&Keyboard::fKey16);
+    functionMap.insert("F17",&Keyboard::fKey17);
+    functionMap.insert("F18",&Keyboard::fKey18);
+    functionMap.insert("F19",&Keyboard::fKey19);
+    functionMap.insert("F20",&Keyboard::fKey20);
+    functionMap.insert("F21",&Keyboard::fKey21);
+    functionMap.insert("F22",&Keyboard::fKey22);
+    functionMap.insert("F23",&Keyboard::fKey23);
+    functionMap.insert("F24",&Keyboard::fKey24);
 
-    functionMap.insert(std::pair<QString, doSomething>("Attn",&Keyboard::attn));
+    functionMap.insert("Attn",&Keyboard::attn);
 
-    functionMap.insert(std::pair<QString, doSomething>("PA1",&Keyboard::paKey1));
-    functionMap.insert(std::pair<QString, doSomething>("PA2",&Keyboard::paKey2));
-    functionMap.insert(std::pair<QString, doSomething>("PA3",&Keyboard::paKey3));
+    functionMap.insert("PA1",&Keyboard::paKey1);
+    functionMap.insert("PA2",&Keyboard::paKey2);
+    functionMap.insert("PA3",&Keyboard::paKey3);
 
-    functionMap.insert(std::pair<QString, doSomething>("Clear",&Keyboard::clear));
+    functionMap.insert("Clear",&Keyboard::clear);
 
-    functionMap.insert(std::pair<QString, doSomething>("ToggleRuler",&Keyboard::ruler));
+    functionMap.insert("ToggleRuler",&Keyboard::ruler);
 
-    functionMap.insert(std::pair<QString, doSomething>("Copy",&Keyboard::copy));
-    functionMap.insert(std::pair<QString, doSomething>("Paste",&Keyboard::paste));
+    functionMap.insert("Copy",&Keyboard::copy);
+    functionMap.insert("Paste",&Keyboard::paste);
 
     setFactoryMaps();
 }
@@ -164,13 +164,9 @@ bool Keyboard::eventFilter( QObject *dist, QEvent *event )
 
 bool Keyboard::processKey()
 {
-    kbMap::const_iterator got;
+    int key = kbBuffer[bufferEnd].key;
 
-    kbBuffer[bufferEnd].isMapped = false;
-
-    got = kbBuffer[bufferEnd].map->find(kbBuffer[bufferEnd].key);
-
-    kbBuffer[bufferEnd].isMapped = (got != kbBuffer[bufferEnd].map->end());
+    kbBuffer[bufferEnd].isMapped = kbBuffer[bufferEnd].map->contains(key);
 
     printf("Keyboard        : isSimpleText: %d - Key is mapped: %d\n", kbBuffer[bufferEnd].keyChar,kbBuffer[bufferEnd].isMapped);
 
@@ -180,8 +176,8 @@ bool Keyboard::processKey()
         {
             kbBuffer[bufferEnd].mustMap = true;
         }
-        got = kbBuffer[bufferEnd].map->find(kbBuffer[bufferEnd].nativeKey);
-        kbBuffer[bufferEnd].isMapped = (got != kbBuffer[bufferEnd].map->end());
+        key = kbBuffer[bufferEnd].nativeKey;
+        kbBuffer[bufferEnd].isMapped = kbBuffer[bufferEnd].map->contains(key);
         printf("Keyboard        : Modifier key is mapped: %d\n", kbBuffer[bufferEnd].isMapped);
     }
     fflush(stdout);
@@ -194,8 +190,9 @@ bool Keyboard::processKey()
     {
 
         // Store target mapping if key is mapped
-        if (kbBuffer[bufferEnd].isMapped) {
-            kbBuffer[bufferEnd].mapped = got->second;
+        if (kbBuffer[bufferEnd].isMapped)
+        {
+            kbBuffer[bufferEnd].mapped = kbBuffer[bufferEnd].map->value(key);
         }
 
         if (kbBuffer[bufferEnd].mapped == &Keyboard::attn)
@@ -212,7 +209,7 @@ bool Keyboard::processKey()
            {
                printf("Keyboard        : Processing nextKey (mapped and mustMap set)\n");
                fflush(stdout);
-               nextKey();int a = 0x01000002;
+               nextKey();
            }
            else if (!kbBuffer[bufferEnd].mustMap)
            {
@@ -629,7 +626,8 @@ void Keyboard::paste()
 void Keyboard::setMapping(QString key, QString function)
 {
     int keyCode;
-    kbMap *setMap = &defaultMap;
+
+    QMap<int, void (Keyboard::*)()> *setMap = &defaultMap;
 
     // Decode "key" which should be something like:
     // Ctrl+A
@@ -684,17 +682,14 @@ void Keyboard::setMapping(QString key, QString function)
         }
     }
 
-    std::unordered_map<QString, doSomething>::const_iterator setIterator;
 
-    setIterator = functionMap.find(function);
-
-    if (setIterator == functionMap.end())
+    if (!functionMap.contains(function))
     {
         printf("Keyboard        : ERROR: Function %s unknown - ignored\n", function.toLatin1().data());
         fflush(stdout);
     }
 
-    setMap->insert(std::pair<int, doSomething>(keyCode, (*setIterator).second));
+    setMap->insert(keyCode, functionMap.value(function));
     emit saveKeyboardMapping("keyboard/" + key, function);
 }
 

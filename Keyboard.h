@@ -114,13 +114,12 @@ class Keyboard : public QObject
 
         void setFactoryMaps();
 
-        typedef std::unordered_map<int, doSomething> kbMap;
+        QMap<int, void (Keyboard::*)()> defaultMap;
 
-        kbMap defaultMap;
-        kbMap altMap;
-        kbMap ctrlMap;
-        kbMap shiftMap;
-        kbMap metaMap;
+        QMap<int, void (Keyboard::*)()> altMap;
+        QMap<int, void (Keyboard::*)()> ctrlMap;
+        QMap<int, void (Keyboard::*)()> shiftMap;
+        QMap<int, void (Keyboard::*)()> metaMap;
 
         typedef struct
         {
@@ -128,7 +127,7 @@ class Keyboard : public QObject
             int modifiers;
             int nativeKey;
             QChar keyChar;
-            kbMap *map;
+            QMap<int, void (Keyboard::*)()> *map;
             bool isMapped;
             bool mustMap;
             doSomething mapped;
@@ -144,6 +143,7 @@ class Keyboard : public QObject
 
         QClipboard *clip;       // Clipboard
 
-        std::unordered_map<QString, doSomething> functionMap;
+//        std::unordered_map<QString, doSomething> functionMap;
+        QMap<QString, doSomething> functionMap;
 };
 #endif // KEYBOARD_H
