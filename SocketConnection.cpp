@@ -13,7 +13,7 @@ SocketConnection::SocketConnection(QString termName)
     // connect readyRead() to the slot that will take care of reading the data in
     connect(dataSocket, &QTcpSocket::readyRead, this, &SocketConnection::onReadyRead);
     // Forward the error signal, QOverload is necessary as error() is overloaded, see the Qt docs
-    connect(dataSocket, QOverload<QAbstractSocket::SocketError>::of(&QAbstractSocket::errorOccurred), this, &SocketConnection::error);
+//    connect(dataSocket, QOverload<QAbstractSocket::SocketError>::of(&QAbstractSocket::errorOccurred), this, &SocketConnection::error);
 
     incomingData = new Buffer();
     subNeg = new Buffer();
@@ -59,7 +59,7 @@ void SocketConnection::onReadyRead()
     // create a QDataStream operating on the socket
     QDataStream dataStream(dataSocket);
     // set the version so that programs compiled with different versions of Qt can agree on how to serialise
-    dataStream.setVersion(QDataStream::Qt_5_15);
+    dataStream.setVersion(QDataStream::Qt_5_12);
 
     uchar socketByte;
 	char data3270; 
