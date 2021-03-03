@@ -22,7 +22,7 @@ Settings::Settings(QWidget *parent) : QDialog(parent), ui(new Ui::Settings)
     {
         termX = 80;
         termY = 24;
-        changeModel(0);
+        changeModel("Model2");
     }
 
     // Cursor blink enabled & speed
@@ -63,11 +63,14 @@ Settings::Settings(QWidget *parent) : QDialog(parent), ui(new Ui::Settings)
     // Font scaling
     if (applicationSettings->contains("font/scale"))
     {
-        ui->FontScaling->setCheckState(applicationSettings->value("font/scale").toString() == "true" ?  Qt::Checked : Qt::Unchecked);
+        fontScaling = applicationSettings->value("font/scale").toString() == "true" ? true : false;
+        ui->FontScaling->setCheckState(fontScaling ?  Qt::Checked : Qt::Unchecked);
+
     }
     else
     {
         ui->FontScaling->setCheckState(Qt::Checked);
+        fontScaling = true;
     }
 
     // Colours
@@ -199,7 +202,7 @@ void Settings::changeModel(QString type)
 {
     for (int i = 0; i < 5; i++)
     {
-        if (type == terms[i].term)
+        if (type == terms[i].name)
         {
             termType = i;
             ui->terminalType->setCurrentIndex(i);
@@ -268,6 +271,12 @@ void Settings::accept()
         printf("%s\n%s\n%d\n", termFont.family().toLatin1().data(), termFont.styleName().toLatin1().data(), termFont.pointSize());
         fflush(stdout);
         emit fontChanged();
+    }
+
+    if (ui->FontScaling->QAbstractButton::isChecked() != fontScaling)
+    {
+        fontScaling = ui->FontScaling->QAbstractButton::isChecked();
+        emit fontScalingChanged(fontScaling);
     }
 
     QDialog::accept();
@@ -375,13 +384,18 @@ bool Settings::getBlink()
     return blink;
 }
 
+bool Settings::getFontScaling()
+{
+    return fontScaling;
+}
+
 void Settings::saveSettings()
 {
     QSettings *qs = new QSettings();
 
-    qs->setValue("terminal/model", terms[termType].term);
-    qs->setValue("terminal/width", terms[termType].x);
-    qs->setValue("terminal/height", terms[termType].y);
+    qs->setValue("terminal/model", termType);
+    qs->setValue("terminal/width", termX);
+    qs->setValue("terminal/height", termY);
 
     qs->setValue("terminal/cursorblink", blink);
     qs->setValue("terminal/cursorblinkspeed", blinkSpeed);

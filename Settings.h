@@ -32,6 +32,7 @@ class Settings : public QDialog
         QString getTermName();
         QFont getFont();
         QColor *getColours();
+        bool getFontScaling();
 
     signals:
 
@@ -40,6 +41,7 @@ class Settings : public QDialog
         void cursorBlinkSpeedChanged(int blinkSpeed);
         void coloursChanged(QColor palette[8]);
         void fontChanged();
+        void fontScalingChanged(bool fontScaling);
         void tempFontChange(QFont f);
         void saveKeyboardSettings();
 
@@ -72,21 +74,23 @@ class Settings : public QDialog
 
         int blinkSpeed;
         bool blink;
+        bool fontScaling;
 
         bool paletteChanged;
 
         struct termTypes
         {
+            QString name;
             QString term;
             int x, y;
         };
 
         termTypes terms[5] = {
-            { "IBM-3279-2-E", 80, 24 },
-            { "IBM-3279-3-E", 80, 32 },
-            { "IBM-3279-4-E", 80, 43 },
-            { "IBM-3279-5-E", 132, 27 },
-            { "IBM-DYNAMIC", 0, 0}
+            { "Model2", "IBM-3279-2-E", 80, 24 },
+            { "Model3", "IBM-3279-3-E", 80, 32 },
+            { "Model4", "IBM-3279-4-E", 80, 43 },
+            { "Model5", "IBM-3279-5-E", 132, 27 },
+            { "Dynamic", "IBM-DYNAMIC", 0, 0}
         };
 
 

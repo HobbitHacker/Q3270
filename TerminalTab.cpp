@@ -100,13 +100,15 @@ void TerminalTab::connectSession()
 
         screen[i]->setColourPalette(settings->getColours());
         screen[i]->resetColours();
-        screen[i]->setFontScaling(view->scaleFont);
+        screen[i]->setFontScaling(settings->getFontScaling());
         screen[i]->setFont(settings->getFont());
 
         connect(datastream, &ProcessDataStream::cursorMoved, screen[i], &DisplayScreen::showStatusCursorPosition);
 
         connect(kbd, &Keyboard::setLock, screen[i], &DisplayScreen::setStatusXSystem);
         connect(kbd, &Keyboard::setInsert, screen[i], &DisplayScreen::setStatusInsert);
+
+        connect(settings, &Settings::fontScalingChanged, screen[i], &DisplayScreen::setFontScaling);
     }
 
     view->setBlink(settings->getBlink());
