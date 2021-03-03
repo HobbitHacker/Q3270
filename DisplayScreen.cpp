@@ -390,6 +390,12 @@ void DisplayScreen::setCharAttr(unsigned char extendedType, unsigned char extend
         case IBM3270_EXT_HILITE:
             switch(extendedValue)
             {
+                case IBM3270_EXT_HI_DEFAULT:
+                    charAttr.uscore  = false;
+                    charAttr.reverse = false;
+                    charAttr.blink   = false;
+                    printf("default");
+                    break;
                 case IBM3270_EXT_HI_NORMAL:
                     charAttr.uscore  = false;
                     charAttr.reverse = false;
@@ -417,6 +423,8 @@ void DisplayScreen::setCharAttr(unsigned char extendedType, unsigned char extend
                     charAttr.uscore_default = false;
                     printf("uscore");
                     break;
+                default:
+                    printf("** Extended Value %02X Not Implemented **", extendedValue);
             }
             break;
         case IBM3270_EXT_FG_COLOUR:
@@ -432,7 +440,7 @@ void DisplayScreen::setCharAttr(unsigned char extendedType, unsigned char extend
             printf("bg colour %s", colName[charAttr.colNum]);
             break;
         default:
-            printf(" ** Not implemented **");
+            printf(" ** Extended Type %02X Not implemented **", extendedType);
     }
     printf("]");
     fflush(stdout);
