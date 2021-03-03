@@ -5,6 +5,7 @@
 #include <QClipboard>
 #include <QLineEdit>
 #include <QKeyEvent>
+#include <QSettings>
 
 //TODO: Change to QMap / QList
 #include <unordered_map>
@@ -26,8 +27,6 @@ class Keyboard : public QObject
 
     Q_OBJECT
 
-    typedef void (Keyboard::*doSomething)();
-
     public:
         Keyboard(ProcessDataStream *d, TerminalView *v);
         void setMap();
@@ -42,6 +41,7 @@ class Keyboard : public QObject
         void unlockKeyboard();
         void lockKeyboard();
         void setMapping(QString key, QString function);
+        void saveKeyboardSettings();
 
     protected:
         bool eventFilter( QObject *dist, QEvent *event );
@@ -114,12 +114,22 @@ class Keyboard : public QObject
 
         void setFactoryMaps();
 
-        QMap<int, void (Keyboard::*)()> defaultMap;
+        typedef void (Keyboard::*kbFunction)();
 
-        QMap<int, void (Keyboard::*)()> altMap;
-        QMap<int, void (Keyboard::*)()> ctrlMap;
-        QMap<int, void (Keyboard::*)()> shiftMap;
-        QMap<int, void (Keyboard::*)()> metaMap;
+        typedef struct
+        {
+                kbFunction kbFunc;
+                QString keySeq;
+                QString keyFunc;
+        } kbDets;
+
+        QMap<int,kbDets> defaultMap;
+
+        QMap<int, kbDets> altMap;
+        QMap<int, kbDets> ctrlMap;
+        QMap<int, kbDets> shiftMap;
+        QMap<int, kbDets> metaMap;
+
 
         typedef struct
         {
@@ -127,10 +137,10 @@ class Keyboard : public QObject
             int modifiers;
             int nativeKey;
             QChar keyChar;
-            QMap<int, void (Keyboard::*)()> *map;
+            QMap<int, kbDets> *map;
             bool isMapped;
             bool mustMap;
-            doSomething mapped;
+            kbFunction mapped;
         } keyStruct;
 
         keyStruct kbBuffer[1024];
@@ -144,6 +154,6 @@ class Keyboard : public QObject
         QClipboard *clip;       // Clipboard
 
 //        std::unordered_map<QString, doSomething> functionMap;
-        QMap<QString, doSomething> functionMap;
+        QMap<QString, kbFunction> functionMap;
 };
 #endif // KEYBOARD_H

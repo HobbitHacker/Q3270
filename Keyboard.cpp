@@ -192,7 +192,7 @@ bool Keyboard::processKey()
         // Store target mapping if key is mapped
         if (kbBuffer[bufferEnd].isMapped)
         {
-            kbBuffer[bufferEnd].mapped = kbBuffer[bufferEnd].map->value(key);
+            kbBuffer[bufferEnd].mapped = kbBuffer[bufferEnd].map->value(key).kbFunc;
         }
 
         if (kbBuffer[bufferEnd].mapped == &Keyboard::attn)
@@ -627,7 +627,7 @@ void Keyboard::setMapping(QString key, QString function)
 {
     int keyCode;
 
-    QMap<int, void (Keyboard::*)()> *setMap = &defaultMap;
+    QMap<int, kbDets> *setMap = &defaultMap;
 
     // Decode "key" which should be something like:
     // Ctrl+A
@@ -689,8 +689,8 @@ void Keyboard::setMapping(QString key, QString function)
         fflush(stdout);
     }
 
-    setMap->insert(keyCode, functionMap.value(function));
-    emit saveKeyboardMapping("keyboard/" + key, function);
+    setMap->insert(keyCode, { functionMap.value(function), key, function });
+
 }
 
 void Keyboard::setFactoryMaps()
@@ -771,4 +771,21 @@ void Keyboard::ruler()
 void Keyboard::clear()
 {
     datastream->processAID(IBM3270_AID_CLEAR, true);
+}
+
+void Keyboard::saveKeyboardSettings()
+{
+    QSettings *s = new QSettings();
+
+    QList<QMap<int, kbDets>> kbs = { defaultMap, ctrlMap, shiftMap, altMap, metaMap };
+
+    for (int i = 0; i < kbs.size(); i++)
+    {
+        QMap<int, kbDets>::const_iterator k = kbs.at(i).constBegin();
+        while(k != kbs.at(i).constEnd())
+        {
+            s->setValue("keyboard/" + k.value().keySeq, k.value().keyFunc);
+            k++;
+        }
+    }
 }

@@ -112,32 +112,6 @@ void MainWindow::menuDisconnect()
     ui->actionReconnect->setEnabled(true);
 }
 
-void MainWindow::menuSetFont()
-{
-/*    FontSelection *fs;
-
-
-    if (applicationSettings->contains("font/name"))
-    {
-        fs = new FontSelection(this,applicationSettings->value("font/name").toString(),applicationSettings->value("font/style").toString(),applicationSettings->value("font/size").toInt(), applicationSettings->value("font/scale").toBool());
-    }
-    else
-    {
-        fs = new FontSelection(this,"ibm3270","Regular",8);
-    }
-
-    connect(fs, &FontSelection::setFont, this, &MainWindow::setSetting);
-
-    if (fs->exec() == QDialog::Accepted)
-    {
-        TerminalTab *t = (TerminalTab *)(ui->mdiArea->activeSubWindow());
-        t->setFont(fs->getFont());
-        t->setScaleFont(fs->getScaling());
-        setSetting("font/scale", QString::number(fs->getScaling()));
-        //ui->verticalLayout->update();
-    }*/
-}
-
 void MainWindow::menuTerminalSettings()
 {
     TerminalTab *t = (TerminalTab *)(ui->mdiArea->activeSubWindow());

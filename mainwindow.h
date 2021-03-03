@@ -47,14 +47,16 @@ class MainWindow : public QMainWindow
     //File menu
     void menuNew();
     void mruConnect();
+    void menuQuit();
+
     // Connect menu
     void menuConnect();
     void menuReconnect();
     void menuDisconnect();
-    void menuQuit();
+
     // Settings menu
-    void menuSetFont();
     void menuTerminalSettings();
+
     // Window Menu
     void menuTabbedView(bool tabView);
 

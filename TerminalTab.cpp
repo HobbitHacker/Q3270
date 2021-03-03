@@ -93,6 +93,8 @@ void TerminalTab::connectSession()
 
     Keyboard *kbd = new Keyboard(datastream, view);
 
+    connect(settings, &Settings::saveKeyboardSettings, kbd, &Keyboard::saveKeyboardSettings);
+
     for (int i = 0; i < 2; i++)
     {
 

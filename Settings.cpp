@@ -20,7 +20,9 @@ Settings::Settings(QWidget *parent) : QDialog(parent), ui(new Ui::Settings)
     }
     else
     {
-        changeModel(2);
+        termX = 80;
+        termY = 24;
+        changeModel(0);
     }
 
     // Cursor blink enabled & speed
@@ -35,9 +37,9 @@ Settings::Settings(QWidget *parent) : QDialog(parent), ui(new Ui::Settings)
     else
     {
         blink = true;
-        blinkSpeed = 5;
+        blinkSpeed = 4;
         ui->cursorBlink->setChecked(true);
-        ui->cursorBlinkSpeed->setSliderPosition(5);
+        ui->cursorBlinkSpeed->setSliderPosition(4);
     }
 
     termFont = QFont("ibm3270", 8);
@@ -55,7 +57,7 @@ Settings::Settings(QWidget *parent) : QDialog(parent), ui(new Ui::Settings)
     {
         termFont.setFamily("ibm3270");
         termFont.setStyleName("Regular");
-        termFont.setPointSize(8);
+        termFont.setPointSize(32);
     }
 
     // Font scaling
@@ -113,6 +115,7 @@ Settings::Settings(QWidget *parent) : QDialog(parent), ui(new Ui::Settings)
     qfd = new QFontDialog();
     qfd->setWindowFlags(Qt::Widget);
     qfd->setOption(QFontDialog::NoButtons);
+    qfd->setOption(QFontDialog::DontUseNativeDialog);
 
 //    connect(qfd, &QFontDialog::currentFontChanged, this, &Settings::fontChanged);
 
@@ -199,6 +202,9 @@ void Settings::changeModel(QString type)
         if (type == terms[i].term)
         {
             termType = i;
+            ui->terminalType->setCurrentIndex(i);
+            ui->terminalCols->setValue(termX);
+            ui->terminalRows->setValue(termY);
             return;
         }
     }
@@ -367,4 +373,37 @@ int Settings::getBlinkSpeed()
 bool Settings::getBlink()
 {
     return blink;
+}
+
+void Settings::saveSettings()
+{
+    QSettings *qs = new QSettings();
+
+    qs->setValue("terminal/model", terms[termType].term);
+    qs->setValue("terminal/width", terms[termType].x);
+    qs->setValue("terminal/height", terms[termType].y);
+
+    qs->setValue("terminal/cursorblink", blink);
+    qs->setValue("terminal/cursorblinkspeed", blinkSpeed);
+
+    qs->setValue("font/name", termFont.family());
+    qs->setValue("font/style", termFont.styleName());
+    qs->setValue("font/size", termFont.pointSize());
+
+    qs->setValue("font/scale", ui->FontScaling->QAbstractButton::isChecked());
+
+    qs->beginWriteArray("colours");
+    for(int i = 0; i < 8; i++)
+    {
+        qs->setArrayIndex(i);
+        qs->setValue("colour", palette[i].name(QColor::HexRgb));
+    }
+    qs->endArray();
+
+    emit saveKeyboardSettings();
+
+    QMessageBox saved;
+    saved.setText("Settings saved");
+    saved.exec();
+
 }

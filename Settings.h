@@ -5,6 +5,7 @@
 #include <QColorDialog>
 #include <QFontDialog>
 #include <QSettings>
+#include <QMessageBox>
 
 #include "3270.h"
 
@@ -40,12 +41,14 @@ class Settings : public QDialog
         void coloursChanged(QColor palette[8]);
         void fontChanged();
         void tempFontChange(QFont f);
+        void saveKeyboardSettings();
 
     private slots:
 
         void changeFont(QFont f);
         void changeModel(int m);
         void setColour();
+        void saveSettings();
 
     private:
 //        using QDialog::accept;

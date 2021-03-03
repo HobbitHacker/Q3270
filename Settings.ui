@@ -29,7 +29,7 @@
       </sizepolicy>
      </property>
      <property name="currentIndex">
-      <number>0</number>
+      <number>2</number>
      </property>
      <widget class="QWidget" name="Terminal">
       <attribute name="title">
@@ -72,9 +72,6 @@
                 <width>138</width>
                 <height>31</height>
                </rect>
-              </property>
-              <property name="placeholderText">
-               <string/>
               </property>
               <property name="frame">
                <bool>true</bool>
@@ -581,6 +578,13 @@
       <number>6</number>
      </property>
      <item>
+      <widget class="QPushButton" name="saveButton">
+       <property name="text">
+        <string>Save Settings</string>
+       </property>
+      </widget>
+     </item>
+     <item>
       <spacer name="horizontalSpacer">
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
@@ -702,11 +706,28 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>saveButton</sender>
+   <signal>clicked()</signal>
+   <receiver>Settings</receiver>
+   <slot>saveSettings()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>51</x>
+     <y>411</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>303</x>
+     <y>214</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>changeModel(int)</slot>
   <slot>changeBlink(int)</slot>
   <slot>changeBlinkSpeed(int)</slot>
   <slot>selectColour()</slot>
+  <slot>saveSettings()</slot>
  </slots>
 </ui>
