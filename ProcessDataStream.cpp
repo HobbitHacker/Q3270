@@ -647,7 +647,8 @@ void ProcessDataStream::replySummary(Buffer *buffer)
                             IBM3270_SF_QUERYREPLY_IMPPARTS,
                             IBM3270_SF_QUERYREPLY_USABLE,
                             IBM3270_SF_QUERYREPLY_CHARSETS,
-                            IBM3270_SF_QUERYREPLY_HIGHLIGHT
+                            IBM3270_SF_QUERYREPLY_HIGHLIGHT,
+//                            IBM3270_SF_QUERYREPLY_PARTS
                    };
 
     unsigned char qrcolour[] = {
@@ -763,6 +764,22 @@ void ProcessDataStream::replySummary(Buffer *buffer)
                                       0x01, 0x36  /* code page 310 */
     };
 
+    unsigned char qalphaparts [] = {
+                    0x00, 0x08,   /* Length */
+                    0x81,         /* Query Reply */
+                    0x84,         /* Alphanumeric partitions */
+                    0x02,         /* 2 partitions supported */
+                    0xFF, 0xFE,   /* Storage allowed */
+                    0x00          /* Partition flags: */
+                                  /* x.......   SCROLL - Scrollable */
+                                  /* .xx.....   RES    - Reserved */
+                                  /* ...x....   AP     - All points addressable */
+                                  /* ....x...   PROT   - Partition Protection */
+                                  /* .....x..   COPY   - Presentation space local copy supported */
+                                  /* ......x.   MODIFY - Modify partition supported */
+                                  /* .......x   RES    - Reserved */
+    };
+
     qpart[14] = terminal->alternate->width();
     qpart[16] = terminal->alternate->height();
 
@@ -809,6 +826,7 @@ void ProcessDataStream::replySummary(Buffer *buffer)
     buffer->addBlock(qhighlight, 13);
     buffer->addBlock(qusablearea, 25);
     buffer->addBlock(qcharsets, 27);
+//    buffer->addBlock(qalphaparts, 8);
 }
 
 int ProcessDataStream::extractBufferAddress(Buffer *b)
