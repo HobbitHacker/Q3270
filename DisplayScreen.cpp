@@ -154,7 +154,9 @@ void DisplayScreen::setFont(QFont font)
     if (fontScaling)
     {
         QFontMetrics *fm = new QFontMetrics(font);
-        QRectF boxRect = QRectF(1, 1, fm->maxWidth() - 1, fm->lineSpacing() * 0.99);
+//        QRectF boxRect = QRectF(0, 0, fm->maxWidth(), fm->lineSpacing() * 0.99);
+        QRectF boxRect = QRectF(0, 0, fm->maxWidth(), fm->lineSpacing());
+//        QRectF boxRect = QRectF()00
 
         printf("DisplayScreen   : FontMetrics: %d x %d    Box char %f x %f   GridSize: %f x %f\n", fm->averageCharWidth(), fm->height(), boxRect.width(), boxRect.height(), gridSize_X, gridSize_Y);
         fflush(stdout);
