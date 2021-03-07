@@ -586,6 +586,7 @@ void DisplayScreen::setExtendedBlink(int pos)
 {
     attrs[pos].reverse = false;
     attrs[pos].blink = true;
+    attrs[pos].extended = true;
     printf("[Blink]");
 }
 
@@ -593,12 +594,14 @@ void DisplayScreen::setExtendedReverse(int pos)
 {
     attrs[pos].blink = false;
     attrs[pos].reverse = true;
+    attrs[pos].extended = true;
     printf("[Reverse]");
 }
 
 void DisplayScreen::setExtendedUscore(int pos)
 {
     attrs[pos].uscore = true;
+    attrs[pos].extended = true;
     printf("[UScore]");
 }
 
