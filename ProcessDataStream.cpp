@@ -322,7 +322,7 @@ void ProcessDataStream::processSFE(Buffer *b)
         {
             case IBM3270_EXT_3270:
                 printf("[Field ");
-                screen->setField(primary_pos, b->getByte(), true);
+                screen->setField(primary_pos, value, true);
                 printf("]");
                 break;
             case IBM3270_EXT_FG_COLOUR:
