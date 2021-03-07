@@ -15,6 +15,25 @@ TerminalTab::TerminalTab()
 
     gs = new QGraphicsScene();
 
+    QGraphicsRectItem *mRect = new QGraphicsRectItem(0, 0, 640, 480);
+    mRect->setBrush(QColor(Qt::black));
+
+    gs->addItem(mRect);
+
+
+    QGraphicsSimpleTextItem *ncMessage = new QGraphicsSimpleTextItem("Not Connected", mRect);
+
+    ncMessage->setPen(QColor(Qt::white));
+
+    QFont font("mono", 24);
+    QFontMetrics fm(font);
+    ncMessage->setFont(font);
+    int xPos = 320 - fm.width(ncMessage->text()) / 2;
+    int yPos = 240 - fm.height() / 2;
+    ncMessage->setPos(xPos, yPos);
+
+    gs->addItem(ncMessage);
+
     view->setScene(gs);
 
     this->setWidget(view);
@@ -153,6 +172,7 @@ void TerminalTab::closeConnection()
     datastream->deleteLater();
 
     view->setScene(gs);
+    view->fitInView(gs->itemsBoundingRect(), Qt::IgnoreAspectRatio);
     view->setDisconnected();
 
     delete screen[0];

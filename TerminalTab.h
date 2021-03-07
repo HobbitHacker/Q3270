@@ -12,8 +12,7 @@
 #include <QMdiSubWindow>
 #include <QSettings>
 #include <QHostInfo>
-#include <QStatusBar>
-#include <QLabel>
+#include <QGraphicsSimpleTextItem>
 
 class TerminalTab : public QMdiSubWindow
 {
@@ -57,7 +56,6 @@ class TerminalTab : public QMdiSubWindow
 
     private:
 
-        QStatusBar *statusBar;
         QGraphicsScene *gs;
 
         ProcessDataStream *datastream;
