@@ -11,6 +11,16 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new(Ui::MainWi
 
     applicationSettings = new QSettings();
 
+    if (applicationSettings->contains("mrumax"))
+    {
+        maxMruCount = applicationSettings->value("mrumax").toInt();
+    }
+    else
+    {
+        maxMruCount = 10;
+        applicationSettings->setValue("mrumax", 10);
+    }
+
     int mruCount = applicationSettings->beginReadArray("mrulist");
 
     for(int i = 0; i < mruCount; i++)
@@ -174,13 +184,13 @@ void MainWindow::updateMRUlist(QString address)
 
     mruList.prepend(address);
 
-    for(int i = 0; i < mruList.size(); i++)
+    for(int i = 0; i < mruList.size() && i < maxMruCount; i++)
     {
         ui->menuRecentSessions->addAction(mruList.at(i), this, [this]() { mruConnect(); } );
     }
 
     applicationSettings->beginWriteArray("mrulist");
-    for(int i = 0; i < mruList.size(); i++)
+    for(int i = 0; i < mruList.size() && i < maxMruCount; i++)
     {
         applicationSettings->setArrayIndex(i);
         applicationSettings->setValue("address", mruList.at(i));

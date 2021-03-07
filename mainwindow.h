@@ -67,11 +67,11 @@ class MainWindow : public QMainWindow
 
     void updateMRUlist(QString address);
 
+    int maxMruCount;
+
     Ui::MainWindow *ui;    
 
     QSettings *applicationSettings;
-
-    Settings *settings;
 
     QMap<QMdiSubWindow *, TerminalTab *> sessions;
 
