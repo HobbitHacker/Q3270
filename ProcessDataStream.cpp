@@ -92,7 +92,7 @@ void ProcessDataStream::processStream(Buffer *b)
             processRM();
             break;
         default:
-            printf("[Unrecognised WRITE command: %2.2X - Block Ignored]", b->getByte());
+            printf("\n\n[** Unrecognised WRITE command: %02X - Block Ignored** ]\n\n", b->getByte());
             b->dump();
             processing = false;
             return;
@@ -280,7 +280,7 @@ void ProcessDataStream::processWSF(Buffer *b)
             WSFoutbound3270DS(b);
             break;
         default:
-            printf("Unimplemented WSF command: %2.2X\n", b->getByte());
+            printf("\n\n[** Unimplemented WSF command: %02X **]\n\n", b->getByte());
             break;
     }
 }
@@ -350,11 +350,12 @@ void ProcessDataStream::processSFE(Buffer *b)
                         screen->setExtendedUscore(primary_pos);
                         break;
                     default:
+                        printf("\n\n[** Unimplemented SFE HILITE value - %2.2X-%2.2X - Ignored **]\n\n", type, value);
                         break;
                 }
                 break;
             default:
-                printf("[%2.2X-%2.2X ***Ignored***]", type, value);
+                printf("\n\n[** Unimplemented SFE attribute - %2.2X-%2.2X - Ignored **]\n\n", type, value);
                 break;
         }
         fflush(stdout);
@@ -410,7 +411,7 @@ void ProcessDataStream::processRA(Buffer *b)
     printf("[RepeatToAddress %d to %d (0x%2.2X)]", primary_pos, endPos, newChar);
     fflush(stdout);
 
-    if (endPos < primary_pos)
+    if (endPos <= primary_pos)
     {
         endPos += screenSize;
     }
@@ -455,7 +456,7 @@ void ProcessDataStream::WSFoutbound3270DS(Buffer *b)
     printf("[Outbound 3270DS");
     int partition = b->nextByte()->getByte();
 
-    printf("partition #%d ", partition);
+    printf(" partition #%d ", partition);
 
     int cmnd = b->nextByte()->getByte();
 
@@ -469,7 +470,7 @@ void ProcessDataStream::WSFoutbound3270DS(Buffer *b)
             wsfLen--;
             break;
         default:
-            printf("** Unrecognised command %d **]", cmnd);
+            printf("\n\n [** Unimplemented WSF command %02X - Ignored **]\n\n", cmnd);
     }
     while(wsfLen>0)
     {
@@ -480,7 +481,7 @@ void ProcessDataStream::WSFoutbound3270DS(Buffer *b)
 
 void ProcessDataStream::WSFreset(Buffer *b)
 {
-    printf("\n\nReset Partition (***Not Implemented***) %2.2X\n\n", b->nextByte()->getByte());
+    printf("\n\n[** Reset Partition %02X - Not Implemented **]\n\n", b->nextByte()->getByte());
     fflush(stdout);
     return;
 }
@@ -838,22 +839,19 @@ int ProcessDataStream::extractBufferAddress(Buffer *b)
 
     switch((sba1>>6)&3)
     {
-        case 0b11:     // 12 bit
-            printf("%2.2X%2.2X (%d%d - 12 bit)", sba1, sba2, (sba1>>7)&1, (sba1>>6)&1);
-            return ((sba1&63)<<6)+(sba2&63);
-        case 0b01:     // 12 bit
-            printf("%2.2X%2.2X (%d%d - 12 bit)", sba1, sba2, (sba1>>7)&1, (sba1>>6)&1);
-            return ((sba1&63)<<6)+(sba2&63);
         case 0b00:     // 14 bit
             printf("%2.2X%2.2X (%d%d - 14 bit)", sba1, sba2, (sba1>>7)&1, (sba1>>6)&1);
             return ((sba1&63)<<8)+sba2;
-        case 0b10:     // reserved
-            printf("%2.2X%2.2X (%d%d - unknown)", sba1, sba2, (sba1>>7)&1, (sba1>>6)&1);
+        case 0b01:     // 12 bit
+            printf("%2.2X%2.2X (%d%d - 12 bit)", sba1, sba2, (sba1>>7)&1, (sba1>>6)&1);
+            return ((sba1&63)<<6)+(sba2&63);
+        case 0b11:     // 12 bit
+            printf("%2.2X%2.2X (%d%d - 12 bit)", sba1, sba2, (sba1>>7)&1, (sba1>>6)&1);
+            return ((sba1&63)<<6)+(sba2&63);
+        default: // case 0b10: - reserved
+            printf("\n\n[** Unimplemented BufferAddress - %2.2X%2.2X - bitmask %d%d **]\n\n", sba1, sba2, (sba1>>7)&1, (sba1>>6)&1);
             return 0;
     }
-    printf("Extract Buffer Address failed: sba1: %2.2X sba2: %2.2X (sba1&63 = %d%d)", sba1, sba2, (sba1>>7)&1, (sba1>>6)&1);
-
-    return -1;
 }
 
 void ProcessDataStream::placeChar(Buffer *b)
@@ -864,8 +862,6 @@ void ProcessDataStream::placeChar(Buffer *b)
 
 void ProcessDataStream::placeChar(int ebcdic)
 {
-
-    printf("(%02x)", ebcdic);
     switch(ebcdic)
     {
         case IBM3270_CHAR_NULL:
@@ -964,14 +960,10 @@ void ProcessDataStream::tab(int offset)
 {
     int nf = screen->findNextUnprotectedField(cursor_pos + offset);
 
-/*    if(nf == cursor_pos)
-    {
-        return;
-    }
-*/
     cursor_y = (nf / screen_x);
     cursor_x = nf - (cursor_y * screen_x);
     printf("Unprotected field found at %d (%d,%d) ", nf, cursor_x, cursor_y);
+
     // Move cursor right (skip attribute byte)
     moveCursor(1, 0);
 }
@@ -983,6 +975,7 @@ void ProcessDataStream::backtab()
     cursor_y = (pf / screen_x);
     cursor_x = pf - (cursor_y * screen_x);
     printf("Backtab: Unprotected field found at %d (%d,%d) ", pf, cursor_x, cursor_y);
+
     // Move cursor right (skip attribute byte)
     moveCursor(1, 0);
 

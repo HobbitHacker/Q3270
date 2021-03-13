@@ -11,6 +11,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new(Ui::MainWi
 
     applicationSettings = new QSettings();
 
+    restoreGeometry(applicationSettings->value("mainwindowgeometry").toByteArray());
+    restoreState(applicationSettings->value("mainwindowstate").toByteArray());
+
     if (applicationSettings->contains("mrumax"))
     {
         maxMruCount = applicationSettings->value("mrumax").toInt();
@@ -201,6 +204,12 @@ void MainWindow::updateMRUlist(QString address)
 void MainWindow::menuQuit()
 {
     QApplication::quit();
+}
+
+void MainWindow::closeEvent(QCloseEvent *event)
+{
+    applicationSettings->setValue("mainwindowgeometry", saveGeometry());
+    applicationSettings->setValue("mainwindowstate", saveState());
 }
 
 void MainWindow::setSetting(QString key, QString value)

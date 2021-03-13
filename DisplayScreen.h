@@ -64,7 +64,7 @@ class DisplayScreen : public QGraphicsScene
 
         void clear();
         void setFont(QFont font);
-        void setColourPalette(QColor c[8]);
+        void setColourPalette(QColor *c);
         void resetColours();
         void setFontScaling(bool fontScaling);
         void toggleRuler();
@@ -274,9 +274,10 @@ class DisplayScreen : public QGraphicsScene
             0xF8, 0xF9, 0x7A, 0x7B, 0x7C, 0x7D, 0x7E, 0x7F,  /* 11 0100 to 11 1111 */
         };
 
-        QColor palette[8];
+        QColor palette[12];
 
-        const char *colName[8] = { "black", "blue", "red", "magenta", "green", "cyan", "yellow", "neutral"};
+        const char *colName[12] = { "black", "blue", "red", "magenta", "green", "cyan", "yellow", "neutral",
+                                    "protected", "unprotected,intensfied", "unprotected", "unprotected, intensified"};
 
         struct Attributes {
                 //TODO: Do we need a basic colour as well as extended?

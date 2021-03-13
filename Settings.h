@@ -39,7 +39,7 @@ class Settings : public QDialog
         void terminalChanged(int type, int x, int y);
         void cursorBlinkChanged(bool blink, int blinkSpeed);
         void cursorBlinkSpeedChanged(int blinkSpeed);
-        void coloursChanged(QColor palette[8]);
+        void coloursChanged(QColor palette[12]);
         void fontChanged();
         void fontScalingChanged(bool fontScaling);
         void tempFontChange(QFont f);
@@ -64,7 +64,7 @@ class Settings : public QDialog
 
         QFontDialog *qfd;
 
-        QColor palette[8];
+        QColor palette[12];
         QFont termFont;
         QFont qfdFont;
 

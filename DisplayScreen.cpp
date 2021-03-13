@@ -153,12 +153,19 @@ void DisplayScreen::setFont(QFont font)
 
     if (fontScaling)
     {
-        QFontMetrics *fm = new QFontMetrics(font);
+        QFontMetrics fm = QFontMetrics(font);
 //        QRectF boxRect = QRectF(0, 0, fm->maxWidth(), fm->lineSpacing() * 0.99);
-        QRectF boxRect = QRectF(0, 0, fm->maxWidth(), fm->lineSpacing());
-//        QRectF boxRect = QRectF()00
+        QRectF charBounds = fm.boundingRect("┼");
+        QRectF boxRect = QRectF(0, 0, fm.width("┼", 1) - 1, fm.lineSpacing() - 2);
 
-        printf("DisplayScreen   : FontMetrics: %d x %d    Box char %f x %f   GridSize: %f x %f\n", fm->averageCharWidth(), fm->height(), boxRect.width(), boxRect.height(), gridSize_X, gridSize_Y);
+        printf("DisplayScreen   : charBounds (┼) =  %f x %f\n   boxRect = %f x %f\n", charBounds.x(), charBounds.y(), boxRect.width(), boxRect.height());
+        printf("Font Width (┼)        : %d\n",fm.width("┼"));
+        printf("Font Height (┼)       : %d\n",fm.height());
+        printf("Font Line Spacing (┼) : %d\n",fm.lineSpacing());
+        printf("Font Max Width        : %d\n", fm.maxWidth());
+        printf("Font Descent          : %d\n", fm.descent());
+        printf("Font Ascent           : %d\n", fm.ascent());
+
         fflush(stdout);
 
         tr.scale(gridSize_X / boxRect.width(), gridSize_Y / boxRect.height());
@@ -177,7 +184,7 @@ void DisplayScreen::setFont(QFont font)
 
 void DisplayScreen::setColourPalette(QColor *c)
 {
-    for (int i = 0; i < 8; i++)
+    for (int i = 0; i < 12; i++)
     {
         palette[i] = c[i];
     }
@@ -368,6 +375,7 @@ void DisplayScreen::setChar(int pos, short unsigned int c, bool move)
     {
         uscore[pos]->setVisible(false);
     }
+    printf("%s", glyph[pos]->text().toLatin1().data());
 }
 
 unsigned char DisplayScreen::getChar(int pos)
@@ -485,19 +493,19 @@ void DisplayScreen::setField(int pos, unsigned char c, bool sfe)
     {
         if (attrs[pos].prot && !attrs[pos].intensify)
         {
-            attrs[pos].colNum = 1; /* Blue */
+            attrs[pos].colNum = 8;  /* Protected (Blue) */
         }
         else if (attrs[pos].prot && attrs[pos].intensify)
         {
-            attrs[pos].colNum = 7;  /* White */
+            attrs[pos].colNum = 11;  /* Protected, Intensified (White) */
         }
         else if (!attrs[pos].prot && !attrs[pos].intensify)
         {
-            attrs[pos].colNum = 4;   /* Green */
+            attrs[pos].colNum = 10;  /* Unprotected (Green) */
         }
         else
         {
-            attrs[pos].colNum = 2;    /* Red */
+            attrs[pos].colNum = 9;  /* Unrprotected, Intensified (Red) */
         }
 
         attrs[pos].uscore = false;
@@ -575,7 +583,6 @@ void DisplayScreen::setExtendedColour(int pos, bool foreground, unsigned char c)
 {
     attrs[pos].colNum = c&7;
     attrs[pos].reverse = !foreground;
-    attrs[pos].extended = true;
     if(foreground)
     {
         printf(" %s]", colName[attrs[pos].colNum]);
@@ -586,7 +593,6 @@ void DisplayScreen::setExtendedBlink(int pos)
 {
     attrs[pos].reverse = false;
     attrs[pos].blink = true;
-    attrs[pos].extended = true;
     printf("[Blink]");
 }
 
@@ -594,14 +600,12 @@ void DisplayScreen::setExtendedReverse(int pos)
 {
     attrs[pos].blink = false;
     attrs[pos].reverse = true;
-    attrs[pos].extended = true;
     printf("[Reverse]");
 }
 
 void DisplayScreen::setExtendedUscore(int pos)
 {
     attrs[pos].uscore = true;
-    attrs[pos].extended = true;
     printf("[UScore]");
 }
 
@@ -1061,7 +1065,7 @@ void DisplayScreen::getModifiedFields(Buffer *buffer)
                         if (b != IBM3270_CHAR_NULL)
                         {
                             buffer->add(b);
-                            printf("%c", b);
+                            printf("%s", glyph[thisField-1]->text().toLatin1().data());
                         }
                         thisField = thisField % screenPos_max;
                     }

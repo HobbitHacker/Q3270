@@ -42,7 +42,8 @@ class MainWindow : public QMainWindow
 
   public slots:
     void setSetting(QString k, QString v);
-	
+    void closeEvent(QCloseEvent *c);
+
   private slots:
     //File menu
     void menuNew();

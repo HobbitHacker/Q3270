@@ -81,7 +81,7 @@ void TerminalTab::setColours(QColor *colours)
 
     QSettings *set = new QSettings();
     set->beginWriteArray("colours");
-    for (int i = 0; i < 8; i++)
+    for (int i = 0; i < 12; i++)
     {
         set->setArrayIndex(i);
         set->setValue("colour", colours[i].name(QColor::HexRgb));

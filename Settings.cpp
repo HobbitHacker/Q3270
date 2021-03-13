@@ -8,6 +8,7 @@ Settings::Settings(QWidget *parent) : QDialog(parent), ui(new Ui::Settings)
     // Separate option to Save Settings
 
     ui->setupUi(this);
+    ui->TabsWidget->setCurrentIndex(0);
 
     QSettings *applicationSettings = new QSettings();
 
@@ -76,16 +77,24 @@ Settings::Settings(QWidget *parent) : QDialog(parent), ui(new Ui::Settings)
     // Colours
     if (applicationSettings->beginReadArray("colours") > 0)
     {
-        for (int i = 0; i < 8; i++)
+        for (int i = 0; i < 12; i++)
         {
             applicationSettings->setArrayIndex(i);
-            palette[i] = QColor(applicationSettings->value("colour").toString());
+            QString c = applicationSettings->value("colour").toString();
+            if (c == "")
+            {
+                palette[i] = default_palette[i];
+            }
+            else
+            {
+                palette[i] = QColor(applicationSettings->value("colour").toString());
+            }
         }
         applicationSettings->endArray();
     }
     else
     {
-        for(int i = 0; i < 8; i++)
+        for(int i = 0; i < 12; i++)
         {
             palette[i] = default_palette[i];
         }
@@ -114,6 +123,16 @@ Settings::Settings(QWidget *parent) : QDialog(parent), ui(new Ui::Settings)
     connect(ui->colourTurq, &QPushButton::clicked, this, &Settings::setColour);
     connect(ui->colourYellow, &QPushButton::clicked, this, &Settings::setColour);
     connect(ui->colourWhite, &QPushButton::clicked, this, &Settings::setColour);
+
+    ui->baseProtected->setStyleSheet(QString("background-color: %1;").arg(palette[8].name(QColor::HexRgb)));
+    ui->baseUnprotectedIntensify->setStyleSheet(QString("background-color: %1;").arg(palette[9].name(QColor::HexRgb)));
+    ui->baseUnprotected->setStyleSheet(QString("background-color: %1;").arg(palette[10].name(QColor::HexRgb)));
+    ui->baseProtectedIntensify->setStyleSheet(QString("background-color: %1;").arg(palette[11].name(QColor::HexRgb)));
+
+    connect(ui->baseProtected, &QPushButton::clicked, this, &Settings::setColour);
+    connect(ui->baseUnprotectedIntensify, &QPushButton::clicked, this, &Settings::setColour);
+    connect(ui->baseUnprotected, &QPushButton::clicked, this, &Settings::setColour);
+    connect(ui->baseProtectedIntensify, &QPushButton::clicked, this, &Settings::setColour);
 
     qfd = new QFontDialog();
     qfd->setWindowFlags(Qt::Widget);
@@ -329,9 +348,29 @@ void Settings::setColour()
     {
         thisColour = 6;
     }
-    else
+    else if (!button.compare("colourWhite"))
     {
         thisColour = 7;
+    }
+    else if (!button.compare("baseProtected"))
+    {
+        thisColour = 8;
+    }
+    else if (!button.compare("baseUnprotectedIntensify"))
+    {
+        thisColour = 9;
+    }
+    else if (!button.compare("baseUnprotected"))
+    {
+        thisColour = 10;
+    }
+    else if (!button.compare("baseUnprotectedIntensify"))
+    {
+        thisColour = 11;
+    }
+    else
+    {
+        return;
     }
 
     const QColor color = QColorDialog::getColor(palette[thisColour], this, "Select Color");
@@ -407,7 +446,7 @@ void Settings::saveSettings()
     qs->setValue("font/scale", ui->FontScaling->QAbstractButton::isChecked());
 
     qs->beginWriteArray("colours");
-    for(int i = 0; i < 8; i++)
+    for(int i = 0; i < 12; i++)
     {
         qs->setArrayIndex(i);
         qs->setValue("colour", palette[i].name(QColor::HexRgb));
