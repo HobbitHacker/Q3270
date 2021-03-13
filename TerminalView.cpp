@@ -17,7 +17,6 @@ TerminalView::TerminalView()
     blink = true;
 
     QGraphicsView::setInteractive(true);
-    selection = new QList<Text *>();
 
     setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -128,14 +127,14 @@ int TerminalView::getBlinkSpeed()
 
 void TerminalView::clearSelection()
 {
-    if (selection->count() > 0)
+    if (selection.count() > 0)
     {
-        for (int i = 0; i < selection->count(); i++)
+        for (int i = 0; i < selection.count(); i++)
         {
-            selection->at(i)->setSelected(false);
+            selection.at(i)->setSelected(false);
         }
     }
-    selection->clear();
+    selection.clear();
 }
 
 
@@ -174,36 +173,36 @@ void TerminalView::mouseReleaseEvent(QMouseEvent *event)
             if (cells.at(i)->type() == Text::Type)
             {
                 Text *a = dynamic_cast<Text *>(cells.at(i));
-                selection->append(a);
+                selection.append(a);
                 a->setSelected(true);
             }
         }
-        printf("Selected items: %d\n", selection->count());
+        printf("Selected items: %d\n", selection.count());
         fflush(stdout);
     }
 }
 
 void TerminalView::copyText()
 {
-    printf("Selection count: %d\n", selection->count());
+    printf("Selection count: %d\n", selection.count());
     fflush(stdout);
-    if (selection->count() == 0)
+    if (selection.count() == 0)
     {
         return;
     }
-    int sy = selection->at(0)->getY();
+    int sy = selection.at(0)->getY();
     QString clip = "";
-    for (int i = 0; i < selection->count(); i++)
+    for (int i = 0; i < selection.count(); i++)
     {
-        if (selection->at(i)->getY() != sy)
+        if (selection.at(i)->getY() != sy)
         {
             clip = clip + "\n";
-            sy = selection->at(i)->getY();
+            sy = selection.at(i)->getY();
         }
-        selection->at(i)->setSelected(false);
-        clip = clip + selection->at(i)->text();
+        selection.at(i)->setSelected(false);
+        clip = clip + selection.at(i)->text();
     }
-    selection->clear();
+    selection.clear();
     QClipboard *cb = QApplication::clipboard();
     cb->setText(clip);
     printf("Text: '%s'\n", clip.toLatin1().data());
