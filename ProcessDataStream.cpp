@@ -336,6 +336,10 @@ void ProcessDataStream::processSFE(Buffer *b)
             case IBM3270_EXT_HILITE:
                 switch(value)
                 {
+                    case IBM3270_EXT_DEFAULT:
+                        printf("[Default]");
+                        screen->resetExtendedHilite(primary_pos);
+                        break;
                     case IBM3270_EXT_HI_NORMAL:
                         printf("[Reset Extended]");
                         screen->resetExtendedHilite(primary_pos);
@@ -499,6 +503,8 @@ void ProcessDataStream::WSFreadPartition(Buffer *b)
     replySummary(queryReply);
 
     emit bufferReady(queryReply);
+
+    delete queryReply;
 
 }
 
@@ -1056,6 +1062,8 @@ void ProcessDataStream::processAID(int aid, bool shortRead)
     }
 
     emit bufferReady(respBuffer);
+
+    delete respBuffer;
 }
 
 void ProcessDataStream::interruptProcess()
@@ -1068,4 +1076,5 @@ void ProcessDataStream::interruptProcess()
 
     emit bufferReady(b);
 
+    delete b;
 }
