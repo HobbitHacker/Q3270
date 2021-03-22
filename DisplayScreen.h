@@ -307,7 +307,7 @@ class DisplayScreen : public QGraphicsScene
 
         Text **glyph;                /* Character on screen */
         QVector<QGraphicsRectItem *> cell;    /* Screen slot */
-        QGraphicsLineItem **uscore;  /* Underscores */
+        QVector<QGraphicsLineItem *> uscore;  /* Underscores */
 
         bool blinkShow;             /* Whether the character is shown/hidden for a given blink event */
         bool cursorShow;            /* Whether the cursor is shown/hidden for a given blink event */

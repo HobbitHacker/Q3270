@@ -16,8 +16,9 @@ DisplayScreen::DisplayScreen(int screen_x, int screen_y)
 
     attrs = new Attributes[screenPos_max];
     glyph = new Text*[screenPos_max];
-    uscore = new QGraphicsLineItem*[screenPos_max];
 
+
+    uscore.reserve(screenPos_max);
     cell.reserve(screenPos_max);
 
     fontScaling = true;
@@ -41,12 +42,12 @@ DisplayScreen::DisplayScreen(int screen_x, int screen_y)
             glyph[pos] = new Text(x, y, cell.at(pos));
             glyph[pos]->setFlag(QGraphicsItem::ItemIsSelectable);
 
-            uscore[pos] = new QGraphicsLineItem(0, 0, gridSize_X, 0);
+            uscore.append(new QGraphicsLineItem(0, 0, gridSize_X, 0));
 
-            addItem(uscore[pos]);
+            addItem(uscore.at(pos));
 
-            uscore[pos]->setZValue(1);
-            uscore[pos]->setPos(x_pos, y_pos + gridSize_Y);
+            uscore.at(pos)->setZValue(1);
+            uscore.at(pos)->setPos(x_pos, y_pos + gridSize_Y);
 
         }
     }
@@ -124,7 +125,10 @@ DisplayScreen::DisplayScreen(int screen_x, int screen_y)
 
 DisplayScreen::~DisplayScreen()
 {
-    clear();
+    for (int i = 0; i < screenPos_max; i++)
+    {
+        delete cell.at(i);
+    }
 }
 
 int DisplayScreen::width()
@@ -228,7 +232,7 @@ void DisplayScreen::clear()
     {
         cell.at(i)->setBrush(palette[0]);
 
-        uscore[i]->setVisible(false);
+        uscore.at(i)->setVisible(false);
 
         glyph[i]->setBrush(palette[1]);
         glyph[i]->setText(0x00, 0x00, false);
@@ -365,8 +369,8 @@ void DisplayScreen::setChar(int pos, short unsigned int c, bool move)
 
     if (attrs[pos].uscore)
     {
-        uscore[pos]->setVisible(true);
-        uscore[pos]->setPen(QPen(palette[attrs[pos].colNum],0));
+        uscore.at(pos)->setVisible(true);
+        uscore.at(pos)->setPen(QPen(palette[attrs[pos].colNum],0));
  //       uscore[pos]->pen().setCosmetic(true);
  //       uscore[pos]->pen().setColor(palette[attrs[pos].colNum]);
 
@@ -621,7 +625,7 @@ void DisplayScreen::setFieldAttrs(int start)
 
     //TODO should store the field attributes?
     glyph[start]->setText(IBM3270_CHAR_NULL, IBM3270_CHAR_NULL, false);
-    uscore[start]->setVisible(false);
+    uscore.at(start)->setVisible(false);
 }
 
 
@@ -670,13 +674,13 @@ int DisplayScreen::resetFieldAttrs(int start)
             }
             if (attrs[offset].uscore)
             {
-                uscore[offset]->setPen(QPen(palette[attrs[offset].colNum],0));
+                uscore.at(offset)->setPen(QPen(palette[attrs[offset].colNum],0));
 //                uscore[offset]->pen().setCosmetic(true);
 //                uscore[offset]->pen().setColor(palette[attrs[offset].colNum]);
             }
             else
             {
-                uscore[offset]->setVisible(false);
+                uscore.at(offset)->setVisible(false);
             }
         }
         else
