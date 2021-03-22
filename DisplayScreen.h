@@ -306,7 +306,7 @@ class DisplayScreen : public QGraphicsScene
         Attributes *attrs;           /* Attributes */
 
         Text **glyph;                /* Character on screen */
-        QGraphicsRectItem **cell;    /* Screen slot */
+        QVector<QGraphicsRectItem *> cell;    /* Screen slot */
         QGraphicsLineItem **uscore;  /* Underscores */
 
         bool blinkShow;             /* Whether the character is shown/hidden for a given blink event */

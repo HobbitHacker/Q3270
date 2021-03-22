@@ -16,8 +16,9 @@ DisplayScreen::DisplayScreen(int screen_x, int screen_y)
 
     attrs = new Attributes[screenPos_max];
     glyph = new Text*[screenPos_max];
-    cell = new QGraphicsRectItem*[screenPos_max];
     uscore = new QGraphicsLineItem*[screenPos_max];
+
+    cell.reserve(screenPos_max);
 
     fontScaling = true;
 
@@ -31,13 +32,13 @@ DisplayScreen::DisplayScreen(int screen_x, int screen_y)
 
             qreal x_pos = x * gridSize_X;
 
-            cell[pos] = new QGraphicsRectItem(0, 0, gridSize_X, gridSize_Y);
-            cell[pos]->setPen(Qt::NoPen);
+            cell.append(new QGraphicsRectItem(0, 0, gridSize_X, gridSize_Y));
+            cell.at(pos)->setPen(Qt::NoPen);
 
-            addItem(cell[pos]);
+            addItem(cell.at(pos));
 
-            cell[pos]->setPos(x_pos, y_pos);
-            glyph[pos] = new Text(x, y, cell[pos]);
+            cell.at(pos)->setPos(x_pos, y_pos);
+            glyph[pos] = new Text(x, y, cell.at(pos));
             glyph[pos]->setFlag(QGraphicsItem::ItemIsSelectable);
 
             uscore[pos] = new QGraphicsLineItem(0, 0, gridSize_X, 0);
@@ -53,9 +54,9 @@ DisplayScreen::DisplayScreen(int screen_x, int screen_y)
     clear();
     setFont(QFont("ibm3270", 11));
 
-    cursor = new QGraphicsRectItem(cell[0]);
-    cursor->setRect(cell[0]->rect());
-    cursor->setPos(cell[0]->boundingRect().left(), cell[0]->boundingRect().top());
+    cursor = new QGraphicsRectItem(cell.at(0));
+    cursor->setRect(cell.at(0)->rect());
+    cursor->setPos(cell.at(0)->boundingRect().left(), cell.at(0)->boundingRect().top());
     cursor->setBrush(Qt::lightGray);
     cursor->setOpacity(0.5);
     cursor->setPen(Qt::NoPen);
@@ -196,18 +197,18 @@ void DisplayScreen::resetColours()
     {
         if (attrs[i].reverse)
         {
-            cell[i]->setBrush(palette[attrs[i].colNum]);
+            cell.at(i)->setBrush(palette[attrs[i].colNum]);
             glyph[i]->setBrush(palette[0]);
             printf("<reverse>");
         }
         else
         {
             glyph[i]->setBrush(palette[attrs[i].colNum]);
-            cell[i]->setBrush(palette[0]);
+            cell.at(i)->setBrush(palette[0]);
         }
         if (!attrs[i].display)
         {
-            glyph[i]->setBrush(cell[i]->brush());
+            glyph[i]->setBrush(cell.at(i)->brush());
         }
     }
 }
@@ -225,7 +226,7 @@ void DisplayScreen::clear()
 {
     for(int i = 0; i < screenPos_max; i++)
     {
-        cell[i]->setBrush(palette[0]);
+        cell.at(i)->setBrush(palette[0]);
 
         uscore[i]->setVisible(false);
 
@@ -341,20 +342,20 @@ void DisplayScreen::setChar(int pos, short unsigned int c, bool move)
     // Colour - non-display / reverse / normal
     if (!attrs[pos].display)
     {
-        glyph[pos]->setBrush(cell[pos]->brush());
+        glyph[pos]->setBrush(cell.at(pos)->brush());
     }
     else
     {
         if (attrs[pos].reverse)
         {
-            cell[pos]->setBrush(palette[attrs[pos].colNum]);
+            cell.at(pos)->setBrush(palette[attrs[pos].colNum]);
             glyph[pos]->setBrush(palette[0]);
             printf("<reverse>");
         }
         else
         {
             glyph[pos]->setBrush(palette[attrs[pos].colNum]);
-            cell[pos]->setBrush(palette[0]);
+            cell.at(pos)->setBrush(palette[0]);
         }
     }
 
@@ -659,12 +660,12 @@ int DisplayScreen::resetFieldAttrs(int start)
         {
             if (attrs[offset].reverse)
             {
-                cell[offset]->setBrush(palette[attrs[offset].colNum]);
+                cell.at(offset)->setBrush(palette[attrs[offset].colNum]);
                 glyph[offset]->setBrush(palette[0]);
             }
             else
             {
-                cell[offset]->setBrush(palette[0]);
+                cell.at(offset)->setBrush(palette[0]);
                 glyph[offset]->setBrush(palette[attrs[offset].colNum]);
             }
             if (attrs[offset].uscore)
@@ -680,7 +681,7 @@ int DisplayScreen::resetFieldAttrs(int start)
         }
         else
         {
-            cell[offset]->setBrush(palette[0]);
+            cell.at(offset)->setBrush(palette[0]);
             glyph[offset]->setBrush(palette[0]);
         }
     }
@@ -832,9 +833,9 @@ void DisplayScreen::eraseUnprotected(int start, int end)
 
 void DisplayScreen::setCursor(int pos)
 {
-    cursor->setParentItem(cell[pos]);
+    cursor->setParentItem(cell.at(pos));
     cursor->setBrush(palette[attrs[pos].colNum]);
-    cursor->setPos(cell[pos]->boundingRect().left(), cell[pos]->boundingRect().top());
+    cursor->setPos(cell.at(pos)->boundingRect().left(), cell.at(pos)->boundingRect().top());
 }
 
 void DisplayScreen::showCursor()
