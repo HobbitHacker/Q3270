@@ -17,6 +17,7 @@ TerminalView::TerminalView()
     blink = true;
 
     QGraphicsView::setInteractive(true);
+//    selection = QList<Text *>();
 
     setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);

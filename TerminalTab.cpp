@@ -185,5 +185,4 @@ void TerminalTab::closeEvent(QCloseEvent *closeEvent)
     {
         closeConnection();
     }
-    QMdiSubWindow::closeEvent(closeEvent);
 }
