@@ -15,9 +15,8 @@ DisplayScreen::DisplayScreen(int screen_x, int screen_y)
     screenPos_max = screen_x * screen_y;
 
     attrs = new Attributes[screenPos_max];
-    glyph = new Text*[screenPos_max];
 
-
+    glyph.reserve(screenPos_max);
     uscore.reserve(screenPos_max);
     cell.reserve(screenPos_max);
 
@@ -39,8 +38,8 @@ DisplayScreen::DisplayScreen(int screen_x, int screen_y)
             addItem(cell.at(pos));
 
             cell.at(pos)->setPos(x_pos, y_pos);
-            glyph[pos] = new Text(x, y, cell.at(pos));
-            glyph[pos]->setFlag(QGraphicsItem::ItemIsSelectable);
+            glyph.append(new Text(x, y, cell.at(pos)));
+            glyph.at(pos)->setFlag(QGraphicsItem::ItemIsSelectable);
 
             uscore.append(new QGraphicsLineItem(0, 0, gridSize_X, 0));
 
@@ -182,8 +181,8 @@ void DisplayScreen::setFont(QFont font)
 
     for (int i = 0; i < screenPos_max; i++)
     {
-        glyph[i]->setFont(QFont(font));
-        glyph[i]->setTransform(tr);
+        glyph.at(i)->setFont(QFont(font));
+        glyph.at(i)->setTransform(tr);
     }
 }
 
@@ -202,17 +201,17 @@ void DisplayScreen::resetColours()
         if (attrs[i].reverse)
         {
             cell.at(i)->setBrush(palette[attrs[i].colNum]);
-            glyph[i]->setBrush(palette[0]);
+            glyph.at(i)->setBrush(palette[0]);
             printf("<reverse>");
         }
         else
         {
-            glyph[i]->setBrush(palette[attrs[i].colNum]);
+            glyph.at(i)->setBrush(palette[attrs[i].colNum]);
             cell.at(i)->setBrush(palette[0]);
         }
         if (!attrs[i].display)
         {
-            glyph[i]->setBrush(cell.at(i)->brush());
+            glyph.at(i)->setBrush(cell.at(i)->brush());
         }
     }
 }
@@ -234,8 +233,8 @@ void DisplayScreen::clear()
 
         uscore.at(i)->setVisible(false);
 
-        glyph[i]->setBrush(palette[1]);
-        glyph[i]->setText(0x00, 0x00, false);
+        glyph.at(i)->setBrush(palette[1]);
+        glyph.at(i)->setText(0x00, 0x00, false);
 
         attrs[i].colNum = 1;
 
@@ -283,11 +282,11 @@ void DisplayScreen::setChar(int pos, short unsigned int c, bool move)
 
     if(!geActive)
     {
-        glyph[pos]->setText(EBCDICtoASCIImap[c], c, false);
+        glyph.at(pos)->setText(EBCDICtoASCIImap[c], c, false);
     }
     else
     {
-        glyph[pos]->setText(EBCDICtoASCIImapge[c], c, true);
+        glyph.at(pos)->setText(EBCDICtoASCIImapge[c], c, true);
         geActive = false;
     }
 
@@ -346,19 +345,19 @@ void DisplayScreen::setChar(int pos, short unsigned int c, bool move)
     // Colour - non-display / reverse / normal
     if (!attrs[pos].display)
     {
-        glyph[pos]->setBrush(cell.at(pos)->brush());
+        glyph.at(pos)->setBrush(cell.at(pos)->brush());
     }
     else
     {
         if (attrs[pos].reverse)
         {
             cell.at(pos)->setBrush(palette[attrs[pos].colNum]);
-            glyph[pos]->setBrush(palette[0]);
+            glyph.at(pos)->setBrush(palette[0]);
             printf("<reverse>");
         }
         else
         {
-            glyph[pos]->setBrush(palette[attrs[pos].colNum]);
+            glyph.at(pos)->setBrush(palette[attrs[pos].colNum]);
             cell.at(pos)->setBrush(palette[0]);
         }
     }
@@ -380,12 +379,12 @@ void DisplayScreen::setChar(int pos, short unsigned int c, bool move)
     {
         uscore[pos]->setVisible(false);
     }
-    printf("%s", glyph[pos]->text().toLatin1().data());
+    printf("%s", glyph.at(pos)->text().toLatin1().data());
 }
 
 unsigned char DisplayScreen::getChar(int pos)
 {
-    return (glyph[pos]->text().toUtf8()[0]);
+    return (glyph.at(pos)->text().toUtf8()[0]);
 }
 
 
@@ -624,7 +623,7 @@ void DisplayScreen::setFieldAttrs(int start)
     resetFieldAttrs(start);
 
     //TODO should store the field attributes?
-    glyph[start]->setText(IBM3270_CHAR_NULL, IBM3270_CHAR_NULL, false);
+    glyph.at(start)->setText(IBM3270_CHAR_NULL, IBM3270_CHAR_NULL, false);
     uscore.at(start)->setVisible(false);
 }
 
@@ -665,12 +664,12 @@ int DisplayScreen::resetFieldAttrs(int start)
             if (attrs[offset].reverse)
             {
                 cell.at(offset)->setBrush(palette[attrs[offset].colNum]);
-                glyph[offset]->setBrush(palette[0]);
+                glyph.at(offset)->setBrush(palette[0]);
             }
             else
             {
                 cell.at(offset)->setBrush(palette[0]);
-                glyph[offset]->setBrush(palette[attrs[offset].colNum]);
+                glyph.at(offset)->setBrush(palette[attrs[offset].colNum]);
             }
             if (attrs[offset].uscore)
             {
@@ -686,7 +685,7 @@ int DisplayScreen::resetFieldAttrs(int start)
         else
         {
             cell.at(offset)->setBrush(palette[0]);
-            glyph[offset]->setBrush(palette[0]);
+            glyph.at(offset)->setBrush(palette[0]);
         }
     }
 
@@ -711,15 +710,12 @@ bool DisplayScreen::insertChar(int pos, unsigned char c, bool insertMode)
         int endPos = -1;
         for(int i = pos; i < (pos + screenPos_max); i++)
         {
-//            unsigned char thisChar = glyph[i%(SCREENX*SCREENY)]->text().toUtf8()[0];
-//            printf("%4d = %c (%2.2X)\n", i, thisChar, thisChar);
-            fflush(stdout);
             int offset = i % screenPos_max;
             if (attrs[offset].prot || attrs[offset].fieldStart)
             {
                 break;
             }
-            if (glyph[offset]->getEBCDIC() == IBM3270_CHAR_NULL)
+            if (glyph.at(offset)->getEBCDIC() == IBM3270_CHAR_NULL)
             {
                 endPos = i;
                 break;
@@ -742,8 +738,8 @@ bool DisplayScreen::insertChar(int pos, unsigned char c, bool insertMode)
 //            printf("Moving %c to %d\n", glyph[offsetPrev]->getEBCDIC(), offset);
 //            fflush(stdout);
             attrs[offset] = attrs[offsetPrev];
-            geActive = glyph[offsetPrev]->getGraphic();
-            setChar(offset, glyph[offsetPrev]->getEBCDIC(), true);
+            geActive = glyph.at(offsetPrev)->getGraphic();
+            setChar(offset, glyph.at(offsetPrev)->getEBCDIC(), true);
         }
         geActive = tmpGE;
     }
@@ -776,18 +772,18 @@ void DisplayScreen::deleteChar(int pos)
 
     int endPos = findNextField(pos);
 
-    for(int fld = pos; fld < endPos - 1 && glyph[fld % screenPos_max]->getEBCDIC() != IBM3270_CHAR_NULL; fld++)
+    for(int fld = pos; fld < endPos - 1 && glyph.at(fld % screenPos_max)->getEBCDIC() != IBM3270_CHAR_NULL; fld++)
     {
         int offset = fld % screenPos_max;
         int offsetNext = (fld + 1) % screenPos_max;
 
         attrs[offset] = attrs[offsetNext];
         bool tmpGE = geActive;
-        setChar(offset, glyph[offsetNext]->getEBCDIC(), true);
+        setChar(offset, glyph.at(offsetNext)->getEBCDIC(), true);
         geActive = tmpGE;
     }
 
-    glyph[endPos - 1]->setText(IBM3270_CHAR_NULL, IBM3270_CHAR_NULL, false);
+    glyph.at(endPos - 1)->setText(IBM3270_CHAR_NULL, IBM3270_CHAR_NULL, false);
     attrs[findField(pos)].mdt = true;
 }
 
@@ -803,7 +799,7 @@ void DisplayScreen::eraseEOF(int pos)
     /* Blank field */
     for(int i = pos; i < nextField; i++)
     {
-        glyph[i % screenPos_max]->setText(0x00, 0x00, false);
+        glyph.at(i % screenPos_max)->setText(0x00, 0x00, false);
     }
 
     attrs[findField(pos)].mdt = true;
@@ -830,7 +826,7 @@ void DisplayScreen::eraseUnprotected(int start, int end)
         }
         else
         {
-                glyph[i]->setText(" ", IBM3270_CHAR_SPACE, false);
+                glyph.at(i)->setText(" ", IBM3270_CHAR_SPACE, false);
         }
     }
 }
@@ -904,11 +900,11 @@ void DisplayScreen::blink()
         {
             if (blinkShow)
             {
-                glyph[i]->setBrush(palette[attrs[i].colNum]);
+                glyph.at(i)->setBrush(palette[attrs[i].colNum]);
             }
             else
             {
-                glyph[i]->setBrush(palette[0]);
+                glyph.at(i)->setBrush(palette[0]);
             }
         }
     }
@@ -1066,11 +1062,11 @@ void DisplayScreen::getModifiedFields(Buffer *buffer)
 
                     do
                     {
-                        uchar b = glyph[thisField++]->getEBCDIC();
+                        uchar b = glyph.at(thisField++)->getEBCDIC();
                         if (b != IBM3270_CHAR_NULL)
                         {
                             buffer->add(b);
-                            printf("%s", glyph[thisField-1]->text().toLatin1().data());
+                            printf("%s", glyph.at(thisField-1)->text().toLatin1().data());
                         }
                         thisField = thisField % screenPos_max;
                     }
@@ -1113,7 +1109,7 @@ void DisplayScreen::dumpDisplay()
         {
             printf("\n");
         }
-        printf("%2.2X ", glyph[i]->getEBCDIC());
+        printf("%2.2X ", glyph.at(i)->getEBCDIC());
     }
     printf("\n---- SCREEN ----\n");
     fflush(stdout);

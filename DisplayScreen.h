@@ -305,7 +305,7 @@ class DisplayScreen : public QGraphicsScene
 
         Attributes *attrs;           /* Attributes */
 
-        Text **glyph;                /* Character on screen */
+        QVector<Text *> glyph;                /* Character on screen */
         QVector<QGraphicsRectItem *> cell;    /* Screen slot */
         QVector<QGraphicsLineItem *> uscore;  /* Underscores */
 

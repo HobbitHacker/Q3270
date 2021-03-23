@@ -371,7 +371,15 @@ void ProcessDataStream::processSFE(Buffer *b)
 void ProcessDataStream::processSBA(Buffer *buf)
 {
     printf("[SetBufferAddress ");
-    primary_pos = extractBufferAddress(buf->nextByte());
+    int tmp_pos = extractBufferAddress(buf->nextByte());
+
+    if (tmp_pos >= screenSize)
+    {
+        printf("[** SBA > screen size - discarded **]");
+        return;
+    }
+
+    primary_pos = tmp_pos;
 
     primary_y = (primary_pos / screen_x);
     primary_x = primary_pos - (primary_y * screen_x);
