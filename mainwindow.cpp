@@ -42,10 +42,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new(Ui::MainWi
 
 void MainWindow::menuNew()
 {
-    TerminalTab *t = new TerminalTab();
-    ui->mdiArea->addSubWindow(t);
-    t->show();
-    ui->actionTerminalSettings->setEnabled(true);
+    newTab();
     menuConnect();
 }
 
@@ -72,15 +69,23 @@ void MainWindow::mruConnect()
         port = menuText.section(":", 1, 1).toInt();
     }
 
-    TerminalTab *t = new TerminalTab();
-    ui->mdiArea->addSubWindow(t);
-    t->show();
+    TerminalTab *t = newTab();
     t->openConnection(host, port, luname);
 
     ui->actionDisconnect->setEnabled(true);
     ui->actionConnect->setDisabled(true);
 
     updateMRUlist(menuText);
+}
+
+TerminalTab *MainWindow::newTab()
+{
+    TerminalTab *t = new TerminalTab();
+    ui->mdiArea->addSubWindow(t);
+    t->show();
+    ui->actionTerminalSettings->setEnabled(true);
+
+    return t;
 }
 
 MainWindow::~MainWindow()

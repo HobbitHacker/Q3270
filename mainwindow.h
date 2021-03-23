@@ -67,6 +67,7 @@ class MainWindow : public QMainWindow
   private:
 
     void updateMRUlist(QString address);
+    TerminalTab *newTab();
 
     int maxMruCount;
 
