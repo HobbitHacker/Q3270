@@ -38,6 +38,11 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new(Ui::MainWi
     applicationSettings->endArray();
 
     connect(ui->mdiArea, &QMdiArea::subWindowActivated, this, &MainWindow::updateMenuEntries);
+
+    sessionGroup = new QActionGroup(this);
+    //sessionGroup->setParent(this);
+
+    subWindow = 0;
 }
 
 void MainWindow::menuNew()
@@ -84,6 +89,30 @@ TerminalTab *MainWindow::newTab()
     ui->mdiArea->addSubWindow(t);
     t->show();
     ui->actionTerminalSettings->setEnabled(true);
+
+    if (subWindow == 0)
+    {
+        ui->menuWindow->addSeparator();
+    }
+
+//    QWidgetAction *labelAct = new QWidgetAction(ui->menuWindow);
+//    QLabel *label = new QLabel("Session " + QString::number(++subWindow), ui->menuWindow);
+//    label->setAlignment(Qt::AlignRight);
+//    labelAct->setDefaultWidget(label);
+//    labelAct->connect(labelAct, &QWidgetAction::triggered, t, [this, t]() { ui->mdiArea->setActiveSubWindow(t); } );
+//    ui->menuWindow->addAction(labelAct);
+//    t->setLabel(label);
+//    connect(ui->menuWindow, &QMenu::aboutToShow, t, &TerminalTab::updateIcon);
+
+
+    QAction *act = new QAction("Session " + QString::number(++subWindow));
+    act->setActionGroup(sessionGroup);
+    act->setCheckable(true);
+    act->setChecked(true);
+    ui->menuWindow->addAction(act);
+    connect(act, &QAction::triggered, t, [this, t, act]() { ui->mdiArea->setActiveSubWindow(t); act->setChecked(true); } );
+
+    t->setWindowTitle("Session " + QString::number(subWindow));
 
     return t;
 }

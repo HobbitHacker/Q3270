@@ -16,6 +16,8 @@
 #include <QDebug>
 #include <QFontDialog>
 #include <QSettings>
+#include <QWidgetAction>
+#include <QLabel>
 
 #include "SocketConnection.h"
 #include "ProcessDataStream.h"
@@ -64,12 +66,17 @@ class MainWindow : public QMainWindow
     // Triggered by windows being activated
     void updateMenuEntries();
 
+    // Triggered by selecting a different session from the window menu
+
   private:
 
     void updateMRUlist(QString address);
     TerminalTab *newTab();
 
     int maxMruCount;
+    int subWindow;
+
+    QActionGroup *sessionGroup;
 
     Ui::MainWindow *ui;    
 
