@@ -123,7 +123,7 @@ void ProcessDataStream::processStream(Buffer *b)
         printf("WCC reset keyboard - ");
         emit keyboardUnlocked();
     }
-    screen->dumpFields();
+//    screen->dumpFields();
 //    screen->dumpDisplay();
     fflush(stdout);
 
