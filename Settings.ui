@@ -654,38 +654,6 @@
    </hints>
   </connection>
   <connection>
-   <sender>colourBlue</sender>
-   <signal>clicked()</signal>
-   <receiver>Settings</receiver>
-   <slot>selectColour()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>499</x>
-     <y>105</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>303</x>
-     <y>214</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>colourBlack</sender>
-   <signal>clicked()</signal>
-   <receiver>Settings</receiver>
-   <slot>selectColour()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>499</x>
-     <y>78</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>303</x>
-     <y>214</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
    <sender>cursorBlink</sender>
    <signal>clicked(bool)</signal>
    <receiver>cursorBlinkSpeed</receiver>
