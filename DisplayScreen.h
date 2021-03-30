@@ -335,14 +335,16 @@ class DisplayScreen : public QGraphicsScene
                 bool colour_default;
         } charAttr;
 
-        QGraphicsRectItem *cursor;
+        QGraphicsRectItem cursor;
 
-        QGraphicsLineItem *crosshair_X;
-        QGraphicsLineItem *crosshair_Y;
+        QGraphicsLineItem crosshair_X;
+        QGraphicsLineItem crosshair_Y;
+        QGraphicsLineItem statusBar;
 
-        QGraphicsSimpleTextItem *statusXSystem;
-        QGraphicsSimpleTextItem *statusCursor;
-        QGraphicsSimpleTextItem *statusInsert;
+        QGraphicsSimpleTextItem statusConnect;
+        QGraphicsSimpleTextItem statusXSystem;
+        QGraphicsSimpleTextItem statusCursor;
+        QGraphicsSimpleTextItem statusInsert;
 
         QFont termFont;
         bool fontScaling;            // Font scales with cell size

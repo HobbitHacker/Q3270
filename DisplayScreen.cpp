@@ -14,13 +14,18 @@ DisplayScreen::DisplayScreen(int screen_x, int screen_y)
 
     screenPos_max = screen_x * screen_y;
 
+    // Default settings
+    fontScaling = true;
+    ruler = false;
+    blinkShow = false;
+    cursorShow = true;
+
     attrs = new Attributes[screenPos_max];
 
-    glyph.reserve(screenPos_max);
-    uscore.reserve(screenPos_max);
-    cell.reserve(screenPos_max);
-
-    fontScaling = true;
+    // Build 3270 display matrix
+    glyph.resize(screenPos_max);
+    uscore.resize(screenPos_max);
+    cell.resize(screenPos_max);
 
     for(int y = 0; y < screen_y; y++)
     {
@@ -32,102 +37,94 @@ DisplayScreen::DisplayScreen(int screen_x, int screen_y)
 
             qreal x_pos = x * gridSize_X;
 
-            cell.append(new QGraphicsRectItem(0, 0, gridSize_X, gridSize_Y));
+            cell.replace(pos, new QGraphicsRectItem(0, 0, gridSize_X, gridSize_Y));
             cell.at(pos)->setPen(Qt::NoPen);
-
-            addItem(cell.at(pos));
-
             cell.at(pos)->setPos(x_pos, y_pos);
-            glyph.append(new Text(x, y, cell.at(pos)));
+
+            glyph.replace(pos, new Text(x_pos, y_pos, cell.at(pos)));
             glyph.at(pos)->setFlag(QGraphicsItem::ItemIsSelectable);
 
-            uscore.append(new QGraphicsLineItem(0, 0, gridSize_X, 0));
-
-            addItem(uscore.at(pos));
-
+            uscore.replace(pos, new QGraphicsLineItem(0, 0, gridSize_X, 0));
             uscore.at(pos)->setZValue(1);
             uscore.at(pos)->setPos(x_pos, y_pos + gridSize_Y);
 
+            addItem(uscore.at(pos));
+            addItem(cell.at(pos));
         }
     }
 
+    // Set default attributes for initial power-on
     clear();
     setFont(QFont("ibm3270", 11));
 
-    cursor = new QGraphicsRectItem(cell.at(0));
-    cursor->setRect(cell.at(0)->rect());
-    cursor->setPos(cell.at(0)->boundingRect().left(), cell.at(0)->boundingRect().top());
-    cursor->setBrush(Qt::lightGray);
-    cursor->setOpacity(0.5);
-    cursor->setPen(Qt::NoPen);
+    // Set up cursor
+    cursor.setRect(cell.at(0)->rect());
+    cursor.setPos(cell.at(0)->boundingRect().left(), cell.at(0)->boundingRect().top());
+    cursor.setBrush(Qt::lightGray);
+    cursor.setOpacity(0.5);
+    cursor.setPen(Qt::NoPen);
+    cursor.setParentItem(cell.at(0));
 
-    crosshair_X = new QGraphicsLineItem(0, 0, 0, screen_y * gridSize_Y);
-    crosshair_Y = new QGraphicsLineItem(0, 0, screen_x * gridSize_X, 0);
+    // Set up crosshairs
+    crosshair_X.setLine(0, 0, 0, screen_y * gridSize_Y);
+    crosshair_Y.setLine(0, 0, screen_x * gridSize_X, 0);
 
-    crosshair_X->setPen(QPen(Qt::white, 0));
-    crosshair_Y->setPen(QPen(Qt::white, 0));
+    crosshair_X.setPen(QPen(Qt::white, 0));
+    crosshair_Y.setPen(QPen(Qt::white, 0));
 
-    crosshair_X->setZValue(2);
-    crosshair_Y->setZValue(2);
+    crosshair_X.setZValue(2);
+    crosshair_Y.setZValue(2);
 
-//    crosshair_X->pen().setCosmetic(true);
-//    crosshair_Y->pen().setCosmetic(true);
+    addItem(&crosshair_X);
+    addItem(&crosshair_Y);
 
-    addItem(crosshair_X);
-    addItem(crosshair_Y);
+    crosshair_X.hide();
+    crosshair_Y.hide();
 
-    crosshair_X->hide();
-    crosshair_Y->hide();
-
-    ruler = false;
-    blinkShow = false;
-    cursorShow = true;
-
+    // Build status bar
     int statusPos = (screen_y * gridSize_Y);
 
-    QGraphicsLineItem *s = new QGraphicsLineItem(0, 0, screen_x * gridSize_X, 0);
-    s->setPos(0, statusPos++);
-    s->setPen(QPen(QColor(0x80, 0x80, 0xFF), 0));
-    addItem(s);
+    statusBar.setLine(0, 0, screen_x * gridSize_X, 0);
+    statusBar.setPos(0, statusPos++);
+    statusBar.setPen(QPen(QColor(0x80, 0x80, 0xFF), 0));
+    addItem(&statusBar);
 
-    QFont statusBar = QFont("ibm3270");
-    statusBar.setPixelSize(gridSize_Y * .75);
+    QFont statusBarText = QFont("ibm3270");
+    statusBarText.setPixelSize(gridSize_Y * .75);
 
-    QGraphicsSimpleTextItem *st = new QGraphicsSimpleTextItem("4-A");
-    st->setPos(0, statusPos);
-    st->setFont(statusBar);
-    st->setBrush(QBrush(QColor(0x80, 0x80, 0xFF)));
+    // Connect status at 0% across
+    statusConnect.setText("4-A");
+    statusConnect.setPos(0, statusPos);
+    statusConnect.setFont(statusBarText);
+    statusConnect.setBrush(QBrush(QColor(0x80, 0x80, 0xFF)));
 
     // XSystem 20% across status bar
-    statusXSystem = new QGraphicsSimpleTextItem("");
-    statusXSystem->setPos(gridSize_X * (screen_x * .20), statusPos);
-    statusXSystem->setFont(statusBar);
-    statusXSystem->setBrush(QBrush(QColor(0x80, 0x80, 0xFF)));
+    statusXSystem.setText("");
+    statusXSystem.setPos(gridSize_X * (screen_x * .20), statusPos);
+    statusXSystem.setFont(statusBarText);
+    statusXSystem.setBrush(QBrush(QColor(0x80, 0x80, 0xFF)));
 
     // Insert 50% across status bar
-    statusInsert = new QGraphicsSimpleTextItem("");
-    statusInsert->setPos(gridSize_X * (screen_x * .50), statusPos);
-    statusInsert->setFont(statusBar);
-    statusInsert->setBrush(QBrush(QColor(0x80, 0x80, 0xFF)));
+    statusInsert.setText("");
+    statusInsert.setPos(gridSize_X * (screen_x * .50), statusPos);
+    statusInsert.setFont(statusBarText);
+    statusInsert.setBrush(QBrush(QColor(0x80, 0x80, 0xFF)));
 
     // Cursor 75% across status bar
-    statusCursor = new QGraphicsSimpleTextItem("000,000");
-    statusCursor->setPos(gridSize_X * (screen_x * .75), statusPos);
-    statusCursor->setFont(statusBar);
-    statusCursor->setBrush(QBrush(QColor(0x80, 0x80, 0xFF)));
+    statusCursor.setText("");
+    statusCursor.setPos(gridSize_X * (screen_x * .75), statusPos);
+    statusCursor.setFont(statusBarText);
+    statusCursor.setBrush(QBrush(QColor(0x80, 0x80, 0xFF)));
 
-    addItem(st);
-    addItem(statusXSystem);
-    addItem(statusCursor);
-    addItem(statusInsert);
+    addItem(&statusConnect);
+    addItem(&statusXSystem);
+    addItem(&statusCursor);
+    addItem(&statusInsert);
 }
 
 DisplayScreen::~DisplayScreen()
 {
-    for (int i = 0; i < screenPos_max; i++)
-    {
-        delete cell.at(i);
-    }
+    delete attrs;
 }
 
 int DisplayScreen::width()
@@ -833,35 +830,35 @@ void DisplayScreen::eraseUnprotected(int start, int end)
 
 void DisplayScreen::setCursor(int pos)
 {
-    cursor->setParentItem(cell.at(pos));
-    cursor->setBrush(palette[attrs[pos].colNum]);
-    cursor->setPos(cell.at(pos)->boundingRect().left(), cell.at(pos)->boundingRect().top());
+    cursor.setParentItem(cell.at(pos));
+    cursor.setBrush(palette[attrs[pos].colNum]);
+    cursor.setPos(cell.at(pos)->boundingRect().left(), cell.at(pos)->boundingRect().top());
 }
 
 void DisplayScreen::showCursor()
 {
-    cursor->show();
+    cursor.show();
 }
 
 void DisplayScreen::setStatusXSystem(QString text)
 {
-    statusXSystem->setText(text);
+    statusXSystem.setText(text);
 }
 
 void DisplayScreen::showStatusCursorPosition(int x, int y)
 {
-    statusCursor->setText(QString("%1,%2").arg(x + 1, 3).arg(y + 1, -3));
+    statusCursor.setText(QString("%1,%2").arg(x + 1, 3).arg(y + 1, -3));
 }
 
 void DisplayScreen::setStatusInsert(bool ins)
 {
     if (ins)
     {
-        statusInsert->setText("\uFF3E");
+        statusInsert.setText("\uFF3E");
     }
     else
     {
-        statusInsert->setText("");
+        statusInsert.setText("");
     }
 }
 
@@ -871,13 +868,13 @@ void DisplayScreen::toggleRuler()
 
     if (ruler)
     {
-        crosshair_X->show();
-        crosshair_Y->show();
+        crosshair_X.show();
+        crosshair_Y.show();
     }
     else
     {
-        crosshair_X->hide();
-        crosshair_Y->hide();
+        crosshair_X.hide();
+        crosshair_Y.hide();
     }
 }
 
@@ -885,8 +882,8 @@ void DisplayScreen::drawRuler(int x, int y)
 {
     if (ruler)
     {
-       crosshair_X->setPos((qreal) x * gridSize_X, 0);
-       crosshair_Y->setPos(0 , (qreal) (y + 1) * gridSize_Y);
+       crosshair_X.setPos((qreal) x * gridSize_X, 0);
+       crosshair_Y.setPos(0 , (qreal) (y + 1) * gridSize_Y);
     }
 }
 
@@ -916,11 +913,11 @@ void DisplayScreen::cursorBlink()
 
     if (!cursorShow)
     {
-        cursor->hide();
+        cursor.hide();
     }
     else
     {
-        cursor->show();
+        cursor.show();
     }
 }
 
