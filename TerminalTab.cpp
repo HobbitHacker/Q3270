@@ -179,6 +179,13 @@ void TerminalTab::closeConnection()
     delete screen[1];
 }
 
+void TerminalTab::activate(bool checked)
+{
+    show();
+    setFocus();
+}
+
+
 void TerminalTab::closeEvent(QCloseEvent *closeEvent)
 {
     if (view->connected)

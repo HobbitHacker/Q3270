@@ -49,6 +49,10 @@ class TerminalTab : public QMdiSubWindow
 
         QColor palette[8];
 
+    public slots:
+
+        void activate(bool checked = false);
+
     private slots:
 
         void closeEvent(QCloseEvent *closeEvent);
