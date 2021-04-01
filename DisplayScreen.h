@@ -41,7 +41,7 @@ class DisplayScreen : public QGraphicsScene
         void setField(int pos, unsigned char c, bool sfe);
         void setGraphicEscape();
 
-        void getModifiedFields(Buffer *buffer);
+        void getModifiedFields(QByteArray &buffer);
 
         int findNextUnprotectedField(int pos);
         int findPrevUnprotectedField(int pos);

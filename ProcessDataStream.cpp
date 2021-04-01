@@ -45,17 +45,17 @@ void ProcessDataStream::setScreen(bool alternate)
     screenSize = screen_x * screen_y;
 }
 
-void ProcessDataStream::processStream(Buffer *b)
+void ProcessDataStream::processStream(QByteArray &b, bool tn3270e)
 {
     //FIXME: buffer size 0 shouldn't happen!
-    if (b->size() == 0)
+/*    if (b.isEmpty())
     {
-        printf("DisplayDataStream: zero buffer size - returning\n");
+        printf("\n\n[** DisplayDataStream: zero buffer size - returning **]\n\n");
         fflush(stdout);
         return;
     }
-
-    b->dump();
+*/
+//    b->dump();
 
     wsfProcessing = false;
 
@@ -65,54 +65,75 @@ void ProcessDataStream::processStream(Buffer *b)
     // back here to restart.
     screen->resetCharAttr();
 
-    switch(b->getByte())
+    buffer = b.begin();
+
+    if (tn3270e)
+    {
+        unsigned char dataType = *buffer++;
+        unsigned char requestFlag = *buffer++;
+        unsigned char responseFlag = *buffer;
+        unsigned char seqNumber = ((uchar) *buffer++<<16);
+        seqNumber+= (uchar) *buffer++;
+
+        printf("SocketConnection : TN3270E Header:\nSocketConnection :    Data Type:      %2.2X\nSocketConnection :    Request Flag:   %2.2X\nSocketConnection :    Response Flag:  %2.2X\nSocketConnection :    Sequence Number: %2.2X\n",
+               dataType, requestFlag, responseFlag, seqNumber);
+
+
+        if (dataType != TN3270E_DATATYPE_3270_DATA)
+        {
+            printf("\n\n[** Unimplemented TN3270E command: %02X **]\n\n", dataType);
+            return;
+        }
+    }
+
+    switch((uchar) *buffer)
     {
         case IBM3270_EW:
         case IBM3270_CCW_EW:
-            processEW(b, false);
-            b->nextByte();
+            processEW(false);
+            buffer++;
             break;
         case IBM3270_W:
         case IBM3270_CCW_W:
-            processW(b);
-            b->nextByte();
+            processW();
+            buffer++;
             break;
         case IBM3270_WSF:
         case IBM3270_CCW_WSF:
             wsfProcessing = true;
-            b->nextByte();
+            buffer++;
             break;
         case IBM3270_EWA:
         case IBM3270_CCW_EWA:
-            processEW(b, true);
-            b->nextByte();
+            processEW(true);
+            buffer++;
             break;
         case IBM3270_RM:
         case IBM3270_CCW_RM:
             processRM();
             break;
         default:
-            printf("\n\n[** Unrecognised WRITE command: %02X - Block Ignored** ]\n\n", b->getByte());
-            b->dump();
+            printf("\n\n[** Unrecognised WRITE command: %02X - Block Ignored **]\n\n", (uchar) *buffer);
+//            b->dump();
             processing = false;
             return;
     }
 
-    while(b->moreBytes())
+    while(buffer != b.end())
     {
         if (wsfProcessing)
         {
-            processWSF(b);
+            processWSF();
         }
         else
         {
-            processOrders(b);
+            processOrders();
         }
-        b->nextByte();
+        buffer++;
     }
 
-    b->reset();
-    b->setProcessing(false);
+//    b.clear();
+//    b->setProcessing(false);
 
     if (resetMDT)
     {
@@ -129,44 +150,45 @@ void ProcessDataStream::processStream(Buffer *b)
 
 }
 
-void ProcessDataStream::processOrders(Buffer *b)
+void ProcessDataStream::processOrders()
 {
-    switch(b->getByte())
+    switch((uchar) *buffer)
     {
         case IBM3270_SF:
-            processSF(b->nextByte());
+            buffer++;
+            processSF();
             break;
         case IBM3270_SBA:
-            processSBA(b);
+            processSBA();
             break;
         case IBM3270_SFE:
-            processSFE(b);
+            processSFE();
             break;
         case IBM3270_IC:
             processIC();
             break;
         case IBM3270_RA:
-            processRA(b);
+            processRA();
             break;
         case IBM3270_SA:
-            processSA(b);
+            processSA();
             break;
         case IBM3270_EUA:
-            processEUA(b);
+            processEUA();
             break;
         case IBM3270_GE:
-            processGE(b);
+            processGE();
             break;
         default:
-            placeChar(b->getByte());
+            placeChar((uchar) *buffer);
     }
 }
 
-void ProcessDataStream::processWCC(Buffer *b)
+void ProcessDataStream::processWCC()
 {
     std::string c;
 
-    uchar wcc = b->getByte();
+    uchar wcc = *buffer;
 
     int reset = (wcc>>6)&1;
 
@@ -212,17 +234,18 @@ void ProcessDataStream::processWCC(Buffer *b)
 }
 
 
-void ProcessDataStream::processW(Buffer *buf)
+void ProcessDataStream::processW()
 {
     printf("[Write ");
 
-    processWCC(buf->nextByte());
+    buffer++;
+    processWCC();
 
     printf("]");
     fflush(stdout);
 }
 
-void ProcessDataStream::processEW(Buffer *buf, bool alternate)
+void ProcessDataStream::processEW(bool alternate)
 {
     printf("[Erase Write ");
 
@@ -236,7 +259,8 @@ void ProcessDataStream::processEW(Buffer *buf, bool alternate)
         setScreen(alternate);
     }
 
-    processWCC(buf->nextByte());
+    buffer++;
+    processWCC();
 
     printf("]");
     fflush(stdout);
@@ -253,34 +277,32 @@ void ProcessDataStream::processEW(Buffer *buf, bool alternate)
 
 }
 
-void ProcessDataStream::processWSF(Buffer *b)
+void ProcessDataStream::processWSF()
 {
     wsfProcessing = true;
 
-    wsfLen = b->getByte()<<8;
-    b->nextByte();
-    wsfLen += b->getByte();
-    b->nextByte();
+    wsfLen = *buffer++<<8;
+    wsfLen += *buffer++;
 
-    printf("WSF - length: %03d; command = %2.2X\n", wsfLen, b->getByte());
+    printf("WSF - length: %03d; command = %2.2X\n", wsfLen, *buffer);
     fflush(stdout);
 
     // Decrease length by two-byte length field and structured field id byte
     wsfLen-=3;
 
-    switch(b->getByte())
+    switch((uchar) *buffer)
     {
         case IBM3270_WSF_RESET:
-            WSFreset(b);
+            WSFreset();
             break;
         case IBM3270_WSF_READPARTITION:
-            WSFreadPartition(b);
+            WSFreadPartition();
             break;
         case IBM3270_WSF_OB3270DS:
-            WSFoutbound3270DS(b);
+            WSFoutbound3270DS();
             break;
         default:
-            printf("\n\n[** Unimplemented WSF command: %02X **]\n\n", b->getByte());
+            printf("\n\n[** Unimplemented WSF command: %02X **]\n\n", *buffer);
             break;
     }
 }
@@ -290,11 +312,11 @@ void ProcessDataStream::processRM()
     processAID(lastAID, false);
 }
 
-void ProcessDataStream::processSF(Buffer *buf)
+void ProcessDataStream::processSF()
 {
     printf("[Start Field:");
 
-    screen->setField(primary_pos, buf->getByte(), false);
+    screen->setField(primary_pos, *buffer, false);
 
     printf("]");
     fflush(stdout);
@@ -302,20 +324,20 @@ void ProcessDataStream::processSF(Buffer *buf)
     incPos();
 }
 
-void ProcessDataStream::processSFE(Buffer *b)
+void ProcessDataStream::processSFE()
 {
-    int pairs = b->nextByte()->getByte();
+    uchar pairs = *++buffer;
 
-    int type;
-    int value;
+    uchar type;
+    uchar value;
 
     screen->resetExtended(primary_pos);
 
     printf("[SFE pairs %d]", pairs);
     for(int i = 1; i <= pairs; i++)
     {
-        type = b->nextByte()->getByte();
-        value = b->nextByte()->getByte();
+        type = *++buffer;
+        value = *++buffer;
 
 //        printf("%3.3d  Type: %2.2X = %2.2X ",i,  type, value);
         switch(type)
@@ -368,10 +390,11 @@ void ProcessDataStream::processSFE(Buffer *b)
     incPos();
 }
 
-void ProcessDataStream::processSBA(Buffer *buf)
+void ProcessDataStream::processSBA()
 {
     printf("[SetBufferAddress ");
-    int tmp_pos = extractBufferAddress(buf->nextByte());
+    buffer++;
+    int tmp_pos = extractBufferAddress();
 
     if (tmp_pos >= screenSize)
     {
@@ -386,10 +409,10 @@ void ProcessDataStream::processSBA(Buffer *buf)
     printf(" %d,%d (%d)]", primary_x, primary_y, primary_pos);
 }
 
-void ProcessDataStream::processSA(Buffer *b)
+void ProcessDataStream::processSA()
 {
-    int extendedType = b->nextByte()->getByte();
-    int extendedValue = b->nextByte()->getByte();
+    uchar extendedType = *++buffer;
+    uchar extendedValue = *++buffer;
     screen->setCharAttr(extendedType, extendedValue);
 }
 
@@ -398,17 +421,17 @@ void ProcessDataStream::processIC()
     moveCursor(primary_x, primary_y, true);
 }
 
-void ProcessDataStream::processRA(Buffer *b)
+void ProcessDataStream::processRA()
 {
-    int endPos = extractBufferAddress(b->nextByte());
+    buffer++;
+    int endPos = extractBufferAddress();
 
     if (endPos > screenSize - 1)
     {
         endPos = screenSize - 1;
     }
 
-    b->nextByte();
-    uchar newChar = b->getByte();
+    uchar newChar = *++buffer;
 
     bool geRA = false;
 
@@ -416,8 +439,7 @@ void ProcessDataStream::processRA(Buffer *b)
     if (newChar == IBM3270_GE)
     {
         geRA = true;
-        b->nextByte();
-        newChar = b->getByte();
+        newChar = *++buffer;
     }
 
     printf("[RepeatToAddress %d to %d (0x%2.2X)]", primary_pos, endPos, newChar);
@@ -444,33 +466,35 @@ void ProcessDataStream::processRA(Buffer *b)
     primary_x = primary_pos - (primary_y * screen_x);
 }
 
-void ProcessDataStream::processEUA(Buffer *b)
+void ProcessDataStream::processEUA()
 {
     printf("[EraseUnprotected to Address ");
-    int stopAddress = extractBufferAddress(b->nextByte());
+
+    buffer++;
+    int stopAddress = extractBufferAddress();
     printf("]");
 
     screen->eraseUnprotected(primary_pos, stopAddress);
     resetKB = true;
 }
 
-void ProcessDataStream::processGE(Buffer *b)
+void ProcessDataStream::processGE()
 {
     printf("[GraphicEscape ");
     screen->setGraphicEscape();
-    placeChar(b->nextByte());
+    placeChar((uchar) *++buffer);
     printf("]");
     fflush(stdout);
 }
 
-void ProcessDataStream::WSFoutbound3270DS(Buffer *b)
+void ProcessDataStream::WSFoutbound3270DS()
 {
     printf("[Outbound 3270DS");
-    int partition = b->nextByte()->getByte();
+    uchar partition = *++buffer;
 
     printf(" partition #%d ", partition);
 
-    int cmnd = b->nextByte()->getByte();
+    uchar cmnd = *++buffer;
 
     wsfLen-=2;
 
@@ -478,7 +502,8 @@ void ProcessDataStream::WSFoutbound3270DS(Buffer *b)
     {
         case IBM3270_W:
             printf("Write ");
-            processWCC(b->nextByte());
+            buffer++;
+            processWCC();
             wsfLen--;
             break;
         default:
@@ -486,37 +511,35 @@ void ProcessDataStream::WSFoutbound3270DS(Buffer *b)
     }
     while(wsfLen>0)
     {
-        processOrders(b);
+        processOrders();
         wsfLen--;
     }
 }
 
-void ProcessDataStream::WSFreset(Buffer *b)
+void ProcessDataStream::WSFreset()
 {
-    printf("\n\n[** Reset Partition %02X - Not Implemented **]\n\n", b->nextByte()->getByte());
+    printf("\n\n[** Reset Partition %02X - Not Implemented **]\n\n", *++buffer);
     fflush(stdout);
     return;
 }
 
-void ProcessDataStream::WSFreadPartition(Buffer *b)
+void ProcessDataStream::WSFreadPartition()
 {
-    uchar partition = b->nextByte()->getByte();
-    uchar type = b->nextByte()->getByte();
+    uchar partition = *++buffer;
+    uchar type = *++buffer;
 
     printf("ReadPartition %d - type %2.2X\n", partition, type);
 
-    Buffer *queryReply = new Buffer();
-    queryReply->add(IBM3270_AID_SF);
+    QByteArray queryReply;
+
+    queryReply.append((uchar) IBM3270_AID_SF);
 
     replySummary(queryReply);
 
     emit bufferReady(queryReply);
-
-    delete queryReply;
-
 }
 
-void ProcessDataStream::replySummary(Buffer *buffer)
+void ProcessDataStream::replySummary(QByteArray &queryReply)
 {
 
     /* 62 x 160
@@ -835,21 +858,29 @@ void ProcessDataStream::replySummary(Buffer *buffer)
     qusablearea[24] = ((qusablearea[5] * qusablearea[7]) & 0xFF);
 
 
-    buffer->addBlock(qrt, 9);
-    buffer->addBlock(qrcolour, 22);
-    buffer->addBlock(qpart, 17);
-    buffer->addBlock(qhighlight, 13);
-    buffer->addBlock(qusablearea, 25);
-    buffer->addBlock(qcharsets, 27);
+    addBytes(queryReply, qrt, 9);
+    addBytes(queryReply, qrcolour, 22);
+    addBytes(queryReply, qpart, 17);
+    addBytes(queryReply, qhighlight, 13);
+    addBytes(queryReply, qusablearea, 25);
+    addBytes(queryReply, qcharsets, 27);
 //    buffer->addBlock(qalphaparts, 8);
 }
 
-int ProcessDataStream::extractBufferAddress(Buffer *b)
+void ProcessDataStream::addBytes(QByteArray &b, uchar *s, int l)
+{
+    for (int i = 0; i < l; i++)
+    {
+        b.append(s[i]);
+    }
+}
+
+int ProcessDataStream::extractBufferAddress()
 {
     //TODO: non-12/14 bit addresses & EBCDIC characters
 
-    unsigned char sba1 = b->getByte();
-    unsigned char sba2 = b->nextByte()->getByte();
+    uchar sba1 = *buffer;
+    uchar sba2 = *++buffer;
 
     switch((sba1>>6)&3)
     {
@@ -868,13 +899,13 @@ int ProcessDataStream::extractBufferAddress(Buffer *b)
     }
 }
 
-void ProcessDataStream::placeChar(Buffer *b)
+void ProcessDataStream::placeChar()
 {
-    int ebcdic = (int)(b->getByte());
+    uchar ebcdic = *buffer;
     placeChar(ebcdic);
 }
 
-void ProcessDataStream::placeChar(int ebcdic)
+void ProcessDataStream::placeChar(uchar ebcdic)
 {
     switch(ebcdic)
     {
@@ -1029,9 +1060,9 @@ void ProcessDataStream::toggleRuler()
 
 void ProcessDataStream::processAID(int aid, bool shortRead)
 {
-    Buffer *respBuffer = new Buffer();
+    QByteArray respBuffer = QByteArray();
 
-    respBuffer->add(aid);
+    respBuffer.append(aid);
 
     lastAID = aid;
 
@@ -1041,23 +1072,23 @@ void ProcessDataStream::processAID(int aid, bool shortRead)
         {
             printf("12 bit buffer address: %02X %02X\n", 0xC0|((cursor_pos>>6)&63), cursor_pos&63);
             fflush(stdout);
-            respBuffer->add(0xC0|((cursor_pos>>6)&63));
-            respBuffer->add(cursor_pos&63);
+            respBuffer.append(0xC0|((cursor_pos>>6)&63));
+            respBuffer.append(cursor_pos&63);
         }
         else if (screenSize < 16384) // 14 bit
         {
-            respBuffer->add((cursor_pos>>8)&63);
-            respBuffer->add(cursor_pos&0xFF);
+            respBuffer.append((cursor_pos>>8)&63);
+            respBuffer.append(cursor_pos&0xFF);
         }
         else // 16 bit
         {
-            respBuffer->add((cursor_pos>>8)&0xFF);
-            respBuffer->add(cursor_pos&0xFF);
+            respBuffer.append((cursor_pos>>8)&0xFF);
+            respBuffer.append(cursor_pos&0xFF);
         }
 
         screen->getModifiedFields(respBuffer);
 
-        respBuffer->dump();
+//        respBuffer->dump();
     }
 
     if (aid == IBM3270_AID_CLEAR)
@@ -1070,19 +1101,14 @@ void ProcessDataStream::processAID(int aid, bool shortRead)
     }
 
     emit bufferReady(respBuffer);
-
-    delete respBuffer;
 }
 
 void ProcessDataStream::interruptProcess()
 {
+    QByteArray b = QByteArray();
 
-    Buffer *b = new Buffer();
-
-    b->add(IAC, true);
-    b->add(IP);
+    b.append((uchar) IAC);
+    b.append((uchar) IP);
 
     emit bufferReady(b);
-
-    delete b;
 }

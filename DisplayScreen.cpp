@@ -1020,7 +1020,7 @@ int DisplayScreen::findPrevUnprotectedField(int pos)
     return pos - 1;
 }
 
-void DisplayScreen::getModifiedFields(Buffer *buffer)
+void DisplayScreen::getModifiedFields(QByteArray &buffer)
 {
     for(int i = 0; i < screenPos_max; i++)
     {
@@ -1030,9 +1030,10 @@ void DisplayScreen::getModifiedFields(Buffer *buffer)
             int thisField = i;
             do
             {
+                //TODO: 0xFF may occur, and need to be doubled
                 if (attrs[thisField].mdt && !attrs[thisField].prot)
                 {
-                    buffer->add(IBM3270_SBA);
+                    buffer.append(IBM3270_SBA);
 
                     printf("Adding field at %d : ", thisField);
 
@@ -1040,18 +1041,18 @@ void DisplayScreen::getModifiedFields(Buffer *buffer)
 
                     if (nextPos < 4096) // 12 bit
                     {
-                        buffer->add(twelveBitBufferAddress[(nextPos>>6)&63]);
-                        buffer->add(twelveBitBufferAddress[(nextPos&63)]);
+                        buffer.append(twelveBitBufferAddress[(nextPos>>6)&63]);
+                        buffer.append(twelveBitBufferAddress[(nextPos&63)]);
                     }
                     else if (nextPos < 16384) // 14 bit
                     {
-                        buffer->add((nextPos>>8)&63);
-                        buffer->add(nextPos&0xFF);
+                        buffer.append((nextPos>>8)&63);
+                        buffer.append(nextPos&0xFF);
                     }
                     else // 16 bit
                     {
-                        buffer->add((nextPos>>8)&0xFF);
-                        buffer->add(nextPos&0xFF);
+                        buffer.append((nextPos>>8)&0xFF);
+                        buffer.append(nextPos&0xFF);
                     }
 
 
@@ -1062,7 +1063,7 @@ void DisplayScreen::getModifiedFields(Buffer *buffer)
                         uchar b = glyph.at(thisField++)->getEBCDIC();
                         if (b != IBM3270_CHAR_NULL)
                         {
-                            buffer->add(b);
+                            buffer.append(b);
                             printf("%s", glyph.at(thisField-1)->text().toLatin1().data());
                         }
                         thisField = thisField % screenPos_max;

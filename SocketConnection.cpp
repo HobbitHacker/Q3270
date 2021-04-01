@@ -15,8 +15,6 @@ SocketConnection::SocketConnection(QString termName)
     // Forward the error signal, QOverload is necessary as error() is overloaded, see the Qt docs
 //    connect(dataSocket, QOverload<QAbstractSocket::SocketError>::of(&QAbstractSocket::errorOccurred), this, &SocketConnection::error);
 
-    incomingData = new Buffer();
-    subNeg = new Buffer();
     tn3270e_Mode = false;
 }
 
@@ -50,24 +48,29 @@ void SocketConnection::connectMainframe(const QHostAddress &address, quint16 por
 void SocketConnection::onReadyRead()
 {
 
-    if (incomingData->processing()) {
+
+/*    if (incomingData->processing()) {
         printf("SocketConnection : Already processing - cannot process, returning\n");
         fflush(stdout);
        return;
     }
-
+*/
     // create a QDataStream operating on the socket
     QDataStream dataStream(dataSocket);
     // set the version so that programs compiled with different versions of Qt can agree on how to serialise
     dataStream.setVersion(QDataStream::Qt_5_12);
 
     uchar socketByte;
-	char data3270; 
-	char response[50];
+
+    char data3270;
     bool readingSB;
 
     readingSB = false;
     int byteCount = 0;
+    QString charRep;
+
+    printf("\n\nSocketConnection : Reset loop\n\n");
+    printf("SocketConnection : ");
 
     // start an infinite loop
     for (;;) {
@@ -78,19 +81,26 @@ void SocketConnection::onReadyRead()
         socketByte = (uchar) data3270;
 
         if (dataStream.commitTransaction()) {
-//            if (byteCount == 0)
-//            {
-//                printf("SocketConnection : ");
-//            }
-//            printf("%2.2X ", socketByte);
+/*            if (byteCount == 0)
+            {
+                printf("SocketConnection : ");
+                charRep = "";
+            }*/
+            printf("%2.2X ", socketByte);
+            if (isalnum(socketByte))
+                charRep = charRep + socketByte;
+            else
+                charRep = charRep + ".";
             byteCount++;
             if (byteCount>32)
             {
-//                printf("\nSocketConnection : ");
+                printf("| %32s |\nSocketConnection : ", charRep.toLatin1().data());
+                charRep = "";
                 byteCount = 0;
             }
             fflush(stdout);
 //            printf("Byte: %02X\n", socketByte);
+            QByteArray response;
             switch (telnetState)
 			{
 
@@ -101,7 +111,8 @@ void SocketConnection::onReadyRead()
 						telnetState = TELNET_STATE_IAC;
 					} else 
 					{
-                        incomingData->add(socketByte);
+                        printf("Adding Byte: %2.2X - buffer size %d\n", socketByte, incomingData.size());
+                        incomingData.append(socketByte);
 					}
 					break;
 
@@ -112,13 +123,13 @@ void SocketConnection::onReadyRead()
                             if (readingSB)
                             {
                                 // socketByte is 0xFF here, so we don't double up the incoming buffer
-                                subNeg->add(socketByte, true);
+                                subNeg.append(socketByte);
                                 telnetState = TELNET_STATE_SB;
                             }
                             else
                             {
                                 // socketByte is 0xFF here, so we don't double up the incoming buffer
-                                incomingData->add(socketByte, true);
+                                incomingData.append(socketByte);
                                 telnetState = TELNET_STATE_DATA;
                             }
                             printf("SocketConnection : Double 0xFF - stored 0xFF in buffer\n");
@@ -159,11 +170,12 @@ void SocketConnection::onReadyRead()
                             telnetState = TELNET_STATE_DATA;
                             break;
                         case EOR:
-                            incomingData->setProcessing(true);
+//                            incomingData->setProcessing(true);
                             printf("SocketConnection :   EOR\n");
                             fflush(stdout);
                             telnetState = TELNET_STATE_DATA;
-                            processBuffer();
+                            emit dataStreamComplete(incomingData, tn3270e_Mode);
+                            incomingData.clear();
 							break;
 						default:
                             printf("SocketConnection : IAC Not sure: %02X\n", socketByte);
@@ -182,13 +194,17 @@ void SocketConnection::onReadyRead()
                         case TELOPT_TTYPE:
 						case TELOPT_BINARY:
 						case TELOPT_EOR:
-                            printf("SocketConnection :     TTYPE, BINARY or EOR (%d) seen\n", socketByte);
-                            sprintf(response, "%c%c%c", (char) IAC, (char) WILL, socketByte);
+                            printf("SocketConnection :     TTYPE, BINARY or EOR (%2.2X) seen\n", socketByte);
+                            response.append((uchar) IAC);
+                            response.append((uchar) WILL);
+                            response.append(socketByte);
                             dataStream.writeRawData(response, 3);
 							telnetState = TELNET_STATE_DATA;
 							break;
 						default:
-                            sprintf(response, "%c%c%c", (char) IAC, (char) WONT, socketByte);
+                            response.append((uchar) IAC);
+                            response.append((uchar) WONT);
+                            response.append(socketByte);
                             dataStream.writeRawData(response, 3);
 							telnetState = TELNET_STATE_DATA;
                             printf("SocketConnection : TTYPE Not sure: %02X\n", socketByte);
@@ -215,12 +231,16 @@ void SocketConnection::onReadyRead()
 						case TELOPT_BINARY:
 						case TELOPT_EOR:
                             printf("SocketConnection :     BINARY/EOR seen\n");
-                            sprintf(response, "%c%c%c", (char) IAC, (char) DO, socketByte);
+                            response.append((uchar) IAC);
+                            response.append((uchar) DO);
+                            response.append(socketByte);
                             dataStream.writeRawData(response, 3);
 							telnetState = TELNET_STATE_DATA;
 							break;
 						default:
-                            sprintf(response, "%c%c%c", (char) IAC, (char) DONT, socketByte);
+                            response.append((uchar) IAC);
+                            response.append((uchar) DONT);
+                            response.append(socketByte);
                             dataStream.writeRawData(response, 3);
 							telnetState = TELNET_STATE_DATA;
                             printf("SocketConnection : WILL Not sure: %02X\n", socketByte);
@@ -241,7 +261,7 @@ void SocketConnection::onReadyRead()
                             printf("SocketConnection : IAC seen in SB processing\n");
                             break;
                         default:
-                            subNeg->add(socketByte);
+                            subNeg.append(socketByte);
                             break;
                     }
                     break;
@@ -255,6 +275,10 @@ void SocketConnection::onReadyRead()
             fflush(stdout);
             // the read failed, the socket goes automatically back to the state it was in before the transaction started
             // we just exit the loop and wait for more data to become available
+            if (byteCount>32)
+            {
+                printf("| %32s |\nSocketConnection : ", charRep.toLatin1().data());
+            }
            break;
        }
     }
@@ -266,25 +290,32 @@ void SocketConnection::onReadyRead()
     fflush(stdout);
 }
 
-void SocketConnection::sendResponse(Buffer *b)
+void SocketConnection::sendResponse(QByteArray &b)
 {
-    char response[10];
+    QByteArray response;
     // create a QDataStream operating on the socket
     QDataStream dataStream(dataSocket);
 
     if (tn3270e_Mode)
     {
-        sprintf(response,"%c%c%c%c%c",(char) TN3270E_DATATYPE_3270_DATA, (char) 0x00, (char) 0x00, (char) 0x00, (char) 0x00);
+        response.append((uchar) TN3270E_DATATYPE_3270_DATA);
+        response.append((uchar) 0x00);
+        response.append((uchar) 0x00);
+        response.append((uchar) 0x00);
+        response.append((uchar) 0x00);
+        dump(response, "TN3270E Response");
         dataStream.writeRawData(response, 5);
     }
 
 //    printf("buffer: %d for %d bytes", b->address(), b->size());
     fflush(stdout);
-    b->dump(true);
-    dataStream.writeRawData(b->address(), b->size());
+//    b->dump(true);
+    dataStream.writeRawData(b.constData(), b.size());
 
-    response[0] = (char) IAC;
-    response[1] = (char) EOR;
+    response.clear();
+    response.append((uchar) IAC);
+    response.append((uchar) EOR);
+    dump(response, "EOR Response");
 
     dataStream.writeRawData(response, 2);
 }
@@ -292,148 +323,165 @@ void SocketConnection::sendResponse(Buffer *b)
 void SocketConnection::processSubNegotiation()
 {
     QDataStream dataStream(dataSocket);
+    QByteArray response;
 
     printf("SocketConnection : -- SubNegotiation --\n");
-    subNeg->dump();
+//    subNeg->dump();
 
-    switch(subNeg->getByte())
+    dump(subNeg, "SubNegotitation");
+
+    switch(subNeg.at(0))
     {
         case TELOPT_TTYPE:
-            if (subNeg->byteEquals(1, TELQUAL_SEND))
+            if (subNeg.at(1) == TELQUAL_SEND)
             {
                 printf("SocketConnection :    SB TTYPE SEND\n");
                 fflush(stdout);
-                Buffer *response = new Buffer();
-                response->add(IAC, true);
-                response->add(SB);
-                response->add(TELOPT_TTYPE);
-                response->add(TELQUAL_IS);
-                response->addBlock((unsigned char *)termName.toLatin1().data(), strlen(termName.toLatin1().data()));
+                response.append((uchar) IAC);
+                response.append((uchar) SB);
+                response.append((uchar) TELOPT_TTYPE);
+                response.append((uchar) TELQUAL_IS);
+                response.append(termName.toLatin1().data(), strlen(termName.toLatin1().data()));
 
                 // Pass LU name if one was requested
                 if (luName.compare(""))
                 {
-                    response->add('@');
-                    response->addBlock((unsigned char *)luName.toLatin1().data(), strlen(luName.toLatin1().data()));
+                    response.append('@');
+                    response.append(luName.toLatin1().data(), strlen(luName.toLatin1().data()));
                 }
 
-                response->add(IAC, true);
-                response->add(SE);
+                response.append((uchar) IAC);
+                response.append((uchar) SE);
                 printf("SocketConnection : (%s)\n",termName.toLatin1().data());
                 fflush(stdout);
-                dataStream.writeRawData(response->address(), response->size());
+                dump(response, "TELQUAL Response");
+                dataStream.writeRawData(response.constData(), response.size());
             }
             else
             {
-                printf("SocketConnection : Unknown TTYPE subnegotiation: %2.2X\n", subNeg->getByte(1));
+                printf("SocketConnection : Unknown TTYPE subnegotiation: %2.2X\n", subNeg.at(1));
                 fflush(stdout);
             }
             break;
         case TELOPT_TN3270E:
-            if (subNeg->byteEquals(1, TN3270E_SEND) && subNeg->byteEquals(2, TN3270E_DEVICE_TYPE))
+            if (subNeg.at(1)  ==  TN3270E_SEND && subNeg.at(2) ==  TN3270E_DEVICE_TYPE)
             {
                 printf("SocketConnection :     SB TN3270E SEND DEVICE_TYPE IAC SE seen - good!\n");
-                Buffer *response = new Buffer();
 
-                response->add(IAC, true);
-                response->add(SB);
-                response->add(TELOPT_TN3270E);
-                response->add(TN3270E_DEVICE_TYPE);
-                response->add(TN3270E_REQUEST);
-                response->addBlock((unsigned char *)termName.toLatin1().data(), strlen(termName.toLatin1().data()));
-                response->add(IAC, true);
-                response->add(SE);
+                response.append((uchar) IAC);
+                response.append((uchar) SB);
+                response.append((uchar) TELOPT_TN3270E);
+                response.append((uchar) TN3270E_DEVICE_TYPE);
+                response.append((uchar) TN3270E_REQUEST);
+                response.append(termName.constData()->toLatin1(), strlen(termName.toLatin1().data()));
+                response.append((uchar) IAC);
+                response.append((uchar) SE);
 
-                response->add(IAC, true);
-                response->add(SB);
-                response->add(TELOPT_TN3270E);
-                response->add(TN3270E_FUNCTIONS);
-                response->add(TN3270E_REQUEST);
-                response->add(IAC, true);
-                response->add(SE);
-                dataStream.writeRawData(response->address(), response->size());
+                response.append((uchar) IAC);
+                response.append((uchar) SB);
+                response.append((uchar) TELOPT_TN3270E);
+                response.append((uchar) TN3270E_FUNCTIONS);
+                response.append((uchar) TN3270E_REQUEST);
+                response.append((uchar) IAC);
+                response.append((uchar) SE);
+
+                dump(response, "TELOPT Response");
+
+                dataStream.writeRawData(response, response.size());
 
                 fflush(stdout);
                 break;
             }
-            if (subNeg->byteEquals(1, TN3270E_DEVICE_TYPE) && subNeg->byteEquals(2, TN3270E_IS))
+            if (subNeg.at(1) == TN3270E_DEVICE_TYPE && subNeg.at(2) == TN3270E_IS)
             {
-                if (subNeg->compare(3,termName.toLatin1().data()) && subNeg->byteEquals(3+strlen(termName.toLatin1().data()), TN3270E_CONNECT))
+                if (subNeg.mid(3).compare(termName.toLatin1().data()) && subNeg.at(3 + termName.length()) == TN3270E_CONNECT)
                 {
                     printf("SocketConnection : Received device-name: '");
-                    for(int i = 4+strlen(termName.toLatin1().data()); i < subNeg->size(); i++)
+                    for(int i = 4+strlen(termName.toLatin1().data()); i < subNeg.size(); i++)
                     {
-                        printf("%c", subNeg->getByte(i));
+                        printf("%c", subNeg.at(i));
                     }
                     printf("'\n");
                     break;
                 }
             }
-            if (subNeg->byteEquals(1, TN3270E_FUNCTIONS) && subNeg->byteEquals(2, TN3270E_IS))
+            if (subNeg.at(1) == TN3270E_FUNCTIONS && subNeg.at(2) == TN3270E_IS)
             {
                 printf("SocketConnection : Supported functions: ");
-                for(int i = 3; i < subNeg->size(); i++)
+                for(int i = 3; i < subNeg.size(); i++)
                 {
-                    printf("%s ", tn3270e_functions_strings[subNeg->getByte(i)]);
+                    printf("%s ", tn3270e_functions_strings[(int) subNeg.at(i)]);
                 }
                 printf("\n");
                 break;
             }
-            if (subNeg->byteEquals(1, TN3270E_FUNCTIONS) && subNeg->byteEquals(2, TN3270E_REQUEST))
+            if (subNeg.at(1) == TN3270E_FUNCTIONS && subNeg.at(2) == TN3270E_REQUEST)
             {
-                Buffer *response = new Buffer();
+                response.append((uchar) IAC);
+                response.append((uchar) SB);
+                response.append((uchar) TELOPT_TN3270E);
+                response.append((uchar) TN3270E_FUNCTIONS);
+                response.append((uchar) TN3270E_IS);
 
-                response->add(IAC, true);
-                response->add(SB);
-                response->add(TELOPT_TN3270E);
-                response->add(TN3270E_FUNCTIONS);
-                response->add(TN3270E_IS);
-
+                //TODO: Unsupported functions
                 printf("SocketConnection : Requested functions:");
-                for(int i = 3; i < subNeg->size(); i++)
+                for(int i = 3; i < subNeg.size(); i++)
                 {
-                    printf("%s ", tn3270e_functions_strings[subNeg->getByte(i)]);
-                    response->add(subNeg->getByte());
+                    printf("%s ", tn3270e_functions_strings[(int) subNeg.at(i)]);
+                    response.append(subNeg.at(i));
                 }
 
-                response->add(IAC, true);
-                response->add(SE);
+                response.append((uchar) IAC);
+                response.append((uchar) SE);
 
                 printf("\n");
-                dataStream.writeRawData(response->address(), response->size());
+
+                dump(response, "TN3270E Functions Response");
+
+                dataStream.writeRawData(response, response.size());
                 break;
             }
-            printf("SocketConnection : Unknown TN3270E request %2.2X\n", subNeg->getByte(1));
+            printf("SocketConnection : Unknown TN3270E request %2.2X\n", subNeg.at(1));
             break;
         default:
-            printf("SocketConnection : Unknown Subnegotiation option: %2.2X\n", subNeg->getByte(0));
+            printf("SocketConnection : Unknown Subnegotiation option: %2.2X\n", subNeg.at(0));
             break;
     }
     telnetState = TELNET_STATE_DATA;
     //FIXME Is reset() an error here? Will data appear asynchronously in the buffer?
-    subNeg->reset();
+    subNeg.clear();
 }
 
-void SocketConnection::processBuffer()
+void SocketConnection::dump(QByteArray &a, QString title)
 {
-    if (!tn3270e_Mode)
+    int w = 0;
+    QString bytes;
+
+    printf("%s Start -------------------------------------------\n", title.toLatin1().data());
+
+    for (int i = 0; i < a.size(); i++)
     {
-        emit dataStreamComplete(incomingData);
-        incomingData->reset();
-        return;
+        if (w == 0)
+            printf("%4.4X ", i);
+
+        printf("%2.2X ", (uchar) a.at(i));
+        if (QChar(a.at(i)).isPrint())
+            bytes = bytes + a.at(i);
+        else
+            bytes = bytes + ".";
+        if (++w == 32) {
+            w = 0;
+            printf ("| %-32.32s |\n", bytes.toLatin1().data());
+        }
     }
-
-    unsigned char dataType = incomingData->getByte();
-    unsigned char requestFlag = incomingData->nextByte()->getByte();
-    unsigned char responseFlag = incomingData->nextByte()->getByte();
-    unsigned char seqNumber = (incomingData->nextByte()->getByte()<<16) + incomingData->nextByte()->getByte();
-
-    printf("SocketConnection : TN3270E Header:\nSocketConnection :    Data Type:      %2.2X\nSocketConnection :    Request Flag:   %2.2X\nSocketConnection :    Response Flag:  %2.2X\nSocketConnection :    Sequence Number: %2.2X\n",
-                    dataType, requestFlag, responseFlag, seqNumber);
-
-    if (dataType == TN3270E_DATATYPE_3270_DATA)
-    {
-        emit dataStreamComplete(incomingData->nextByte());
-        incomingData->reset();
+    if (w != 0) {
+//        for (int i = w; i < 32; i++)
+//            printf("   ");
+        char format[50];
+        sprintf(&format[0], "%%%d.%ds| %%-32.32s |", (32 - w) * 3, (32 - w) * 3 );
+        printf (format, " ", bytes.toLatin1().data());
     }
+    printf("\n%s End   -------------------------------------------\n", title.toLatin1().data());
+
+    fflush(stdout);
 }

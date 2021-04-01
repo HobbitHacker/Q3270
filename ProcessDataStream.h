@@ -32,7 +32,6 @@
 #include <QDebug>
 
 //#include "text.h"
-#include "Buffer.h"
 #include "DisplayScreen.h"
 #include "3270.h"
 #include "TerminalView.h"
@@ -76,11 +75,11 @@ class ProcessDataStream : public QObject
 
     public slots:
 
-        void processStream(Buffer *b);
+        void processStream(QByteArray &b, bool tn3270e);
 
     signals:
 
-        void bufferReady(Buffer *buffer);
+        void bufferReady(QByteArray &b);
         void keyboardUnlocked();
         void cursorMoved(int x, int y);
         void blink();
@@ -92,8 +91,10 @@ class ProcessDataStream : public QObject
 
         TerminalView *terminal;
 
-        uchar *buffer;
+//        uchar *buffer;
         uchar *bufferCurrentPos;
+
+        QByteArray::Iterator buffer;
 
         /* Which screen size we're currently using */
         bool alternate_size;
@@ -118,33 +119,33 @@ class ProcessDataStream : public QObject
 
         void setScreen(bool alternate = false);
 
-        void placeChar(Buffer *b);
-        void placeChar(int c);
+        void placeChar();
+        void placeChar(uchar c);
 
-        void processWCC(Buffer *b);
-        void processOrders(Buffer *b);
+        void processWCC();
+        void processOrders();
 
         /* 3270 Command Codes */
         /* TODO: 3270 Command codes RB, RMA and EAU */
-        void processW(Buffer *b);
-        void processEW(Buffer *b, bool alternate);      // Incorporates EWA
-        void processWSF(Buffer *b);
+        void processW();
+        void processEW(bool alternate);      // Incorporates EWA
+        void processWSF();
         void processRM();
 
 
         /* 3270 Orders */
         /* TODO: 3270 Orders MF, PT */
-        void processSF(Buffer *b);
-        void processSFE(Buffer *b);
-        void processSBA(Buffer *b);
-        void processSA(Buffer *b);
+        void processSF();
+        void processSFE();
+        void processSBA();
+        void processSA();
         void processIC();
-        void processRA(Buffer *b);
-        void processEUA(Buffer *b);
-        void processGE(Buffer *b);
+        void processRA();
+        void processEUA();
+        void processGE();
 
 
-        int extractBufferAddress(Buffer *b);
+        int extractBufferAddress();
         void incPos();
 
         void removeCursor();
@@ -153,11 +154,12 @@ class ProcessDataStream : public QObject
         bool wsfProcessing;
         int wsfLen;
 
-        void WSFreset(Buffer *b);
-        void WSFreadPartition(Buffer *b);
-        void WSFoutbound3270DS(Buffer *b);
+        void WSFreset();
+        void WSFreadPartition();
+        void WSFoutbound3270DS();
 
-        void replySummary(Buffer *buffer);
+        void replySummary(QByteArray &buffer);
+        void addBytes(QByteArray &buffer, uchar *bytes, int len);
 };
 
 #endif // DISPLAYDATASTREAM_H
