@@ -13,7 +13,6 @@
 
 #include "ProcessDataStream.h"
 #include "SocketConnection.h"
-#include "Buffer.h"
 #include "TerminalView.h"
 #include "3270.h"
 

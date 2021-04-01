@@ -10,7 +10,6 @@
 #include <QTimer>
 
 #include "text.h"
-#include "Buffer.h"
 #include "3270.h"
 
 class DisplayScreen : public QGraphicsScene
