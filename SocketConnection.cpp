@@ -111,7 +111,7 @@ void SocketConnection::onReadyRead()
 						telnetState = TELNET_STATE_IAC;
 					} else 
 					{
-                        printf("Adding Byte: %2.2X - buffer size %d\n", socketByte, incomingData.size());
+                        //printf("Adding Byte: %2.2X - buffer size %d\n", socketByte, incomingData.size());
                         incomingData.append(socketByte);
 					}
 					break;
@@ -373,7 +373,7 @@ void SocketConnection::processSubNegotiation()
                 response.append((uchar) TELOPT_TN3270E);
                 response.append((uchar) TN3270E_DEVICE_TYPE);
                 response.append((uchar) TN3270E_REQUEST);
-                response.append(termName.constData()->toLatin1(), strlen(termName.toLatin1().data()));
+                response.append(termName.toLatin1().data(), strlen(termName.toLatin1().data()));
                 response.append((uchar) IAC);
                 response.append((uchar) SE);
 
