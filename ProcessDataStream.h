@@ -18,20 +18,13 @@
 #define DISPLAYDATASTREAM_H
 
 #include <qglobal.h>
-#include <qobject.h>
-#//include <QGraphicsScene>
-//#include <QGraphicsRectItem>
-//#include <QLabel>
-//#include <QHostInfo>
 #include <QGuiApplication>
 #include <QScreen>
-//#include <QTimer>
 
 #include <stdlib.h>
 #include <QObject>
 #include <QDebug>
 
-//#include "text.h"
 #include "DisplayScreen.h"
 #include "3270.h"
 #include "TerminalView.h"

@@ -59,6 +59,7 @@ void ProcessDataStream::processStream(QByteArray &b, bool tn3270e)
 
     wsfProcessing = false;
 
+    //TODO: Multiple structured field WRITE commands
     // Process Command codes
     // Structured Fields Require Multiple WRITE commands
     // Add logic to cycle round buffer for structure field length if appropriate so we can come
@@ -71,7 +72,7 @@ void ProcessDataStream::processStream(QByteArray &b, bool tn3270e)
     {
         unsigned char dataType = *buffer++;
         unsigned char requestFlag = *buffer++;
-        unsigned char responseFlag = *buffer;
+        unsigned char responseFlag = *buffer++;
         unsigned char seqNumber = ((uchar) *buffer++<<16);
         seqNumber+= (uchar) *buffer++;
 
@@ -79,6 +80,7 @@ void ProcessDataStream::processStream(QByteArray &b, bool tn3270e)
                dataType, requestFlag, responseFlag, seqNumber);
 
 
+        // TODO: Handling of TN3270E datatypes
         if (dataType != TN3270E_DATATYPE_3270_DATA)
         {
             printf("\n\n[** Unimplemented TN3270E command: %02X **]\n\n", dataType);
