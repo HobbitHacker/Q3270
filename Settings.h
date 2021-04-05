@@ -6,6 +6,7 @@
 #include <QFontDialog>
 #include <QSettings>
 #include <QMessageBox>
+#include <QTableWidgetItem>
 
 #include "3270.h"
 
@@ -33,6 +34,7 @@ class Settings : public QDialog
         QFont getFont();
         QColor *getColours();
         bool getFontScaling();
+        void setKeyboardMap(QMap<QString, QStringList> map);
 
     signals:
 
@@ -41,6 +43,7 @@ class Settings : public QDialog
         void cursorBlinkSpeedChanged(int blinkSpeed);
         void coloursChanged(QColor palette[12]);
         void fontChanged();
+        void newMap(QMap<QString, QStringList> newMap);
         void fontScalingChanged(bool fontScaling);
         void tempFontChange(QFont f);
         void saveKeyboardSettings();
@@ -50,15 +53,12 @@ class Settings : public QDialog
         void changeFont(QFont f);
         void changeModel(int m);
         void setColour();
+        void populateKeySequence(QTableWidgetItem *item);
+        void setKey();
+        void truncateShortcut();
         void saveSettings();
 
     private:
-//        using QDialog::accept;
-        void accept();
-        void reject();
-
-        void changeModel(QString model);
-        void changeSize(int x, int y);
 
         Ui::Settings *ui;
 
@@ -67,6 +67,8 @@ class Settings : public QDialog
         QColor palette[12];
         QFont termFont;
         QFont qfdFont;
+
+        QMap<QString, QStringList> keyboardMap;
 
         int termType;
         int termX;
@@ -77,6 +79,10 @@ class Settings : public QDialog
         bool fontScaling;
 
         bool paletteChanged;
+        bool keyboardChanged;
+
+        int lastRow;
+        int lastSeq;
 
         struct termTypes
         {
@@ -93,6 +99,11 @@ class Settings : public QDialog
             { "Dynamic", "IBM-DYNAMIC", 0, 0}
         };
 
+        void accept();
+        void reject();
+
+        void changeModel(QString model);
+        void changeSize(int x, int y);
 
 };
 

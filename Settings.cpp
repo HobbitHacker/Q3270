@@ -134,6 +134,15 @@ Settings::Settings(QWidget *parent) : QDialog(parent), ui(new Ui::Settings)
     connect(ui->baseUnprotected, &QPushButton::clicked, this, &Settings::setColour);
     connect(ui->baseProtectedIntensify, &QPushButton::clicked, this, &Settings::setColour);
 
+    connect(ui->KeyboardMap, &QTableWidget::itemClicked, this, &Settings::populateKeySequence);
+    connect(ui->keySequenceEdit, &QKeySequenceEdit::editingFinished, this, &Settings::truncateShortcut);
+    connect(ui->setKeyboardMap, &QPushButton::clicked, this, &Settings::setKey);
+
+    lastRow = -1;
+    lastSeq = -1;
+
+    keyboardChanged = false;
+
     qfd = new QFontDialog();
     qfd->setWindowFlags(Qt::Widget);
     qfd->setOption(QFontDialog::NoButtons);
@@ -147,6 +156,32 @@ Settings::Settings(QWidget *parent) : QDialog(parent), ui(new Ui::Settings)
 Settings::~Settings()
 {
     delete ui;
+}
+
+void Settings::setKeyboardMap(QMap<QString, QStringList> map)
+{
+    keyboardMap = map;
+
+    QMap<QString, QStringList>::ConstIterator i = map.constBegin();
+
+    ui->KeyboardMap->setRowCount(0);
+
+    int row = 0;
+
+    ui->KeyboardFunctionList->addItem("Unassigned");
+
+    while(i != map.constEnd())
+    {
+        ui->KeyboardMap->insertRow(row);
+        ui->KeyboardMap->setItem(row, 0, new QTableWidgetItem(i.key()));
+        ui->KeyboardMap->setItem(row, 1, new QTableWidgetItem(i.value().join(", ")));
+        ui->KeyboardFunctionList->addItem(i.key());
+        printf("Function name %s mapped to %s\n",  i.key().toLatin1().data(), i.value().join(",").toLatin1().data());
+        fflush(stdout);
+        i++;
+    }
+
+    ui->KeyboardMap->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
 }
 
 void Settings::showForm(bool connected)
@@ -296,6 +331,11 @@ void Settings::accept()
     {
         fontScaling = ui->FontScaling->QAbstractButton::isChecked();
         emit fontScalingChanged(fontScaling);
+    }
+
+    if (keyboardChanged)
+    {
+        emit newMap(keyboardMap);
     }
 
     QDialog::accept();
@@ -460,3 +500,82 @@ void Settings::saveSettings()
     saved.exec();
 
 }
+
+void Settings::populateKeySequence(QTableWidgetItem *item)
+{
+    //NOTE: This doesn't handle the custom left-ctrl/right-ctrl stuff
+    int thisRow = item->row();
+    QStringList keyList = ui->KeyboardMap->item(thisRow, 1)->text().split(", ");
+
+    if (thisRow != lastRow)
+    {
+        lastSeq = 0;
+    }
+    else
+    {
+        if (++lastSeq >= keyList.size())
+            lastSeq = 0;
+    }
+
+    ui->KeyboardFunctionList->setCurrentIndex(ui->KeyboardFunctionList->findText(ui->KeyboardMap->item(thisRow, 0)->text()));
+
+    if (keyList.size() != 0)
+    {
+        ui->keySequenceEdit->setKeySequence(QKeySequence(keyList[lastSeq]));
+    }
+    else
+    {
+        ui->keySequenceEdit->clear();
+    }
+
+    if (keyList.size() == 1)
+    {
+        ui->LabelMultipleKeys->setText("");
+    }
+    else
+    {
+        ui->LabelMultipleKeys->setText("Click again for next key mapping");
+    }
+
+    lastRow = thisRow;
+
+}
+
+void Settings::setKey()
+{
+    QMap<QString, QStringList>::iterator i = keyboardMap.begin();
+
+    while(i != keyboardMap.end())
+    {
+        for (int s = 0; s < i.value().size(); s++)
+        {
+            if (QKeySequence(i.value()[s]) == ui->keySequenceEdit->keySequence())
+            {
+                printf("Found %s as %s - removing\n", i.value()[s].toLatin1().data(), i.key().toLatin1().data());
+                fflush(stdout);
+                // Remove existing entry
+                i.value().removeAt(s);
+            }
+        }
+        if (ui->KeyboardFunctionList->currentIndex() != 0 && !i.key().compare(ui->KeyboardFunctionList->currentText()))
+        {
+            printf("Adding to %s\n", i.key().toLatin1().data());
+            fflush(stdout);
+            i.value().append(ui->keySequenceEdit->keySequence().toString());
+        }
+        i++;
+    }
+
+    setKeyboardMap(keyboardMap);
+
+    keyboardChanged = true;
+}
+
+void Settings::truncateShortcut()
+{
+    int value = ui->keySequenceEdit->keySequence()[0];
+    QKeySequence shortcut(value);
+    ui->keySequenceEdit->setKeySequence(shortcut);
+}
+
+

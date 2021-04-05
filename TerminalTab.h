@@ -60,11 +60,12 @@ class TerminalTab : public QMdiSubWindow
 
     private:
 
+        Keyboard *kbd;
+
         QGraphicsScene *gs;
 
         ProcessDataStream *datastream;
         SocketConnection *socket;
-        Keyboard *kbd;
 
         DisplayScreen *screen[2];
 

@@ -13,13 +13,16 @@ TerminalTab::TerminalTab()
     connect(settings, &Settings::cursorBlinkChanged, view, &TerminalView::setBlink);
     connect(settings, &Settings::cursorBlinkSpeedChanged, view, &TerminalView::setBlinkSpeed);
 
+    kbd = new Keyboard(view);
+
+    connect(settings, &Settings::newMap, kbd, &Keyboard::setNewMap);
+
     gs = new QGraphicsScene();
 
     QGraphicsRectItem *mRect = new QGraphicsRectItem(0, 0, 640, 480);
     mRect->setBrush(QColor(Qt::black));
 
     gs->addItem(mRect);
-
 
     QGraphicsSimpleTextItem *ncMessage = new QGraphicsSimpleTextItem("Not Connected", mRect);
 
@@ -42,6 +45,7 @@ TerminalTab::TerminalTab()
 
 void TerminalTab::showForm()
 {
+    settings->setKeyboardMap(kbd->getMap());
     settings->showForm(view->connected);
 }
 
@@ -110,7 +114,7 @@ void TerminalTab::connectSession()
     datastream = new ProcessDataStream(view);
     socket = new SocketConnection(settings->getTermName());
 
-    Keyboard *kbd = new Keyboard(datastream, view);
+    kbd->setDataStream(datastream);
 
     connect(settings, &Settings::saveKeyboardSettings, kbd, &Keyboard::saveKeyboardSettings);
 
@@ -154,15 +158,6 @@ void TerminalTab::closeConnection()
     disconnect(socket, &SocketConnection::dataStreamComplete, datastream, &ProcessDataStream::processStream);
     disconnect(socket, &SocketConnection::disconnected3270, this, &TerminalTab::closeConnection);
 
-//  disconnect(datastream, &ProcessDataStream::cursorMoved, primary, &DisplayScreen::showStatusCursorPosition);
-//    disconnect(datastream, &ProcessDataStream::cursorMoved, alternate, &DisplayScreen::showStatusCursorPosition);
-
-//    disconnect(kbd, &Keyboard::setLock, primary, &DisplayScreen::setStatusXSystem);
-//    disconnect(kbd, &Keyboard::setLock, alternate, &DisplayScreen::setStatusXSystem);
-
-//    disconnect(kbd, &Keyboard::setInsert, primary, &DisplayScreen::setStatusInsert);
-//    disconnect(kbd, &Keyboard::setInsert, alternate, &DisplayScreen::setStatusInsert);
-
     socket->disconnectMainframe();
 
     view->stopTimers();
@@ -177,6 +172,8 @@ void TerminalTab::closeConnection()
 
     delete screen[0];
     delete screen[1];
+    delete kbd;
+    delete settings;
 }
 
 void TerminalTab::activate(bool checked)

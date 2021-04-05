@@ -1,9 +1,7 @@
 #include "Keyboard.h"
 
-Keyboard::Keyboard(ProcessDataStream *d, TerminalView *view)
+Keyboard::Keyboard(TerminalView *view)
 {    
-    datastream = d;
-
     lock = false;
     insMode = false;
 
@@ -15,8 +13,13 @@ Keyboard::Keyboard(ProcessDataStream *d, TerminalView *view)
     this->view = view;
 
     clearBufferEntry();
+    setMap();
+}
 
-    connect(d, &ProcessDataStream::keyboardUnlocked, this, &Keyboard::unlockKeyboard);
+void Keyboard::setDataStream(ProcessDataStream *d)
+{
+    datastream = d;
+    connect(datastream, &ProcessDataStream::keyboardUnlocked, this, &Keyboard::unlockKeyboard);
 }
 
 void Keyboard::setMap()
@@ -29,7 +32,7 @@ void Keyboard::setMap()
     functionMap.insert("Left",&Keyboard::cursorLeft);
     functionMap.insert("Right",&Keyboard::cursorRight);
 
-    functionMap.insert("Backspace",&Keyboard::cursorLeft);
+    functionMap.insert("Backspace",&Keyboard::backspace);
 
     functionMap.insert("Tab",&Keyboard::tab);
     functionMap.insert("Backtab",&Keyboard::backtab);
@@ -81,7 +84,47 @@ void Keyboard::setMap()
     functionMap.insert("Copy",&Keyboard::copy);
     functionMap.insert("Paste",&Keyboard::paste);
 
+    functionMap.insert("Blah", &Keyboard::unlockKeyboard);
+
     setFactoryMaps();
+}
+
+QMap<QString, QStringList> Keyboard::getMap()
+{
+    QMap<QString, Keyboard::kbFunction>::const_iterator i = functionMap.constBegin();
+
+    QMap<QString, QStringList> thisMap;
+    QStringList keyList;
+
+    while(i != functionMap.constEnd())
+    {
+        keyList.clear();
+
+        getMapping(i.key(), keyList, defaultMap);
+        getMapping(i.key(), keyList, shiftMap);
+        getMapping(i.key(), keyList, ctrlMap);
+        getMapping(i.key(), keyList, altMap);
+        getMapping(i.key(), keyList, metaMap);
+
+        thisMap[i.key()] = keyList;
+        i++;
+    }
+
+    return thisMap;
+}
+
+void Keyboard::getMapping(QString key, QStringList &keyList, QMap<int, kbDets> map)
+{
+    QMap<int, kbDets>::const_iterator i = map.constBegin();
+    while(i != map.constEnd())
+    {
+        // NOTE: Should be case-insensitive?
+        if (!i->keyFunc.compare(key))
+        {
+            keyList.append(i.value().keySeq);
+        }
+        i++;
+    }
 }
 
 void Keyboard::clearBufferEntry()
@@ -186,7 +229,7 @@ bool Keyboard::processKey()
     printf("Keyboard        : Keycount incremented. Key: %d isMapped: %d, mustMap: %d\n", kbBuffer[bufferEnd].key, kbBuffer[bufferEnd].isMapped, kbBuffer[bufferEnd].mustMap);
     fflush(stdout);
 
-    if (kbBuffer[bufferEnd].key != 0  || kbBuffer[bufferEnd].isMapped)
+    if ((kbBuffer[bufferEnd].key != 0  || kbBuffer[bufferEnd].isMapped) && view->connected)
     {
 
         // Store target mapping if key is mapped
@@ -367,6 +410,12 @@ void Keyboard::cursorRight()
 void Keyboard::cursorLeft()
 {
     datastream->moveCursor(-1, 0);
+}
+
+void Keyboard::backspace()
+{
+    //TODO: Stop cursor at field position
+    cursorLeft();
 }
 
 void Keyboard::enter()
@@ -708,8 +757,7 @@ void Keyboard::setFactoryMaps()
     setMapping("Left", "Left");
     setMapping("Right", "Right");
 
-    //TODO: make backspace stop at start of field
-    setMapping("Backspace","Left");
+    setMapping("Backspace","Backspace");
 
     setMapping("Tab", "Tab");
     setMapping("Backtab", "Backtab");
@@ -768,6 +816,25 @@ void Keyboard::ruler()
     datastream->toggleRuler();
 }
 
+void Keyboard::setNewMap(QMap<QString, QStringList> newMap)
+{
+    defaultMap.clear();
+    ctrlMap.clear();
+    altMap.clear();
+    shiftMap.clear();
+    metaMap.clear();
+
+    QMap<QString, QStringList>::ConstIterator i = newMap.constBegin();
+    while(i != newMap.constEnd())
+    {
+        for (int s = 0; s < i.value().size(); s++)
+        {
+            setMapping(i.value()[s], i.key());
+        }
+        i++;
+    }
+}
+
 void Keyboard::clear()
 {
     datastream->processAID(IBM3270_AID_CLEAR, true);
@@ -775,7 +842,7 @@ void Keyboard::clear()
 
 void Keyboard::saveKeyboardSettings()
 {
-    QSettings *s = new QSettings();
+    QSettings s;
 
     QList<QMap<int, kbDets>> kbs = { defaultMap, ctrlMap, shiftMap, altMap, metaMap };
 
@@ -784,7 +851,7 @@ void Keyboard::saveKeyboardSettings()
         QMap<int, kbDets>::const_iterator k = kbs.at(i).constBegin();
         while(k != kbs.at(i).constEnd())
         {
-            s->setValue("keyboard/" + k.value().keySeq, k.value().keyFunc);
+            s.setValue("keyboard/" + k.value().keySeq, k.value().keyFunc);
             k++;
         }
     }

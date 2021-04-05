@@ -6,10 +6,12 @@
 #include <QLineEdit>
 #include <QKeyEvent>
 #include <QSettings>
+#include <QVector>
+#include <QMap>
 
 //TODO: Change to QMap / QList
-#include <unordered_map>
-#include <functional>
+//#include <unordered_map>
+//#include <functional>
 
 #include "ProcessDataStream.h"
 #include "SocketConnection.h"
@@ -27,9 +29,11 @@ class Keyboard : public QObject
     Q_OBJECT
 
     public:
-        Keyboard(ProcessDataStream *d, TerminalView *v);
+        Keyboard(TerminalView *v);
         void setMap();
         bool processKey();
+        void setDataStream(ProcessDataStream *d);
+        QMap<QString, QStringList> getMap();
 
     signals:
         void setLock(QString xsystem);
@@ -40,6 +44,7 @@ class Keyboard : public QObject
         void unlockKeyboard();
         void lockKeyboard();
         void setMapping(QString key, QString function);
+        void setNewMap(QMap<QString, QStringList> newMap);
         void saveKeyboardSettings();
 
     protected:
@@ -47,7 +52,45 @@ class Keyboard : public QObject
 
     private:
 
+        typedef void (Keyboard::*kbFunction)();
+
+        struct kbDets
+        {
+                kbFunction kbFunc;
+                QString keySeq;
+                QString keyFunc;
+        };
+
+        struct keyStruct
+        {
+            int key;
+            int modifiers;
+            int nativeKey;
+            QChar keyChar;
+            QMap<int, kbDets> *map;
+            bool isMapped;
+            bool mustMap;
+            kbFunction mapped;
+        };
+
         ProcessDataStream *datastream;
+        TerminalView *view;
+
+        QClipboard *clip;       // Clipboard
+
+        QMap<int,kbDets> defaultMap;
+        QMap<int, kbDets> altMap;
+        QMap<int, kbDets> ctrlMap;
+        QMap<int, kbDets> shiftMap;
+        QMap<int, kbDets> metaMap;
+
+        QMap<QString, kbFunction> functionMap;
+
+        keyStruct kbBuffer[1024];
+
+        int bufferPos;
+        int bufferEnd;
+        int keyCount;
 
         bool lock;
         bool insMode;
@@ -112,47 +155,7 @@ class Keyboard : public QObject
         void clearBufferEntry();
 
         void setFactoryMaps();
+        void getMapping(QString keySeq, QStringList &list, QMap<int, kbDets>);
 
-        typedef void (Keyboard::*kbFunction)();
-
-        typedef struct
-        {
-                kbFunction kbFunc;
-                QString keySeq;
-                QString keyFunc;
-        } kbDets;
-
-        QMap<int,kbDets> defaultMap;
-
-        QMap<int, kbDets> altMap;
-        QMap<int, kbDets> ctrlMap;
-        QMap<int, kbDets> shiftMap;
-        QMap<int, kbDets> metaMap;
-
-
-        typedef struct
-        {
-            int key;
-            int modifiers;
-            int nativeKey;
-            QChar keyChar;
-            QMap<int, kbDets> *map;
-            bool isMapped;
-            bool mustMap;
-            kbFunction mapped;
-        } keyStruct;
-
-        keyStruct kbBuffer[1024];
-
-        TerminalView *view;
-
-        int bufferPos;
-        int bufferEnd;
-        int keyCount;
-
-        QClipboard *clip;       // Clipboard
-
-//        std::unordered_map<QString, doSomething> functionMap;
-        QMap<QString, kbFunction> functionMap;
 };
 #endif // KEYBOARD_H
