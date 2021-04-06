@@ -157,7 +157,7 @@ void DisplayScreen::setFont(QFont font)
         QFontMetrics fm = QFontMetrics(font);
 //        QRectF boxRect = QRectF(0, 0, fm->maxWidth(), fm->lineSpacing() * 0.99);
         QRectF charBounds = fm.boundingRect("┼");
-        QRectF boxRect = QRectF(0, 0, fm.width("┼", 1) - 1, fm.lineSpacing() - 2);
+        QRectF boxRect = QRectF(0, 0, fm.width("┼", 1) - 1, fm.lineSpacing() - 5);
 
         printf("DisplayScreen   : charBounds (┼) =  %f x %f\n   boxRect = %f x %f\n", charBounds.x(), charBounds.y(), boxRect.width(), boxRect.height());
         printf("Font Width (┼)        : %d\n",fm.width("┼"));
