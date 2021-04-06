@@ -21,6 +21,7 @@ class TerminalTab : public QMdiSubWindow
 
     public:
         TerminalTab();
+        ~TerminalTab();
 
         void openConnection(QString host, int port, QString luName);
         void connectSession();

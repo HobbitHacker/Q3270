@@ -43,6 +43,13 @@ TerminalTab::TerminalTab()
 
 }
 
+TerminalTab::~TerminalTab()
+{
+    delete kbd;
+    delete settings;
+    delete gs;
+}
+
 void TerminalTab::showForm()
 {
     settings->setKeyboardMap(kbd->getMap());
@@ -172,8 +179,6 @@ void TerminalTab::closeConnection()
 
     delete screen[0];
     delete screen[1];
-    delete kbd;
-    delete settings;
 }
 
 void TerminalTab::activate(bool checked)
