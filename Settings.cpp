@@ -493,6 +493,7 @@ void Settings::saveSettings()
     }
     qs->endArray();
 
+    emit newMap(keyboardMap);
     emit saveKeyboardSettings();
 
     QMessageBox saved;
