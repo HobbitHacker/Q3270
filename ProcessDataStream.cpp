@@ -113,6 +113,12 @@ void ProcessDataStream::processStream(QByteArray &b, bool tn3270e)
         case IBM3270_RM:
         case IBM3270_CCW_RM:
             processRM();
+            buffer++;
+            break;
+        case IBM3270_RB:
+        case IBM3270_CCW_RB:
+            processRB();
+            buffer++;
             break;
         default:
             printf("\n\n[** Unrecognised WRITE command: %02X - Block Ignored **]\n\n", (uchar) *buffer);
@@ -277,6 +283,19 @@ void ProcessDataStream::processEW(bool alternate)
 
     screen->clear();
 
+}
+
+
+void ProcessDataStream::processRB()
+{
+    QByteArray screenContents;
+
+    screenContents.append(lastAID);
+
+    addCursorAddress(screenContents);
+    screen->getScreen(screenContents);
+
+    emit bufferReady(screenContents);
 }
 
 void ProcessDataStream::processWSF()
@@ -1059,6 +1078,27 @@ void ProcessDataStream::toggleRuler()
     screen->drawRuler(cursor_x, cursor_y);
 }
 
+void ProcessDataStream::addCursorAddress(QByteArray &reply)
+{
+    if (screenSize < 4096) // 12 bit
+    {
+        printf("12 bit buffer address: %02X %02X\n", 0xC0|((cursor_pos>>6)&63), cursor_pos&63);
+        fflush(stdout);
+        reply.append(0xC0|((cursor_pos>>6)&63));
+        reply.append(cursor_pos&63);
+    }
+    else if (screenSize < 16384) // 14 bit
+    {
+        reply.append((cursor_pos>>8)&63);
+        reply.append(cursor_pos&0xFF);
+    }
+    else // 16 bit
+    {
+        reply.append((cursor_pos>>8)&0xFF);
+        reply.append(cursor_pos&0xFF);
+    }
+
+}
 
 void ProcessDataStream::processAID(int aid, bool shortRead)
 {
@@ -1070,27 +1110,8 @@ void ProcessDataStream::processAID(int aid, bool shortRead)
 
     if (!shortRead)
     {
-        if (screenSize < 4096) // 12 bit
-        {
-            printf("12 bit buffer address: %02X %02X\n", 0xC0|((cursor_pos>>6)&63), cursor_pos&63);
-            fflush(stdout);
-            respBuffer.append(0xC0|((cursor_pos>>6)&63));
-            respBuffer.append(cursor_pos&63);
-        }
-        else if (screenSize < 16384) // 14 bit
-        {
-            respBuffer.append((cursor_pos>>8)&63);
-            respBuffer.append(cursor_pos&0xFF);
-        }
-        else // 16 bit
-        {
-            respBuffer.append((cursor_pos>>8)&0xFF);
-            respBuffer.append(cursor_pos&0xFF);
-        }
-
+        addCursorAddress(respBuffer);
         screen->getModifiedFields(respBuffer);
-
-//        respBuffer->dump();
     }
 
     if (aid == IBM3270_AID_CLEAR)

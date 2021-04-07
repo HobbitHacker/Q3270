@@ -42,10 +42,12 @@ class ProcessDataStream : public QObject
 	Q_OBJECT
 	
 	public:
-	
-        ProcessDataStream(TerminalView *t);
+
         QString EBCDICtoASCII();
+
         bool processing;
+
+        ProcessDataStream(TerminalView *t);
 
         void insertChar(unsigned char keycode, bool insMode);
 
@@ -84,9 +86,6 @@ class ProcessDataStream : public QObject
 
         TerminalView *terminal;
 
-//        uchar *buffer;
-        uchar *bufferCurrentPos;
-
         QByteArray::Iterator buffer;
 
         /* Which screen size we're currently using */
@@ -110,6 +109,9 @@ class ProcessDataStream : public QObject
         bool alarm;
         int lastAID;    // Last AID encountered
 
+        bool wsfProcessing;
+        int wsfLen;
+
         void setScreen(bool alternate = false);
 
         void placeChar();
@@ -119,12 +121,12 @@ class ProcessDataStream : public QObject
         void processOrders();
 
         /* 3270 Command Codes */
-        /* TODO: 3270 Command codes RB, RMA and EAU */
+        /* TODO: 3270 Command codes RMA and EAU */
         void processW();
         void processEW(bool alternate);      // Incorporates EWA
+        void processRB();
         void processWSF();
         void processRM();
-
 
         /* 3270 Orders */
         /* TODO: 3270 Orders MF, PT */
@@ -138,14 +140,12 @@ class ProcessDataStream : public QObject
         void processGE();
 
 
+        void addCursorAddress(QByteArray &reply);
         int extractBufferAddress();
         void incPos();
 
         void removeCursor();
         void addCursor();
-
-        bool wsfProcessing;
-        int wsfLen;
 
         void WSFreset();
         void WSFreadPartition();

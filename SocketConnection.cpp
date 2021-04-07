@@ -309,7 +309,7 @@ void SocketConnection::sendResponse(QByteArray &b)
 
 //    printf("buffer: %d for %d bytes", b->address(), b->size());
     fflush(stdout);
-//    b->dump(true);
+    dump(b, "Sending data");
     dataStream.writeRawData(b.constData(), b.size());
 
     response.clear();
@@ -462,13 +462,16 @@ void SocketConnection::dump(QByteArray &a, QString title)
     for (int i = 0; i < a.size(); i++)
     {
         if (w == 0)
+        {
             printf("%4.4X ", i);
+            bytes = "";
+        }
 
         printf("%2.2X ", (uchar) a.at(i));
         if (QChar(a.at(i)).isPrint())
-            bytes = bytes + a.at(i);
+            bytes.append(a.at(i));
         else
-            bytes = bytes + ".";
+            bytes.append(".");
         if (++w == 32) {
             w = 0;
             printf ("| %-32.32s |\n", bytes.toLatin1().data());

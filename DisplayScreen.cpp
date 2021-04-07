@@ -296,7 +296,6 @@ void DisplayScreen::setChar(int pos, short unsigned int c, bool move)
             if (!charAttr.colour_default)
             {
                 attrs[pos].colNum = charAttr.colNum;
-                printf("<CH %s>", colName[attrs[pos].colNum]);
             }
             else
             {
@@ -307,10 +306,6 @@ void DisplayScreen::setChar(int pos, short unsigned int c, bool move)
             if (!charAttr.reverse_default)
             {
                 attrs[pos].reverse = charAttr.reverse;
-                if (attrs[pos].reverse)
-                {
-                    printf("<CH reverse>");
-                }
             }
             else
             {
@@ -321,10 +316,6 @@ void DisplayScreen::setChar(int pos, short unsigned int c, bool move)
             if (!charAttr.uscore_default)
             {
                 attrs[pos].uscore = charAttr.uscore;
-                if (attrs[pos].uscore)
-                {
-                    printf("<CH uscore>");
-                }
             }
             else
             {
@@ -350,7 +341,6 @@ void DisplayScreen::setChar(int pos, short unsigned int c, bool move)
         {
             cell.at(pos)->setBrush(palette[attrs[pos].colNum]);
             glyph.at(pos)->setBrush(palette[0]);
-            printf("<reverse>");
         }
         else
         {
@@ -370,7 +360,6 @@ void DisplayScreen::setChar(int pos, short unsigned int c, bool move)
  //       uscore[pos]->pen().setCosmetic(true);
  //       uscore[pos]->pen().setColor(palette[attrs[pos].colNum]);
 
-        printf("<uscore %d>", attrs[pos].colNum);
     }
     else
     {
@@ -439,16 +428,32 @@ void DisplayScreen::setCharAttr(unsigned char extendedType, unsigned char extend
             }
             break;
         case IBM3270_EXT_FG_COLOUR:
-            charAttr.colour = palette[extendedValue&7];
-            charAttr.colNum = extendedValue&7;
-            charAttr.colour_default = false;
-            printf("fg colour %s", colName[charAttr.colNum]);
+            if (extendedValue == IBM3270_EXT_DEFAULT)
+            {
+                charAttr.colour_default = true;
+                printf("fg colour default");
+            }
+            else
+            {
+                charAttr.colour = palette[extendedValue&7];
+                charAttr.colNum = extendedValue&7;
+                charAttr.colour_default = false;
+                printf("fg colour %s", colName[charAttr.colNum]);
+            }
             break;
         case IBM3270_EXT_BG_COLOUR:
-            charAttr.colour = palette[extendedValue&7];
-            charAttr.colNum = extendedValue&7;
-            charAttr.colour_default = false;
-            printf("bg colour %s", colName[charAttr.colNum]);
+            if (extendedValue == IBM3270_EXT_DEFAULT)
+            {
+                charAttr.colour_default = true;
+                printf("bg colour default");
+            }
+            else
+            {
+                charAttr.colour = palette[extendedValue&7];
+                charAttr.colNum = extendedValue&7;
+                charAttr.colour_default = false;
+                printf("bg colour %s", colName[charAttr.colNum]);
+            }
             break;
         default:
             printf(" ** Extended Type %02X Not implemented **", extendedType);
@@ -1100,17 +1105,62 @@ void DisplayScreen::dumpFields()
 
 void DisplayScreen::dumpDisplay()
 {
-    printf("---- SCREEN ----");
+    printf("---- SCREEN ----\n");
+
+    QString ascii;
+
     for (int i = 0; i < screenPos_max; i++)
     {
-        if (i % screen_x == 0)
+        if (i % screen_x == 0 && i > 0)
         {
-            printf("\n");
+
+            printf("| %s |\n", ascii.toLatin1().data());
+            ascii = "";
         }
+        ascii.append(glyph.at(i)->text());
         printf("%2.2X ", glyph.at(i)->getEBCDIC());
     }
+
+    printf("| %s |\n", ascii.toLatin1().data());
+
     printf("\n---- SCREEN ----\n");
     fflush(stdout);
+}
+
+void DisplayScreen::getScreen(QByteArray &buffer)
+{
+    dumpDisplay();
+
+    for (int i = 0; i < screenPos_max; i++)
+    {
+        if (attrs[i].fieldStart)
+        {
+            buffer.append(IBM3270_SF);
+            uchar attr;
+            if (attrs[i].display & !attrs[i].pen)
+            {
+                attr = 0x00;
+            }
+            else if (attrs[i].display & attrs[i].pen)
+            {
+                attr = 0x01;
+            }
+            else if(attrs[i].intensify)
+            {
+                attr = 0x10;
+            }
+            else
+            {
+                attr = 0x11;
+            }
+            buffer.append(twelveBitBufferAddress[attrs[i].mdt | attr << 3 | attrs[i].num << 4 | attrs[i].prot << 5]);
+
+        }
+        else
+        {
+            buffer.append(glyph.at(i)->getEBCDIC());
+        }
+    }
 }
 
 void DisplayScreen::dumpAttrs(int pos)

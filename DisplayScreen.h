@@ -69,6 +69,8 @@ class DisplayScreen : public QGraphicsScene
         void toggleRuler();
         void drawRuler(int x, int y);
 
+        void getScreen(QByteArray &buffer);
+
         void dumpFields();
         void dumpDisplay();
         void dumpAttrs(int pos);
