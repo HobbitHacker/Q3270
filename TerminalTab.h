@@ -3,7 +3,7 @@
 
 #include "ProcessDataStream.h"
 #include "TerminalView.h"
-#include "3270.h"
+#include "Q3270.h"
 #include "SocketConnection.h"
 #include "Keyboard.h"
 #include "Settings.h"

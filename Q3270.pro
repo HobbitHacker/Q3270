@@ -30,10 +30,10 @@ SOURCES += \
 
 HEADERS += \
     DisplayScreen.h \
-    3270.h \
     Host.h \
     Keyboard.h \
     ProcessDataStream.h \
+    Q3270.h \
     Settings.h \
     TerminalTab.h \
     TerminalView.h \

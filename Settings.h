@@ -8,7 +8,7 @@
 #include <QMessageBox>
 #include <QTableWidgetItem>
 
-#include "3270.h"
+#include "Q3270.h"
 
 namespace Ui {
     class Settings;

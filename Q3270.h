@@ -108,6 +108,7 @@
 #define IBM3270_AID_PA2   0x6E
 #define IBM3270_AID_PA3   0x6B
 
+
 #define IBM3270_AID_CLEAR 0x6D
 
 #define TELOPT_TN3270E 0x28 /* TN3270 Extended */

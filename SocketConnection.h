@@ -14,7 +14,7 @@
 
 #include <arpa/telnet.h>
 
-#include "3270.h"
+#include "Q3270.h"
 #include "ProcessDataStream.h"
 
 class QHostAddress;

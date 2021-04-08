@@ -16,7 +16,7 @@
 #include "ProcessDataStream.h"
 #include "SocketConnection.h"
 #include "TerminalView.h"
-#include "3270.h"
+#include "Q3270.h"
 
 //#define CALL_MEMBER_FN(object,ptrToMember)  ((object).*(ptrToMember))
 

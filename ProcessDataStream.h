@@ -26,7 +26,7 @@
 #include <QDebug>
 
 #include "DisplayScreen.h"
-#include "3270.h"
+#include "Q3270.h"
 #include "TerminalView.h"
 #include <arpa/telnet.h>
 

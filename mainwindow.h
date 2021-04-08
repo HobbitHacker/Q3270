@@ -24,7 +24,7 @@
 #include "Keyboard.h"
 #include "TerminalView.h"
 #include "Settings.h"
-#include "3270.h"
+#include "Q3270.h"
 #include "TerminalTab.h"
 #include "Host.h"
 

@@ -7,7 +7,7 @@
 #include <QStyleOptionGraphicsItem>
 #include <QGraphicsSimpleTextItem>
 
-#include "3270.h"
+#include "Q3270.h"
 
 class Text : public QObject, public QGraphicsSimpleTextItem
 {
