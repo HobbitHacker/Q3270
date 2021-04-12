@@ -1196,8 +1196,16 @@ void DisplayScreen::getScreen(QByteArray &buffer)
             {
                 attr = 0x11;
             }
-            buffer.append(twelveBitBufferAddress[glyph.at(i)->isMdtOn() | attr << 3 | glyph.at(i)->isNumeric() << 4 | glyph.at(i)->isProtected() << 5]);
 
+            int byte = twelveBitBufferAddress[glyph.at(i)->isMdtOn() | attr << 3 | glyph.at(i)->isNumeric() << 4 | glyph.at(i)->isProtected() << 5];
+
+            buffer.append(byte);
+
+            // Double up 0xFF bytes
+            if (byte == 0xFF)
+            {
+                buffer.append(byte);
+            }
         }
         else
         {

@@ -893,6 +893,12 @@ void ProcessDataStream::addBytes(QByteArray &b, uchar *s, int l)
     for (int i = 0; i < l; i++)
     {
         b.append(s[i]);
+
+        //Double up 0xFF bytes
+        if (s[i] == 0xFF)
+        {
+            b.append(0xFF);
+        }
     }
 }
 
