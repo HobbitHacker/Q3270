@@ -73,6 +73,7 @@ class MainWindow : public QMainWindow
 
     void updateMRUlist(QString address);
     TerminalTab *newTab();
+    Host *connectHost;
 
     int maxMruCount;
     int subWindow;

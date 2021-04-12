@@ -41,7 +41,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new(Ui::MainWi
     connect(ui->mdiArea, &QMdiArea::subWindowActivated, this, &MainWindow::updateMenuEntries);
 
     sessionGroup = new QActionGroup(this);
-    //sessionGroup->setParent(this);
+
+    // Host connection dialog
+    connectHost = new Host();
 
     subWindow = 0;
 }
@@ -122,17 +124,17 @@ TerminalTab *MainWindow::newTab()
 MainWindow::~MainWindow()
 {
     delete ui;
+    delete connectHost;
 }
 
 void MainWindow::menuConnect()
 {
-    Host *h = new Host();
 
-    if (h->exec() == QDialog::Accepted)
+    if (connectHost->exec() == QDialog::Accepted)
     {
         TerminalTab *t = (TerminalTab *)(ui->mdiArea->activeSubWindow());
-        t->openConnection(h->hostName, h->port, h->luName);
-        updateMRUlist((h->luName.compare("") ? h->luName + "@" : "") + h->hostName + ":" + QString::number(h->port));
+        t->openConnection(connectHost->hostName, connectHost->port, connectHost->luName);
+        updateMRUlist((connectHost->luName.compare("") ? connectHost->luName + "@" : "") + connectHost->hostName + ":" + QString::number(connectHost->port));
         ui->actionDisconnect->setEnabled(true);
         ui->actionConnect->setDisabled(true);
         ui->actionReconnect->setDisabled(true);
