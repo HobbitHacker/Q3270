@@ -98,16 +98,6 @@ TerminalTab *MainWindow::newTab()
         ui->menuWindow->addSeparator();
     }
 
-//    QWidgetAction *labelAct = new QWidgetAction(ui->menuWindow);
-//    QLabel *label = new QLabel("Session " + QString::number(++subWindow), ui->menuWindow);
-//    label->setAlignment(Qt::AlignRight);
-//    labelAct->setDefaultWidget(label);
-//    labelAct->connect(labelAct, &QWidgetAction::triggered, t, [this, t]() { ui->mdiArea->setActiveSubWindow(t); } );
-//    ui->menuWindow->addAction(labelAct);
-//    t->setLabel(label);
-//    connect(ui->menuWindow, &QMenu::aboutToShow, t, &TerminalTab::updateIcon);
-
-
     QAction *act = new QAction("Session " + QString::number(++subWindow));
     act->setActionGroup(sessionGroup);
     act->setCheckable(true);
