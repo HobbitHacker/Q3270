@@ -1,18 +1,18 @@
-#include "text.h"
+#include "Glyph.h"
 #include <QDebug>
 
-Text::Text(int x, int y, QGraphicsItem* parent) : QGraphicsSimpleTextItem(parent)
+Glyph::Glyph(int x, int y, QGraphicsItem* parent) : QGraphicsSimpleTextItem(parent)
 {
     pos_x = x;
     pos_y = y;
 }
 
-QRectF Text::boundingRect() const
+QRectF Glyph::boundingRect() const
 {
     return QGraphicsSimpleTextItem::boundingRect();
 }
 
-void Text::setText(const QString text, unsigned char ebcdic, bool graphic)
+void Glyph::setText(const QString text, unsigned char ebcdic, bool graphic)
 {
     if (ebcdic == 0x00)
     {
@@ -27,7 +27,7 @@ void Text::setText(const QString text, unsigned char ebcdic, bool graphic)
     this->ebcdic = ebcdic;
 }
 
-int Text::type() const
+int Glyph::type() const
 {
     return Type;
 }

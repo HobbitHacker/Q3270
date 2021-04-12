@@ -9,7 +9,7 @@
 #include <QDebug>
 #include <QTimer>
 
-#include "text.h"
+#include "Glyph.h"
 #include "Q3270.h"
 
 class DisplayScreen : public QGraphicsScene
@@ -284,7 +284,7 @@ class DisplayScreen : public QGraphicsScene
         int screen_y;                /* Max Rows */
         int screenPos_max;           /* Max position on screen */
 
-        QVector<Text *> glyph;                /* Character on screen */
+        QVector<Glyph *> glyph;                /* Character on screen */
         QVector<QGraphicsRectItem *> cell;    /* Screen slot */
         QVector<QGraphicsLineItem *> uscore;  /* Underscores */
 

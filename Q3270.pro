@@ -20,6 +20,7 @@ DEFINES += QT_DEPRECATED_WARNINGS QT_FLUSH_PAINT=1 \
 
 SOURCES += \
     DisplayScreen.cpp \
+    Glyph.cpp \
     Host.cpp \
     Keyboard.cpp \
     ProcessDataStream.cpp \
@@ -28,11 +29,11 @@ SOURCES += \
     TerminalView.cpp \
     main.cpp \
     mainwindow.cpp \
-    SocketConnection.cpp \
-    text.cpp
+    SocketConnection.cpp
 
 HEADERS += \
     DisplayScreen.h \
+    Glyph.h \
     Host.h \
     Keyboard.h \
     ProcessDataStream.h \
@@ -41,8 +42,7 @@ HEADERS += \
     TerminalTab.h \
     TerminalView.h \
     mainwindow.h \
-    SocketConnection.h \
-    text.h
+    SocketConnection.h
 
 FORMS += \
     About.ui \

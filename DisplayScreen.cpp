@@ -39,7 +39,7 @@ DisplayScreen::DisplayScreen(int screen_x, int screen_y)
             cell.at(pos)->setPen(Qt::NoPen);
             cell.at(pos)->setPos(x_pos, y_pos);
 
-            glyph.replace(pos, new Text(x_pos, y_pos, cell.at(pos)));
+            glyph.replace(pos, new Glyph(x_pos, y_pos, cell.at(pos)));
             glyph.at(pos)->setFlag(QGraphicsItem::ItemIsSelectable);
 
             uscore.replace(pos, new QGraphicsLineItem(0, 0, gridSize_X, 0));

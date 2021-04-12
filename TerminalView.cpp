@@ -6,7 +6,7 @@
   */
 
 #include "TerminalView.h"
-#include "text.h"
+#include "Glyph.h"
 
 TerminalView::TerminalView()
 {
@@ -171,9 +171,9 @@ void TerminalView::mouseReleaseEvent(QMouseEvent *event)
         QList<QGraphicsItem *>cells = current->items(mapToScene(rect), Qt::IntersectsItemShape, Qt::AscendingOrder);
         for(int i = 0; i < cells.size(); i++)
         {
-            if (cells.at(i)->type() == Text::Type)
+            if (cells.at(i)->type() == Glyph::Type)
             {
-                Text *a = dynamic_cast<Text *>(cells.at(i));
+                Glyph *a = dynamic_cast<Glyph *>(cells.at(i));
                 selection.append(a);
                 a->setSelected(true);
             }

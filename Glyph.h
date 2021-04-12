@@ -1,5 +1,5 @@
-#ifndef TEXT_H
-#define TEXT_H
+#ifndef GLYPH_H
+#define GLYPH_H
 
 #include <QRectF>
 #include <QObject>
@@ -9,13 +9,13 @@
 
 #include "Q3270.h"
 
-class Text : public QObject, public QGraphicsSimpleTextItem
+class Glyph : public QObject, public QGraphicsSimpleTextItem
 {
 
     Q_OBJECT
 
     public:
-        Text(int x, int y, QGraphicsItem* parent);
+        Glyph(int x, int y, QGraphicsItem* parent);
         QRectF boundingRect() const;
 
         enum { Type = UserType + 1 };
@@ -23,7 +23,7 @@ class Text : public QObject, public QGraphicsSimpleTextItem
         int type() const;
 
         void setText(const QString text, uchar ebcdic, bool graphic);
-        void copyTextFrom(Text *source);
+        void copyTextFrom(Glyph *source);
 
         // Getters, inline for speed
         inline uchar getEBCDIC()   { return ebcdic; };
@@ -101,4 +101,4 @@ class Text : public QObject, public QGraphicsSimpleTextItem
 
 };
 
-#endif // TEXT_H
+#endif // GLYPH_H

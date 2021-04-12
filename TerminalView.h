@@ -63,7 +63,7 @@ class TerminalView : public QGraphicsView
 
         QTimer *blinker;
         QTimer *cursorBlinker;
-        QList <Text *>selection;
+        QList <Glyph *>selection;
 
 };
 
