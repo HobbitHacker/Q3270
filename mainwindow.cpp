@@ -1,5 +1,6 @@
 #include "ui_mainwindow.h"
 #include "mainwindow.h"
+#include "ui_About.h"
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new(Ui::MainWindow))
 {
@@ -111,6 +112,7 @@ TerminalTab *MainWindow::newTab()
     act->setChecked(true);
     ui->menuWindow->addAction(act);
     connect(act, &QAction::triggered, t, [this, t, act]() { ui->mdiArea->setActiveSubWindow(t); act->setChecked(true); } );
+    connect(t, &TerminalTab::connectionClosed, this, &MainWindow::updateMenuEntries);
 
     t->setWindowTitle("Session " + QString::number(subWindow));
 
@@ -171,6 +173,21 @@ void MainWindow::menuTerminalSettings()
     fflush(stdout);
 }
 
+void MainWindow::menuAbout()
+{
+    QDialog *about = new QDialog(0,0);
+    Ui::About *ab = new Ui::About;
+    ab->setupUi(about);
+
+    QString v = QString("Version ").append(Q3270_VERSION);
+    ab->VersionNumber->setText(v);
+
+    about->exec();
+
+    delete ab;
+    delete about;
+}
+
 void MainWindow::menuTabbedView(bool tabView)
 {
     if (tabView)
@@ -193,9 +210,11 @@ void MainWindow::updateMenuEntries()
         {
             ui->actionDisconnect->setEnabled(true);
             ui->actionConnect->setDisabled(true);
+            ui->actionReconnect->setDisabled(true);
         }
         else
         {
+            ui->actionReconnect->setEnabled(true);
             ui->actionDisconnect->setDisabled(true);
             ui->actionConnect->setEnabled(true);
         }

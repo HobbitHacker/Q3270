@@ -26,6 +26,7 @@ class SocketConnection : public QObject
 
     public:
         explicit SocketConnection(QString termName);
+        ~SocketConnection();
 
         void sendResponse(QByteArray &b);
 
@@ -43,6 +44,7 @@ class SocketConnection : public QObject
         void onReadyRead();
 
     private:
+
         enum TelnetState {
             TELNET_STATE_DATA,
             TELNET_STATE_IAC,

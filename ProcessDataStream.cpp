@@ -479,7 +479,7 @@ void ProcessDataStream::processRA()
         {
             screen->setGraphicEscape();
         }
-        screen->setChar(offset, newChar, false);
+        screen->setChar(offset, newChar, false, false);
     }
 
     primary_pos = endPos % screenSize;
@@ -931,10 +931,10 @@ void ProcessDataStream::placeChar(uchar ebcdic)
     switch(ebcdic)
     {
         case IBM3270_CHAR_NULL:
-            screen->setChar(primary_pos, 0x00, false);
+            screen->setChar(primary_pos, 0x00, false, false);
             break;
         default:
-            screen->setChar(primary_pos, ebcdic, false);
+            screen->setChar(primary_pos, ebcdic, false, false);
     }
 
     incPos();

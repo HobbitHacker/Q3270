@@ -26,7 +26,6 @@ class TerminalTab : public QMdiSubWindow
         void openConnection(QString host, int port, QString luName);
         void connectSession();
         void closeConnection();
-        void connectionClosed();
 
         int terminalWidth();
         int terminalHeight();
@@ -49,6 +48,9 @@ class TerminalTab : public QMdiSubWindow
         TerminalView *view;
 
         QColor palette[8];
+
+    signals:
+        void connectionClosed();
 
     public slots:
 

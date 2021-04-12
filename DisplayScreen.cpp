@@ -20,8 +20,6 @@ DisplayScreen::DisplayScreen(int screen_x, int screen_y)
     blinkShow = false;
     cursorShow = true;
 
-    attrs = new Attributes[screenPos_max];
-
     // Build 3270 display matrix
     glyph.resize(screenPos_max);
     uscore.resize(screenPos_max);
@@ -124,7 +122,6 @@ DisplayScreen::DisplayScreen(int screen_x, int screen_y)
 
 DisplayScreen::~DisplayScreen()
 {
-    delete attrs;
 }
 
 int DisplayScreen::width()
@@ -195,18 +192,18 @@ void DisplayScreen::resetColours()
 {
     for (int i = 0; i < screenPos_max; i++)
     {
-        if (attrs[i].reverse)
+        if (glyph.at(i)->isReverse())
         {
-            cell.at(i)->setBrush(palette[attrs[i].colNum]);
+            cell.at(i)->setBrush(palette[glyph.at(i)->getColour()]);
             glyph.at(i)->setBrush(palette[0]);
             printf("<reverse>");
         }
         else
         {
-            glyph.at(i)->setBrush(palette[attrs[i].colNum]);
+            glyph.at(i)->setBrush(palette[glyph.at(i)->getColour()]);
             cell.at(i)->setBrush(palette[0]);
         }
-        if (!attrs[i].display)
+        if (!glyph.at(i)->isDisplay())
         {
             glyph.at(i)->setBrush(cell.at(i)->brush());
         }
@@ -233,26 +230,23 @@ void DisplayScreen::clear()
         glyph.at(i)->setBrush(palette[1]);
         glyph.at(i)->setText(0x00, 0x00, false);
 
-        attrs[i].colNum = 1;
+        glyph.at(i)->setColour(1);
 
-        attrs[i].askip = false;
-        attrs[i].num = false;
-        attrs[i].mdt = false;
-        attrs[i].prot = false;
+        glyph.at(i)->setFieldStart(false);
 
-        attrs[i].fieldStart = false;
+        glyph.at(i)->setNumeric(false);
+        glyph.at(i)->setMDT(false);
+        glyph.at(i)->setProtected(false);
+        glyph.at(i)->setDisplay(true);
+        glyph.at(i)->setPenSelect(false);
+        glyph.at(i)->setIntensify(false);
 
-        attrs[i].display = true;
-        attrs[1].pen = false;
-        attrs[i].intensify = false;
+        glyph.at(i)->setExtended(false);
+        glyph.at(i)->setUScore(false);
+        glyph.at(i)->setReverse(false);
+        glyph.at(i)->setBlink(false);
 
-        attrs[i].extended = false;
-        attrs[i].uscore = false;
-
-        attrs[i].reverse = false;
-        attrs[i].blink = false;
-
-        attrs[i].charAttr = false;
+        glyph.at(i)->setCharAttrs(false);
 
     }
     resetCharAttr();
@@ -260,14 +254,14 @@ void DisplayScreen::clear()
     geActive = false;
 }
 
-void DisplayScreen::setChar(int pos, short unsigned int c, bool move)
+void DisplayScreen::setChar(int pos, short unsigned int c, bool move, bool fromKB)
 {
 
     int lastField;
 
-    if (attrs[pos].fieldStart)
+    if (glyph.at(pos)->isFieldStart())
     {
-        attrs[pos].fieldStart = false;
+        glyph.at(pos)->setFieldStart(false);
         lastField = resetFieldAttrs(pos);
     }
     else
@@ -275,7 +269,11 @@ void DisplayScreen::setChar(int pos, short unsigned int c, bool move)
         lastField = findField(pos);
     }
 
-    attrs[pos].charAttr = useCharAttr;
+    glyph.at(pos)->setCharAttrs(false);
+    if (!fromKB)
+    {
+        glyph.at(pos)->setCharAttrs(useCharAttr);
+    }
 
     if(!geActive)
     {
@@ -289,62 +287,62 @@ void DisplayScreen::setChar(int pos, short unsigned int c, bool move)
 
     if (!move)
     {
-        if (attrs[pos].charAttr)
+        if (glyph.at(pos)->hasCharAttrs())
         {
             // Set colour
 
             if (!charAttr.colour_default)
             {
-                attrs[pos].colNum = charAttr.colNum;
+                glyph.at(pos)->setColour(charAttr.colNum);
             }
             else
             {
-                attrs[pos].colNum = attrs[lastField].colNum;
+                glyph.at(pos)->setColour(glyph.at(lastField)->getColour());
             }
 
             // Reverse video
             if (!charAttr.reverse_default)
             {
-                attrs[pos].reverse = charAttr.reverse;
+                glyph.at(pos)->setReverse(charAttr.reverse);
             }
             else
             {
-                attrs[pos].reverse = attrs[lastField].reverse;
+                glyph.at(pos)->setReverse(glyph.at(lastField)->isReverse());
             }
 
             // Underscore
             if (!charAttr.uscore_default)
             {
-                attrs[pos].uscore = charAttr.uscore;
+                glyph.at(pos)->setUScore(charAttr.uscore);
             }
             else
             {
-                attrs[pos].uscore = attrs[lastField].uscore;
+                glyph.at(pos)->setUScore(glyph.at(lastField)->isUScore());
             }
         }
         else
         {
-            attrs[pos].uscore = attrs[lastField].uscore;
-            attrs[pos].reverse = attrs[lastField].reverse;
-            attrs[pos].colNum = attrs[lastField].colNum;
+            glyph.at(pos)->setUScore(glyph.at(lastField)->isUScore());
+            glyph.at(pos)->setReverse(glyph.at(lastField)->isReverse());
+            glyph.at(pos)->setColour(glyph.at(lastField)->getColour());
         }
     }
 
     // Colour - non-display / reverse / normal
-    if (!attrs[pos].display)
+    if (!glyph.at(pos)->isDisplay())
     {
         glyph.at(pos)->setBrush(cell.at(pos)->brush());
     }
     else
     {
-        if (attrs[pos].reverse)
+        if (glyph.at(pos)->isReverse())
         {
-            cell.at(pos)->setBrush(palette[attrs[pos].colNum]);
+            cell.at(pos)->setBrush(palette[glyph.at(pos)->getColour()]);
             glyph.at(pos)->setBrush(palette[0]);
         }
         else
         {
-            glyph.at(pos)->setBrush(palette[attrs[pos].colNum]);
+            glyph.at(pos)->setBrush(palette[glyph.at(pos)->getColour()]);
             cell.at(pos)->setBrush(palette[0]);
         }
     }
@@ -353,10 +351,10 @@ void DisplayScreen::setChar(int pos, short unsigned int c, bool move)
     // Underscore processing
     //
 
-    if (attrs[pos].uscore)
+    if (glyph.at(pos)->isUScore())
     {
         uscore.at(pos)->setVisible(true);
-        uscore.at(pos)->setPen(QPen(palette[attrs[pos].colNum],0));
+        uscore.at(pos)->setPen(QPen(palette[glyph.at(pos)->getColour()],0));
  //       uscore[pos]->pen().setCosmetic(true);
  //       uscore[pos]->pen().setColor(palette[attrs[pos].colNum]);
 
@@ -482,44 +480,46 @@ void DisplayScreen::setField(int pos, unsigned char c, bool sfe)
 {
     printf("3270 Attribute %2.2X at %d", c, pos);
 
-    attrs[pos].prot = (c>>5)&1;
-    attrs[pos].num  = (c>>4)&1;
-    attrs[pos].display = (((c>>2)&3) != 3);
-    attrs[pos].pen = (( c >> 2) & 3) == 2 || (( c >> 2) & 3) == 1;
-    attrs[pos].intensify = ((c >> 2) & 3) == 2;
-    attrs[pos].mdt = c & 1;
-    attrs[pos].extended = sfe;
+    glyph.at(pos)->setProtected((c>>5) & 1);
+    glyph.at(pos)->setNumeric((c>>4) & 1);
+    glyph.at(pos)->setDisplay((((c>>2)&3) != 3));
+    glyph.at(pos)->setPenSelect((( c >> 2) & 3) == 2 || (( c >> 2) & 3) == 1);
+    glyph.at(pos)->setIntensify(((c >> 2) & 3) == 2);
+    glyph.at(pos)->setMDT(c & 1);
+    glyph.at(pos)->setExtended(sfe);
 
-    attrs[pos].charAttr = false;
-    attrs[pos].askip = (attrs[pos].prot & attrs[pos].num);
+    glyph.at(pos)->setCharAttrs(false);
+
+    //TODO: Replace aksip attribute with inline code compare of prot & num
+//    glyph.at(pos)->setAutoSkip(glyph.at(pos)->isProtected() & glyph.at(pos)->isNumeric());
 
     //    printf("P:%d N:%d D:%d L:%d I:%d M:%d A:%d\n", f.prot, f.num, f.display, f.pen, f.intensify, f.mdt, f.askip);
 
     if (!sfe)
     {
-        if (attrs[pos].prot && !attrs[pos].intensify)
+        if (glyph.at(pos)->isProtected() && !glyph.at(pos)->isIntensify())
         {
-            attrs[pos].colNum = 8;  /* Protected (Blue) */
+            glyph.at(pos)->setColour(8);  /* Protected (Blue) */
         }
-        else if (attrs[pos].prot && attrs[pos].intensify)
+        else if (glyph.at(pos)->isProtected() && glyph.at(pos)->isIntensify())
         {
-            attrs[pos].colNum = 11;  /* Protected, Intensified (White) */
+            glyph.at(pos)->setColour(11);  /* Protected, Intensified (White) */
         }
-        else if (!attrs[pos].prot && !attrs[pos].intensify)
+        else if (!glyph.at(pos)->isProtected() && !glyph.at(pos)->isIntensify())
         {
-            attrs[pos].colNum = 10;  /* Unprotected (Green) */
+            glyph.at(pos)->setColour(10);  /* Unprotected (Green) */
         }
         else
         {
-            attrs[pos].colNum = 9;  /* Unrprotected, Intensified (Red) */
+            glyph.at(pos)->setColour(9);  /* Unrprotected, Intensified (Red) */
         }
 
-        attrs[pos].uscore = false;
-        attrs[pos].reverse = false;
-        attrs[pos].blink = false;
+        glyph.at(pos)->setUScore(false);
+        glyph.at(pos)->setReverse(false);
+        glyph.at(pos)->setBlink(false);
     }
 
-    if(!attrs[pos].prot)
+    if(!glyph.at(pos)->isProtected())
     {
         printf("(unprot,");
     }
@@ -527,27 +527,27 @@ void DisplayScreen::setField(int pos, unsigned char c, bool sfe)
     {
         printf("(prot,");
     }
-    if(attrs[pos].intensify)
+    if(glyph.at(pos)->isIntensify())
     {
         printf("intens,");
     }
-    if (attrs[pos].askip)
+    if (glyph.at(pos)->isAutoSkip())
     {
         printf("askip,");
     }
-    if (!attrs[pos].display)
+    if (!glyph.at(pos)->isDisplay())
     {
         printf("nondisp,");
     }
-    if (attrs[pos].pen)
+    if (glyph.at(pos)->isPenSelect())
     {
         printf("pen,");
     }
-    if (attrs[pos].num)
+    if (glyph.at(pos)->isNumeric())
     {
         printf("num,");
     }
-    if (attrs[pos].mdt)
+    if (glyph.at(pos)->isMdtOn())
     {
         printf("mdt,");
     }
@@ -567,59 +567,59 @@ void DisplayScreen::resetExtended(int pos)
 {
     resetExtendedHilite(pos);
 
-    attrs[pos].colNum = 1;
+    glyph.at(pos)->setColour(1);
 
-    attrs[pos].display = true;
-    attrs[pos].num = false;
-    attrs[pos].mdt = false;
-    attrs[pos].pen = false;
-    attrs[pos].askip = false;
-    attrs[pos].prot = false;
+    glyph.at(pos)->setDisplay(true);
+    glyph.at(pos)->setNumeric(false);
+    glyph.at(pos)->setMDT(false);
+    glyph.at(pos)->setPenSelect(false);
+    glyph.at(pos)->setProtected(false);
 }
 
 
 void DisplayScreen::resetExtendedHilite(int pos)
 {
-    attrs[pos].uscore = false;
-    attrs[pos].blink = false;
-    attrs[pos].reverse = false;
+    glyph.at(pos)->setUScore(false);
+    glyph.at(pos)->setBlink(false);
+    glyph.at(pos)->setReverse(false);
 }
 
 void DisplayScreen::setExtendedColour(int pos, bool foreground, unsigned char c)
 {
-    attrs[pos].colNum = c&7;
-    attrs[pos].reverse = !foreground;
+    //TODO: Default colour?
+    glyph.at(pos)->setColour(c&7);
+    glyph.at(pos)->setReverse(!foreground);
     if(foreground)
     {
-        printf(" %s]", colName[attrs[pos].colNum]);
+        printf(" %s]", colName[glyph.at(pos)->getColour()]);
     }
 }
 
 void DisplayScreen::setExtendedBlink(int pos)
 {
-    attrs[pos].reverse = false;
-    attrs[pos].blink = true;
+    glyph.at(pos)->setReverse(false);
+    glyph.at(pos)->setBlink(true);
     printf("[Blink]");
 }
 
 void DisplayScreen::setExtendedReverse(int pos)
 {
-    attrs[pos].blink = false;
-    attrs[pos].reverse = true;
+    glyph.at(pos)->setBlink(false);
+    glyph.at(pos)->setReverse(true);
     printf("[Reverse]");
 }
 
 void DisplayScreen::setExtendedUscore(int pos)
 {
-    attrs[pos].uscore = true;
+    glyph.at(pos)->setUScore(true);
     printf("[UScore]");
 }
 
 void DisplayScreen::setFieldAttrs(int start)
 {
-    attrs[start].fieldStart = true;
+    glyph.at(start)->setFieldStart(true);
 
-    printf("[setting field %d to uscore %d colour %s]", start, attrs[start].uscore, colName[attrs[start].colNum]);
+    printf("[setting field %d to uscore %d colour %s]", start, glyph.at(start)->isUScore(), colName[glyph.at(start)->getColour()]);
     fflush(stdout);
 
     resetFieldAttrs(start);
@@ -642,40 +642,40 @@ int DisplayScreen::resetFieldAttrs(int start)
     {
         int offset = i % screenPos_max;
 
-        if (attrs[offset].fieldStart && i > start)
+        if (glyph.at(offset)->isFieldStart() && i > start)
         {
             printf("[ended at %d]", offset);
             return lastField;
         }
 
-        attrs[offset].prot = attrs[lastField].prot;
-        attrs[offset].mdt = attrs[lastField].mdt;
-        attrs[offset].num = attrs[lastField].num;
-        attrs[offset].askip = attrs[lastField].askip;
-        attrs[offset].pen = attrs[lastField].pen;
-        attrs[offset].display = attrs[lastField].display;
+        glyph.at(offset)->setProtected(glyph.at(lastField)->isProtected());
+        glyph.at(offset)->setMDT(glyph.at(lastField)->isMdtOn());
+        glyph.at(offset)->setNumeric(glyph.at(lastField)->isNumeric());
+        glyph.at(offset)->setPenSelect(glyph.at(lastField)->isPenSelect());
+        glyph.at(offset)->setDisplay(glyph.at(lastField)->isDisplay());
 
-        attrs[offset].colNum = attrs[lastField].colNum;
-        attrs[offset].uscore = attrs[lastField].uscore;
-        attrs[offset].blink = attrs[lastField].blink;
-        attrs[offset].reverse = attrs[lastField].reverse;
-        attrs[offset].charAttr = false;
+        glyph.at(offset)->setColour(glyph.at(lastField)->getColour());
+        glyph.at(offset)->setUScore(glyph.at(lastField)->isUScore());
+        glyph.at(offset)->setBlink(glyph.at(lastField)->isBlink());
+        glyph.at(offset)->setReverse(glyph.at(lastField)->isReverse());
 
-        if (attrs[offset].display)
+        glyph.at(offset)->setCharAttrs(false);
+
+        if (glyph.at(offset)->isDisplay())
         {
-            if (attrs[offset].reverse)
+            if (glyph.at(offset)->isReverse())
             {
-                cell.at(offset)->setBrush(palette[attrs[offset].colNum]);
+                cell.at(offset)->setBrush(palette[glyph.at(offset)->getColour()]);
                 glyph.at(offset)->setBrush(palette[0]);
             }
             else
             {
                 cell.at(offset)->setBrush(palette[0]);
-                glyph.at(offset)->setBrush(palette[attrs[offset].colNum]);
+                glyph.at(offset)->setBrush(palette[glyph.at(offset)->getColour()]);
             }
-            if (attrs[offset].uscore)
+            if (glyph.at(offset)->isUScore())
             {
-                uscore.at(offset)->setPen(QPen(palette[attrs[offset].colNum],0));
+                uscore.at(offset)->setPen(QPen(palette[glyph.at(offset)->getColour()],0));
 //                uscore[offset]->pen().setCosmetic(true);
 //                uscore[offset]->pen().setColor(palette[attrs[offset].colNum]);
             }
@@ -698,7 +698,7 @@ int DisplayScreen::resetFieldAttrs(int start)
 
 bool DisplayScreen::insertChar(int pos, unsigned char c, bool insertMode)
 {
-    if (attrs[pos].prot || attrs[pos].fieldStart)
+    if (glyph.at(pos)->isProtected() || glyph.at(pos)->isFieldStart())
     {
         printf("Protected!\n");
         fflush(stdout);
@@ -713,7 +713,7 @@ bool DisplayScreen::insertChar(int pos, unsigned char c, bool insertMode)
         for(int i = pos; i < (pos + screenPos_max); i++)
         {
             int offset = i % screenPos_max;
-            if (attrs[offset].prot || attrs[offset].fieldStart)
+            if (glyph.at(offset)->isProtected() || glyph.at(offset)->isFieldStart())
             {
                 break;
             }
@@ -739,16 +739,33 @@ bool DisplayScreen::insertChar(int pos, unsigned char c, bool insertMode)
 
 //            printf("Moving %c to %d\n", glyph[offsetPrev]->getEBCDIC(), offset);
 //            fflush(stdout);
-            attrs[offset] = attrs[offsetPrev];
-            geActive = glyph.at(offsetPrev)->getGraphic();
-            setChar(offset, glyph.at(offsetPrev)->getEBCDIC(), true);
+            //TODO: Improve performance
+            glyph.at(offset)->setFieldStart(glyph.at(offsetPrev)->isFieldStart());
+
+            glyph.at(offset)->setProtected(glyph.at(offsetPrev)->isProtected());
+            glyph.at(offset)->setMDT(glyph.at(offsetPrev)->isMdtOn());
+            glyph.at(offset)->setNumeric(glyph.at(offsetPrev)->isNumeric());
+            glyph.at(offset)->setPenSelect(glyph.at(offsetPrev)->isPenSelect());
+            glyph.at(offset)->setDisplay(glyph.at(offsetPrev)->isDisplay());
+
+            glyph.at(offset)->setColour(glyph.at(offsetPrev)->getColour());
+            glyph.at(offset)->setUScore(glyph.at(offsetPrev)->isUScore());
+            glyph.at(offset)->setBlink(glyph.at(offsetPrev)->isBlink());
+            glyph.at(offset)->setReverse(glyph.at(offsetPrev)->isReverse());
+
+            glyph.at(offset)->setCharAttrs(glyph.at(offsetPrev)->hasCharAttrs());
+
+            geActive = glyph.at(offsetPrev)->isGraphic();
+            setChar(offset, glyph.at(offsetPrev)->getEBCDIC(), true, false);
         }
         geActive = tmpGE;
     }
 
     printf("MDT set for %d\n", thisField);
-    attrs[thisField].mdt = true;
-    setChar(pos, ASCIItoEBCDICmap[c], false);
+
+    glyph.at(thisField)->setMDT(true);
+
+    setChar(pos, ASCIItoEBCDICmap[c], false, true);
 
     return true;
 }
@@ -760,12 +777,12 @@ bool DisplayScreen::insertChar(int pos, unsigned char c, bool insertMode)
  */
 bool DisplayScreen::isAskip(int pos)
 {
-    return attrs[pos].askip;
+    return glyph.at(pos)->isAutoSkip();
 }
 
 void DisplayScreen::deleteChar(int pos)
 {
-    if (attrs[pos].prot)
+    if (glyph.at(pos)->isProtected())
     {
         printf("Protected!\n");
         fflush(stdout);
@@ -779,14 +796,28 @@ void DisplayScreen::deleteChar(int pos)
         int offset = fld % screenPos_max;
         int offsetNext = (fld + 1) % screenPos_max;
 
-        attrs[offset] = attrs[offsetNext];
+        glyph.at(offset)->setFieldStart(glyph.at(offsetNext)->isFieldStart());
+
+        glyph.at(offset)->setProtected(glyph.at(offsetNext)->isProtected());
+        glyph.at(offset)->setMDT(glyph.at(offsetNext)->isMdtOn());
+        glyph.at(offset)->setNumeric(glyph.at(offsetNext)->isNumeric());
+        glyph.at(offset)->setPenSelect(glyph.at(offsetNext)->isPenSelect());
+        glyph.at(offset)->setDisplay(glyph.at(offsetNext)->isDisplay());
+
+        glyph.at(offset)->setColour(glyph.at(offsetNext)->getColour());
+        glyph.at(offset)->setUScore(glyph.at(offsetNext)->isUScore());
+        glyph.at(offset)->setBlink(glyph.at(offsetNext)->isBlink());
+        glyph.at(offset)->setReverse(glyph.at(offsetNext)->isReverse());
+
+        glyph.at(offset)->setCharAttrs(glyph.at(offsetNext)->hasCharAttrs());
+
         bool tmpGE = geActive;
-        setChar(offset, glyph.at(offsetNext)->getEBCDIC(), true);
+        setChar(offset, glyph.at(offsetNext)->getEBCDIC(), true, false);
         geActive = tmpGE;
     }
 
     glyph.at(endPos - 1)->setText(IBM3270_CHAR_NULL, IBM3270_CHAR_NULL, false);
-    attrs[findField(pos)].mdt = true;
+    glyph.at(findField(pos))->setMDT(true);
 }
 
 void DisplayScreen::eraseEOF(int pos)
@@ -804,7 +835,7 @@ void DisplayScreen::eraseEOF(int pos)
         glyph.at(i % screenPos_max)->setText(0x00, 0x00, false);
     }
 
-    attrs[findField(pos)].mdt = true;
+    glyph.at(findField(pos))->setMDT(true);
 }
 
 void DisplayScreen::eraseUnprotected(int start, int end)
@@ -815,14 +846,14 @@ void DisplayScreen::eraseUnprotected(int start, int end)
     }
 
     int thisField = findField(start);
-    if (attrs[thisField].prot)
+    if (glyph.at(thisField)->isProtected())
     {
         start = findNextUnprotectedField(start);
     }
 
     for(int i = start; i < end; i++)
     {
-        if(attrs[i].prot || attrs[i].fieldStart)
+        if(glyph.at(i)->isProtected() || glyph.at(i)->isFieldStart())
         {
             i = findNextUnprotectedField(i);
         }
@@ -836,7 +867,7 @@ void DisplayScreen::eraseUnprotected(int start, int end)
 void DisplayScreen::setCursor(int pos)
 {
     cursor.setParentItem(cell.at(pos));
-    cursor.setBrush(palette[attrs[pos].colNum]);
+    cursor.setBrush(palette[glyph.at(pos)->getColour()]);
     cursor.setPos(cell.at(pos)->boundingRect().left(), cell.at(pos)->boundingRect().top());
 }
 
@@ -898,11 +929,11 @@ void DisplayScreen::blink()
 
     for (int i = 0; i < screenPos_max; i++)
     {
-        if (attrs[i].blink)
+        if (glyph.at(i)->isBlink())
         {
             if (blinkShow)
             {
-                glyph.at(i)->setBrush(palette[attrs[i].colNum]);
+                glyph.at(i)->setBrush(palette[glyph.at(i)->getColour()]);
             }
             else
             {
@@ -942,7 +973,7 @@ int DisplayScreen::findField(int pos)
 
 //        printf("findField: i = %d, offset = %d (new offset = %d)\n", i, +(i%(SCREENX*SCREENY)), offset);
 //        fflush(stdout);
-        if (attrs[offset].fieldStart)
+        if (glyph.at(offset)->isFieldStart())
         {
             return offset;
         }
@@ -952,7 +983,7 @@ int DisplayScreen::findField(int pos)
 
 int DisplayScreen::findNextField(int pos)
 {
-    if(attrs[pos].fieldStart)
+    if(glyph.at(pos)->isFieldStart())
     {
         pos++;
     }
@@ -960,7 +991,7 @@ int DisplayScreen::findNextField(int pos)
     for(int i = pos; i < (pos + screenPos_max); i++)
     {
         tmpPos = i % screenPos_max;
-        if (attrs[tmpPos].fieldStart)
+        if (glyph.at(tmpPos)->isFieldStart())
         {
             return tmpPos;
         }
@@ -984,7 +1015,7 @@ int DisplayScreen::findNextUnprotectedField(int pos)
         // fieldStart - an unprotected field cannot start where two fieldStarts are adajacent
         tmpPos = i % screenPos_max;
         tmpNxt = (i + 1) % screenPos_max;
-        if (attrs[tmpPos].fieldStart && !attrs[tmpPos].prot && !attrs[tmpNxt].fieldStart)
+        if (glyph.at(tmpPos)->isFieldStart() && !glyph.at(tmpPos)->isProtected() && !glyph.at(tmpNxt)->isFieldStart())
         {
             return tmpPos;
         }
@@ -1015,7 +1046,7 @@ int DisplayScreen::findPrevUnprotectedField(int pos)
         // Check this position for unprotected and fieldStart and check the next position for
         // fieldStart - an unprotected field cannot start where two fieldStarts are adajacent
         tmpNxt = (tmpPos + 1) % screenPos_max;
-        if (attrs[tmpPos].fieldStart && !attrs[tmpPos].prot && !attrs[tmpNxt].fieldStart)
+        if (glyph.at(tmpPos)->isFieldStart() && !glyph.at(tmpPos)->isProtected() && !glyph.at(tmpNxt)->isFieldStart())
         {
             return tmpPos;
         }
@@ -1029,14 +1060,13 @@ void DisplayScreen::getModifiedFields(QByteArray &buffer)
 {
     for(int i = 0; i < screenPos_max; i++)
     {
-        if (attrs[i].fieldStart && !attrs[i].prot)
+        if (glyph.at(i)->isFieldStart() && !glyph.at(i)->isProtected())
         {
             int firstField = i;
             int thisField = i;
             do
             {
-                //TODO: 0xFF may occur, and need to be doubled
-                if (attrs[thisField].mdt && !attrs[thisField].prot)
+                if (glyph.at(thisField)->isMdtOn() && !glyph.at(thisField)->isProtected())
                 {
                     buffer.append(IBM3270_SBA);
 
@@ -1044,24 +1074,37 @@ void DisplayScreen::getModifiedFields(QByteArray &buffer)
 
                     int nextPos = (thisField + 1) % screenPos_max;
 
+                    int byte1;
+                    int byte2;
+
                     if (nextPos < 4096) // 12 bit
                     {
-                        buffer.append(twelveBitBufferAddress[(nextPos>>6)&63]);
-                        buffer.append(twelveBitBufferAddress[(nextPos&63)]);
+                        byte1 = twelveBitBufferAddress[(nextPos>>6) & 0x3F];
+                        byte2 = twelveBitBufferAddress[(nextPos & 0x3F)];
                     }
                     else if (nextPos < 16384) // 14 bit
                     {
-                        buffer.append((nextPos>>8)&63);
-                        buffer.append(nextPos&0xFF);
+                        byte1 = (nextPos>>8) & 0x3F;
+                        byte2 = nextPos & 0xFF;
                     }
                     else // 16 bit
                     {
-                        buffer.append((nextPos>>8)&0xFF);
-                        buffer.append(nextPos&0xFF);
+                        byte1 = (nextPos>>8) & 0xFF;
+                        byte2 = nextPos & 0xFF;
                     }
 
+                    buffer.append(byte1);
+                    if (byte1 == 0xFF)
+                    {
+                        buffer.append(0xFF);
+                    }
+                    buffer.append(byte2);
+                    if (byte2 == 0xFF)
+                    {
+                        buffer.append(0xFF);
+                    }
 
-                    attrs[thisField].mdt = false;
+                    glyph.at(thisField)->setMDT(false);
 
                     do
                     {
@@ -1073,7 +1116,7 @@ void DisplayScreen::getModifiedFields(QByteArray &buffer)
                         }
                         thisField = thisField % screenPos_max;
                     }
-                    while(!attrs[thisField].fieldStart);
+                    while(!glyph.at(thisField)->isFieldStart());
                     printf("\n");
                     fflush(stdout);
                 }
@@ -1091,12 +1134,12 @@ void DisplayScreen::dumpFields()
     fflush(stdout);
     for(int i = 0; i < screenPos_max; i++)
     {
-        if (attrs[i].fieldStart)
+        if (glyph.at(i)->isFieldStart())
         {
             int tmpy = i / screen_x;
             int tmpx = i - (tmpy * screen_x);
 
-            printf("Field at %4d (%2d,%2d) : Prot: %d\n", i, tmpx, tmpy, attrs[i].prot);
+            printf("Field at %4d (%2d,%2d) : Prot: %d\n", i, tmpx, tmpy, glyph.at(i)->isProtected());
         }
     }
     fflush(stdout);
@@ -1133,19 +1176,19 @@ void DisplayScreen::getScreen(QByteArray &buffer)
 
     for (int i = 0; i < screenPos_max; i++)
     {
-        if (attrs[i].fieldStart)
+        if (glyph.at(i)->isFieldStart())
         {
             buffer.append(IBM3270_SF);
             uchar attr;
-            if (attrs[i].display & !attrs[i].pen)
+            if (glyph.at(i)->isDisplay() & !glyph.at(i)->isPenSelect())
             {
                 attr = 0x00;
             }
-            else if (attrs[i].display & attrs[i].pen)
+            else if (glyph.at(i)->isDisplay() & glyph.at(i)->isPenSelect())
             {
                 attr = 0x01;
             }
-            else if(attrs[i].intensify)
+            else if(glyph.at(i)->isIntensify())
             {
                 attr = 0x10;
             }
@@ -1153,7 +1196,7 @@ void DisplayScreen::getScreen(QByteArray &buffer)
             {
                 attr = 0x11;
             }
-            buffer.append(twelveBitBufferAddress[attrs[i].mdt | attr << 3 | attrs[i].num << 4 | attrs[i].prot << 5]);
+            buffer.append(twelveBitBufferAddress[glyph.at(i)->isMdtOn() | attr << 3 | glyph.at(i)->isNumeric() << 4 | glyph.at(i)->isProtected() << 5]);
 
         }
         else
@@ -1166,5 +1209,15 @@ void DisplayScreen::getScreen(QByteArray &buffer)
 void DisplayScreen::dumpAttrs(int pos)
 {
     printf("   Attrs: Prot:%d Ext:%d Start:%d Skip:%d Display:%d Uscore:%d Rev:%d Blnk:%d Intens:%d Num:%d Pen:%d\n",
-           attrs[pos].prot, attrs[pos].extended, attrs[pos].fieldStart, attrs[pos].askip, attrs[pos].display, attrs[pos].uscore, attrs[pos].reverse, attrs[pos].blink, attrs[pos].intensify, attrs[pos].num, attrs[pos].pen);
+           glyph.at(pos)->isProtected(),
+           glyph.at(pos)->isExtended(),
+           glyph.at(pos)->isFieldStart(),
+           glyph.at(pos)->isAutoSkip(),
+           glyph.at(pos)->isDisplay(),
+           glyph.at(pos)->isUScore(),
+           glyph.at(pos)->isReverse(),
+           glyph.at(pos)->isBlink(),
+           glyph.at(pos)->isIntensify(),
+           glyph.at(pos)->isNumeric(),
+           glyph.at(pos)->isPenSelect());
 }

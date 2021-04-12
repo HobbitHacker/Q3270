@@ -169,9 +169,7 @@ void TerminalTab::closeConnection()
 
     view->stopTimers();
 
-    delete socket;
-
-    datastream->deleteLater();
+    delete datastream;
 
     view->setScene(gs);
     view->fitInView(gs->itemsBoundingRect(), Qt::IgnoreAspectRatio);
@@ -179,6 +177,8 @@ void TerminalTab::closeConnection()
 
     delete screen[0];
     delete screen[1];
+
+    emit connectionClosed();
 }
 
 void TerminalTab::activate(bool checked)

@@ -9,13 +9,21 @@ SocketConnection::SocketConnection(QString termName)
 	
     // Forward the connected and disconnected signals
 //    connect(dataSocket, &QTcpSocket::connected, this, &SocketConnection::connected);
-//    connect(dataSocket, &QTcpSocket::disconnected, this, &SocketConnection::closed);
+    connect(dataSocket, &QTcpSocket::disconnected, this, &SocketConnection::closed);
     // connect readyRead() to the slot that will take care of reading the data in
     connect(dataSocket, &QTcpSocket::readyRead, this, &SocketConnection::onReadyRead);
     // Forward the error signal, QOverload is necessary as error() is overloaded, see the Qt docs
 //    connect(dataSocket, QOverload<QAbstractSocket::SocketError>::of(&QAbstractSocket::errorOccurred), this, &SocketConnection::error);
 
     tn3270e_Mode = false;
+}
+
+SocketConnection::~SocketConnection()
+{
+    disconnect(dataSocket, &QTcpSocket::disconnected, this, &SocketConnection::closed);
+    disconnect(dataSocket, &QTcpSocket::readyRead, this, &SocketConnection::onReadyRead);
+
+    dataSocket->deleteLater();
 }
 
 void SocketConnection::closed()
@@ -80,18 +88,18 @@ void SocketConnection::onReadyRead()
         dataStream.readRawData(&data3270, 1);
         socketByte = (uchar) data3270;
 
-        if (dataStream.commitTransaction()) {
-/*            if (byteCount == 0)
-            {
-                printf("SocketConnection : ");
-                charRep = "";
-            }*/
+        if (dataStream.commitTransaction())
+        {
+
             printf("%2.2X ", socketByte);
+
             if (isalnum(socketByte))
                 charRep = charRep + socketByte;
             else
                 charRep = charRep + ".";
+
             byteCount++;
+
             if (byteCount>32)
             {
                 printf("| %32s |\nSocketConnection : ", charRep.toLatin1().data());
@@ -99,8 +107,9 @@ void SocketConnection::onReadyRead()
                 byteCount = 0;
             }
             fflush(stdout);
-//            printf("Byte: %02X\n", socketByte);
+
             QByteArray response;
+
             switch (telnetState)
 			{
 

@@ -66,7 +66,8 @@ class MainWindow : public QMainWindow
     // Triggered by windows being activated
     void updateMenuEntries();
 
-    // Triggered by selecting a different session from the window menu
+    // The Help->About dialog
+    void menuAbout();
 
   private:
 

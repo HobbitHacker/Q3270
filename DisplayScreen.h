@@ -25,7 +25,7 @@ class DisplayScreen : public QGraphicsScene
         qreal gridWidth();
         qreal gridHeight();
 
-        void setChar(int pos, short unsigned int c, bool move);
+        void setChar(int pos, short unsigned int c, bool move, bool fromKB);
         void setCharAttr(unsigned char c, unsigned char d);
 
         void resetExtendedHilite(int pos);
@@ -280,31 +280,9 @@ class DisplayScreen : public QGraphicsScene
         const char *colName[12] = { "black", "blue", "red", "magenta", "green", "cyan", "yellow", "neutral",
                                     "protected", "unprotected,intensfied", "unprotected", "unprotected, intensified"};
 
-        struct Attributes {
-                //TODO: Do we need a basic colour as well as extended?
-                int colNum;
-                bool askip;
-                bool num;
-                bool mdt;
-                bool prot;
-                bool fieldStart;
-                bool display;
-                bool pen;
-                bool intensify;
-                /* Extended Attributes */
-                bool extended;
-                bool uscore;
-                bool reverse;
-                bool blink;
-                /* Character Attribute in effect */
-                bool charAttr;
-        };
-
         int screen_x;                /* Max Columns */
         int screen_y;                /* Max Rows */
         int screenPos_max;           /* Max position on screen */
-
-        Attributes *attrs;           /* Attributes */
 
         QVector<Text *> glyph;                /* Character on screen */
         QVector<QGraphicsRectItem *> cell;    /* Screen slot */
