@@ -24,6 +24,7 @@ class TerminalTab : public QMdiSubWindow
         ~TerminalTab();
 
         void openConnection(QString host, int port, QString luName);
+        void openConnection(QString address);
         void connectSession();
         void closeConnection();
 
@@ -42,6 +43,7 @@ class TerminalTab : public QMdiSubWindow
         void setColours(QColor colours[8]);
 
         int getType();
+        QString address();
 
         void showForm();
 
@@ -51,10 +53,6 @@ class TerminalTab : public QMdiSubWindow
 
     signals:
         void connectionClosed();
-
-    public slots:
-
-        void activate(bool checked = false);
 
     private slots:
 

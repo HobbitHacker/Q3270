@@ -110,8 +110,29 @@ void TerminalTab::openConnection(QString host, int port, QString luName)
     connectSession();
 }
 
+void TerminalTab::openConnection(QString address)
+{
+    if (address.contains("@"))
+    {
+       tabLU = address.section("@", 0, 0);
+       tabHost = address.section("@", 1, 1).section(":", 0, 0);
+       tabPort = address.section(":", 1, 1).toInt();
+    }
+    else
+    {
+        tabLU = "";
+        tabHost = address.section(":", 0, 0);
+        tabPort = address.section(":", 1, 1).toInt();
+    }
+
+    connectSession();
+
+}
+
 void TerminalTab::connectSession()
 {
+    setWindowTitle(windowTitle().append(" [").append(address()).append("]"));
+
     screen[0] = new DisplayScreen(80, 24);
     screen[1] = new DisplayScreen(settings->getTermX(), settings->getTermY());
 
@@ -181,12 +202,17 @@ void TerminalTab::closeConnection()
     emit connectionClosed();
 }
 
-void TerminalTab::activate(bool checked)
+QString TerminalTab::address()
 {
-    show();
-    setFocus();
+    if (tabLU.isEmpty())
+    {
+        return tabHost + ":" + QString::number(tabPort);
+    }
+    else
+    {
+        return tabLU + "@" + tabHost + ":" + QString::number(tabPort);
+    }
 }
-
 
 void TerminalTab::closeEvent(QCloseEvent *closeEvent)
 {

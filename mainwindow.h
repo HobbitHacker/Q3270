@@ -43,7 +43,6 @@ class MainWindow : public QMainWindow
     ~MainWindow();
 
   public slots:
-    void setSetting(QString k, QString v);
     void closeEvent(QCloseEvent *c);
 
   private slots:
@@ -81,8 +80,6 @@ class MainWindow : public QMainWindow
     QActionGroup *sessionGroup;
 
     Ui::MainWindow *ui;    
-
-    QSettings *applicationSettings;
 
     QMap<QMdiSubWindow *, TerminalTab *> sessions;
 

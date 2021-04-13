@@ -10,42 +10,63 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new(Ui::MainWi
 
     ui->setupUi(this);
 
-    applicationSettings = new QSettings();
-
-    restoreGeometry(applicationSettings->value("mainwindowgeometry").toByteArray());
-    restoreState(applicationSettings->value("mainwindowstate").toByteArray());
-
-    if (applicationSettings->contains("mrumax"))
-    {
-        maxMruCount = applicationSettings->value("mrumax").toInt();
-    }
-    else
-    {
-        maxMruCount = 10;
-        applicationSettings->setValue("mrumax", 10);
-    }
-
-    int mruCount = applicationSettings->beginReadArray("mrulist");
-
-    for(int i = 0; i < mruCount; i++)
-    {
-        applicationSettings->setArrayIndex(i);
-
-        QString address = applicationSettings->value("address").toString();
-        mruList.append(address);
-        ui->menuRecentSessions->addAction(address, this, &MainWindow::mruConnect);
-    }
-
-    applicationSettings->endArray();
-
-    connect(ui->mdiArea, &QMdiArea::subWindowActivated, this, &MainWindow::updateMenuEntries);
+    QSettings applicationSettings;
 
     sessionGroup = new QActionGroup(this);
 
     // Host connection dialog
     connectHost = new Host();
 
+    // Session number
     subWindow = 0;
+
+    restoreGeometry(applicationSettings.value("mainwindowgeometry").toByteArray());
+    restoreState(applicationSettings.value("mainwindowstate").toByteArray());
+
+    if (applicationSettings.contains("mrumax"))
+    {
+        maxMruCount = applicationSettings.value("mrumax").toInt();
+    }
+    else
+    {
+        maxMruCount = 10;
+        applicationSettings.setValue("mrumax", 10);
+    }
+
+    int mruCount = applicationSettings.beginReadArray("mrulist");
+
+    for(int i = 0; i < mruCount; i++)
+    {
+        applicationSettings.setArrayIndex(i);
+
+        QString address = applicationSettings.value("address").toString();
+        mruList.append(address);
+        ui->menuRecentSessions->addAction(address, this, &MainWindow::mruConnect);
+    }
+
+    applicationSettings.endArray();
+
+    if (applicationSettings.value("restorewindows", false).toBool())
+    {
+        int sessionCount = applicationSettings.beginReadArray("sessions");
+        for (int i = 0; i < sessionCount; i++)
+        {
+            applicationSettings.setArrayIndex(i);
+
+            TerminalTab *t = newTab();
+            t->restoreGeometry(applicationSettings.value("geometry").toByteArray());
+            t->openConnection(applicationSettings.value("address").toString());
+        }
+
+        ui->actionDisconnect->setEnabled(true);
+        ui->actionReconnect->setDisabled(true);
+        ui->actionConnect->setDisabled(true);
+
+        applicationSettings.endArray();
+
+    }
+
+    connect(ui->mdiArea, &QMdiArea::subWindowActivated, this, &MainWindow::updateMenuEntries);
 }
 
 void MainWindow::menuNew()
@@ -58,55 +79,45 @@ void MainWindow::mruConnect()
 {
     QAction *sender = (QAction *)QObject::sender();
 
-    QString menuText = sender->text();
-
-    QString host;
-    int port;
-    QString luname;
-
-    if (menuText.contains("@"))
-    {
-       luname = menuText.section("@", 0, 0);
-       host = menuText.section("@", 1, 1).section(":", 0, 0);
-       port = menuText.section(":", 1, 1).toInt();
-    }
-    else
-    {
-        luname = "";
-        host = menuText.section(":", 0, 0);
-        port = menuText.section(":", 1, 1).toInt();
-    }
+    QString address = sender->text();
 
     TerminalTab *t = newTab();
-    t->openConnection(host, port, luname);
+
+    t->openConnection(address);
 
     ui->actionDisconnect->setEnabled(true);
+    ui->actionReconnect->setDisabled(true);
     ui->actionConnect->setDisabled(true);
 
-    updateMRUlist(menuText);
+    updateMRUlist(address);
 }
 
 TerminalTab *MainWindow::newTab()
 {
-    TerminalTab *t = new TerminalTab();
-    ui->mdiArea->addSubWindow(t);
-    t->show();
-    ui->actionTerminalSettings->setEnabled(true);
-
     if (subWindow == 0)
     {
-        ui->menuWindow->addSeparator();
+        ui->menuWindow->addSeparator()->setText(" ");
     }
 
-    QAction *act = new QAction("Session " + QString::number(++subWindow));
+    TerminalTab *t = new TerminalTab();
+
+    ui->mdiArea->addSubWindow(t);
+
+    t->show();
+    t->setWindowTitle("Session " + QString::number(++subWindow));
+
+    ui->actionTerminalSettings->setEnabled(true);
+
+    QAction *act = new QAction("Session " + QString::number(subWindow));
+
     act->setActionGroup(sessionGroup);
     act->setCheckable(true);
     act->setChecked(true);
+
     ui->menuWindow->addAction(act);
+
     connect(act, &QAction::triggered, t, [this, t, act]() { ui->mdiArea->setActiveSubWindow(t); act->setChecked(true); } );
     connect(t, &TerminalTab::connectionClosed, this, &MainWindow::updateMenuEntries);
-
-    t->setWindowTitle("Session " + QString::number(subWindow));
 
     return t;
 }
@@ -237,13 +248,15 @@ void MainWindow::updateMRUlist(QString address)
         ui->menuRecentSessions->addAction(mruList.at(i), this, [this]() { mruConnect(); } );
     }
 
-    applicationSettings->beginWriteArray("mrulist");
+    QSettings applicationSettings;
+
+    applicationSettings.beginWriteArray("mrulist");
     for(int i = 0; i < mruList.size() && i < maxMruCount; i++)
     {
-        applicationSettings->setArrayIndex(i);
-        applicationSettings->setValue("address", mruList.at(i));
+        applicationSettings.setArrayIndex(i);
+        applicationSettings.setValue("address", mruList.at(i));
     }
-    applicationSettings->endArray();
+    applicationSettings.endArray();
 }
 
 void MainWindow::menuQuit()
@@ -253,13 +266,28 @@ void MainWindow::menuQuit()
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
-    applicationSettings->setValue("mainwindowgeometry", saveGeometry());
-    applicationSettings->setValue("mainwindowstate", saveState());
-}
+    disconnect(ui->mdiArea, &QMdiArea::subWindowActivated, this, &MainWindow::updateMenuEntries);
+    disconnect(this, "&updateMenuEntries()");
 
-void MainWindow::setSetting(QString key, QString value)
-{
-    applicationSettings->setValue(key, value);
-    printf("Saving %s as %s\n", key.toLatin1().data(), value.toLatin1().data());
-    fflush(stdout);
+    QSettings applicationSettings;
+
+    applicationSettings.setValue("mainwindowgeometry", saveGeometry());
+    applicationSettings.setValue("mainwindowstate", saveState());
+
+    applicationSettings.setValue("restoresessions", true);
+
+    applicationSettings.beginWriteArray("sessions");
+
+    for (int i = 0; i < ui->mdiArea->subWindowList().size(); i++)
+    {
+
+        applicationSettings.setArrayIndex(i);
+
+        QMdiSubWindow *t = ui->mdiArea->subWindowList().at(i);
+
+        applicationSettings.setValue("geometry", t->saveGeometry());
+        applicationSettings.setValue("address", ((TerminalTab *)t)->address());
+    }
+
+    applicationSettings.endArray();
 }
