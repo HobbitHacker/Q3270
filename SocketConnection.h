@@ -76,7 +76,7 @@ class SocketConnection : public QObject
         QString luName;
 
         QByteArray incomingData;
-        QByteArray subNeg;
+        QByteArray subNegotiationBuffer;
 
         void sendData();
 
