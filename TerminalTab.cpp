@@ -22,6 +22,7 @@ TerminalTab::TerminalTab()
     QGraphicsRectItem *mRect = new QGraphicsRectItem(0, 0, 640, 480);
     mRect->setBrush(QColor(Qt::black));
 
+    // Set up default "Not Connected" text
     gs->addItem(mRect);
 
     QGraphicsSimpleTextItem *ncMessage = new QGraphicsSimpleTextItem("Not Connected", mRect);
