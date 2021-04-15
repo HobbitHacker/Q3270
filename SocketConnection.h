@@ -3,6 +3,8 @@
 #ifndef SOCKETCONNECTION_H
 #define SOCKETCONNECTION_H
 
+#include <QDebug>
+
 #include <QObject>
 #include <QTcpSocket>
 #include <QDataStream>
