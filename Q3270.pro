@@ -10,7 +10,7 @@ VERSION = 0.1.1
 # any Qt feature that has been marked deprecated (the exact warnings
 # depend on your compiler). Please consult the documentation of the
 # deprecated API in order to know how to port your code away from it.
-DEFINES += QT_DEPRECATED_WARNINGS QT_FLUSH_PAINT=1 \
+DEFINES += QT_DEPRECATED_WARNINGS \
            Q3270_VERSION=\"\\\"$${VERSION}\\\"\"
 
 # You can also make your code fail to compile if it uses deprecated APIs.
