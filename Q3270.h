@@ -169,7 +169,7 @@ static QColor default_palette[12] = {
     QColor(128,128,255),    /* Basic Blue */
     QColor(255,0,0),        /* Basic Red */
     QColor(0,255,0),        /* Basic Green */
-    QColor(255,255,255)     /* Basic Green */
+    QColor(255,255,255)     /* Basic White */
 };
 
 
