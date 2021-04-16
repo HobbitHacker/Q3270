@@ -106,7 +106,7 @@ class ProcessDataStream : public QObject
         int cursor_pos;
 
         bool resetMDT;
-        bool resetKB;
+        bool restoreKeyboard;
         bool alarm;
         int lastAID;    // Last AID encountered
 
@@ -140,8 +140,6 @@ class ProcessDataStream : public QObject
         void processEUA();
         void processGE();
 
-
-        void addCursorAddress(QByteArray &reply);
         int extractBufferAddress();
         void incPos();
 

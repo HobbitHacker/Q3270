@@ -1,12 +1,12 @@
 /*
  * Copyright 2020 Andy Styles <andy@styles.homeip.net>
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -76,10 +76,6 @@ void ProcessDataStream::processStream(QByteArray &b, bool tn3270e)
         unsigned char seqNumber = ((uchar) *buffer++<<16);
         seqNumber+= (uchar) *buffer++;
 
-        printf("SocketConnection : TN3270E Header:\nSocketConnection :    Data Type:      %2.2X\nSocketConnection :    Request Flag:   %2.2X\nSocketConnection :    Response Flag:  %2.2X\nSocketConnection :    Sequence Number: %2.2X\n",
-               dataType, requestFlag, responseFlag, seqNumber);
-
-
         // TODO: Handling of TN3270E datatypes
         if (dataType != TN3270E_DATATYPE_3270_DATA)
         {
@@ -147,9 +143,9 @@ void ProcessDataStream::processStream(QByteArray &b, bool tn3270e)
     {
 
     }
-    if (resetKB)
+    if (restoreKeyboard)
     {
-        printf("WCC reset keyboard - ");
+        printf("[restore keyboard]");
         emit keyboardUnlocked();
     }
 //    screen->dumpFields();
@@ -200,10 +196,10 @@ void ProcessDataStream::processWCC()
 
     int reset = (wcc>>6)&1;
 
-    printf("WCC=%2.2X(",wcc);
+    printf("[");
 
     resetMDT = wcc&1;
-    resetKB  = (wcc>>1)&1;
+    restoreKeyboard  = (wcc>>1)&1;
     alarm    = (wcc>>2)&1;
 
     if (reset)
@@ -220,25 +216,25 @@ void ProcessDataStream::processWCC()
         printf("reset MDT");
     }
 
-    if (resetKB)
+    if (restoreKeyboard)
     {
         if(reset|resetMDT)
         {
             printf(",");
         }
-        printf("reset KB");
+        printf("restore keyboard");
         lastAID = IBM3270_AID_NOAID;
     }
 
     if (alarm)
     {
-        if (resetKB|resetMDT|reset)
+        if (restoreKeyboard|resetMDT|reset)
         {
             printf(",");
         }
         printf("alarm");
     }
-    printf(")");
+    printf("]");
 }
 
 
@@ -292,7 +288,7 @@ void ProcessDataStream::processRB()
 
     screenContents.append(lastAID);
 
-    addCursorAddress(screenContents);
+    screen->addPosToBuffer(screenContents, cursor_pos);
     screen->getScreen(screenContents);
 
     emit bufferReady(screenContents);
@@ -304,9 +300,6 @@ void ProcessDataStream::processWSF()
 
     wsfLen = *buffer++<<8;
     wsfLen += *buffer++;
-
-    printf("WSF - length: %03d; command = %2.2X\n", wsfLen, *buffer);
-    fflush(stdout);
 
     // Decrease length by two-byte length field and structured field id byte
     wsfLen-=3;
@@ -328,6 +321,10 @@ void ProcessDataStream::processWSF()
     }
 }
 
+/**
+ * @brief ProcessDataStream::processRM
+ *        ReadModified - Extract modified fields from screen and return them.
+ */
 void ProcessDataStream::processRM()
 {
     processAID(lastAID, false);
@@ -354,13 +351,11 @@ void ProcessDataStream::processSFE()
 
     screen->resetExtended(primary_pos);
 
-    printf("[SFE pairs %d]", pairs);
     for(int i = 1; i <= pairs; i++)
     {
         type = *++buffer;
         value = *++buffer;
 
-//        printf("%3.3d  Type: %2.2X = %2.2X ",i,  type, value);
         switch(type)
         {
             case IBM3270_EXT_3270:
@@ -427,7 +422,7 @@ void ProcessDataStream::processSBA()
 
     primary_y = (primary_pos / screen_x);
     primary_x = primary_pos - (primary_y * screen_x);
-    printf(" %d,%d (%d)]", primary_x, primary_y, primary_pos);
+    printf("%d,%d]", primary_x, primary_y);
 }
 
 void ProcessDataStream::processSA()
@@ -496,7 +491,7 @@ void ProcessDataStream::processEUA()
     printf("]");
 
     screen->eraseUnprotected(primary_pos, stopAddress);
-    resetKB = true;
+    restoreKeyboard = true;
 }
 
 void ProcessDataStream::processGE()
@@ -912,13 +907,13 @@ int ProcessDataStream::extractBufferAddress()
     switch((sba1>>6)&3)
     {
         case 0b00:     // 14 bit
-            printf("%2.2X%2.2X (%d%d - 14 bit)", sba1, sba2, (sba1>>7)&1, (sba1>>6)&1);
+//            printf("%2.2X%2.2X (%d%d - 14 bit)", sba1, sba2, (sba1>>7)&1, (sba1>>6)&1);
             return ((sba1&63)<<8)+sba2;
         case 0b01:     // 12 bit
-            printf("%2.2X%2.2X (%d%d - 12 bit)", sba1, sba2, (sba1>>7)&1, (sba1>>6)&1);
+//            printf("%2.2X%2.2X (%d%d - 12 bit)", sba1, sba2, (sba1>>7)&1, (sba1>>6)&1);
             return ((sba1&63)<<6)+(sba2&63);
         case 0b11:     // 12 bit
-            printf("%2.2X%2.2X (%d%d - 12 bit)", sba1, sba2, (sba1>>7)&1, (sba1>>6)&1);
+//            printf("%2.2X%2.2X (%d%d - 12 bit)", sba1, sba2, (sba1>>7)&1, (sba1>>6)&1);
             return ((sba1&63)<<6)+(sba2&63);
         default: // case 0b10: - reserved
             printf("\n\n[** Unimplemented BufferAddress - %2.2X%2.2X - bitmask %d%d **]\n\n", sba1, sba2, (sba1>>7)&1, (sba1>>6)&1);
@@ -1030,7 +1025,7 @@ void ProcessDataStream::tab(int offset)
 
     cursor_y = (nf / screen_x);
     cursor_x = nf - (cursor_y * screen_x);
-    printf("Unprotected field found at %d (%d,%d) ", nf, cursor_x, cursor_y);
+//    printf("Unprotected field found at %d (%d,%d) ", nf, cursor_x, cursor_y);
 
     // Move cursor right (skip attribute byte)
     moveCursor(1, 0);
@@ -1042,7 +1037,7 @@ void ProcessDataStream::backtab()
 
     cursor_y = (pf / screen_x);
     cursor_x = pf - (cursor_y * screen_x);
-    printf("Backtab: Unprotected field found at %d (%d,%d) ", pf, cursor_x, cursor_y);
+//    printf("Backtab: Unprotected field found at %d (%d,%d) ", pf, cursor_x, cursor_y);
 
     // Move cursor right (skip attribute byte)
     moveCursor(1, 0);
@@ -1094,7 +1089,7 @@ void ProcessDataStream::endline()
 
     while(i < endPos && !screen->isProtected(offset) && !screen->isFieldStart(offset))
     {
-        qDebug() << "Offset: " << offset << " Protected: " << screen->isProtected(offset) << " Character: " << (uchar)screen->getChar(offset) << "Field Start:" << screen->isFieldStart(offset);
+//        qDebug() << "Offset: " << offset << " Protected: " << screen->isProtected(offset) << " Character: " << (uchar)screen->getChar(offset) << "Field Start:" << screen->isFieldStart(offset);
         uchar thisChar = screen->getChar(offset);
         if (letter && (thisChar == 0x00 || thisChar == ' '))
         {
@@ -1127,28 +1122,6 @@ void ProcessDataStream::toggleRuler()
     screen->drawRuler(cursor_x, cursor_y);
 }
 
-void ProcessDataStream::addCursorAddress(QByteArray &reply)
-{
-    if (screenSize < 4096) // 12 bit
-    {
-        printf("12 bit buffer address: %02X %02X\n", 0xC0|((cursor_pos>>6)&63), cursor_pos&63);
-        fflush(stdout);
-        reply.append(0xC0|((cursor_pos>>6)&63));
-        reply.append(cursor_pos&63);
-    }
-    else if (screenSize < 16384) // 14 bit
-    {
-        reply.append((cursor_pos>>8)&63);
-        reply.append(cursor_pos&0xFF);
-    }
-    else // 16 bit
-    {
-        reply.append((cursor_pos>>8)&0xFF);
-        reply.append(cursor_pos&0xFF);
-    }
-
-}
-
 void ProcessDataStream::processAID(int aid, bool shortRead)
 {
     QByteArray respBuffer = QByteArray();
@@ -1159,7 +1132,7 @@ void ProcessDataStream::processAID(int aid, bool shortRead)
 
     if (!shortRead)
     {
-        addCursorAddress(respBuffer);
+        screen->addPosToBuffer(respBuffer, cursor_pos);
         screen->getModifiedFields(respBuffer);
     }
 
