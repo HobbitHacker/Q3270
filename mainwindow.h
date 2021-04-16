@@ -62,11 +62,14 @@ class MainWindow : public QMainWindow
     // Window Menu
     void menuTabbedView(bool tabView);
 
+    // The Help->About dialog
+    void menuAbout();
+
     // Triggered by windows being activated
     void updateMenuEntries();
 
-    // The Help->About dialog
-    void menuAbout();
+    // Triggered by windows being closed
+    void subWindowClosed(QObject *closedWindow);
 
   private:
 

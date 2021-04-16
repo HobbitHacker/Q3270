@@ -53,6 +53,7 @@ class TerminalTab : public QMdiSubWindow
 
     signals:
         void connectionClosed();
+        void windowClosed(TerminalTab *t);
 
     private slots:
 

@@ -221,4 +221,5 @@ void TerminalTab::closeEvent(QCloseEvent *closeEvent)
     {
         closeConnection();
     }
+    closeEvent->accept();
 }

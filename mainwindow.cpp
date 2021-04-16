@@ -101,6 +101,8 @@ TerminalTab *MainWindow::newTab()
 
     TerminalTab *t = new TerminalTab();
 
+    t->setAttribute(Qt::WA_DeleteOnClose);
+
     ui->mdiArea->addSubWindow(t);
 
     t->show();
@@ -118,6 +120,7 @@ TerminalTab *MainWindow::newTab()
 
     connect(act, &QAction::triggered, t, [this, t, act]() { ui->mdiArea->setActiveSubWindow(t); act->setChecked(true); } );
     connect(t, &TerminalTab::connectionClosed, this, &MainWindow::updateMenuEntries);
+    connect(t, &TerminalTab::destroyed, this, &MainWindow::subWindowClosed);
 
     return t;
 }
@@ -276,6 +279,10 @@ void MainWindow::closeEvent(QCloseEvent *event)
 
     applicationSettings.setValue("restoresessions", true);
 
+    applicationSettings.beginGroup("sessions");
+    applicationSettings.remove("");
+    applicationSettings.endGroup();
+
     applicationSettings.beginWriteArray("sessions");
 
     for (int i = 0; i < ui->mdiArea->subWindowList().size(); i++)
@@ -290,4 +297,43 @@ void MainWindow::closeEvent(QCloseEvent *event)
     }
 
     applicationSettings.endArray();
+
+    event->accept();
+}
+
+void MainWindow::subWindowClosed(QObject *closedWindow)
+{
+    subWindow = 0;
+
+    QList<QAction *> acts = sessionGroup->actions();
+
+    for(int i = 0; i < acts.size(); i++)
+    {
+        sessionGroup->removeAction(acts.at(i));
+        ui->menuWindow->removeAction(acts.at(i));
+        delete acts.at(i);
+    }
+
+    QList<QMdiSubWindow *> windows = ui->mdiArea->subWindowList();
+
+    for (int i = 0; i < windows.size(); i++)
+    {
+        TerminalTab *t = (TerminalTab *)windows.at(i);
+
+        if (t != closedWindow)
+        {
+
+            t->setWindowTitle("Session " + QString::number(++subWindow) + " [" + t->address() + "]");
+
+            QAction *act = new QAction("Session " + QString::number(subWindow));
+
+            act->setActionGroup(sessionGroup);
+            act->setCheckable(true);
+            act->setChecked(true);
+
+            ui->menuWindow->addAction(act);
+
+            connect(act, &QAction::triggered, t, [this, t, act]() { ui->mdiArea->setActiveSubWindow(t); act->setChecked(true); } );
+        }
+    }
 }
