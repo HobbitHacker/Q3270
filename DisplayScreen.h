@@ -74,9 +74,10 @@ class DisplayScreen : public QGraphicsScene
 
         void getScreen(QByteArray &buffer);
 
+        void addPosToBuffer(QByteArray &buffer, int pos);
+
         void dumpFields();
         void dumpDisplay();
-        void dumpAttrs(int pos);
 
     public slots:
 
