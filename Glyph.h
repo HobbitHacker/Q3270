@@ -51,7 +51,7 @@ class Glyph : public QObject, public QGraphicsSimpleTextItem
         inline void setColour(int c)         { colNum = c; };
         inline void setFieldStart(bool fs)   { fieldStart = fs; };
 //        inline void setAutoSkip(bool as)     { askip = as; };
-        inline void setNumeric(bool n)       { askip = n; };
+        inline void setNumeric(bool n)       { num = n; };
         inline void setGraphic(bool ge)      { graphic = ge; };
         inline void setMDT(bool m)           { mdt = m; };
         inline void setProtected(bool p)     { prot = p; };
