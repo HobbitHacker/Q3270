@@ -487,13 +487,9 @@ void DisplayScreen::setField(int pos, unsigned char c, bool sfe)
     glyph.at(pos)->setIntensify(((c >> 2) & 3) == 2);
     glyph.at(pos)->setMDT(c & 1);
     glyph.at(pos)->setExtended(sfe);
+    glyph.at(pos)->setFieldStart(true);
 
     glyph.at(pos)->setCharAttrs(false);
-
-    //TODO: Replace aksip attribute with inline code compare of prot & num
-//    glyph.at(pos)->setAutoSkip(glyph.at(pos)->isProtected() & glyph.at(pos)->isNumeric());
-
-    //    printf("P:%d N:%d D:%d L:%d I:%d M:%d A:%d\n", f.prot, f.num, f.display, f.pen, f.intensify, f.mdt, f.askip);
 
     if (!sfe)
     {
@@ -676,8 +672,6 @@ int DisplayScreen::resetFieldAttrs(int start)
             if (glyph.at(offset)->isUScore())
             {
                 uscore.at(offset)->setPen(QPen(palette[glyph.at(offset)->getColour()],0));
-//                uscore[offset]->pen().setCosmetic(true);
-//                uscore[offset]->pen().setColor(palette[attrs[offset].colNum]);
             }
             else
             {
@@ -778,6 +772,16 @@ bool DisplayScreen::insertChar(int pos, unsigned char c, bool insertMode)
 bool DisplayScreen::isAskip(int pos)
 {
     return glyph.at(pos)->isAutoSkip();
+}
+
+bool DisplayScreen::isProtected(int pos)
+{
+    return glyph.at(pos)->isProtected();
+}
+
+bool DisplayScreen::isFieldStart(int pos)
+{
+    return glyph.at(pos)->isFieldStart();
 }
 
 void DisplayScreen::deleteChar(int pos)

@@ -114,6 +114,7 @@ class Keyboard : public QObject
         void programaccessKey(int k);
         void attn();
         void clear();
+        void endline();
 
         void ruler();
 

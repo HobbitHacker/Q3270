@@ -59,7 +59,10 @@ class DisplayScreen : public QGraphicsScene
         int resetFieldAttrs(int start);
 
         unsigned char getChar(int pos);
+
         bool isAskip(int pos);
+        bool isProtected(int pos);
+        bool isFieldStart(int pos);
 
         void clear();
         void setFont(QFont font);
@@ -277,8 +280,26 @@ class DisplayScreen : public QGraphicsScene
 
         QColor palette[12];
 
+        enum Colours
+        {
+            BLACK                      = 0,
+            BLUE                       = 1,
+            RED                        = 2,
+            MAGENTA                    = 3,
+            GREEN                      = 4,
+            CYAN                       = 5,
+            YELLOW                     = 6,
+            NEUTRAL                    = 7,
+            PROTECTED_NORMAL           = 8,
+            UNPROTECTED_INTENSIFIED    = 9,
+            UNPROTECTED_NORMAL         = 10,
+            PROTECTED_INTENSIFIED      = 11
+
+
+        };
+
         const char *colName[12] = { "black", "blue", "red", "magenta", "green", "cyan", "yellow", "neutral",
-                                    "protected", "unprotected,intensfied", "unprotected", "unprotected, intensified"};
+                                    "protected", "unprotected,intensfied", "unprotected", "protected, intensified"};
 
         int screen_x;                /* Max Columns */
         int screen_y;                /* Max Rows */

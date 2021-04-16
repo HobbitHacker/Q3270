@@ -60,6 +60,7 @@ class ProcessDataStream : public QObject
         void deleteChar();
         void newline();
         void toggleRuler();
+        void endline();
 
         void showFields();
 

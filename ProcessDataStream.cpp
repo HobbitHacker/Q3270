@@ -1018,10 +1018,6 @@ void ProcessDataStream::moveCursor(int x, int y, bool absolute)
 
     cursor_pos = cursor_x + (cursor_y * screen_x);
 
-    printf("moveCursor: Now at %d,%d (%d) ", cursor_x, cursor_y, cursor_pos);
-    screen->dumpAttrs(cursor_pos);
-    fflush(stdout);
-
     screen->setCursor(cursor_pos);
     screen->drawRuler(cursor_x, cursor_y);
 
@@ -1076,6 +1072,53 @@ void ProcessDataStream::newline()
     cursor_pos = cursor_x + cursor_y * screen_x;
 
     tab(0);
+}
+
+void ProcessDataStream::endline()
+{
+    if (screen->isProtected(cursor_pos))
+    {
+        return;
+    }
+
+    int endPos = cursor_pos + screenSize;
+
+    QString field;
+    int endField;
+
+    int i = cursor_pos;
+    int offset = cursor_pos;
+
+    endField = cursor_pos;
+    bool letter = false;
+
+    while(i < endPos && !screen->isProtected(offset) && !screen->isFieldStart(offset))
+    {
+        qDebug() << "Offset: " << offset << " Protected: " << screen->isProtected(offset) << " Character: " << (uchar)screen->getChar(offset) << "Field Start:" << screen->isFieldStart(offset);
+        uchar thisChar = screen->getChar(offset);
+        if (letter && (thisChar == 0x00 || thisChar == ' '))
+        {
+            endField = offset;
+            letter = false;
+        }
+
+        if (thisChar != 0x00 && thisChar != ' ')
+        {
+            letter = true;
+
+        }
+
+        field.append(screen->getChar(offset));
+        offset = ++i % screenSize;
+    }
+
+    cursor_pos = endField;
+
+    cursor_x = (cursor_pos / screen_x);
+    cursor_x = cursor_pos - (cursor_y * screen_x);
+
+    moveCursor(cursor_x, cursor_y, true);
+
 }
 
 void ProcessDataStream::toggleRuler()

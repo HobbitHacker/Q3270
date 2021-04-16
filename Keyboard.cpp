@@ -39,6 +39,7 @@ void Keyboard::setMap()
 
     functionMap.insert("Newline",&Keyboard::newline);
     functionMap.insert("Home",&Keyboard::home);
+    functionMap.insert("Endline", &Keyboard::endline);
 
     functionMap.insert("EraseEOF",&Keyboard::eraseEOF);
 
@@ -645,6 +646,11 @@ void Keyboard::reset()
     emit setInsert(false);
 }
 
+void Keyboard::endline()
+{
+    datastream->endline();
+}
+
 void Keyboard::copy()
 {
     view->copyText();
@@ -767,6 +773,7 @@ void Keyboard::setFactoryMaps()
     setMapping("Home", "Home");
     setMapping("End", "EraseEOF");
     setMapping("Return", "Newline");
+    setMapping("Ctrl+End", "Endline");
 
     setMapping("F1", "F1");
     setMapping("F2", "F2");
