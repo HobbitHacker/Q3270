@@ -86,6 +86,7 @@ class DisplayScreen : public QGraphicsScene
         void setStatusXSystem(QString text);
         void showStatusCursorPosition(int x,int y);
         void setStatusInsert(bool ins);
+        void setCursorColour(bool inherit);
 
     private:
 
@@ -312,6 +313,7 @@ class DisplayScreen : public QGraphicsScene
 
         bool blinkShow;             /* Whether the character is shown/hidden for a given blink event */
         bool cursorShow;            /* Whether the cursor is shown/hidden for a given blink event */
+        bool cursorColour;          // Whether cursor inherits the colour of the character underneath
 
         bool geActive;              // Next character is Graphic Escape
 

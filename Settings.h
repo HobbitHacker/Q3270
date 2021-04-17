@@ -47,6 +47,7 @@ class Settings : public QDialog
         void fontScalingChanged(bool fontScaling);
         void tempFontChange(QFont f);
         void saveKeyboardSettings();
+        void setCursorColour(bool inherit);
 
     private slots:
 
@@ -77,6 +78,7 @@ class Settings : public QDialog
         int blinkSpeed;
         bool blink;
         bool fontScaling;
+        bool cursorInherit;
 
         bool paletteChanged;
         bool keyboardChanged;

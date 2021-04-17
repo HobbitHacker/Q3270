@@ -19,6 +19,7 @@ DisplayScreen::DisplayScreen(int screen_x, int screen_y)
     ruler = false;
     blinkShow = false;
     cursorShow = true;
+    cursorColour = true;
 
     // Build 3270 display matrix
     glyph.resize(screenPos_max);
@@ -851,6 +852,20 @@ void DisplayScreen::eraseUnprotected(int start, int end)
         {
                 glyph.at(i)->setText(" ", IBM3270_CHAR_SPACE, false);
         }
+    }
+}
+
+void DisplayScreen::setCursorColour(bool inherit)
+{
+    cursorColour = inherit;
+    if (inherit)
+    {
+        Glyph *g = (Glyph *)cursor.parentItem()->childItems()[0];
+        cursor.setBrush(palette[g->getColour()]);
+    }
+    else
+    {
+        cursor.setBrush(QBrush(QColor(0xBB, 0xBB, 0xBB)));
     }
 }
 

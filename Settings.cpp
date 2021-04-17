@@ -43,6 +43,16 @@ Settings::Settings(QWidget *parent) : QDialog(parent), ui(new Ui::Settings)
         ui->cursorBlinkSpeed->setSliderPosition(4);
     }
 
+    // Cursor colour inheritance
+    if (applicationSettings.contains("terminal/cursorinheritcolour"))
+    {
+        cursorInherit = applicationSettings.value("terminal/cusorinheritcolour").toBool();
+    }
+    else
+    {
+        cursorInherit = true;
+    }
+
     termFont = QFont("ibm3270", 8);
 
     // Font
@@ -137,6 +147,8 @@ Settings::Settings(QWidget *parent) : QDialog(parent), ui(new Ui::Settings)
     connect(ui->KeyboardMap, &QTableWidget::itemClicked, this, &Settings::populateKeySequence);
     connect(ui->keySequenceEdit, &QKeySequenceEdit::editingFinished, this, &Settings::truncateShortcut);
     connect(ui->setKeyboardMap, &QPushButton::clicked, this, &Settings::setKey);
+
+    ui->cursorColour->setCheckState(cursorInherit == true ? Qt::Checked : Qt::Unchecked);
 
     lastRow = -1;
     lastSeq = -1;
@@ -338,6 +350,13 @@ void Settings::accept()
         emit newMap(keyboardMap);
     }
 
+    if (ui->cursorColour->QAbstractButton::isChecked() != cursorInherit)
+    {
+        cursorInherit = ui->cursorColour->QAbstractButton::isChecked();
+
+        emit setCursorColour(cursorInherit);
+    }
+
     QDialog::accept();
 
 }
@@ -472,7 +491,7 @@ void Settings::saveSettings()
 {
     QSettings qs;
 
-    qs.setValue("terminal/model", termType);
+    qs.setValue("terminal/model", terms[termType].name);
     qs.setValue("terminal/width", termX);
     qs.setValue("terminal/height", termY);
 

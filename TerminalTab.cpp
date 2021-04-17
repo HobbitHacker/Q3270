@@ -162,6 +162,7 @@ void TerminalTab::connectSession()
         connect(kbd, &Keyboard::setInsert, screen[i], &DisplayScreen::setStatusInsert);
 
         connect(settings, &Settings::fontScalingChanged, screen[i], &DisplayScreen::setFontScaling);
+        connect(settings, &Settings::setCursorColour, screen[i], &DisplayScreen::setCursorColour);
     }
 
     view->setBlink(settings->getBlink());
