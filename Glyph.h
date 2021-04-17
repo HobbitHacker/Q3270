@@ -15,6 +15,7 @@ class Glyph : public QObject, public QGraphicsSimpleTextItem
     Q_OBJECT
 
     public:
+
         Glyph(int x, int y, QGraphicsItem* parent);
         QRectF boundingRect() const;
 
@@ -23,7 +24,6 @@ class Glyph : public QObject, public QGraphicsSimpleTextItem
         int type() const;
 
         void setText(const QString text, uchar ebcdic, bool graphic);
-        void copyTextFrom(Glyph *source);
 
         // Getters, inline for speed
         inline uchar getEBCDIC()   { return ebcdic; };
@@ -50,7 +50,6 @@ class Glyph : public QObject, public QGraphicsSimpleTextItem
         // Setters, inline for speed
         inline void setColour(int c)         { colNum = c; };
         inline void setFieldStart(bool fs)   { fieldStart = fs; };
-//        inline void setAutoSkip(bool as)     { askip = as; };
         inline void setNumeric(bool n)       { num = n; };
         inline void setGraphic(bool ge)      { graphic = ge; };
         inline void setMDT(bool m)           { mdt = m; };
@@ -67,9 +66,11 @@ class Glyph : public QObject, public QGraphicsSimpleTextItem
 
     private:
 
-        int pos_x;              // 3270 screen position x
-        int pos_y;              // 3270 screen position y
-        QString contents;
+        // X & Y screen position
+        int pos_x;
+        int pos_y;
+
+        // EBCDIC code for this character
         uchar ebcdic;
 
         // Is this a GE character?
@@ -79,7 +80,6 @@ class Glyph : public QObject, public QGraphicsSimpleTextItem
         bool fieldStart;
 
         // Field attributes
-        bool askip;
         bool num;
         bool mdt;
         bool prot;
