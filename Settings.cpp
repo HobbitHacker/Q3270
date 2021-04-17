@@ -10,14 +10,14 @@ Settings::Settings(QWidget *parent) : QDialog(parent), ui(new Ui::Settings)
     ui->setupUi(this);
     ui->TabsWidget->setCurrentIndex(0);
 
-    QSettings *applicationSettings = new QSettings();
+    QSettings applicationSettings;
 
     // Model type
-    if (applicationSettings->contains("terminal/model"))
+    if (applicationSettings.contains("terminal/model"))
     {
-        termX = applicationSettings->value("terminal/width").toInt();
-        termY = applicationSettings->value("terminal/height").toInt();
-        changeModel(applicationSettings->value("terminal/model").toString());
+        termX = applicationSettings.value("terminal/width").toInt();
+        termY = applicationSettings.value("terminal/height").toInt();
+        changeModel(applicationSettings.value("terminal/model").toString());
     }
     else
     {
@@ -27,10 +27,10 @@ Settings::Settings(QWidget *parent) : QDialog(parent), ui(new Ui::Settings)
     }
 
     // Cursor blink enabled & speed
-    if (applicationSettings->contains("terminal/cursorblink"))
+    if (applicationSettings.contains("terminal/cursorblink"))
     {
-        blink = applicationSettings->value("terminal/cursorblink").toBool();
-        blinkSpeed = applicationSettings->value("terminal/cursorblinkspeed").toInt();
+        blink = applicationSettings.value("terminal/cursorblink").toBool();
+        blinkSpeed = applicationSettings.value("terminal/cursorblinkspeed").toInt();
         ui->cursorBlink->setChecked(blink);
         ui->cursorBlinkSpeed->setSliderPosition(blinkSpeed);
 
@@ -46,13 +46,13 @@ Settings::Settings(QWidget *parent) : QDialog(parent), ui(new Ui::Settings)
     termFont = QFont("ibm3270", 8);
 
     // Font
-    if (applicationSettings->contains("font/name"))
+    if (applicationSettings.contains("font/name"))
     {
-        printf("%s\n%s\n%d\n", applicationSettings->value("font/name").toString().toLatin1().data(), applicationSettings->value("font/style").toString().toLatin1().data(), applicationSettings->value("font/size").toInt());
+        printf("%s\n%s\n%d\n", applicationSettings.value("font/name").toString().toLatin1().data(), applicationSettings.value("font/style").toString().toLatin1().data(), applicationSettings.value("font/size").toInt());
         fflush(stdout);
-        termFont.setFamily(applicationSettings->value("font/name").toString());
-        termFont.setStyleName(applicationSettings->value("font/style").toString());
-        termFont.setPointSize(applicationSettings->value("font/size").toInt());
+        termFont.setFamily(applicationSettings.value("font/name").toString());
+        termFont.setStyleName(applicationSettings.value("font/style").toString());
+        termFont.setPointSize(applicationSettings.value("font/size").toInt());
     }
     else
     {
@@ -62,9 +62,9 @@ Settings::Settings(QWidget *parent) : QDialog(parent), ui(new Ui::Settings)
     }
 
     // Font scaling
-    if (applicationSettings->contains("font/scale"))
+    if (applicationSettings.contains("font/scale"))
     {
-        fontScaling = applicationSettings->value("font/scale").toString() == "true" ? true : false;
+        fontScaling = applicationSettings.value("font/scale").toString() == "true" ? true : false;
         ui->FontScaling->setCheckState(fontScaling ?  Qt::Checked : Qt::Unchecked);
 
     }
@@ -75,22 +75,22 @@ Settings::Settings(QWidget *parent) : QDialog(parent), ui(new Ui::Settings)
     }
 
     // Colours
-    if (applicationSettings->beginReadArray("colours") > 0)
+    if (applicationSettings.beginReadArray("colours") > 0)
     {
         for (int i = 0; i < 12; i++)
         {
-            applicationSettings->setArrayIndex(i);
-            QString c = applicationSettings->value("colour").toString();
+            applicationSettings.setArrayIndex(i);
+            QString c = applicationSettings.value("colour").toString();
             if (c == "")
             {
                 palette[i] = default_palette[i];
             }
             else
             {
-                palette[i] = QColor(applicationSettings->value("colour").toString());
+                palette[i] = QColor(applicationSettings.value("colour").toString());
             }
         }
-        applicationSettings->endArray();
+        applicationSettings.endArray();
     }
     else
     {
@@ -470,28 +470,28 @@ bool Settings::getFontScaling()
 
 void Settings::saveSettings()
 {
-    QSettings *qs = new QSettings();
+    QSettings qs;
 
-    qs->setValue("terminal/model", termType);
-    qs->setValue("terminal/width", termX);
-    qs->setValue("terminal/height", termY);
+    qs.setValue("terminal/model", termType);
+    qs.setValue("terminal/width", termX);
+    qs.setValue("terminal/height", termY);
 
-    qs->setValue("terminal/cursorblink", blink);
-    qs->setValue("terminal/cursorblinkspeed", blinkSpeed);
+    qs.setValue("terminal/cursorblink", blink);
+    qs.setValue("terminal/cursorblinkspeed", blinkSpeed);
 
-    qs->setValue("font/name", termFont.family());
-    qs->setValue("font/style", termFont.styleName());
-    qs->setValue("font/size", termFont.pointSize());
+    qs.setValue("font/name", termFont.family());
+    qs.setValue("font/style", termFont.styleName());
+    qs.setValue("font/size", termFont.pointSize());
 
-    qs->setValue("font/scale", ui->FontScaling->QAbstractButton::isChecked());
+    qs.setValue("font/scale", ui->FontScaling->QAbstractButton::isChecked());
 
-    qs->beginWriteArray("colours");
+    qs.beginWriteArray("colours");
     for(int i = 0; i < 12; i++)
     {
-        qs->setArrayIndex(i);
-        qs->setValue("colour", palette[i].name(QColor::HexRgb));
+        qs.setArrayIndex(i);
+        qs.setValue("colour", palette[i].name(QColor::HexRgb));
     }
-    qs->endArray();
+    qs.endArray();
 
     emit newMap(keyboardMap);
     emit saveKeyboardSettings();

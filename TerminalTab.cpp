@@ -30,8 +30,10 @@ TerminalTab::TerminalTab()
     ncMessage->setPen(QColor(Qt::white));
 
     QFont font("mono", 24);
-    QFontMetrics fm(font);
     ncMessage->setFont(font);
+
+    // Centre "Not Connected" based on font size. 640x480 halved, less the size of the font
+    QFontMetrics fm(font);
     int xPos = 320 - fm.width(ncMessage->text()) / 2;
     int yPos = 240 - fm.height() / 2;
     ncMessage->setPos(xPos, yPos);
@@ -91,15 +93,15 @@ void TerminalTab::setColours(QColor *colours)
         screen[i]->resetColours();
     }
 
-    QSettings *set = new QSettings();
-    set->beginWriteArray("colours");
+    QSettings set;
+    set.beginWriteArray("colours");
     for (int i = 0; i < 12; i++)
     {
-        set->setArrayIndex(i);
-        set->setValue("colour", colours[i].name(QColor::HexRgb));
+        set.setArrayIndex(i);
+        set.setValue("colour", colours[i].name(QColor::HexRgb));
         palette[i] = colours[i];
     }
-    set->endArray();
+    set.endArray();
 }
 
 void TerminalTab::openConnection(QString host, int port, QString luName)
@@ -149,7 +151,6 @@ void TerminalTab::connectSession()
 
     for (int i = 0; i < 2; i++)
     {
-
         screen[i]->setColourPalette(settings->getColours());
         screen[i]->resetColours();
         screen[i]->setFontScaling(settings->getFontScaling());
