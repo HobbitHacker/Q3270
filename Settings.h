@@ -34,6 +34,7 @@ class Settings : public QDialog
         QFont getFont();
         QColor *getColours();
         bool getFontScaling();
+        bool getStretch();
         void setKeyboardMap(QMap<QString, QStringList> map);
 
     signals:
@@ -48,6 +49,7 @@ class Settings : public QDialog
         void tempFontChange(QFont f);
         void saveKeyboardSettings();
         void setCursorColour(bool inherit);
+        void setStretch(bool stretch);
 
     private slots:
 
@@ -79,6 +81,7 @@ class Settings : public QDialog
         bool blink;
         bool fontScaling;
         bool cursorInherit;
+        bool stretchScreen;
 
         bool paletteChanged;
         bool keyboardChanged;

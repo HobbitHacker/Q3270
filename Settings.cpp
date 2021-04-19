@@ -18,6 +18,8 @@ Settings::Settings(QWidget *parent) : QDialog(parent), ui(new Ui::Settings)
         termX = applicationSettings.value("terminal/width").toInt();
         termY = applicationSettings.value("terminal/height").toInt();
         changeModel(applicationSettings.value("terminal/model").toString());
+        stretchScreen = applicationSettings.value("terminal/stretch").toBool();
+
     }
     else
     {
@@ -357,6 +359,8 @@ void Settings::accept()
         emit setCursorColour(cursorInherit);
     }
 
+    emit setStretch(ui->stretch);
+
     QDialog::accept();
 
 }
@@ -487,6 +491,11 @@ bool Settings::getFontScaling()
     return fontScaling;
 }
 
+bool Settings::getStretch()
+{
+    return stretchScreen;
+}
+
 void Settings::saveSettings()
 {
     QSettings qs;
@@ -511,6 +520,8 @@ void Settings::saveSettings()
         qs.setValue("colour", palette[i].name(QColor::HexRgb));
     }
     qs.endArray();
+
+    qs.setValue("terminal/stretch", ui->stretch->QAbstractButton::isChecked());
 
     emit newMap(keyboardMap);
     emit saveKeyboardSettings();

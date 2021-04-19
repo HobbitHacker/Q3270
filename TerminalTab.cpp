@@ -41,6 +41,7 @@ TerminalTab::TerminalTab()
     gs->addItem(ncMessage);
 
     view->setScene(gs);
+    view->setStretch(settings->getStretch());
 
     this->setWidget(view);
 
@@ -51,6 +52,7 @@ TerminalTab::~TerminalTab()
     delete kbd;
     delete settings;
     delete gs;
+    delete view;
 }
 
 void TerminalTab::showForm()
@@ -148,6 +150,7 @@ void TerminalTab::connectSession()
     kbd->setDataStream(datastream);
 
     connect(settings, &Settings::saveKeyboardSettings, kbd, &Keyboard::saveKeyboardSettings);
+    connect(settings, &Settings::setStretch, view, &TerminalView::setStretch);
 
     for (int i = 0; i < 2; i++)
     {
@@ -163,6 +166,7 @@ void TerminalTab::connectSession()
 
         connect(settings, &Settings::fontScalingChanged, screen[i], &DisplayScreen::setFontScaling);
         connect(settings, &Settings::setCursorColour, screen[i], &DisplayScreen::setCursorColour);
+
     }
 
     view->setBlink(settings->getBlink());

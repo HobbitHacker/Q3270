@@ -90,9 +90,14 @@ void TerminalView::fit()
     }
     else
     {
-//        fitInView(this->scene()->itemsBoundingRect(), Qt::KeepAspectRatio);
-        fitInView(this->scene()->itemsBoundingRect(), Qt::IgnoreAspectRatio);
+        fitInView(this->scene()->itemsBoundingRect(), Qt::KeepAspectRatio);
     }
+}
+
+void TerminalView::setStretch(bool stretch)
+{
+    this->stretch = stretch;
+    fit();
 }
 
 void TerminalView::blinkText()

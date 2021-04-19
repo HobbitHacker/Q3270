@@ -26,6 +26,8 @@ class TerminalView : public QGraphicsView
         int  getBlinkSpeed();
         void setBlinkSpeed(int speed);
         bool getBlink();
+        bool getStretch();
+
         void setBlink(bool blink);
         void setScenes(DisplayScreen *primary, DisplayScreen *alternate);
         void setConnected();
@@ -46,6 +48,10 @@ class TerminalView : public QGraphicsView
 
         QPoint origin;
         QRubberBand *rubberBand;
+
+    public slots:
+
+        void setStretch(bool stretch);
 
     private slots:
 
