@@ -13,6 +13,8 @@
 #include <QSettings>
 #include <QHostInfo>
 #include <QGraphicsSimpleTextItem>
+#include <QVBoxLayout>
+#include <QMenuBar>
 
 class TerminalTab : public QMdiSubWindow
 {
@@ -78,6 +80,11 @@ class TerminalTab : public QMdiSubWindow
         QLabel *cursorAddress;
         QLabel *syslock;
         QLabel *insMode;
+
+        // Local window menu
+        QAction *actionConnect;
+        QAction *actionReconnect;
+        QAction *actionDisconnect;
 
         QString tabHost;
         int tabPort;
