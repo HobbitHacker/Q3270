@@ -1,0 +1,369 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>ColourTheme</class>
+ <widget class="QDialog" name="ColourTheme">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>457</width>
+    <height>371</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Colour Schemes</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout">
+     <item>
+      <widget class="QComboBox" name="colourScheme">
+       <property name="editable">
+        <bool>false</bool>
+       </property>
+       <item>
+        <property name="text">
+         <string>Factory</string>
+        </property>
+       </item>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="colourNew">
+       <property name="enabled">
+        <bool>true</bool>
+       </property>
+       <property name="text">
+        <string>New Scheme</string>
+       </property>
+       <property name="autoDefault">
+        <bool>false</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="colourDelete">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+       <property name="text">
+        <string>Delete Scheme</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QLabel" name="colourError">
+     <property name="text">
+      <string/>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <layout class="QVBoxLayout" name="verticalLayout_2">
+     <item>
+      <layout class="QHBoxLayout" name="horizontalLayout_3">
+       <item>
+        <widget class="QGroupBox" name="baseColours">
+         <property name="title">
+          <string>Base Colours</string>
+         </property>
+         <layout class="QFormLayout" name="formLayout">
+          <item row="0" column="0">
+           <widget class="QLabel" name="label_4">
+            <property name="text">
+             <string>Unprotected</string>
+            </property>
+            <property name="buddy">
+             <cstring>baseUnprotected</cstring>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QPushButton" name="baseUnprotected">
+            <property name="styleSheet">
+             <string notr="true">background-color: #ff00ff</string>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="label_10">
+            <property name="text">
+             <string>Protected</string>
+            </property>
+            <property name="buddy">
+             <cstring>baseProtected</cstring>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QPushButton" name="baseProtected">
+            <property name="text">
+             <string/>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="QLabel" name="label_11">
+            <property name="text">
+             <string>Unprotected, Intensified</string>
+            </property>
+            <property name="buddy">
+             <cstring>baseUnprotectedIntensify</cstring>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="1">
+           <widget class="QPushButton" name="baseUnprotectedIntensify">
+            <property name="text">
+             <string/>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="0">
+           <widget class="QLabel" name="label_12">
+            <property name="text">
+             <string>Protected, Intensified</string>
+            </property>
+            <property name="buddy">
+             <cstring>baseProtectedIntensify</cstring>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="1">
+           <widget class="QPushButton" name="baseProtectedIntensify">
+            <property name="text">
+             <string/>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="extendedColours">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="title">
+          <string>Extended Colours</string>
+         </property>
+         <layout class="QFormLayout" name="formLayout_3">
+          <item row="0" column="0">
+           <widget class="QLabel" name="label_13">
+            <property name="text">
+             <string>Black</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QPushButton" name="colourBlack">
+            <property name="text">
+             <string/>
+            </property>
+            <property name="autoDefault">
+             <bool>false</bool>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="label_14">
+            <property name="text">
+             <string>Blue</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QPushButton" name="colourBlue">
+            <property name="text">
+             <string/>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="QLabel" name="label_15">
+            <property name="text">
+             <string>Red</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="1">
+           <widget class="QPushButton" name="colourRed">
+            <property name="text">
+             <string/>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="0">
+           <widget class="QLabel" name="label_16">
+            <property name="text">
+             <string>Magenta (Pink)</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="1">
+           <widget class="QPushButton" name="colourPink">
+            <property name="text">
+             <string/>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="0">
+           <widget class="QLabel" name="label_17">
+            <property name="text">
+             <string>Green</string>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="1">
+           <widget class="QPushButton" name="colourGreen">
+            <property name="text">
+             <string/>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="0">
+           <widget class="QLabel" name="label_18">
+            <property name="text">
+             <string>Cyan (Turquoise)</string>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="1">
+           <widget class="QPushButton" name="colourTurq">
+            <property name="text">
+             <string/>
+            </property>
+           </widget>
+          </item>
+          <item row="6" column="0">
+           <widget class="QLabel" name="label_19">
+            <property name="text">
+             <string>Yellow</string>
+            </property>
+           </widget>
+          </item>
+          <item row="6" column="1">
+           <widget class="QPushButton" name="colourYellow">
+            <property name="text">
+             <string/>
+            </property>
+           </widget>
+          </item>
+          <item row="7" column="0">
+           <widget class="QLabel" name="label_20">
+            <property name="text">
+             <string>White</string>
+            </property>
+           </widget>
+          </item>
+          <item row="7" column="1">
+           <widget class="QPushButton" name="colourWhite">
+            <property name="text">
+             <string/>
+            </property>
+            <property name="autoDefault">
+             <bool>false</bool>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <layout class="QHBoxLayout" name="horizontalLayout_4"/>
+     </item>
+     <item>
+      <widget class="QDialogButtonBox" name="buttonBox">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="standardButtons">
+        <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>accepted()</signal>
+   <receiver>ColourTheme</receiver>
+   <slot>accept()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>248</x>
+     <y>254</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>157</x>
+     <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>rejected()</signal>
+   <receiver>ColourTheme</receiver>
+   <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>316</x>
+     <y>260</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>286</x>
+     <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>colourDelete</sender>
+   <signal>clicked()</signal>
+   <receiver>ColourTheme</receiver>
+   <slot>deleteScheme()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>377</x>
+     <y>21</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>228</x>
+     <y>185</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>colourNew</sender>
+   <signal>clicked()</signal>
+   <receiver>ColourTheme</receiver>
+   <slot>addScheme()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>228</x>
+     <y>21</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>228</x>
+     <y>185</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+ <slots>
+  <slot>schemeChanged(int)</slot>
+  <slot>addScheme()</slot>
+  <slot>deleteScheme()</slot>
+  <slot>schemeRenamed(QString)</slot>
+ </slots>
+</ui>
