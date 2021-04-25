@@ -99,7 +99,7 @@ TerminalTab *MainWindow::newTab()
         ui->menuWindow->addSeparator()->setText(" ");
     }
 
-    TerminalTab *t = new TerminalTab();
+    TerminalTab *t = new TerminalTab(&colourTheme);
 
     t->setAttribute(Qt::WA_DeleteOnClose);
 
@@ -177,6 +177,11 @@ void MainWindow::menuTerminalSettings()
     }
 
     fflush(stdout);
+}
+
+void MainWindow::menuColourTheme()
+{
+    colourTheme.exec();
 }
 
 void MainWindow::menuAbout()

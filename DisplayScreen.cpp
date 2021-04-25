@@ -1,10 +1,11 @@
 #include "DisplayScreen.h"
 
-DisplayScreen::DisplayScreen(int screen_x, int screen_y)
+DisplayScreen::DisplayScreen(int screen_x, int screen_y, ColourTheme::Colours colours)
 {
-    setColourPalette(default_palette);
 
-    setBackgroundBrush(palette[0]);
+    palette = colours;
+
+    setBackgroundBrush(palette[ColourTheme::BLACK]);
 
     this->screen_x = screen_x;
     this->screen_y = screen_y;
@@ -181,12 +182,9 @@ void DisplayScreen::setFont(QFont font)
     }
 }
 
-void DisplayScreen::setColourPalette(QColor *c)
+void DisplayScreen::setColourPalette(ColourTheme::Colours c)
 {
-    for (int i = 0; i < 12; i++)
-    {
-        palette[i] = c[i];
-    }
+    palette = c;
 }
 
 void DisplayScreen::resetColours()
@@ -196,13 +194,13 @@ void DisplayScreen::resetColours()
         if (glyph.at(i)->isReverse())
         {
             cell.at(i)->setBrush(palette[glyph.at(i)->getColour()]);
-            glyph.at(i)->setBrush(palette[Colours::BLACK]);
+            glyph.at(i)->setBrush(palette[ColourTheme::BLACK]);
             printf("<reverse>");
         }
         else
         {
             glyph.at(i)->setBrush(palette[glyph.at(i)->getColour()]);
-            cell.at(i)->setBrush(palette[Colours::BLACK]);
+            cell.at(i)->setBrush(palette[ColourTheme::BLACK]);
         }
         if (!glyph.at(i)->isDisplay())
         {
@@ -224,14 +222,13 @@ void DisplayScreen::clear()
 {
     for(int i = 0; i < screenPos_max; i++)
     {
-        cell.at(i)->setBrush(palette[Colours::BLACK]);
+        cell.at(i)->setBrush(palette[ColourTheme::BLACK]);
 
         uscore.at(i)->setVisible(false);
 
-        glyph.at(i)->setBrush(palette[1]);
+        glyph.at(i)->setColour(ColourTheme::BLUE);
+        glyph.at(i)->setBrush(palette[ColourTheme::BLUE]);
         glyph.at(i)->setText(0x00, 0x00, false);
-
-        glyph.at(i)->setColour(Colours::BLUE);
 
         glyph.at(i)->setFieldStart(false);
 
@@ -248,7 +245,6 @@ void DisplayScreen::clear()
         glyph.at(i)->setBlink(false);
 
         glyph.at(i)->setCharAttrs(false);
-
     }
     resetCharAttr();
 
@@ -339,12 +335,12 @@ void DisplayScreen::setChar(int pos, short unsigned int c, bool move, bool fromK
         if (glyph.at(pos)->isReverse())
         {
             cell.at(pos)->setBrush(palette[glyph.at(pos)->getColour()]);
-            glyph.at(pos)->setBrush(palette[Colours::BLACK]);
+            glyph.at(pos)->setBrush(palette[ColourTheme::BLACK]);
         }
         else
         {
             glyph.at(pos)->setBrush(palette[glyph.at(pos)->getColour()]);
-            cell.at(pos)->setBrush(palette[Colours::BLACK]);
+            cell.at(pos)->setBrush(palette[ColourTheme::BLACK]);
         }
     }
 
@@ -356,9 +352,6 @@ void DisplayScreen::setChar(int pos, short unsigned int c, bool move, bool fromK
     {
         uscore.at(pos)->setVisible(true);
         uscore.at(pos)->setPen(QPen(palette[glyph.at(pos)->getColour()],0));
- //       uscore[pos]->pen().setCosmetic(true);
- //       uscore[pos]->pen().setColor(palette[attrs[pos].colNum]);
-
     }
     else
     {
@@ -434,8 +427,8 @@ void DisplayScreen::setCharAttr(unsigned char extendedType, unsigned char extend
             }
             else
             {
-                charAttr.colour = palette[extendedValue&7];
-                charAttr.colNum = extendedValue&7;
+                charAttr.colour = palette[(ColourTheme::Colour)(extendedValue&7)];
+                charAttr.colNum = (ColourTheme::Colour)(extendedValue&7);
                 charAttr.colour_default = false;
                 printf("fg colour %s", colName[charAttr.colNum]);
             }
@@ -448,8 +441,8 @@ void DisplayScreen::setCharAttr(unsigned char extendedType, unsigned char extend
             }
             else
             {
-                charAttr.colour = palette[extendedValue&7];
-                charAttr.colNum = extendedValue&7;
+                charAttr.colour = palette[(ColourTheme::Colour)(extendedValue&7)];
+                charAttr.colNum = (ColourTheme::Colour)(extendedValue&7);
                 charAttr.colour_default = false;
                 printf("bg colour %s", colName[charAttr.colNum]);
             }
@@ -494,19 +487,19 @@ void DisplayScreen::setField(int pos, unsigned char c, bool sfe)
     {
         if (glyph.at(pos)->isProtected() && !glyph.at(pos)->isIntensify())
         {
-            glyph.at(pos)->setColour(Colours::PROTECTED_NORMAL);        /* Protected (Blue) */
+            glyph.at(pos)->setColour(ColourTheme::PROTECTED_NORMAL);        /* Protected (Blue) */
         }
         else if (glyph.at(pos)->isProtected() && glyph.at(pos)->isIntensify())
         {
-            glyph.at(pos)->setColour(Colours::PROTECTED_INTENSIFIED);   /* Protected, Intensified (White) */
+            glyph.at(pos)->setColour(ColourTheme::PROTECTED_INTENSIFIED);   /* Protected, Intensified (White) */
         }
         else if (!glyph.at(pos)->isProtected() && !glyph.at(pos)->isIntensify())
         {
-            glyph.at(pos)->setColour(Colours::UNPROTECTED_NORMAL);      /* Unprotected (Green) */
+            glyph.at(pos)->setColour(ColourTheme::UNPROTECTED_NORMAL);      /* Unprotected (Green) */
         }
         else
         {
-            glyph.at(pos)->setColour(Colours::UNPROTECTED_INTENSIFIED); /* Unrprotected, Intensified (Red) */
+            glyph.at(pos)->setColour(ColourTheme::UNPROTECTED_INTENSIFIED); /* Unrprotected, Intensified (Red) */
         }
 
         glyph.at(pos)->setUScore(false);
@@ -562,7 +555,7 @@ void DisplayScreen::resetExtended(int pos)
 {
     resetExtendedHilite(pos);
 
-    glyph.at(pos)->setColour(1);
+    glyph.at(pos)->setColour(ColourTheme::BLUE);
 
     glyph.at(pos)->setDisplay(true);
     glyph.at(pos)->setNumeric(false);
@@ -582,7 +575,7 @@ void DisplayScreen::resetExtendedHilite(int pos)
 void DisplayScreen::setExtendedColour(int pos, bool foreground, unsigned char c)
 {
     //TODO: Default colour?
-    glyph.at(pos)->setColour(c&7);
+    glyph.at(pos)->setColour((ColourTheme::Colour)(c&7));
     glyph.at(pos)->setReverse(!foreground);
     if(foreground)
     {
@@ -655,11 +648,11 @@ int DisplayScreen::resetFieldAttrs(int start)
             if (glyph.at(offset)->isReverse())
             {
                 cell.at(offset)->setBrush(palette[glyph.at(offset)->getColour()]);
-                glyph.at(offset)->setBrush(palette[Colours::BLACK]);
+                glyph.at(offset)->setBrush(palette[ColourTheme::BLACK]);
             }
             else
             {
-                cell.at(offset)->setBrush(palette[Colours::BLACK]);
+                cell.at(offset)->setBrush(palette[ColourTheme::BLACK]);
                 glyph.at(offset)->setBrush(palette[glyph.at(offset)->getColour()]);
             }
             if (glyph.at(offset)->isUScore())
@@ -673,8 +666,8 @@ int DisplayScreen::resetFieldAttrs(int start)
         }
         else
         {
-            cell.at(offset)->setBrush(palette[Colours::BLACK]);
-            glyph.at(offset)->setBrush(palette[Colours::BLACK]);
+            cell.at(offset)->setBrush(palette[ColourTheme::BLACK]);
+            glyph.at(offset)->setBrush(palette[ColourTheme::BLACK]);
         }
     }
 
@@ -942,7 +935,7 @@ void DisplayScreen::blink()
             }
             else
             {
-                glyph.at(i)->setBrush(palette[Colours::BLACK]);
+                glyph.at(i)->setBrush(palette[ColourTheme::BLACK]);
             }
         }
     }

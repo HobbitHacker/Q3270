@@ -22,7 +22,7 @@ class ColourTheme : public QDialog
 
     public:
 
-        enum ExtendedColours
+        enum Colour
         {
             BLACK                      = 0,
             BLUE                       = 1,
@@ -31,25 +31,22 @@ class ColourTheme : public QDialog
             GREEN                      = 4,
             CYAN                       = 5,
             YELLOW                     = 6,
-            NEUTRAL                    = 7
+            NEUTRAL                    = 7,
+
+            UNPROTECTED_NORMAL         = 32,
+            PROTECTED_NORMAL           = 33,
+            UNPROTECTED_INTENSIFIED    = 34,
+            PROTECTED_INTENSIFIED      = 35
         };
 
-        enum BaseColours
-        {
-            PROTECTED_NORMAL           = 0,
-            UNPROTECTED_INTENSIFIED    = 1,
-            UNPROTECTED_NORMAL         = 2,
-            PROTECTED_INTENSIFIED      = 3
-        };
-
-        struct Colours
-        {
-                QVector<QColor> base;
-                QVector<QColor> extended;
-        };
+        typedef QMap<Colour, QColor> Colours;
 
         explicit ColourTheme(QWidget *parent = nullptr);
         ~ColourTheme();
+
+        const Colours getScheme(QString scheme);
+        void setButtonColours(Colours scheme, QHash<Colour, QPushButton *>);
+        QList<QString> getSchemes();
 
     private:
         Ui::ColourTheme *ui;
@@ -59,7 +56,12 @@ class ColourTheme : public QDialog
         QLabel newSchemeMessage;
         QDialogButtonBox newSchemePopUpButtons;
 
+        QHash<Colour, QPushButton *> colourButtons;
+        QList<QPushButton *> extendedButtons;
+
         QMap<QString, Colours> schemes;
+
+        Colours colours;
 
         Colours currentScheme;
         QString currentSchemeName;

@@ -16,13 +16,15 @@
 #include <QVBoxLayout>
 #include <QMenuBar>
 
+#include <ColourTheme.h>
+
 class TerminalTab : public QMdiSubWindow
 {
 
     Q_OBJECT
 
     public:
-        TerminalTab();
+        TerminalTab(ColourTheme *colours);
         ~TerminalTab();
 
         void openConnection(QString host, int port, QString luName);
@@ -42,7 +44,7 @@ class TerminalTab : public QMdiSubWindow
 
         void setFont();
         void setScaleFont(bool scale);
-        void setColours(QColor colours[8]);
+        void setColours(ColourTheme::Colours colours);
 
         int getType();
         QString address();
@@ -74,6 +76,7 @@ class TerminalTab : public QMdiSubWindow
         DisplayScreen *screen[2];
 
         Settings *settings;
+        ColourTheme *colours;
 
         bool altScreen;
 

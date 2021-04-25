@@ -1,7 +1,7 @@
 #include "ui_Settings.h"
 #include "Settings.h"
 
-Settings::Settings(QWidget *parent) : QDialog(parent), ui(new Ui::Settings)
+Settings::Settings(QWidget *parent, ColourTheme *colours) : QDialog(parent), ui(new Ui::Settings)
 {
     // All initial settings moved to here, extracted from QSettings, or set to default as needed.
     // Other classes refer to this as needed.
@@ -86,65 +86,36 @@ Settings::Settings(QWidget *parent) : QDialog(parent), ui(new Ui::Settings)
         fontScaling = true;
     }
 
-    // Colours
-    if (applicationSettings.beginReadArray("colours") > 0)
-    {
-        for (int i = 0; i < 12; i++)
-        {
-            applicationSettings.setArrayIndex(i);
-            QString c = applicationSettings.value("colour").toString();
-            if (c == "")
-            {
-                palette[i] = default_palette[i];
-            }
-            else
-            {
-                palette[i] = QColor(applicationSettings.value("colour").toString());
-            }
-        }
-        applicationSettings.endArray();
-    }
-    else
-    {
-        for(int i = 0; i < 12; i++)
-        {
-            palette[i] = default_palette[i];
-        }
-    }
+    // Set up a list of buttons for use in setButtonColours
+    colourButtons[ColourTheme::UNPROTECTED_NORMAL]      = ui->baseUnprotected;
+    colourButtons[ColourTheme::PROTECTED_NORMAL]        = ui->baseProtected;
+    colourButtons[ColourTheme::UNPROTECTED_INTENSIFIED] = ui->baseUnprotectedIntensify;
+    colourButtons[ColourTheme::PROTECTED_INTENSIFIED]   =  ui->baseProtectedIntensify;
+
+    colourButtons[ColourTheme::BLACK]        = ui->colourBlack;
+    colourButtons[ColourTheme::BLUE]         = ui->colourBlue;
+    colourButtons[ColourTheme::RED]          = ui->colourRed;
+    colourButtons[ColourTheme::MAGENTA]      = ui->colourPink;
+    colourButtons[ColourTheme::GREEN]        = ui->colourGreen;
+    colourButtons[ColourTheme::CYAN]         = ui->colourTurq;
+    colourButtons[ColourTheme::YELLOW]       = ui->colourYellow;
+    colourButtons[ColourTheme::NEUTRAL]      = ui->colourWhite;
+
+    // Colour the buttons, based on Settings
+    colourSchemeName = applicationSettings.value("ColourScheme", "Factory").toString();
+    colourScheme = colours->getScheme(colourSchemeName);
+    colours->setButtonColours(colourScheme, colourButtons);
+
+    // Save the ColourTheme object
+    this->colours = colours;
+
+    // Setup Manage Schemes button
+    connect(ui->colourManage, &QPushButton::clicked, this, &Settings::populateSchemeNames);
 
     // Not connected to start with
     ui->terminalCols->setEnabled(true);
     ui->terminalRows->setEnabled(true);
     ui->terminalType->setEnabled(true);
-
-
-    ui->colourBlack->setStyleSheet(QString("background-color: %1;").arg(palette[0].name(QColor::HexRgb)));
-    ui->colourBlue->setStyleSheet(QString("background-color: %1;").arg(palette[1].name(QColor::HexRgb)));
-    ui->colourRed->setStyleSheet(QString("background-color: %1;").arg(palette[2].name(QColor::HexRgb)));
-    ui->colourPink->setStyleSheet(QString("background-color: %1;").arg(palette[3].name(QColor::HexRgb)));
-    ui->colourGreen->setStyleSheet(QString("background-color: %1;").arg(palette[4].name(QColor::HexRgb)));
-    ui->colourTurq->setStyleSheet(QString("background-color: %1;").arg(palette[5].name(QColor::HexRgb)));
-    ui->colourYellow->setStyleSheet(QString("background-color: %1;").arg(palette[6].name(QColor::HexRgb)));
-    ui->colourWhite->setStyleSheet(QString("background-color: %1;").arg(palette[7].name(QColor::HexRgb)));
-
-    connect(ui->colourBlack, &QPushButton::clicked, this, &Settings::setColour);
-    connect(ui->colourBlue, &QPushButton::clicked, this, &Settings::setColour);
-    connect(ui->colourRed, &QPushButton::clicked, this, &Settings::setColour);
-    connect(ui->colourPink, &QPushButton::clicked, this, &Settings::setColour);
-    connect(ui->colourGreen, &QPushButton::clicked, this, &Settings::setColour);
-    connect(ui->colourTurq, &QPushButton::clicked, this, &Settings::setColour);
-    connect(ui->colourYellow, &QPushButton::clicked, this, &Settings::setColour);
-    connect(ui->colourWhite, &QPushButton::clicked, this, &Settings::setColour);
-
-    ui->baseProtected->setStyleSheet(QString("background-color: %1;").arg(palette[8].name(QColor::HexRgb)));
-    ui->baseUnprotectedIntensify->setStyleSheet(QString("background-color: %1;").arg(palette[9].name(QColor::HexRgb)));
-    ui->baseUnprotected->setStyleSheet(QString("background-color: %1;").arg(palette[10].name(QColor::HexRgb)));
-    ui->baseProtectedIntensify->setStyleSheet(QString("background-color: %1;").arg(palette[11].name(QColor::HexRgb)));
-
-    connect(ui->baseProtected, &QPushButton::clicked, this, &Settings::setColour);
-    connect(ui->baseUnprotectedIntensify, &QPushButton::clicked, this, &Settings::setColour);
-    connect(ui->baseUnprotected, &QPushButton::clicked, this, &Settings::setColour);
-    connect(ui->baseProtectedIntensify, &QPushButton::clicked, this, &Settings::setColour);
 
     connect(ui->KeyboardMap, &QTableWidget::itemClicked, this, &Settings::populateKeySequence);
     connect(ui->keySequenceEdit, &QKeySequenceEdit::editingFinished, this, &Settings::truncateShortcut);
@@ -152,11 +123,13 @@ Settings::Settings(QWidget *parent) : QDialog(parent), ui(new Ui::Settings)
 
     ui->cursorColour->setCheckState(cursorInherit == true ? Qt::Checked : Qt::Unchecked);
 
+    //No last chosen keyboard row or key sequence
     lastRow = -1;
     lastSeq = -1;
 
     keyboardChanged = false;
 
+    // Build a QFontDialog for use within our Settings dialog
     qfd = new QFontDialog();
     qfd->setWindowFlags(Qt::Widget);
     qfd->setOption(QFontDialog::NoButtons);
@@ -218,6 +191,8 @@ void Settings::showForm(bool connected)
     paletteChanged = false;
 
     qfd->setCurrentFont(termFont);
+
+    populateSchemeNames();
 
     this->exec();
 }
@@ -325,7 +300,7 @@ void Settings::accept()
 
     if (paletteChanged)
     {
-        emit coloursChanged(palette);
+        emit coloursChanged(colourScheme);
     }
 
     printf("Before: %s - %s - %d\n", termFont.family().toLatin1().data(), termFont.styleName().toLatin1().data(), termFont.pointSize());
@@ -372,83 +347,6 @@ void Settings::reject()
     QDialog::reject();
 }
 
-void Settings::setColour()
-{
-
-    QPushButton* buttonSender = qobject_cast<QPushButton*>(sender());
-
-    buttonSender->clearFocus();
-
-    QString button = buttonSender->objectName();
-
-    int thisColour;
-
-    if (!button.compare("colourBlack"))
-    {
-        thisColour = 0;
-    }
-    else if (!button.compare("colourBlue"))
-    {
-        thisColour = 1;
-    }
-    else if (!button.compare("colourRed"))
-    {
-        thisColour = 2;
-    }
-    else if (!button.compare("colourPink"))
-    {
-        thisColour = 3;
-    }
-    else if (!button.compare("colourGreen"))
-    {
-        thisColour = 4;
-    }
-    else if (!button.compare("colourTurq"))
-    {
-        thisColour = 5;
-    }
-    else if (!button.compare("colourYellow"))
-    {
-        thisColour = 6;
-    }
-    else if (!button.compare("colourWhite"))
-    {
-        thisColour = 7;
-    }
-    else if (!button.compare("baseProtected"))
-    {
-        thisColour = 8;
-    }
-    else if (!button.compare("baseUnprotectedIntensify"))
-    {
-        thisColour = 9;
-    }
-    else if (!button.compare("baseUnprotected"))
-    {
-        thisColour = 10;
-    }
-    else if (!button.compare("baseUnprotectedIntensify"))
-    {
-        thisColour = 11;
-    }
-    else
-    {
-        return;
-    }
-
-    const QColor color = QColorDialog::getColor(palette[thisColour], this, "Select Color");
-
-    if (color.isValid())
-    {
-        if (palette[thisColour] != color)
-        {
-            paletteChanged = true;
-            buttonSender->setStyleSheet(QString("background-color: %1;").arg(color.name(QColor::HexRgb)));
-            palette[thisColour] = color;
-        }
-    }
-}
-
 int Settings::getTermX()
 {
     return termX;
@@ -471,11 +369,6 @@ QString Settings::getTermName()
     return terms[termType].term;
 }
 
-QColor *Settings::getColours()
-{
-    return palette;
-}
-
 int Settings::getBlinkSpeed()
 {
     return blinkSpeed;
@@ -496,6 +389,11 @@ bool Settings::getStretch()
     return stretchScreen;
 }
 
+ColourTheme::Colours Settings::getColours()
+{
+    return colourScheme;
+}
+
 void Settings::saveSettings()
 {
     QSettings qs;
@@ -512,7 +410,7 @@ void Settings::saveSettings()
     qs.setValue("font/size", termFont.pointSize());
 
     qs.setValue("font/scale", ui->FontScaling->QAbstractButton::isChecked());
-
+/*
     qs.beginWriteArray("colours");
     for(int i = 0; i < 12; i++)
     {
@@ -520,7 +418,7 @@ void Settings::saveSettings()
         qs.setValue("colour", palette[i].name(QColor::HexRgb));
     }
     qs.endArray();
-
+*/
     qs.setValue("terminal/stretch", ui->stretch->QAbstractButton::isChecked());
 
     emit newMap(keyboardMap);
@@ -610,3 +508,18 @@ void Settings::truncateShortcut()
 }
 
 
+void Settings::colourSchemeChanged(int index)
+{
+    colourSchemeName = ui->colourScheme->currentText();
+    colourScheme = colours->getScheme(colourSchemeName);
+    colours->setButtonColours(colourScheme, colourButtons);
+
+    paletteChanged = true;
+}
+
+
+void Settings::populateSchemeNames()
+{
+    ui->colourScheme->clear();
+    ui->colourScheme->addItems(colours->getSchemes());
+}

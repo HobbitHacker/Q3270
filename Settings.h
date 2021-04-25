@@ -9,6 +9,7 @@
 #include <QTableWidgetItem>
 
 #include "Q3270.h"
+#include "ColourTheme.h"
 
 namespace Ui {
     class Settings;
@@ -20,7 +21,7 @@ class Settings : public QDialog
 
     public:
 
-        explicit Settings(QWidget *parent);
+        explicit Settings(QWidget *parent, ColourTheme *colours);
         ~Settings();
 
         void showForm(bool connected);
@@ -32,7 +33,7 @@ class Settings : public QDialog
         int getTermY();
         QString getTermName();
         QFont getFont();
-        QColor *getColours();
+        ColourTheme::Colours getColours();
         bool getFontScaling();
         bool getStretch();
         void setKeyboardMap(QMap<QString, QStringList> map);
@@ -42,7 +43,7 @@ class Settings : public QDialog
         void terminalChanged(int type, int x, int y);
         void cursorBlinkChanged(bool blink, int blinkSpeed);
         void cursorBlinkSpeedChanged(int blinkSpeed);
-        void coloursChanged(QColor palette[12]);
+        void coloursChanged(ColourTheme::Colours);
         void fontChanged();
         void newMap(QMap<QString, QStringList> newMap);
         void fontScalingChanged(bool fontScaling);
@@ -55,11 +56,12 @@ class Settings : public QDialog
 
         void changeFont(QFont f);
         void changeModel(int m);
-        void setColour();
         void populateKeySequence(QTableWidgetItem *item);
         void setKey();
         void truncateShortcut();
         void saveSettings();
+        void colourSchemeChanged(int index);
+        void populateSchemeNames();
 
     private:
 
@@ -67,9 +69,15 @@ class Settings : public QDialog
 
         QFontDialog *qfd;
 
-        QColor palette[12];
+        ColourTheme *colours;
+
+        QString colourSchemeName;
+        ColourTheme::Colours colourScheme;
+
         QFont termFont;
         QFont qfdFont;
+
+        QHash<ColourTheme::Colour, QPushButton *> colourButtons;
 
         QMap<QString, QStringList> keyboardMap;
 

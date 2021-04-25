@@ -11,13 +11,14 @@
 
 #include "Glyph.h"
 #include "Q3270.h"
+#include "ColourTheme.h"
 
 class DisplayScreen : public QGraphicsScene
 {
     Q_OBJECT
 
     public:
-        DisplayScreen(int screen_x, int screen_y);
+        DisplayScreen(int screen_x, int screen_y, ColourTheme::Colours);
         ~DisplayScreen();
 
         int width();
@@ -66,7 +67,7 @@ class DisplayScreen : public QGraphicsScene
 
         void clear();
         void setFont(QFont font);
-        void setColourPalette(QColor *c);
+        void setColourPalette(ColourTheme::Colours c);
         void resetColours();
         void setFontScaling(bool fontScaling);
         void toggleRuler();
@@ -280,25 +281,7 @@ class DisplayScreen : public QGraphicsScene
             0xF8, 0xF9, 0x7A, 0x7B, 0x7C, 0x7D, 0x7E, 0x7F,  /* 11 0100 to 11 1111 */
         };
 
-        QColor palette[12];
-
-        enum Colours
-        {
-            BLACK                      = 0,
-            BLUE                       = 1,
-            RED                        = 2,
-            MAGENTA                    = 3,
-            GREEN                      = 4,
-            CYAN                       = 5,
-            YELLOW                     = 6,
-            NEUTRAL                    = 7,
-            PROTECTED_NORMAL           = 8,
-            UNPROTECTED_INTENSIFIED    = 9,
-            UNPROTECTED_NORMAL         = 10,
-            PROTECTED_INTENSIFIED      = 11
-
-
-        };
+        ColourTheme::Colours palette;
 
         const char *colName[12] = { "black", "blue", "red", "magenta", "green", "cyan", "yellow", "neutral",
                                     "protected", "unprotected,intensfied", "unprotected", "protected, intensified"};
@@ -307,7 +290,7 @@ class DisplayScreen : public QGraphicsScene
         int screen_y;                /* Max Rows */
         int screenPos_max;           /* Max position on screen */
 
-        QVector<Glyph *> glyph;                /* Character on screen */
+        QVector<Glyph *> glyph;               /* Character on screen */
         QVector<QGraphicsRectItem *> cell;    /* Screen slot */
         QVector<QGraphicsLineItem *> uscore;  /* Underscores */
 
@@ -323,6 +306,7 @@ class DisplayScreen : public QGraphicsScene
 
         /* Character Attributes in effect */
         bool useCharAttr;
+
         struct {
                 bool uscore;
                 bool uscore_default;
@@ -334,7 +318,7 @@ class DisplayScreen : public QGraphicsScene
                 bool blink_default;
 
                 QBrush colour;
-                int colNum;
+                ColourTheme::Colour colNum;
                 bool colour_default;
         } charAttr;
 

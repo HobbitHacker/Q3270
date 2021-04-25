@@ -157,20 +157,4 @@ enum Indicators {
     GoElsewhere
 };
 
-static QColor default_palette[12] = {
-    QColor(0,0,0),          /* Black */
-    QColor(128,128,255),    /* Blue */
-    QColor(255,0,0),        /* Red */
-    QColor(255,0, 255),     /* Magenta */
-    QColor(0,255,0),        /* Green */
-    QColor(0,255,255),      /* Cyan */
-    QColor(255,255,0),      /* Yellow */
-    QColor(255,255,255),    /* White */
-    QColor(128,128,255),    /* Basic Blue */
-    QColor(255,0,0),        /* Basic Red */
-    QColor(0,255,0),        /* Basic Green */
-    QColor(255,255,255)     /* Basic White */
-};
-
-
 #endif // N3270_H

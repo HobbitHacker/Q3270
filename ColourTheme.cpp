@@ -12,22 +12,21 @@ ColourTheme::ColourTheme(QWidget *parent) :
     Colours factory;
 
     // Factory defaults
-    palette.base.append(QColor(128,128,255));        /* Basic Blue */
-    palette.base.append(QColor(255,0,0));            /* Basic Red */
-    palette.base.append(QColor(0,255,0));            /* Basic Green */
-    palette.base.append(QColor(255,255,255));        /* Basic White */
+    palette[PROTECTED_NORMAL]        = QColor(128,128,255);        /* Basic Blue */
+    palette[UNPROTECTED_INTENSIFIED] = QColor(255,0,0);            /* Basic Red */
+    palette[UNPROTECTED_NORMAL]      = QColor(0,255,0);            /* Basic Green */
+    palette[PROTECTED_INTENSIFIED]   = QColor(255,255,255);        /* Basic White */
 
-    palette.extended.append(QColor(0,0,0));          /* Black */
-    palette.extended.append(QColor(128,128,255));    /* Blue */
-    palette.extended.append(QColor(255,0,0));        /* Red */
-    palette.extended.append(QColor(255,0, 255));     /* Magenta */
-    palette.extended.append(QColor(0,255,0));        /* Green */
-    palette.extended.append(QColor(0,255,255));      /* Cyan */
-    palette.extended.append(QColor(255,255,0));      /* Yellow */
-    palette.extended.append(QColor(255,255,255));    /* White */
+    palette[BLACK]   = QColor(0,0,0);          /* Black */
+    palette[BLUE]    = QColor(128,128,255);    /* Blue */
+    palette[RED]     = QColor(255,0,0);        /* Red */
+    palette[MAGENTA] = QColor(255,0, 255);     /* Magenta */
+    palette[GREEN]   = QColor(0,255,0);        /* Green */
+    palette[CYAN]    = QColor(0,255,255);      /* Cyan */
+    palette[YELLOW]  = QColor(255,255,0);      /* Yellow */
+    palette[NEUTRAL] = QColor(255,255,255);    /* White */
 
     schemes.insert("Factory", palette);
-    ui->colourScheme->addItem("Factory");
 
     factory = palette;
 
@@ -42,19 +41,19 @@ ColourTheme::ColourTheme(QWidget *parent) :
 
             QString schemeName = s.value("Name").toString();
 
-            palette.base[UNPROTECTED_NORMAL]      = QColor(s.value("UnprotectedNormal").toString());
-            palette.base[UNPROTECTED_INTENSIFIED] = QColor(s.value("UnprotectedIntensified").toString());
-            palette.base[PROTECTED_NORMAL]        = QColor(s.value("ProtectedNormal").toString());
-            palette.base[PROTECTED_INTENSIFIED]   = QColor(s.value("ProtectedIntensified").toString());
+            palette[UNPROTECTED_NORMAL]      = QColor(s.value("UnprotectedNormal").toString());
+            palette[UNPROTECTED_INTENSIFIED] = QColor(s.value("UnprotectedIntensified").toString());
+            palette[PROTECTED_NORMAL]        = QColor(s.value("ProtectedNormal").toString());
+            palette[PROTECTED_INTENSIFIED]   = QColor(s.value("ProtectedIntensified").toString());
 
-            palette.extended[BLACK]     = QColor(s.value("Black").toString());
-            palette.extended[BLUE]      = QColor(s.value("Blue").toString());
-            palette.extended[RED]       = QColor(s.value("Red").toString());
-            palette.extended[MAGENTA]   = QColor(s.value("Magenta").toString());
-            palette.extended[GREEN]     = QColor(s.value("Green").toString());
-            palette.extended[CYAN]      = QColor(s.value("Cyan").toString());
-            palette.extended[YELLOW]    = QColor(s.value("Yellow").toString());
-            palette.extended[NEUTRAL]   = QColor(s.value("Neutral").toString());
+            palette[BLACK]     = QColor(s.value("Black").toString());
+            palette[BLUE]      = QColor(s.value("Blue").toString());
+            palette[RED]       = QColor(s.value("Red").toString());
+            palette[MAGENTA]   = QColor(s.value("Magenta").toString());
+            palette[GREEN]     = QColor(s.value("Green").toString());
+            palette[CYAN]      = QColor(s.value("Cyan").toString());
+            palette[YELLOW]    = QColor(s.value("Yellow").toString());
+            palette[NEUTRAL]   = QColor(s.value("Neutral").toString());
 
             schemes.insert(schemeName, palette);
             ui->colourScheme->addItem(schemeName);
@@ -62,13 +61,10 @@ ColourTheme::ColourTheme(QWidget *parent) :
 
     s.endArray();
 
-    setScheme("Factory");
-    currentSchemeIndex = 0;
-
-    // Set colour buttons
+    // Set colour buttons actions
+    connect(ui->baseUnprotected, &QPushButton::clicked, this, &ColourTheme::setColour);
     connect(ui->baseProtected, &QPushButton::clicked, this, &ColourTheme::setColour);
     connect(ui->baseUnprotectedIntensify, &QPushButton::clicked, this, &ColourTheme::setColour);
-    connect(ui->baseUnprotected, &QPushButton::clicked, this, &ColourTheme::setColour);
     connect(ui->baseProtectedIntensify, &QPushButton::clicked, this, &ColourTheme::setColour);
 
     connect(ui->colourBlack, &QPushButton::clicked, this, &ColourTheme::setColour);
@@ -97,6 +93,29 @@ ColourTheme::ColourTheme(QWidget *parent) :
     connect(&newSchemeName, &QLineEdit::textChanged, this, &ColourTheme::checkDuplicate);
     connect(&newSchemePopUpButtons, &QDialogButtonBox::accepted, &newSchemePopUp, &QDialog::accept);
     connect(&newSchemePopUpButtons, &QDialogButtonBox::rejected, &newSchemePopUp, &QDialog::reject);
+
+    // Set up a list of buttons for use in setButtonColours
+    colourButtons[UNPROTECTED_NORMAL]      = ui->baseUnprotected;
+    colourButtons[PROTECTED_NORMAL]        = ui->baseProtected;
+    colourButtons[UNPROTECTED_INTENSIFIED] = ui->baseUnprotectedIntensify;
+    colourButtons[PROTECTED_INTENSIFIED]   =  ui->baseProtectedIntensify;
+
+    colourButtons[BLACK]        = ui->colourBlack;
+    colourButtons[BLUE]         = ui->colourBlue;
+    colourButtons[RED]          = ui->colourRed;
+    colourButtons[MAGENTA]      = ui->colourPink;
+    colourButtons[GREEN]        = ui->colourGreen;
+    colourButtons[CYAN]         = ui->colourTurq;
+    colourButtons[YELLOW]       = ui->colourYellow;
+    colourButtons[NEUTRAL]      = ui->colourWhite;
+
+    // Set the default colour scheme to Factory
+    ui->colourScheme->addItem("Factory");
+
+    setScheme("Factory");
+
+    currentSchemeIndex = 0;
+
 }
 
 ColourTheme::~ColourTheme()
@@ -106,8 +125,7 @@ ColourTheme::~ColourTheme()
 
 void ColourTheme::setScheme(QString schemeName)
 {
-    // Set dialog to factory defaults
-
+    // Set colour theme according to schemeName, using Factory if not found
     qDebug() << "Changing colours to " << schemeName;
 
     if (schemes.find(schemeName) == schemes.end())
@@ -121,21 +139,6 @@ void ColourTheme::setScheme(QString schemeName)
         currentSchemeName = schemeName;
     }
 
-    // Change colour swatches
-    ui->colourBlack->setStyleSheet(QString("background-color: %1;").arg(currentScheme.extended.at(BLACK).name()));
-    ui->colourBlue->setStyleSheet(QString("background-color: %1;").arg(currentScheme.extended.at(BLUE).name()));
-    ui->colourRed->setStyleSheet(QString("background-color: %1;").arg(currentScheme.extended.at(RED).name()));
-    ui->colourPink->setStyleSheet(QString("background-color: %1;").arg(currentScheme.extended.at(MAGENTA).name()));
-    ui->colourGreen->setStyleSheet(QString("background-color: %1;").arg(currentScheme.extended.at(GREEN).name()));
-    ui->colourTurq->setStyleSheet(QString("background-color: %1;").arg(currentScheme.extended.at(CYAN).name()));
-    ui->colourYellow->setStyleSheet(QString("background-color: %1;").arg(currentScheme.extended.at(YELLOW).name()));
-    ui->colourWhite->setStyleSheet(QString("background-color: %1;").arg(currentScheme.extended.at(NEUTRAL).name()));
-
-    ui->baseUnprotected->setStyleSheet(QString("background-color: %1;").arg(currentScheme.base.at(UNPROTECTED_NORMAL).name()));
-    ui->baseUnprotectedIntensify->setStyleSheet(QString("background-color: %1;").arg(currentScheme.base.at(UNPROTECTED_INTENSIFIED).name()));
-    ui->baseProtected->setStyleSheet(QString("background-color: %1;").arg(currentScheme.base.at(PROTECTED_NORMAL).name()));
-    ui->baseProtectedIntensify->setStyleSheet(QString("background-color: %1;").arg(currentScheme.base.at(PROTECTED_INTENSIFIED).name()));
-
     // Disable editing for Factory scheme
     if (!schemeName.compare("Factory"))
     {
@@ -148,6 +151,25 @@ void ColourTheme::setScheme(QString schemeName)
         ui->baseColours->setEnabled(true);
     }
 
+    setButtonColours(currentScheme, colourButtons);
+}
+
+void ColourTheme::setButtonColours(Colours scheme, QHash<Colour, QPushButton *> buttons)
+{
+    // Change colour swatches
+    buttons[UNPROTECTED_NORMAL]->setStyleSheet(QString("background-color: %1;").arg(scheme[UNPROTECTED_NORMAL].name()));
+    buttons[PROTECTED_NORMAL]->setStyleSheet(QString("background-color: %1;").arg(scheme[UNPROTECTED_INTENSIFIED].name()));
+    buttons[UNPROTECTED_INTENSIFIED]->setStyleSheet(QString("background-color: %1;").arg(scheme[PROTECTED_NORMAL].name()));
+    buttons[PROTECTED_INTENSIFIED]->setStyleSheet(QString("background-color: %1;").arg(scheme[PROTECTED_INTENSIFIED].name()));
+
+    buttons[BLACK]->setStyleSheet(QString("background-color: %1;").arg(scheme[BLACK].name()));
+    buttons[BLUE]->setStyleSheet(QString("background-color: %1;").arg(scheme[BLUE].name()));
+    buttons[RED]->setStyleSheet(QString("background-color: %1;").arg(scheme[RED].name()));
+    buttons[MAGENTA]->setStyleSheet(QString("background-color: %1;").arg(scheme[MAGENTA].name()));
+    buttons[GREEN]->setStyleSheet(QString("background-color: %1;").arg(scheme[GREEN].name()));
+    buttons[CYAN]->setStyleSheet(QString("background-color: %1;").arg(scheme[CYAN].name()));
+    buttons[YELLOW]->setStyleSheet(QString("background-color: %1;").arg(scheme[YELLOW].name()));
+    buttons[NEUTRAL]->setStyleSheet(QString("background-color: %1;").arg(scheme[NEUTRAL].name()));
 }
 
 
@@ -163,51 +185,51 @@ void ColourTheme::setColour()
 
     if (!button.compare("colourBlack"))
     {
-        colourDialog(currentScheme.extended[BLACK], buttonSender);
+        colourDialog(currentScheme[BLACK], buttonSender);
     }
     else if (!button.compare("colourBlue"))
     {
-        colourDialog(currentScheme.extended[BLUE], buttonSender);
+        colourDialog(currentScheme[BLUE], buttonSender);
     }
     else if (!button.compare("colourRed"))
     {
-        colourDialog(currentScheme.extended[RED], buttonSender);
+        colourDialog(currentScheme[RED], buttonSender);
     }
     else if (!button.compare("colourPink"))
     {
-        colourDialog(currentScheme.extended[MAGENTA], buttonSender);
+        colourDialog(currentScheme[MAGENTA], buttonSender);
     }
     else if (!button.compare("colourGreen"))
     {
-        colourDialog(currentScheme.extended[GREEN], buttonSender);
+        colourDialog(currentScheme[GREEN], buttonSender);
     }
     else if (!button.compare("colourTurq"))
     {
-        colourDialog(currentScheme.extended[CYAN], buttonSender);
+        colourDialog(currentScheme[CYAN], buttonSender);
     }
     else if (!button.compare("colourYellow"))
     {
-        colourDialog(currentScheme.extended[YELLOW], buttonSender);
+        colourDialog(currentScheme[YELLOW], buttonSender);
     }
     else if (!button.compare("colourWhite"))
     {
-        colourDialog(currentScheme.extended[NEUTRAL], buttonSender);
+        colourDialog(currentScheme[NEUTRAL], buttonSender);
     }
     else if (!button.compare("baseProtected"))
     {
-        colourDialog(currentScheme.base[PROTECTED_NORMAL], buttonSender);
+        colourDialog(currentScheme[PROTECTED_NORMAL], buttonSender);
     }
     else if (!button.compare("baseUnprotectedIntensify"))
     {
-        colourDialog(currentScheme.extended[UNPROTECTED_INTENSIFIED], buttonSender);
+        colourDialog(currentScheme[UNPROTECTED_INTENSIFIED], buttonSender);
     }
     else if (!button.compare("baseUnprotected"))
     {
-        colourDialog(currentScheme.extended[UNPROTECTED_NORMAL], buttonSender);
+        colourDialog(currentScheme[UNPROTECTED_NORMAL], buttonSender);
     }
     else if (!button.compare("baseProtectedIntensify"))
     {
-        colourDialog(currentScheme.extended[PROTECTED_INTENSIFIED], buttonSender);
+        colourDialog(currentScheme[PROTECTED_INTENSIFIED], buttonSender);
     }
 
     // Update the map with the new colour
@@ -305,4 +327,22 @@ void ColourTheme::deleteScheme()
     // Remove scheme from lists
     schemes.remove(ui->colourScheme->currentText());
     ui->colourScheme->removeItem(currentSchemeIndex);
+}
+
+
+const ColourTheme::Colours ColourTheme::getScheme(QString scheme)
+{
+    // Return requested scheme, if found, or Factory scheme if not
+    if (schemes.find(scheme) == schemes.end())
+    {
+        return schemes.constFind("Factory").value();
+    }
+
+    return schemes.constFind(scheme).value();
+}
+
+QList<QString> ColourTheme::getSchemes()
+{
+    // Return all the schemes
+    return schemes.keys();
 }

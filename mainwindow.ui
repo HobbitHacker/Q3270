@@ -35,18 +35,20 @@
    </property>
    <widget class="QMenu" name="menuConnect">
     <property name="title">
-     <string>Connect</string>
+     <string>Session</string>
     </property>
     <addaction name="actionConnect"/>
     <addaction name="actionReconnect"/>
     <addaction name="actionDisconnect"/>
     <addaction name="separator"/>
+    <addaction name="actionTerminalSettings"/>
    </widget>
    <widget class="QMenu" name="menuFont_Settings">
     <property name="title">
      <string>Settings</string>
     </property>
-    <addaction name="actionTerminalSettings"/>
+    <addaction name="actionPreferences"/>
+    <addaction name="actionThemes"/>
    </widget>
    <widget class="QMenu" name="menuFile">
     <property name="title">
@@ -61,7 +63,6 @@
     <addaction name="menuRecentSessions"/>
     <addaction name="separator"/>
     <addaction name="actionQuit"/>
-    <addaction name="separator"/>
    </widget>
    <widget class="QMenu" name="menuWindow">
     <property name="title">
@@ -70,8 +71,6 @@
     <addaction name="actionTabs"/>
     <addaction name="actionTile"/>
     <addaction name="actionGrid"/>
-    <addaction name="separator"/>
-    <addaction name="separator"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
@@ -145,6 +144,16 @@
   <action name="actionAbout_Q3270">
    <property name="text">
     <string>About Q3270...</string>
+   </property>
+  </action>
+  <action name="actionPreferences">
+   <property name="text">
+    <string>Preferences</string>
+   </property>
+  </action>
+  <action name="actionThemes">
+   <property name="text">
+    <string>Themes</string>
    </property>
   </action>
  </widget>
@@ -310,6 +319,22 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>actionThemes</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>menuColourTheme()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>821</x>
+     <y>518</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>menuConnect()</slot>
@@ -321,5 +346,6 @@
   <slot>menuTabbedView(bool)</slot>
   <slot>menuReconnect()</slot>
   <slot>menuAbout()</slot>
+  <slot>menuColourTheme()</slot>
  </slots>
 </ui>

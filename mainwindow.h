@@ -27,6 +27,7 @@
 #include "Q3270.h"
 #include "TerminalTab.h"
 #include "Host.h"
+#include "ColourTheme.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -51,13 +52,14 @@ class MainWindow : public QMainWindow
     void mruConnect();
     void menuQuit();
 
-    // Connect menu
+    // Session menu
     void menuConnect();
     void menuReconnect();
     void menuDisconnect();
+    void menuTerminalSettings();
 
     // Settings menu
-    void menuTerminalSettings();
+    void menuColourTheme();
 
     // Window Menu
     void menuTabbedView(bool tabView);
@@ -76,6 +78,7 @@ class MainWindow : public QMainWindow
     void updateMRUlist(QString address);
     TerminalTab *newTab();
     Host *connectHost;
+    ColourTheme colourTheme;
 
     int maxMruCount;
     int subWindow;

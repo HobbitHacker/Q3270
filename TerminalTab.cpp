@@ -1,10 +1,13 @@
 #include "TerminalTab.h"
 
-TerminalTab::TerminalTab()
+TerminalTab::TerminalTab(ColourTheme *colours)
 {
-    settings = new Settings(this->parentWidget());
-
+    // Create Settings and TerminalView objects
+    settings = new Settings(this->parentWidget(), colours);
     view = new TerminalView();
+
+    // Save ColourTheme object
+    this->colours = colours;
 
     // make layout and a menu bar
     QWidget *central = new QWidget();
@@ -111,14 +114,14 @@ void TerminalTab::setScaleFont(bool scale)
     }
 }
 
-void TerminalTab::setColours(QColor *colours)
+void TerminalTab::setColours(ColourTheme::Colours colours)
 {
     for (int i = 0; i < 2; i++)
     {
         screen[i]->setColourPalette(colours);
         screen[i]->resetColours();
     }
-
+/*
     QSettings set;
     set.beginWriteArray("colours");
     for (int i = 0; i < 12; i++)
@@ -128,6 +131,7 @@ void TerminalTab::setColours(QColor *colours)
         palette[i] = colours[i];
     }
     set.endArray();
+*/
 }
 
 void TerminalTab::openConnection(QString host, int port, QString luName)
@@ -162,8 +166,8 @@ void TerminalTab::connectSession()
 {
     setWindowTitle(windowTitle().append(" [").append(address()).append("]"));
 
-    screen[0] = new DisplayScreen(80, 24);
-    screen[1] = new DisplayScreen(settings->getTermX(), settings->getTermY());
+    screen[0] = new DisplayScreen(80, 24, settings->getColours());
+    screen[1] = new DisplayScreen(settings->getTermX(), settings->getTermY(), settings->getColours());
 
     view->setScenes(screen[0], screen[1]);
     view->setAlternateScreen(false);
@@ -178,8 +182,6 @@ void TerminalTab::connectSession()
 
     for (int i = 0; i < 2; i++)
     {
-        screen[i]->setColourPalette(settings->getColours());
-        screen[i]->resetColours();
         screen[i]->setFontScaling(settings->getFontScaling());
         screen[i]->setFont(settings->getFont());
 
