@@ -24,12 +24,13 @@ SOURCES += \
     Glyph.cpp \
     Host.cpp \
     Keyboard.cpp \
+    MainWindow.cpp \
     ProcessDataStream.cpp \
+    SaveSession.cpp \
     Settings.cpp \
     TerminalTab.cpp \
     TerminalView.cpp \
     main.cpp \
-    mainwindow.cpp \
     SocketConnection.cpp
 
 HEADERS += \
@@ -38,20 +39,22 @@ HEADERS += \
     Glyph.h \
     Host.h \
     Keyboard.h \
+    MainWindow.h \
     ProcessDataStream.h \
     Q3270.h \
+    SaveSession.h \
     Settings.h \
     TerminalTab.h \
     TerminalView.h \
-    mainwindow.h \
     SocketConnection.h
 
 FORMS += \
     About.ui \
     ColourTheme.ui \
     Host.ui \
-    Settings.ui \
-    mainwindow.ui
+    MainWindow.ui \
+    SaveSession.ui \
+    Settings.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

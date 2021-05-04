@@ -1,5 +1,5 @@
-#include "ui_mainwindow.h"
-#include "mainwindow.h"
+#include "ui_MainWindow.h"
+#include "MainWindow.h"
 #include "ui_About.h"
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new(Ui::MainWindow))
@@ -45,7 +45,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new(Ui::MainWi
     }
 
     applicationSettings.endArray();
-
+/*
     if (applicationSettings.value("restorewindows", false).toBool())
     {
         int sessionCount = applicationSettings.beginReadArray("sessions");
@@ -65,14 +65,20 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new(Ui::MainWi
         applicationSettings.endArray();
 
     }
+*/
 
-    connect(ui->mdiArea, &QMdiArea::subWindowActivated, this, &MainWindow::updateMenuEntries);
+    terminal = new TerminalTab(ui->terminalLayout);
 }
 
 void MainWindow::menuNew()
 {
-    newTab();
+//    newTab();
     menuConnect();
+}
+
+void MainWindow::menuSaveSession()
+{
+    qDebug() << SaveSession::getSessionName("Default Name");
 }
 
 void MainWindow::mruConnect()
@@ -81,48 +87,13 @@ void MainWindow::mruConnect()
 
     QString address = sender->text();
 
-    TerminalTab *t = newTab();
-
-    t->openConnection(address);
+    terminal->openConnection(address);
 
     ui->actionDisconnect->setEnabled(true);
     ui->actionReconnect->setDisabled(true);
     ui->actionConnect->setDisabled(true);
 
     updateMRUlist(address);
-}
-
-TerminalTab *MainWindow::newTab()
-{
-    if (subWindow == 0)
-    {
-        ui->menuWindow->addSeparator()->setText(" ");
-    }
-
-    TerminalTab *t = new TerminalTab(&colourTheme);
-
-    t->setAttribute(Qt::WA_DeleteOnClose);
-
-    ui->mdiArea->addSubWindow(t);
-
-    t->show();
-    t->setWindowTitle("Session " + QString::number(++subWindow));
-
-    ui->actionTerminalSettings->setEnabled(true);
-
-    QAction *act = new QAction("Session " + QString::number(subWindow));
-
-    act->setActionGroup(sessionGroup);
-    act->setCheckable(true);
-    act->setChecked(true);
-
-    ui->menuWindow->addAction(act);
-
-    connect(act, &QAction::triggered, t, [this, t, act]() { ui->mdiArea->setActiveSubWindow(t); act->setChecked(true); } );
-    connect(t, &TerminalTab::connectionClosed, this, &MainWindow::updateMenuEntries);
-    connect(t, &TerminalTab::destroyed, this, &MainWindow::subWindowClosed);
-
-    return t;
 }
 
 MainWindow::~MainWindow()
@@ -136,8 +107,7 @@ void MainWindow::menuConnect()
 
     if (connectHost->exec() == QDialog::Accepted)
     {
-        TerminalTab *t = (TerminalTab *)(ui->mdiArea->activeSubWindow());
-        t->openConnection(connectHost->hostName, connectHost->port, connectHost->luName);
+        terminal->openConnection(connectHost->hostName, connectHost->port, connectHost->luName);
         updateMRUlist((connectHost->luName.compare("") ? connectHost->luName + "@" : "") + connectHost->hostName + ":" + QString::number(connectHost->port));
         ui->actionDisconnect->setEnabled(true);
         ui->actionConnect->setDisabled(true);
@@ -147,9 +117,7 @@ void MainWindow::menuConnect()
 
 void MainWindow::menuReconnect()
 {
-    TerminalTab *t = (TerminalTab *)(ui->mdiArea->activeSubWindow());
-
-    t->connectSession();
+    terminal->connectSession();
 
     ui->actionConnect->setDisabled(true);
     ui->actionDisconnect->setEnabled(true);
@@ -158,9 +126,7 @@ void MainWindow::menuReconnect()
 
 void MainWindow::menuDisconnect()
 {
-    TerminalTab *t = (TerminalTab *)(ui->mdiArea->activeSubWindow());
-
-    t->closeConnection();
+    terminal->closeConnection();
 
     ui->actionDisconnect->setDisabled(true);
     ui->actionConnect->setEnabled(true);
@@ -169,14 +135,7 @@ void MainWindow::menuDisconnect()
 
 void MainWindow::menuTerminalSettings()
 {
-    TerminalTab *t = (TerminalTab *)(ui->mdiArea->activeSubWindow());
-
-    if (t)
-    {
-        t->showForm();
-    }
-
-    fflush(stdout);
+    terminal->showForm();
 }
 
 void MainWindow::menuColourTheme()
@@ -199,42 +158,20 @@ void MainWindow::menuAbout()
     delete about;
 }
 
-void MainWindow::menuTabbedView(bool tabView)
-{
-    if (tabView)
-    {
-        ui->mdiArea->setViewMode(QMdiArea::TabbedView);
-    }
-    else
-    {
-        ui->mdiArea->setViewMode(QMdiArea::SubWindowView);
-    }
-}
-
 void MainWindow::updateMenuEntries()
 {
-    if(TerminalTab *t = (TerminalTab *)(ui->mdiArea->activeSubWindow()))
+    ui->actionTerminalSettings->setEnabled(true);
+    if (terminal->view->connected)
     {
-
-        ui->actionTerminalSettings->setEnabled(true);
-        if (t->view->connected)
-        {
-            ui->actionDisconnect->setEnabled(true);
-            ui->actionConnect->setDisabled(true);
-            ui->actionReconnect->setDisabled(true);
-        }
-        else
-        {
-            ui->actionReconnect->setEnabled(true);
-            ui->actionDisconnect->setDisabled(true);
-            ui->actionConnect->setEnabled(true);
-        }
+        ui->actionDisconnect->setEnabled(true);
+        ui->actionConnect->setDisabled(true);
+        ui->actionReconnect->setDisabled(true);
     }
     else
     {
+        ui->actionReconnect->setEnabled(true);
         ui->actionDisconnect->setDisabled(true);
-        ui->actionConnect->setDisabled(true);
-        ui->actionTerminalSettings->setDisabled(true);
+        ui->actionConnect->setEnabled(true);
     }
 }
 
@@ -274,7 +211,6 @@ void MainWindow::menuQuit()
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
-    disconnect(ui->mdiArea, &QMdiArea::subWindowActivated, this, &MainWindow::updateMenuEntries);
     disconnect(this, "&updateMenuEntries()");
 
     QSettings applicationSettings;
@@ -290,6 +226,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
 
     applicationSettings.beginWriteArray("sessions");
 
+/*
     for (int i = 0; i < ui->mdiArea->subWindowList().size(); i++)
     {
 
@@ -300,12 +237,12 @@ void MainWindow::closeEvent(QCloseEvent *event)
         applicationSettings.setValue("geometry", t->saveGeometry());
         applicationSettings.setValue("address", ((TerminalTab *)t)->address());
     }
-
+*/
     applicationSettings.endArray();
 
     event->accept();
 }
-
+/*
 void MainWindow::subWindowClosed(QObject *closedWindow)
 {
     subWindow = 0;
@@ -342,3 +279,4 @@ void MainWindow::subWindowClosed(QObject *closedWindow)
         }
     }
 }
+*/

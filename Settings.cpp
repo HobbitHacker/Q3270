@@ -1,7 +1,8 @@
+
 #include "ui_Settings.h"
 #include "Settings.h"
 
-Settings::Settings(QWidget *parent, ColourTheme *colours) : QDialog(parent), ui(new Ui::Settings)
+Settings::Settings(QWidget *parent) : QDialog(parent), ui(new Ui::Settings)
 {
     // All initial settings moved to here, extracted from QSettings, or set to default as needed.
     // Other classes refer to this as needed.
@@ -101,13 +102,15 @@ Settings::Settings(QWidget *parent, ColourTheme *colours) : QDialog(parent), ui(
     colourButtons[ColourTheme::YELLOW]       = ui->colourYellow;
     colourButtons[ColourTheme::NEUTRAL]      = ui->colourWhite;
 
+    colours = new ColourTheme();
+
     // Colour the buttons, based on Settings
     colourSchemeName = applicationSettings.value("ColourScheme", "Factory").toString();
     colourScheme = colours->getScheme(colourSchemeName);
     colours->setButtonColours(colourScheme, colourButtons);
 
     // Save the ColourTheme object
-    this->colours = colours;
+//    this->colours = colours;
 
     // Setup Manage Schemes button
     connect(ui->colourManage, &QPushButton::clicked, this, &Settings::populateSchemeNames);

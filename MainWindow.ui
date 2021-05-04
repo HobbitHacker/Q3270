@@ -20,7 +20,7 @@
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout">
     <item>
-     <widget class="QMdiArea" name="mdiArea"/>
+     <layout class="QVBoxLayout" name="terminalLayout"/>
     </item>
    </layout>
   </widget>
@@ -61,6 +61,7 @@
     </widget>
     <addaction name="actionNew"/>
     <addaction name="menuRecentSessions"/>
+    <addaction name="actionSave_Session"/>
     <addaction name="separator"/>
     <addaction name="actionQuit"/>
    </widget>
@@ -156,6 +157,11 @@
     <string>Themes</string>
    </property>
   </action>
+  <action name="actionSave_Session">
+   <property name="text">
+    <string>Save Session...</string>
+   </property>
+  </action>
  </widget>
  <resources/>
  <connections>
@@ -240,54 +246,6 @@
    </hints>
   </connection>
   <connection>
-   <sender>actionTabs</sender>
-   <signal>toggled(bool)</signal>
-   <receiver>MainWindow</receiver>
-   <slot>menuTabbedView(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>821</x>
-     <y>518</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>actionTile</sender>
-   <signal>triggered()</signal>
-   <receiver>mdiArea</receiver>
-   <slot>tileSubWindows()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>821</x>
-     <y>529</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>actionGrid</sender>
-   <signal>triggered()</signal>
-   <receiver>mdiArea</receiver>
-   <slot>cascadeSubWindows()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>821</x>
-     <y>529</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
    <sender>actionReconnect</sender>
    <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
@@ -335,6 +293,22 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>actionSave_Session</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>menuSaveSession()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>821</x>
+     <y>518</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>menuConnect()</slot>
@@ -347,5 +321,6 @@
   <slot>menuReconnect()</slot>
   <slot>menuAbout()</slot>
   <slot>menuColourTheme()</slot>
+  <slot>menuSaveSession()</slot>
  </slots>
 </ui>

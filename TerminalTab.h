@@ -8,8 +8,6 @@
 #include "Keyboard.h"
 #include "Settings.h"
 
-#include <QMdiArea>
-#include <QMdiSubWindow>
 #include <QSettings>
 #include <QHostInfo>
 #include <QGraphicsSimpleTextItem>
@@ -18,13 +16,13 @@
 
 #include <ColourTheme.h>
 
-class TerminalTab : public QMdiSubWindow
+class TerminalTab : public QWidget
 {
 
     Q_OBJECT
 
     public:
-        TerminalTab(ColourTheme *colours);
+        TerminalTab(QVBoxLayout *v);
         ~TerminalTab();
 
         void openConnection(QString host, int port, QString luName);

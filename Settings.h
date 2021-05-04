@@ -21,7 +21,7 @@ class Settings : public QDialog
 
     public:
 
-        explicit Settings(QWidget *parent, ColourTheme *colours);
+        explicit Settings(QWidget *parent);
         ~Settings();
 
         void showForm(bool connected);

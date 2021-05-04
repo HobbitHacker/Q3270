@@ -1,38 +1,17 @@
 #include "TerminalTab.h"
 
-TerminalTab::TerminalTab(ColourTheme *colours)
+TerminalTab::TerminalTab(QVBoxLayout *layout)
 {
     // Create Settings and TerminalView objects
-    settings = new Settings(this->parentWidget(), colours);
+    settings = new Settings(this->parentWidget());
     view = new TerminalView();
 
     // Save ColourTheme object
-    this->colours = colours;
-
-    // make layout and a menu bar
-    QWidget *central = new QWidget();
-
-    QVBoxLayout *boxLayout = new QVBoxLayout(central);
-    QMenuBar *menuBar = new QMenuBar();
-    QMenu *connectMenu = new QMenu("Session");
-
-    menuBar->addMenu(connectMenu);
-
-    actionConnect = connectMenu->addAction("Connect...");
-    actionReconnect = connectMenu->addAction("Reconnect");
-    actionDisconnect = connectMenu->addAction("Disconnect");
-
-    connect(actionConnect, &QAction::triggered, this, &TerminalTab::connectSession);
-    connect(actionReconnect, &QAction::triggered, this, &TerminalTab::connectSession);
-    connect(actionDisconnect, &QAction::triggered, this, &TerminalTab::closeConnection);
-
+    //this->colours = colours;
+/*
     actionConnect->setEnabled(false);
     actionReconnect->setEnabled(false);
     actionDisconnect->setEnabled(false);
-
-    // assign menubar to widget
-    boxLayout->setMenuBar(menuBar);
-    boxLayout->addWidget(view);
 
     connect(settings, &Settings::coloursChanged, this, &TerminalTab::setColours);
     connect(settings, &Settings::fontChanged, this, &TerminalTab::setFont);
@@ -40,15 +19,16 @@ TerminalTab::TerminalTab(ColourTheme *colours)
 
     connect(settings, &Settings::cursorBlinkChanged, view, &TerminalView::setBlink);
     connect(settings, &Settings::cursorBlinkSpeedChanged, view, &TerminalView::setBlinkSpeed);
-
+*/
     kbd = new Keyboard(view);
 
-    connect(settings, &Settings::newMap, kbd, &Keyboard::setNewMap);
+//    connect(settings, &Settings::newMap, kbd, &Keyboard::setNewMap);
 
     gs = new QGraphicsScene();
 
     QGraphicsRectItem *mRect = new QGraphicsRectItem(0, 0, 640, 480);
     mRect->setBrush(QColor(Qt::black));
+    mRect->setPen(QColor(Qt::black));
 
     // Set up default "Not Connected" text
     gs->addItem(mRect);
@@ -71,7 +51,9 @@ TerminalTab::TerminalTab(ColourTheme *colours)
     view->setScene(gs);
     view->setStretch(settings->getStretch());
 
-    this->setWidget(central);
+    layout->addWidget(view);
+
+    view->show();
 }
 
 TerminalTab::~TerminalTab()
@@ -212,10 +194,11 @@ void TerminalTab::connectSession()
     view->installEventFilter(kbd);
 
     view->setConnected();
-
+/*
     actionConnect->setEnabled(false);
     actionReconnect->setEnabled(false);
     actionDisconnect->setEnabled(true);
+    */
 }
 
 void TerminalTab::closeConnection()
@@ -235,11 +218,11 @@ void TerminalTab::closeConnection()
 
     delete screen[0];
     delete screen[1];
-
+/*
     actionConnect->setEnabled(true);
     actionReconnect->setEnabled(true);
     actionDisconnect->setEnabled(false);
-
+*/
     emit connectionClosed();
 }
 

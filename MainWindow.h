@@ -28,6 +28,7 @@
 #include "TerminalTab.h"
 #include "Host.h"
 #include "ColourTheme.h"
+#include "SaveSession.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -50,6 +51,7 @@ class MainWindow : public QMainWindow
     //File menu
     void menuNew();
     void mruConnect();
+    void menuSaveSession();
     void menuQuit();
 
     // Session menu
@@ -61,22 +63,18 @@ class MainWindow : public QMainWindow
     // Settings menu
     void menuColourTheme();
 
-    // Window Menu
-    void menuTabbedView(bool tabView);
-
     // The Help->About dialog
     void menuAbout();
 
     // Triggered by windows being activated
     void updateMenuEntries();
 
-    // Triggered by windows being closed
-    void subWindowClosed(QObject *closedWindow);
-
   private:
 
     void updateMRUlist(QString address);
-    TerminalTab *newTab();
+
+    TerminalTab *terminal;
+
     Host *connectHost;
     ColourTheme colourTheme;
 
@@ -86,8 +84,6 @@ class MainWindow : public QMainWindow
     QActionGroup *sessionGroup;
 
     Ui::MainWindow *ui;    
-
-    QMap<QMdiSubWindow *, TerminalTab *> sessions;
 
     QList<QString> mruList;
 };
