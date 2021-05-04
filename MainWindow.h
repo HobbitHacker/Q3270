@@ -28,7 +28,7 @@
 #include "TerminalTab.h"
 #include "Host.h"
 #include "ColourTheme.h"
-#include "SaveSession.h"
+#include "SessionManagement.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }

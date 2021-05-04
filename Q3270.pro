@@ -26,7 +26,7 @@ SOURCES += \
     Keyboard.cpp \
     MainWindow.cpp \
     ProcessDataStream.cpp \
-    SaveSession.cpp \
+    SessionManagement.cpp \
     Settings.cpp \
     TerminalTab.cpp \
     TerminalView.cpp \
@@ -42,7 +42,7 @@ HEADERS += \
     MainWindow.h \
     ProcessDataStream.h \
     Q3270.h \
-    SaveSession.h \
+    SessionManagement.h \
     Settings.h \
     TerminalTab.h \
     TerminalView.h \

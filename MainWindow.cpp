@@ -10,7 +10,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new(Ui::MainWi
 
     ui->setupUi(this);
 
-    QSettings applicationSettings;
+    QSettings settings;
 
     sessionGroup = new QActionGroup(this);
 
@@ -20,31 +20,31 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new(Ui::MainWi
     // Session number
     subWindow = 0;
 
-    restoreGeometry(applicationSettings.value("mainwindowgeometry").toByteArray());
-    restoreState(applicationSettings.value("mainwindowstate").toByteArray());
+    restoreGeometry(settings.value("mainwindowgeometry").toByteArray());
+    restoreState(settings.value("mainwindowstate").toByteArray());
 
-    if (applicationSettings.contains("mrumax"))
+    if (settings.contains("mrumax"))
     {
-        maxMruCount = applicationSettings.value("mrumax").toInt();
+        maxMruCount = settings.value("mrumax").toInt();
     }
     else
     {
         maxMruCount = 10;
-        applicationSettings.setValue("mrumax", 10);
+        settings.setValue("mrumax", 10);
     }
 
-    int mruCount = applicationSettings.beginReadArray("mrulist");
+    int mruCount = settings.beginReadArray("mrulist");
 
     for(int i = 0; i < mruCount; i++)
     {
-        applicationSettings.setArrayIndex(i);
+        settings.setArrayIndex(i);
 
-        QString address = applicationSettings.value("address").toString();
+        QString address = settings.value("address").toString();
         mruList.append(address);
         ui->menuRecentSessions->addAction(address, this, &MainWindow::mruConnect);
     }
 
-    applicationSettings.endArray();
+    settings.endArray();
 /*
     if (applicationSettings.value("restorewindows", false).toBool())
     {
@@ -78,7 +78,10 @@ void MainWindow::menuNew()
 
 void MainWindow::menuSaveSession()
 {
-    qDebug() << SaveSession::getSessionName("Default Name");
+    // Get session name and description from SaveSession class
+    SessionManagement saveAs(terminal);
+
+    saveAs.saveSession();
 }
 
 void MainWindow::mruConnect()
@@ -279,4 +282,38 @@ void MainWindow::subWindowClosed(QObject *closedWindow)
         }
     }
 }
+*/
+
+/*
+ *
+ * Desktop-type fade out notification - needs to be given its own class
+ *
+ *
+ * QGraphicsOpacityEffect* effect=new QGraphicsOpacityEffect();
+this->label->setGraphicsEffect(effect);
+this->label->setStyleSheet("border: 3px solid gray;border-radius:20px;background-color:#ffffff;color:gray");
+this->label->setAlignment(Qt::AlignCenter);
+this->label->setText("Your Notification");
+QPropertyAnimation* a=new QPropertyAnimation(effect,"opacity");
+a->setDuration(1000);  // in miliseconds
+a->setStartValue(0);
+a->setEndValue(1);
+a->setEasingCurve(QEasingCurve::InBack);
+a->start(QPropertyAnimation::DeleteWhenStopped);
+this->label->show();
+connect(this->timer,&QTimer::timeout,this,&Notifier::fadeOut);
+this->timer->start(2000); // 1000 ms to make the notification opacity full and 1000 seconds to call the fade out so total of 2000ms.
+
+void fadeOut(){
+    QGraphicsOpacityEffect *effect = new QGraphicsOpacityEffect();
+    this->label->setGraphicsEffect(effect);
+    QPropertyAnimation *a = new QPropertyAnimation(effect,"opacity");
+    a->setDuration(1000); // it will took 1000ms to face out
+    a->setStartValue(1);
+    a->setEndValue(0);
+    a->setEasingCurve(QEasingCurve::OutBack);
+    a->start(QPropertyAnimation::DeleteWhenStopped);
+    connect(a,SIGNAL(finished()),this->label,SLOT(hide()));
+}
+
 */
