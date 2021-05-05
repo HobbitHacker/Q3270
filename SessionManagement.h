@@ -14,6 +14,7 @@
 
 namespace Ui {
     class SaveSession;
+    class OpenSession;
 }
 
 class SessionManagement : public QDialog
@@ -22,15 +23,25 @@ class SessionManagement : public QDialog
 
     public:
 
-        explicit SessionManagement(TerminalTab *t);
+        explicit SessionManagement();
         ~SessionManagement();
 
-        // Dialog to save a session
-        void saveSession();
+        // Dialogs to open and to save a session
+        void openSession(TerminalTab *t);
+        void saveSession(TerminalTab *t);
 
     private:
 
         Ui::SaveSession *save;
+        Ui::OpenSession *load;
+
+        // Save session details
+        void saveSettings();
+
+        // Populate QTableWidget with session details
+        void populateTable(QTableWidget *table);
+
+    private slots:
 
         // Triggered when session name edited; used to enable/disable OK button
         void saveSessionNameEdited(QString name);
@@ -38,10 +49,8 @@ class SessionManagement : public QDialog
         // Triggered when table row clicked
         void saveRowClicked(int row, int column);
 
-        // Save session details
-        void saveSettings();
-
-
+        // Triggered when Open table row clicked; used to enable OK button
+        void openRowClicked(int row, int column);
 };
 
 #endif // SESSIONMANAGEMENT_H

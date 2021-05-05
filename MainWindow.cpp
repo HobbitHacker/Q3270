@@ -17,9 +17,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new(Ui::MainWi
     // Host connection dialog
     connectHost = new Host();
 
-    // Session number
-    subWindow = 0;
-
     restoreGeometry(settings.value("mainwindowgeometry").toByteArray());
     restoreState(settings.value("mainwindowstate").toByteArray());
 
@@ -67,7 +64,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new(Ui::MainWi
     }
 */
 
-    terminal = new TerminalTab(ui->terminalLayout);
+    terminal = new TerminalTab(ui->terminalLayout, colourTheme);
 }
 
 void MainWindow::menuNew()
@@ -78,10 +75,18 @@ void MainWindow::menuNew()
 
 void MainWindow::menuSaveSession()
 {
-    // Get session name and description from SaveSession class
-    SessionManagement saveAs(terminal);
+    // Save session dialog
+    SessionManagement sm;
 
-    saveAs.saveSession();
+    sm.saveSession(terminal);
+}
+
+void MainWindow::menuOpenSession()
+{
+    // Open session dialog
+    SessionManagement sm;
+
+    sm.openSession(terminal);
 }
 
 void MainWindow::mruConnect()

@@ -1,7 +1,8 @@
 #include "SessionManagement.h"
 #include "ui_SaveSession.h"
+#include "ui_OpenSession.h"
 
-SessionManagement::SessionManagement(TerminalTab *t) : QDialog()
+SessionManagement::SessionManagement() : QDialog()
 {
 
 }
@@ -11,18 +12,20 @@ SessionManagement::~SessionManagement()
 
 }
 
-void SessionManagement::saveSession()
+/*
+ * Save Session Methods
+ *
+ */
+
+void SessionManagement::saveSession(TerminalTab *terminal)
 {
     // Build UI
-    QDialog *saveDialog = new QDialog(0, 0);
+    QDialog saveDialog(0, 0);
 
     save = new Ui::SaveSession;
 
-    save->setupUi(saveDialog);
-    saveDialog->show();
-
-    // Ensure table stretches to full width
-    save->tableWidget->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+    save->setupUi(&saveDialog);
+    saveDialog.show();
 
     // Signals we are interested in
     connect(save->sessionName, &QLineEdit::textChanged, this, &SessionManagement::saveSessionNameEdited);
@@ -34,40 +37,20 @@ void SessionManagement::saveSession()
     // Populate supplied name into dialog box
     save->sessionName->setText("");
 
-    // Extract current Session names and descriptions, and add to table
-    QSettings settings;
-    settings.beginGroup("Sessions");
+    // Build table
+    populateTable(save->tableWidget);
 
-    // Get a list of all existing sessions
-    QStringList sessionList = settings.childGroups();
-
-    // Empty table first
-    save->tableWidget->setRowCount(0);
-
-    // Populate session table
-    for(int i = 0;i < sessionList.count(); i++)
+    // Extract list of session names for comparison
+    QStringList sessionList;
+    for (int i = 0; i < save->tableWidget->rowCount(); i++)
     {
-        // Extract session description
-        settings.beginGroup(sessionList.at(i));
-
-        QString description = settings.value("Description").toString();
-
-        // Add session details to table
-        save->tableWidget->insertRow(i);
-        save->tableWidget->setItem(i, 0, new QTableWidgetItem(sessionList.at(i)));
-        save->tableWidget->setItem(i, 1, new QTableWidgetItem(description));
-
-        // End group for this session
-        settings.endGroup();
+        sessionList.append(save->tableWidget->item(i, 0)->text());
     }
-
-    // Fit table to window
-    save->tableWidget->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
 
     // Infinite loop
     for(;;)
     {
-        if (saveDialog->exec())
+        if (saveDialog.exec() == QDialogButtonBox::Ok)
         {
             // If the session name already exists, prompt to overwrite, else use the name
             if (sessionList.contains(save->sessionName->text()))
@@ -80,6 +63,7 @@ void SessionManagement::saveSession()
                 if (msgBox.exec() == QMessageBox::Ok)
                 {
                     saveSettings();
+                    delete save;
                     return;
                 }
             }
@@ -87,12 +71,14 @@ void SessionManagement::saveSession()
             {
                 // It's a unique name, return it
                 saveSettings();
+                delete save;
                 return;
             }
         }
         else
         {
             // User pressed cancel
+            delete save;
             return;
         }
     }
@@ -136,4 +122,87 @@ void SessionManagement::saveSettings()
 
     // End group for all sessions
     settings.endGroup();
+}
+
+/*
+ * Open Session Methods
+ *
+ */
+
+void SessionManagement::openSession(TerminalTab *t)
+{
+    // Build UI
+    QDialog openDialog(0, 0);
+
+    load = new Ui::OpenSession;
+
+    load->setupUi(&openDialog);
+    openDialog.show();
+
+    // Signals we are interested in
+    connect(load->tableWidget, &QTableWidget::cellClicked, this, &SessionManagement::openRowClicked);
+
+    // Default to OK button being disabled
+    load->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
+
+    // Populate table
+    populateTable(load->tableWidget);
+
+    // Process open request if 'OK' (or double-clicked)
+    if (openDialog.exec() != QDialogButtonBox::Cancel)
+    {
+        QSettings settings;
+
+        // Position at Sessions group
+        settings.beginGroup("Sessions");
+        // Position at Session Name sub-group
+        settings.beginGroup(load->tableWidget->item(load->tableWidget->currentRow(), 0)->text());
+        // Set colour scheme
+        t->setColourScheme(settings.value("ColourTheme").toString());
+    }
+
+    delete load;
+}
+
+void SessionManagement::openRowClicked(int x, int y)
+{
+    load->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(true);
+}
+
+/*
+ * Utility Methods
+ *
+ */
+
+void SessionManagement::populateTable(QTableWidget *table)
+{
+    // Extract current Session names and descriptions, and add to table
+    QSettings settings;
+    settings.beginGroup("Sessions");
+
+    // Get a list of all existing sessions
+    QStringList sessionList = settings.childGroups();
+
+    // Empty table first
+    table->setRowCount(0);
+
+    // Populate session table
+    for(int i = 0;i < sessionList.count(); i++)
+    {
+        // Extract session description
+        settings.beginGroup(sessionList.at(i));
+
+        QString description = settings.value("Description").toString();
+
+        // Add session details to table
+        table->insertRow(i);
+        table->setItem(i, 0, new QTableWidgetItem(sessionList.at(i)));
+        table->setItem(i, 1, new QTableWidgetItem(description));
+
+        // End group for this session
+        settings.endGroup();
+    }
+
+    // Fit table to window
+    table->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
 }

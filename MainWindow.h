@@ -52,6 +52,7 @@ class MainWindow : public QMainWindow
     void menuNew();
     void mruConnect();
     void menuSaveSession();
+    void menuOpenSession();
     void menuQuit();
 
     // Session menu
@@ -79,7 +80,6 @@ class MainWindow : public QMainWindow
     ColourTheme colourTheme;
 
     int maxMruCount;
-    int subWindow;
 
     QActionGroup *sessionGroup;
 

@@ -53,6 +53,7 @@ FORMS += \
     ColourTheme.ui \
     Host.ui \
     MainWindow.ui \
+    OpenSession.ui \
     SaveSession.ui \
     Settings.ui
 

@@ -59,6 +59,7 @@
       <string>Recent Sessions</string>
      </property>
     </widget>
+    <addaction name="actionOpen_Session"/>
     <addaction name="actionNew"/>
     <addaction name="menuRecentSessions"/>
     <addaction name="actionSave_Session"/>
@@ -160,6 +161,11 @@
   <action name="actionSave_Session">
    <property name="text">
     <string>Save Session...</string>
+   </property>
+  </action>
+  <action name="actionOpen_Session">
+   <property name="text">
+    <string>Open Session...</string>
    </property>
   </action>
  </widget>
@@ -309,6 +315,22 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>actionOpen_Session</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>menuOpenSession()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>821</x>
+     <y>518</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>menuConnect()</slot>
@@ -322,5 +344,6 @@
   <slot>menuAbout()</slot>
   <slot>menuColourTheme()</slot>
   <slot>menuSaveSession()</slot>
+  <slot>menuOpenSession()</slot>
  </slots>
 </ui>

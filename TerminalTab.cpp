@@ -1,13 +1,13 @@
 #include "TerminalTab.h"
 
-TerminalTab::TerminalTab(QVBoxLayout *layout)
+TerminalTab::TerminalTab(QVBoxLayout *layout, ColourTheme &colours)
 {
     // Create Settings and TerminalView objects
     settings = new Settings(this->parentWidget());
     view = new TerminalView();
 
     // Save ColourTheme object
-    //this->colours = colours;
+    this->colours = &colours;
 /*
     actionConnect->setEnabled(false);
     actionReconnect->setEnabled(false);
@@ -103,17 +103,12 @@ void TerminalTab::setColours(ColourTheme::Colours colours)
         screen[i]->setColourPalette(colours);
         screen[i]->resetColours();
     }
-/*
-    QSettings set;
-    set.beginWriteArray("colours");
-    for (int i = 0; i < 12; i++)
-    {
-        set.setArrayIndex(i);
-        set.setValue("colour", colours[i].name(QColor::HexRgb));
-        palette[i] = colours[i];
-    }
-    set.endArray();
-*/
+}
+
+void TerminalTab::setColourScheme(QString schemeName)
+{
+    // Set colour scheme by name; pass obtained scheme to setColours()
+    setColours(colours->getScheme(schemeName));
 }
 
 void TerminalTab::openConnection(QString host, int port, QString luName)

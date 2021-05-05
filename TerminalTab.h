@@ -22,7 +22,7 @@ class TerminalTab : public QWidget
     Q_OBJECT
 
     public:
-        TerminalTab(QVBoxLayout *v);
+        TerminalTab(QVBoxLayout *v, ColourTheme &colours);
         ~TerminalTab();
 
         void openConnection(QString host, int port, QString luName);
@@ -43,6 +43,9 @@ class TerminalTab : public QWidget
         void setFont();
         void setScaleFont(bool scale);
         void setColours(ColourTheme::Colours colours);
+
+        // Set colour scheme by name
+        void setColourScheme(QString schemeName);
 
         int getType();
         QString address();
