@@ -21,7 +21,7 @@ class Settings : public QDialog
 
     public:
 
-        explicit Settings(QWidget *parent);
+        explicit Settings(QWidget *parent = nullptr);
         ~Settings();
 
         void showForm(bool connected);

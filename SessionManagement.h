@@ -36,7 +36,7 @@ class SessionManagement : public QDialog
         Ui::OpenSession *load;
 
         // Save session details
-        void saveSettings();
+        void saveSettings(TerminalTab *terminal);
 
         // Populate QTableWidget with session details
         void populateTable(QTableWidget *table);

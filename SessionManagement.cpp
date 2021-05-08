@@ -20,7 +20,7 @@ SessionManagement::~SessionManagement()
 void SessionManagement::saveSession(TerminalTab *terminal)
 {
     // Build UI
-    QDialog saveDialog(0, 0);
+    QDialog saveDialog;
 
     save = new Ui::SaveSession;
 
@@ -47,11 +47,16 @@ void SessionManagement::saveSession(TerminalTab *terminal)
         sessionList.append(save->tableWidget->item(i, 0)->text());
     }
 
+    // Flag to show whether user wishes to save the settings
+    bool saveIt;
+
     // Infinite loop
     for(;;)
     {
-        if (saveDialog.exec() == QDialogButtonBox::Ok)
+        if (saveDialog.exec() == QDialog::Accepted)
         {
+            saveIt = true;
+
             // If the session name already exists, prompt to overwrite, else use the name
             if (sessionList.contains(save->sessionName->text()))
             {
@@ -59,18 +64,15 @@ void SessionManagement::saveSession(TerminalTab *terminal)
                 msgBox.setText("Overwrite " + save->sessionName->text() + "?");
                 msgBox.setInformativeText(save->sessionName->text() + " already exists; do you want to overwrite it?");
                 msgBox.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
-                // User has pressed OK, so return the details
-                if (msgBox.exec() == QMessageBox::Ok)
-                {
-                    saveSettings();
-                    delete save;
-                    return;
-                }
+
+                // Set flag according to whether user pressed OK
+                saveIt = (msgBox.exec() == QMessageBox::Ok);
             }
-            else
+
+            if (saveIt)
             {
-                // It's a unique name, return it
-                saveSettings();
+                //  User either chose a unique name or confirmed overwrite
+                saveSettings(terminal);
                 delete save;
                 return;
             }
@@ -104,7 +106,7 @@ void SessionManagement::saveRowClicked(int row, int column)
     save->lineEdit->setText(save->tableWidget->item(row, 1)->text());
 }
 
-void SessionManagement::saveSettings()
+void SessionManagement::saveSettings(TerminalTab *terminal)
 {
 
     QSettings settings;
@@ -115,7 +117,8 @@ void SessionManagement::saveSettings()
     // Each session is stored under the Sessions/<session name> key
     settings.beginGroup((save->sessionName->text()));
     settings.setValue("Description", save->lineEdit->text());
-    settings.setValue("ColourTheme", "Factory");
+    settings.setValue("ColourTheme", terminal->getColourScheme());
+    settings.setValue("Address", terminal->address());
 
     // End group for session
     settings.endGroup();

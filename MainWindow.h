@@ -75,9 +75,8 @@ class MainWindow : public QMainWindow
     void updateMRUlist(QString address);
 
     TerminalTab *terminal;
-
     Host *connectHost;
-    ColourTheme colourTheme;
+    ColourTheme *colourTheme;
 
     int maxMruCount;
 

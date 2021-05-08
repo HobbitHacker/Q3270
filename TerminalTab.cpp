@@ -1,36 +1,32 @@
 #include "TerminalTab.h"
 
-TerminalTab::TerminalTab(QVBoxLayout *layout, ColourTheme &colours)
+TerminalTab::TerminalTab(QVBoxLayout *layout, ColourTheme *colours)
 {
-    // Create Settings and TerminalView objects
-    settings = new Settings(this->parentWidget());
+    // Create Settings object
+    settings = new Settings();
+
+    // Create terminal display and keyboard objects
     view = new TerminalView();
+    kbd = new Keyboard(view);
 
     // Save ColourTheme object
-    this->colours = &colours;
-/*
-    actionConnect->setEnabled(false);
-    actionReconnect->setEnabled(false);
-    actionDisconnect->setEnabled(false);
+    this->colours = colours;
 
+    // Map settings signals to their target slots
     connect(settings, &Settings::coloursChanged, this, &TerminalTab::setColours);
     connect(settings, &Settings::fontChanged, this, &TerminalTab::setFont);
     connect(settings, &Settings::tempFontChange, this, &TerminalTab::setCurrentFont);
-
     connect(settings, &Settings::cursorBlinkChanged, view, &TerminalView::setBlink);
     connect(settings, &Settings::cursorBlinkSpeedChanged, view, &TerminalView::setBlinkSpeed);
-*/
-    kbd = new Keyboard(view);
+    connect(settings, &Settings::newMap, kbd, &Keyboard::setNewMap);
 
-//    connect(settings, &Settings::newMap, kbd, &Keyboard::setNewMap);
-
+    // Build "Not Connected" display
     gs = new QGraphicsScene();
 
     QGraphicsRectItem *mRect = new QGraphicsRectItem(0, 0, 640, 480);
     mRect->setBrush(QColor(Qt::black));
     mRect->setPen(QColor(Qt::black));
 
-    // Set up default "Not Connected" text
     gs->addItem(mRect);
 
     QGraphicsSimpleTextItem *ncMessage = new QGraphicsSimpleTextItem("Not Connected", mRect);
@@ -48,9 +44,11 @@ TerminalTab::TerminalTab(QVBoxLayout *layout, ColourTheme &colours)
 
     gs->addItem(ncMessage);
 
+    // Set "Not Connected" as the initially displayed scene
     view->setScene(gs);
     view->setStretch(settings->getStretch());
 
+    // Add it to the display and finally show it
     layout->addWidget(view);
 
     view->show();
@@ -107,8 +105,13 @@ void TerminalTab::setColours(ColourTheme::Colours colours)
 
 void TerminalTab::setColourScheme(QString schemeName)
 {
+    colourTheme = schemeName;
+
     // Set colour scheme by name; pass obtained scheme to setColours()
-    setColours(colours->getScheme(schemeName));
+    if (view->connected)
+    {
+        setColours(colours->getScheme(schemeName));
+    }
 }
 
 void TerminalTab::openConnection(QString host, int port, QString luName)
@@ -156,6 +159,8 @@ void TerminalTab::connectSession()
 
     connect(settings, &Settings::saveKeyboardSettings, kbd, &Keyboard::saveKeyboardSettings);
     connect(settings, &Settings::setStretch, view, &TerminalView::setStretch);
+
+    setColourScheme(colourTheme);
 
     for (int i = 0; i < 2; i++)
     {

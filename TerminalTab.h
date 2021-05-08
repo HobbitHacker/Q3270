@@ -22,7 +22,7 @@ class TerminalTab : public QWidget
     Q_OBJECT
 
     public:
-        TerminalTab(QVBoxLayout *v, ColourTheme &colours);
+        TerminalTab(QVBoxLayout *v, ColourTheme *colours);
         ~TerminalTab();
 
         void openConnection(QString host, int port, QString luName);
@@ -46,6 +46,9 @@ class TerminalTab : public QWidget
 
         // Set colour scheme by name
         void setColourScheme(QString schemeName);
+        
+        // Return current colour scheme name
+        inline QString getColourScheme()    { return colourTheme; };
 
         int getType();
         QString address();
@@ -76,8 +79,8 @@ class TerminalTab : public QWidget
 
         DisplayScreen *screen[2];
 
-        Settings *settings;
         ColourTheme *colours;
+        Settings *settings;
 
         bool altScreen;
 
@@ -85,14 +88,12 @@ class TerminalTab : public QWidget
         QLabel *syslock;
         QLabel *insMode;
 
-        // Local window menu
-        QAction *actionConnect;
-        QAction *actionReconnect;
-        QAction *actionDisconnect;
-
         QString tabHost;
         int tabPort;
         QString tabLU;
+        
+        // Current colour theme
+        QString colourTheme;
 
         bool resizeFont;
 

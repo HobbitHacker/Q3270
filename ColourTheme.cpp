@@ -9,7 +9,6 @@ ColourTheme::ColourTheme(QWidget *parent) :
     ui->colourScheme->clear();
 
     Colours palette;
-    Colours factory;
 
     // Factory defaults
     palette[PROTECTED_NORMAL]        = QColor(128,128,255);        /* Basic Blue */
@@ -26,26 +25,40 @@ ColourTheme::ColourTheme(QWidget *parent) :
     palette[YELLOW]  = QColor(255,255,0);      /* Yellow */
     palette[NEUTRAL] = QColor(255,255,255);    /* White */
 
+    // Add the factory scheme to the list
     schemes.insert("Factory", palette);
 
-    factory = palette;
+    // Set the default colour scheme to Factory
+    ui->colourScheme->addItem("Factory");
 
     // Populate schemes map with settings from config file
     QSettings s;
 
-    int schemeCount = s.beginReadArray("ColourSchemes");
+    // Begin Schemes main group
+    s.beginGroup("ColourSchemes");
 
-    for (int sc = 0; sc < schemeCount; sc++)
+    // Get schemes, and sort them
+    QStringList schemeList = s.childGroups();
+    schemeList.sort(Qt::CaseSensitive);
+
+    for (int sc = 0; sc < schemeList.count(); sc++)
     {
-            s.setArrayIndex(sc);
+        qDebug() << schemeList.at(sc);
 
-            QString schemeName = s.value("Name").toString();
+        // Ignore Factory scheme (shouldn't be present, but in case of accidents, or user fudging)
+        if (schemeList.at(sc).compare("Factory"))
+        {
+            qDebug() << "Storing " << schemeList.at(sc);
+            // Begin scheme specific group
+            s.beginGroup(schemeList.at(sc));
 
+            // Base colours
             palette[UNPROTECTED_NORMAL]      = QColor(s.value("UnprotectedNormal").toString());
             palette[UNPROTECTED_INTENSIFIED] = QColor(s.value("UnprotectedIntensified").toString());
             palette[PROTECTED_NORMAL]        = QColor(s.value("ProtectedNormal").toString());
             palette[PROTECTED_INTENSIFIED]   = QColor(s.value("ProtectedIntensified").toString());
 
+            // Extended Colours
             palette[BLACK]     = QColor(s.value("Black").toString());
             palette[BLUE]      = QColor(s.value("Blue").toString());
             palette[RED]       = QColor(s.value("Red").toString());
@@ -55,11 +68,17 @@ ColourTheme::ColourTheme(QWidget *parent) :
             palette[YELLOW]    = QColor(s.value("Yellow").toString());
             palette[NEUTRAL]   = QColor(s.value("Neutral").toString());
 
-            schemes.insert(schemeName, palette);
-            ui->colourScheme->addItem(schemeName);
+            // Save scheme
+            schemes.insert(schemeList.at(sc), palette);
+            ui->colourScheme->addItem(schemeList.at(sc));
+
+            // End scheme specific group
+            s.endGroup();
+        }
     }
 
-    s.endArray();
+    // End schemes main group
+    s.endGroup();
 
     // Set colour buttons actions
     connect(ui->baseUnprotected, &QPushButton::clicked, this, &ColourTheme::setColour);
@@ -109,18 +128,32 @@ ColourTheme::ColourTheme(QWidget *parent) :
     colourButtons[YELLOW]       = ui->colourYellow;
     colourButtons[NEUTRAL]      = ui->colourWhite;
 
-    // Set the default colour scheme to Factory
-    ui->colourScheme->addItem("Factory");
+    qDebug() << schemes.keys();
 
     setScheme("Factory");
 
     currentSchemeIndex = 0;
 
+    for(int i = 0; i < ui->colourScheme->count(); i++)
+    {
+        qDebug() << "At " << i << " " << ui->colourScheme->itemText(i);
+    }
 }
 
 ColourTheme::~ColourTheme()
 {
+    qDebug() << "ColourTheme: Destroyed";
     delete ui;
+}
+
+int ColourTheme::exec()
+{
+    for(int i = 0; i < ui->colourScheme->count(); i++)
+    {
+        qDebug() << "At " << i << " " << ui->colourScheme->itemText(i);
+    }
+
+    return QDialog::exec();
 }
 
 void ColourTheme::setScheme(QString schemeName)
@@ -345,4 +378,58 @@ QList<QString> ColourTheme::getSchemes()
 {
     // Return all the schemes
     return schemes.keys();
+}
+
+void ColourTheme::accept()
+{
+    // Save settings
+    QSettings settings;
+
+    // Group for Colours
+    settings.beginGroup("ColourSchemes");
+
+    // Clear any existing settings
+    settings.remove("");
+
+    QMap<QString, QMap<ColourTheme::Colour, QColor>>::const_iterator i = schemes.constBegin();
+
+    while(i != schemes.constEnd())
+    {
+        // Skip Factory scheme
+        if (i.key().compare("Factory"))
+        {
+            // Start new group for each scheme
+            settings.beginGroup(i.key());
+
+            Colours c = i.value();
+
+            // Save base colours
+            settings.setValue("UnprotectedNormal", c[UNPROTECTED_NORMAL].name());
+            settings.setValue("UnprotectedIntensified", c[UNPROTECTED_INTENSIFIED].name());
+            settings.setValue("ProtectedNormal", c[PROTECTED_NORMAL].name());
+            settings.setValue("ProtectedIntensified", c[PROTECTED_INTENSIFIED].name());
+
+            // Save Extended colours
+            settings.setValue("Black", c[BLACK].name());
+            settings.setValue("Blue", c[BLUE].name());
+            settings.setValue("Red", c[RED].name());
+            settings.setValue("Magenta", c[MAGENTA].name());
+            settings.setValue("Green", c[GREEN].name());
+            settings.setValue("Cyan", c[CYAN].name());
+            settings.setValue("Yellow", c[YELLOW].name());
+            settings.setValue("Neutral", c[NEUTRAL].name());
+
+            // End Scheme group
+            settings.endGroup();
+        }
+
+        // Next scheme
+        i++;
+
+    }
+
+    // Finish ColourSchemes group
+    settings.endGroup();
+
+    QDialog::accept();
 }

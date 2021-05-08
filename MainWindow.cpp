@@ -17,6 +17,12 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new(Ui::MainWi
     // Host connection dialog
     connectHost = new Host();
 
+    // Colour scheme dialog
+    colourTheme = new ColourTheme();
+    
+    // Session settings dialog
+    
+
     restoreGeometry(settings.value("mainwindowgeometry").toByteArray());
     restoreState(settings.value("mainwindowstate").toByteArray());
 
@@ -148,7 +154,7 @@ void MainWindow::menuTerminalSettings()
 
 void MainWindow::menuColourTheme()
 {
-    colourTheme.exec();
+    colourTheme->exec();
 }
 
 void MainWindow::menuAbout()

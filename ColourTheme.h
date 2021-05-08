@@ -11,6 +11,7 @@
 #include <QLineEdit>
 #include <QDialogButtonBox>
 #include <QLabel>
+#include <QMap>
 
 namespace Ui {
     class ColourTheme;
@@ -48,6 +49,8 @@ class ColourTheme : public QDialog
         void setButtonColours(Colours scheme, QHash<Colour, QPushButton *>);
         QList<QString> getSchemes();
 
+        int exec();
+
     private:
         Ui::ColourTheme *ui;
 
@@ -80,6 +83,8 @@ class ColourTheme : public QDialog
         void checkDuplicate();
 
         void colourDialog(QColor &c, QPushButton *b);
+
+        void accept();
 
 };
 
