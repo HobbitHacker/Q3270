@@ -15,6 +15,7 @@
 
 namespace Ui {
     class ColourTheme;
+    class NewTheme;
 }
 
 class ColourTheme : public QDialog
@@ -45,41 +46,39 @@ class ColourTheme : public QDialog
         explicit ColourTheme(QWidget *parent = nullptr);
         ~ColourTheme();
 
-        const Colours getScheme(QString scheme);
-        void setButtonColours(Colours scheme, QHash<Colour, QPushButton *>);
-        QList<QString> getSchemes();
+        const Colours getTheme(QString theme);
+        void setButtonColours(Colours theme, QHash<Colour, QPushButton *>);
+        QList<QString> getThemes();
 
         int exec();
 
     private:
         Ui::ColourTheme *ui;
+        Ui::NewTheme *newTheme;
 
-        QDialog newSchemePopUp;
-        QLineEdit newSchemeName;
-        QLabel newSchemeMessage;
-        QDialogButtonBox newSchemePopUpButtons;
+        QDialog newThemePopUp;
 
         QHash<Colour, QPushButton *> colourButtons;
         QList<QPushButton *> extendedButtons;
 
-        QMap<QString, Colours> schemes;
+        QMap<QString, Colours> themes;
 
         Colours colours;
 
-        Colours currentScheme;
-        QString currentSchemeName;
-        int currentSchemeIndex;
+        Colours currentTheme;
+        QString currentThemeName;
+        int currentThemeIndex;
 
         bool error;
 
-        void setScheme(QString schemeName);
+        void setTheme(QString themeName);
 
     private slots:
 
         void setColour();
-        void schemeChanged(int index);
-        void addScheme();
-        void deleteScheme();
+        void themeChanged(int index);
+        void addTheme();
+        void deleteTheme();
         void checkDuplicate();
 
         void colourDialog(QColor &c, QPushButton *b);

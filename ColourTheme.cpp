@@ -1,12 +1,13 @@
 #include "ColourTheme.h"
 #include "ui_ColourTheme.h"
+#include "ui_NewTheme.h"
 
 ColourTheme::ColourTheme(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::ColourTheme)
 {
     ui->setupUi(this);
-    ui->colourScheme->clear();
+    ui->colourTheme->clear();
 
     Colours palette;
 
@@ -25,32 +26,33 @@ ColourTheme::ColourTheme(QWidget *parent) :
     palette[YELLOW]  = QColor(255,255,0);      /* Yellow */
     palette[NEUTRAL] = QColor(255,255,255);    /* White */
 
-    // Add the factory scheme to the list
-    schemes.insert("Factory", palette);
+    // Add the factory theme to the list
+    themes.insert("Factory", palette);
 
-    // Set the default colour scheme to Factory
-    ui->colourScheme->addItem("Factory");
+    // Set the default colour theme to Factory
+    ui->colourTheme->addItem("Factory");
 
-    // Populate schemes map with settings from config file
+    // Populate Themes map with settings from config file
     QSettings s;
 
-    // Begin Schemes main group
-    s.beginGroup("ColourSchemes");
+    // Begin Themes main group
+    s.beginGroup("ColourThemes");
 
-    // Get schemes, and sort them
-    QStringList schemeList = s.childGroups();
-    schemeList.sort(Qt::CaseSensitive);
+    // Get Themes, and sort them
+    QStringList ThemeList = s.childGroups();
+    ThemeList.sort(Qt::CaseSensitive);
 
-    for (int sc = 0; sc < schemeList.count(); sc++)
+    // Populate Themes list and combo boxes from config file
+    for (int sc = 0; sc < ThemeList.count(); sc++)
     {
-        qDebug() << schemeList.at(sc);
+        qDebug() << ThemeList.at(sc);
 
-        // Ignore Factory scheme (shouldn't be present, but in case of accidents, or user fudging)
-        if (schemeList.at(sc).compare("Factory"))
+        // Ignore Factory theme (shouldn't be present, but in case of accidents, or user fudging)
+        if (ThemeList.at(sc).compare("Factory"))
         {
-            qDebug() << "Storing " << schemeList.at(sc);
-            // Begin scheme specific group
-            s.beginGroup(schemeList.at(sc));
+            qDebug() << "Storing " << ThemeList.at(sc);
+            // Begin theme specific group
+            s.beginGroup(ThemeList.at(sc));
 
             // Base colours
             palette[UNPROTECTED_NORMAL]      = QColor(s.value("UnprotectedNormal").toString());
@@ -68,16 +70,16 @@ ColourTheme::ColourTheme(QWidget *parent) :
             palette[YELLOW]    = QColor(s.value("Yellow").toString());
             palette[NEUTRAL]   = QColor(s.value("Neutral").toString());
 
-            // Save scheme
-            schemes.insert(schemeList.at(sc), palette);
-            ui->colourScheme->addItem(schemeList.at(sc));
+            // Save theme
+            themes.insert(ThemeList.at(sc), palette);
+            ui->colourTheme->addItem(ThemeList.at(sc));
 
-            // End scheme specific group
+            // End theme specific group
             s.endGroup();
         }
     }
 
-    // End schemes main group
+    // End Themes main group
     s.endGroup();
 
     // Set colour buttons actions
@@ -95,23 +97,17 @@ ColourTheme::ColourTheme(QWidget *parent) :
     connect(ui->colourYellow, &QPushButton::clicked, this, &ColourTheme::setColour);
     connect(ui->colourWhite, &QPushButton::clicked, this, &ColourTheme::setColour);
 
-    // Detect scheme selection change
-    connect(ui->colourScheme, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &ColourTheme::schemeChanged);
+    // Detect theme selection change
+    connect(ui->colourTheme, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &ColourTheme::themeChanged);
 
-    // Create a pop-up dialog for new scheme names
-    QVBoxLayout *vbox = new QVBoxLayout(&newSchemePopUp);
-    newSchemePopUpButtons.setStandardButtons(QDialogButtonBox::Ok|QDialogButtonBox::Cancel);
-    newSchemeName.setText("New Scheme");
-    newSchemeMessage.setText("");
-    vbox->addWidget(&newSchemeName);
-    vbox->addWidget(&newSchemeMessage);
-    vbox->addWidget(&newSchemePopUpButtons);
-    newSchemePopUp.setWindowTitle("New Colour Scheme Name");
+    // Create a pop-up dialog for new theme names
+    newTheme = new Ui::NewTheme;
+    newTheme->setupUi(&newThemePopUp);
 
     // Set up connections for pop-up features
-    connect(&newSchemeName, &QLineEdit::textChanged, this, &ColourTheme::checkDuplicate);
-    connect(&newSchemePopUpButtons, &QDialogButtonBox::accepted, &newSchemePopUp, &QDialog::accept);
-    connect(&newSchemePopUpButtons, &QDialogButtonBox::rejected, &newSchemePopUp, &QDialog::reject);
+    connect(newTheme->newName, &QLineEdit::textChanged, this, &ColourTheme::checkDuplicate);
+    connect(newTheme->buttonBox, &QDialogButtonBox::accepted, &newThemePopUp, &QDialog::accept);
+    connect(newTheme->buttonBox, &QDialogButtonBox::rejected, &newThemePopUp, &QDialog::reject);
 
     // Set up a list of buttons for use in setButtonColours
     colourButtons[UNPROTECTED_NORMAL]      = ui->baseUnprotected;
@@ -128,15 +124,15 @@ ColourTheme::ColourTheme(QWidget *parent) :
     colourButtons[YELLOW]       = ui->colourYellow;
     colourButtons[NEUTRAL]      = ui->colourWhite;
 
-    qDebug() << schemes.keys();
+    qDebug() << themes.keys();
 
-    setScheme("Factory");
+    setTheme("Factory");
 
-    currentSchemeIndex = 0;
+    currentThemeIndex = 0;
 
-    for(int i = 0; i < ui->colourScheme->count(); i++)
+    for(int i = 0; i < ui->colourTheme->count(); i++)
     {
-        qDebug() << "At " << i << " " << ui->colourScheme->itemText(i);
+        qDebug() << "At " << i << " " << ui->colourTheme->itemText(i);
     }
 }
 
@@ -148,32 +144,32 @@ ColourTheme::~ColourTheme()
 
 int ColourTheme::exec()
 {
-    for(int i = 0; i < ui->colourScheme->count(); i++)
+    for(int i = 0; i < ui->colourTheme->count(); i++)
     {
-        qDebug() << "At " << i << " " << ui->colourScheme->itemText(i);
+        qDebug() << "At " << i << " " << ui->colourTheme->itemText(i);
     }
 
     return QDialog::exec();
 }
 
-void ColourTheme::setScheme(QString schemeName)
+void ColourTheme::setTheme(QString ThemeName)
 {
-    // Set colour theme according to schemeName, using Factory if not found
-    qDebug() << "Changing colours to " << schemeName;
+    // Set colour theme according to ThemeName, using Factory if not found
+    qDebug() << "Changing colours to " << ThemeName;
 
-    if (schemes.find(schemeName) == schemes.end())
+    if (themes.find(ThemeName) == themes.end())
     {
-        currentScheme = schemes.constFind("Factory").value();
-        currentSchemeName = "Factory";
+        currentTheme = themes.constFind("Factory").value();
+        currentThemeName = "Factory";
     }
     else
     {
-        currentScheme = schemes.constFind(schemeName).value();
-        currentSchemeName = schemeName;
+        currentTheme = themes.constFind(ThemeName).value();
+        currentThemeName = ThemeName;
     }
 
-    // Disable editing for Factory scheme
-    if (!schemeName.compare("Factory"))
+    // Disable editing for Factory theme
+    if (!ThemeName.compare("Factory"))
     {
         ui->extendedColours->setEnabled(false);
         ui->baseColours->setEnabled(false);
@@ -184,25 +180,25 @@ void ColourTheme::setScheme(QString schemeName)
         ui->baseColours->setEnabled(true);
     }
 
-    setButtonColours(currentScheme, colourButtons);
+    setButtonColours(currentTheme, colourButtons);
 }
 
-void ColourTheme::setButtonColours(Colours scheme, QHash<Colour, QPushButton *> buttons)
+void ColourTheme::setButtonColours(Colours theme, QHash<Colour, QPushButton *> buttons)
 {
     // Change colour swatches
-    buttons[UNPROTECTED_NORMAL]->setStyleSheet(QString("background-color: %1;").arg(scheme[UNPROTECTED_NORMAL].name()));
-    buttons[PROTECTED_NORMAL]->setStyleSheet(QString("background-color: %1;").arg(scheme[UNPROTECTED_INTENSIFIED].name()));
-    buttons[UNPROTECTED_INTENSIFIED]->setStyleSheet(QString("background-color: %1;").arg(scheme[PROTECTED_NORMAL].name()));
-    buttons[PROTECTED_INTENSIFIED]->setStyleSheet(QString("background-color: %1;").arg(scheme[PROTECTED_INTENSIFIED].name()));
+    buttons[UNPROTECTED_NORMAL]->setStyleSheet(QString("background-color: %1;").arg(theme[UNPROTECTED_NORMAL].name()));
+    buttons[PROTECTED_NORMAL]->setStyleSheet(QString("background-color: %1;").arg(theme[PROTECTED_NORMAL].name()));
+    buttons[UNPROTECTED_INTENSIFIED]->setStyleSheet(QString("background-color: %1;").arg(theme[UNPROTECTED_INTENSIFIED].name()));
+    buttons[PROTECTED_INTENSIFIED]->setStyleSheet(QString("background-color: %1;").arg(theme[PROTECTED_INTENSIFIED].name()));
 
-    buttons[BLACK]->setStyleSheet(QString("background-color: %1;").arg(scheme[BLACK].name()));
-    buttons[BLUE]->setStyleSheet(QString("background-color: %1;").arg(scheme[BLUE].name()));
-    buttons[RED]->setStyleSheet(QString("background-color: %1;").arg(scheme[RED].name()));
-    buttons[MAGENTA]->setStyleSheet(QString("background-color: %1;").arg(scheme[MAGENTA].name()));
-    buttons[GREEN]->setStyleSheet(QString("background-color: %1;").arg(scheme[GREEN].name()));
-    buttons[CYAN]->setStyleSheet(QString("background-color: %1;").arg(scheme[CYAN].name()));
-    buttons[YELLOW]->setStyleSheet(QString("background-color: %1;").arg(scheme[YELLOW].name()));
-    buttons[NEUTRAL]->setStyleSheet(QString("background-color: %1;").arg(scheme[NEUTRAL].name()));
+    buttons[BLACK]->setStyleSheet(QString("background-color: %1;").arg(theme[BLACK].name()));
+    buttons[BLUE]->setStyleSheet(QString("background-color: %1;").arg(theme[BLUE].name()));
+    buttons[RED]->setStyleSheet(QString("background-color: %1;").arg(theme[RED].name()));
+    buttons[MAGENTA]->setStyleSheet(QString("background-color: %1;").arg(theme[MAGENTA].name()));
+    buttons[GREEN]->setStyleSheet(QString("background-color: %1;").arg(theme[GREEN].name()));
+    buttons[CYAN]->setStyleSheet(QString("background-color: %1;").arg(theme[CYAN].name()));
+    buttons[YELLOW]->setStyleSheet(QString("background-color: %1;").arg(theme[YELLOW].name()));
+    buttons[NEUTRAL]->setStyleSheet(QString("background-color: %1;").arg(theme[NEUTRAL].name()));
 }
 
 
@@ -218,60 +214,60 @@ void ColourTheme::setColour()
 
     if (!button.compare("colourBlack"))
     {
-        colourDialog(currentScheme[BLACK], buttonSender);
+        colourDialog(currentTheme[BLACK], buttonSender);
     }
     else if (!button.compare("colourBlue"))
     {
-        colourDialog(currentScheme[BLUE], buttonSender);
+        colourDialog(currentTheme[BLUE], buttonSender);
     }
     else if (!button.compare("colourRed"))
     {
-        colourDialog(currentScheme[RED], buttonSender);
+        colourDialog(currentTheme[RED], buttonSender);
     }
     else if (!button.compare("colourPink"))
     {
-        colourDialog(currentScheme[MAGENTA], buttonSender);
+        colourDialog(currentTheme[MAGENTA], buttonSender);
     }
     else if (!button.compare("colourGreen"))
     {
-        colourDialog(currentScheme[GREEN], buttonSender);
+        colourDialog(currentTheme[GREEN], buttonSender);
     }
     else if (!button.compare("colourTurq"))
     {
-        colourDialog(currentScheme[CYAN], buttonSender);
+        colourDialog(currentTheme[CYAN], buttonSender);
     }
     else if (!button.compare("colourYellow"))
     {
-        colourDialog(currentScheme[YELLOW], buttonSender);
+        colourDialog(currentTheme[YELLOW], buttonSender);
     }
     else if (!button.compare("colourWhite"))
     {
-        colourDialog(currentScheme[NEUTRAL], buttonSender);
+        colourDialog(currentTheme[NEUTRAL], buttonSender);
     }
     else if (!button.compare("baseProtected"))
     {
-        colourDialog(currentScheme[PROTECTED_NORMAL], buttonSender);
+        colourDialog(currentTheme[PROTECTED_NORMAL], buttonSender);
     }
     else if (!button.compare("baseUnprotectedIntensify"))
     {
-        colourDialog(currentScheme[UNPROTECTED_INTENSIFIED], buttonSender);
+        colourDialog(currentTheme[UNPROTECTED_INTENSIFIED], buttonSender);
     }
     else if (!button.compare("baseUnprotected"))
     {
-        colourDialog(currentScheme[UNPROTECTED_NORMAL], buttonSender);
+        colourDialog(currentTheme[UNPROTECTED_NORMAL], buttonSender);
     }
     else if (!button.compare("baseProtectedIntensify"))
     {
-        colourDialog(currentScheme[PROTECTED_INTENSIFIED], buttonSender);
+        colourDialog(currentTheme[PROTECTED_INTENSIFIED], buttonSender);
     }
 
     // Update the map with the new colour
-    schemes.find(currentSchemeName).value() = currentScheme;
+    themes.find(currentThemeName).value() = currentTheme;
 }
 
 void ColourTheme::colourDialog(QColor &c, QPushButton *b)
 {
-    // Display colour picker and set scheme colour accordingly, along with button
+    // Display colour picker and set theme colour accordingly, along with button
     const QColor dialogColour = QColorDialog::getColor(c, this, "Select Color");
 
     // Store colour in lists, and update colour button
@@ -290,18 +286,18 @@ void ColourTheme::colourDialog(QColor &c, QPushButton *b)
 }
 
 
-void ColourTheme::schemeChanged(int index)
+void ColourTheme::themeChanged(int index)
 {
-    qDebug() << "This index: " << index << " Current Index: " << ui->colourScheme->currentIndex() << " Our Index: " << currentSchemeIndex;
+    qDebug() << "This index: " << index << " Current Index: " << ui->colourTheme->currentIndex() << " Our Index: " << currentThemeIndex;
 
     // When the combobox is changed, update the palette colours
-    setScheme(ui->colourScheme->itemText(index));
+    setTheme(ui->colourTheme->itemText(index));
 
     // Save the new index
-    currentSchemeIndex = index;
+    currentThemeIndex = index;
 
-    // Disable delete for Factory scheme
-    if (currentSchemeIndex == 0)
+    // Disable delete for Factory theme
+    if (currentThemeIndex == 0)
     {
         ui->colourDelete->setEnabled(false);
     }
@@ -311,73 +307,73 @@ void ColourTheme::schemeChanged(int index)
     }
 }
 
-void ColourTheme::addScheme()
+void ColourTheme::addTheme()
 {
-    QString newName = "New Scheme";
+    QString newName = "New Theme";
 
-    // Create unique name for new scheme
-    if (schemes.find(newName) != schemes.end())
+    // Create unique name for new theme
+    if (themes.find(newName) != themes.end())
     {
         int i = 1;
-        while(schemes.find(newName + " " + QString::number(i)) != schemes.end())
+        while(themes.find(newName + " " + QString::number(i)) != themes.end())
         {
             i++;
         }
-        newName = "New Scheme " + QString::number(i);
+        newName = "New Theme " + QString::number(i);
     }
 
     // Allow user to modify name, disallowing existing names
-    if(newSchemePopUp.exec() == QDialog::Accepted)
+    if(newThemePopUp.exec() == QDialog::Accepted)
     {
-        // Save scheme name
-        newName = newSchemeName.text();
-        schemes.insert(newName, currentScheme);
+        // Save theme name
+        newName = newTheme->newName->text();
+        themes.insert(newName, currentTheme);
 
-        qDebug() << "Added " << newName << " Total items: " << schemes.count();
+        qDebug() << "Added " << newName << " Total items: " << themes.count();
 
-        ui->colourScheme->addItem(newName);
-        ui->colourScheme->setCurrentIndex(ui->colourScheme->count() - 1);
+        ui->colourTheme->addItem(newName);
+        ui->colourTheme->setCurrentIndex(ui->colourTheme->count() - 1);
     }
 }
 
 void ColourTheme::checkDuplicate()
 {
-    // Check if new scheme name being entered is a unique value
-    if (schemes.find(newSchemeName.text()) == schemes.end())
+    // Check if new theme name being entered is a unique value
+    if (themes.find(newTheme->newName->text()) == themes.end())
     {
-        newSchemePopUpButtons.button(QDialogButtonBox::Ok)->setEnabled(true);
-        newSchemeMessage.setText("");
+        newTheme->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(true);
+        newTheme->message->setText("");
     }
     else
     {
-        newSchemePopUpButtons.button(QDialogButtonBox::Ok)->setEnabled(false);
-        newSchemeMessage.setText("Duplicate scheme name");
+        newTheme->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(false);
+        newTheme->message->setText("Duplicate theme name");
     }
 }
 
-void ColourTheme::deleteScheme()
+void ColourTheme::deleteTheme()
 {
-    // Remove scheme from lists
-    schemes.remove(ui->colourScheme->currentText());
-    ui->colourScheme->removeItem(currentSchemeIndex);
+    // Remove theme from lists
+    themes.remove(ui->colourTheme->currentText());
+    ui->colourTheme->removeItem(currentThemeIndex);
 }
 
 
-const ColourTheme::Colours ColourTheme::getScheme(QString scheme)
+const ColourTheme::Colours ColourTheme::getTheme(QString theme)
 {
-    // Return requested scheme, if found, or Factory scheme if not
-    if (schemes.find(scheme) == schemes.end())
+    // Return requested theme, if found, or Factory theme if not
+    if (themes.find(theme) == themes.end())
     {
-        return schemes.constFind("Factory").value();
+        return themes.constFind("Factory").value();
     }
 
-    return schemes.constFind(scheme).value();
+    return themes.constFind(theme).value();
 }
 
-QList<QString> ColourTheme::getSchemes()
+QList<QString> ColourTheme::getThemes()
 {
-    // Return all the schemes
-    return schemes.keys();
+    // Return all the Themes
+    return themes.keys();
 }
 
 void ColourTheme::accept()
@@ -386,19 +382,19 @@ void ColourTheme::accept()
     QSettings settings;
 
     // Group for Colours
-    settings.beginGroup("ColourSchemes");
+    settings.beginGroup("ColourThemes");
 
     // Clear any existing settings
     settings.remove("");
 
-    QMap<QString, QMap<ColourTheme::Colour, QColor>>::const_iterator i = schemes.constBegin();
+    QMap<QString, QMap<ColourTheme::Colour, QColor>>::const_iterator i = themes.constBegin();
 
-    while(i != schemes.constEnd())
+    while(i != themes.constEnd())
     {
-        // Skip Factory scheme
+        // Skip Factory theme
         if (i.key().compare("Factory"))
         {
-            // Start new group for each scheme
+            // Start new group for each theme
             settings.beginGroup(i.key());
 
             Colours c = i.value();
@@ -419,16 +415,16 @@ void ColourTheme::accept()
             settings.setValue("Yellow", c[YELLOW].name());
             settings.setValue("Neutral", c[NEUTRAL].name());
 
-            // End Scheme group
+            // End Theme group
             settings.endGroup();
         }
 
-        // Next scheme
+        // Next theme
         i++;
 
     }
 
-    // Finish ColourSchemes group
+    // Finish ColourThemes group
     settings.endGroup();
 
     QDialog::accept();

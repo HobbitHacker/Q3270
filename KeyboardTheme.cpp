@@ -1,7 +1,8 @@
-#include "ui_KeyboardTheme.h"
+#include "ui_NewTheme.h"
 #include "KeyboardTheme.h"
+#include "ui_KeyboardTheme.h"
 
-KeyboardTheme::KeyboardTheme() : QDialog(), ui(new Ui::KeyboardTheme)
+KeyboardTheme::KeyboardTheme(QWidget *parent) : QDialog(parent), ui(new Ui::KeyboardTheme)
 {   
     ui->setupUi(this);
 
@@ -92,11 +93,11 @@ KeyboardTheme::KeyboardTheme() : QDialog(), ui(new Ui::KeyboardTheme)
     {
         qDebug() << themeList.at(sc);
 
-        // Ignore Factory scheme (shouldn't be present, but in case of accidents, or user fudging)
+        // Ignore Factory theme (shouldn't be present, but in case of accidents, or user fudging)
         if (themeList.at(sc).compare("Factory"))
         {
             qDebug() << "Storing " << themeList.at(sc);
-            // Begin scheme specific group
+            // Begin theme specific group
             s.beginGroup(themeList.at(sc));
 
             // All keyboard mappings for this theme
@@ -137,6 +138,16 @@ KeyboardTheme::KeyboardTheme() : QDialog(), ui(new Ui::KeyboardTheme)
 
     setTheme("Factory");
 
+    // Popup dialog for new themes
+    newTheme = new Ui::NewTheme();
+
+    newTheme->setupUi(&newThemePopUp);
+
+    // Map the controls we're interested in
+    connect(newTheme->newName, &QLineEdit::textChanged, this, &KeyboardTheme::checkDuplicate);
+    connect(newTheme->buttonBox, &QDialogButtonBox::accepted, &newThemePopUp, &QDialog::accept);
+    connect(newTheme->buttonBox, &QDialogButtonBox::rejected, &newThemePopUp, &QDialog::reject);
+
 }
 
 void KeyboardTheme::setTheme(QString newTheme)
@@ -175,4 +186,89 @@ void KeyboardTheme::setTheme(QString newTheme)
     }
 
     ui->KeyboardMap->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+}
+
+void KeyboardTheme::themeChanged(int index)
+{
+
+    // Save new index
+    currentThemeIndex = index;
+
+    // Save the new name
+    currentTheme = ui->keyboardThemes->itemText(index);
+
+    // Update the keyboard map when the combobox changes
+    setTheme(currentTheme);
+
+    // Disable delete for Factory theme
+    if (currentThemeIndex == 0)
+    {
+        ui->deleteThemeButton->setDisabled(true);
+    }
+    else
+    {
+        ui->deleteThemeButton->setEnabled(true);
+    }
+}
+
+void KeyboardTheme::addTheme()
+{
+
+    QString newName = "New Theme";
+
+    // Create unique name for new theme
+    if (themes.find(newName) != themes.end())
+    {
+        int i = 1;
+        while(themes.find(newName + " " + QString::number(i)) != themes.end())
+        {
+            i++;
+        }
+        newName = "New Scheme " + QString::number(i);
+    }
+
+    // Populate dialog box name
+    newTheme->newName->setText(newName);
+
+    // Allow user to modify name, disallowing existing names
+    if(newThemePopUp.exec() == QDialog::Accepted)
+    {
+        // Save theme name
+        newName = newTheme->newName->text();
+        theme = themes[currentTheme];
+        themes.insert(newName, theme);
+        setTheme(newName);
+
+        qDebug() << "Added " << newName << " Total items: " << themes.count();
+
+        ui->keyboardThemes->addItem(newName);
+        ui->keyboardThemes->setCurrentIndex(ui->keyboardThemes->count() - 1);
+    }
+}
+
+
+void KeyboardTheme::checkDuplicate()
+{
+    // Check if new theme name being entered is a unique value
+    if (themes.find(newTheme->newName->text()) == themes.end())
+    {
+        newTheme->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(true);
+        newTheme->message->setText("");
+    }
+    else
+    {
+        newTheme->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(false);
+        newTheme->message->setText("Duplicate theme name");
+    }
+
+}
+
+void KeyboardTheme::deleteTheme()
+{
+
+}
+
+void KeyboardTheme::accept()
+{
+
 }

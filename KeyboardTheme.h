@@ -6,10 +6,14 @@
 #include <QMap>
 #include <QSettings>
 #include <QDebug>
+#include <QLineEdit>
+#include <QLabel>
+#include <QDialogButtonBox>
 
 
 namespace Ui {
     class KeyboardTheme;
+    class NewTheme;
 }
 
 class KeyboardTheme : public QDialog
@@ -20,11 +24,14 @@ class KeyboardTheme : public QDialog
 
         typedef QMap<QString, QStringList> KeyboardMap;
 
-        KeyboardTheme();
+        KeyboardTheme(QWidget *parent = nullptr);
 
     private:
 
         Ui::KeyboardTheme *ui;
+        Ui::NewTheme *newTheme;
+
+        QDialog newThemePopUp;
 
         QMap<QString, KeyboardMap> themes;
 
@@ -35,6 +42,15 @@ class KeyboardTheme : public QDialog
         int currentThemeIndex;
 
         void setTheme(QString theme);
+
+    private slots:
+
+        void themeChanged(int index);
+        void addTheme();
+        void deleteTheme();
+        void checkDuplicate();
+
+        void accept();
 
 };
 
