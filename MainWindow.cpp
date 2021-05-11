@@ -17,9 +17,12 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new(Ui::MainWi
     // Host connection dialog
     connectHost = new Host();
 
-    // Colour scheme dialog
+    // Colour theme dialog
     colourTheme = new ColourTheme();
-    
+
+    // Keyboard theme dialog
+    keyboardTheme = new KeyboardTheme();
+
     // Session settings dialog
     
 
@@ -147,7 +150,7 @@ void MainWindow::menuDisconnect()
     ui->actionReconnect->setEnabled(true);
 }
 
-void MainWindow::menuTerminalSettings()
+void MainWindow::menuSessionPreferences()
 {
     terminal->showForm();
 }
@@ -155,6 +158,11 @@ void MainWindow::menuTerminalSettings()
 void MainWindow::menuColourTheme()
 {
     colourTheme->exec();
+}
+
+void MainWindow::menuKeyboardTheme()
+{
+    keyboardTheme->exec();
 }
 
 void MainWindow::menuAbout()
@@ -174,7 +182,6 @@ void MainWindow::menuAbout()
 
 void MainWindow::updateMenuEntries()
 {
-    ui->actionTerminalSettings->setEnabled(true);
     if (terminal->view->connected)
     {
         ui->actionDisconnect->setEnabled(true);

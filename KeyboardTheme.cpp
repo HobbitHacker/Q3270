@@ -68,4 +68,111 @@ KeyboardTheme::KeyboardTheme() : QDialog(), ui(new Ui::KeyboardTheme)
 
     // Add factory theme to list of themes
     themes.insert("Factory", theme);
+
+    // Store all functions: this is the definitive list of Q3270 functions
+    functionList = theme.keys();
+    ui->KeyboardFunctionList->addItems(functionList);
+
+    // Populate drop-down list with Factory keyboard layout
+    ui->keyboardThemes->addItem("Factory");
+
+    // Now add those from the config file
+    QSettings s;
+
+    // Keyboard themes are all stored under the KeyboardThemes group
+    s.beginGroup("KeyboardThemes");
+
+    // Get a list of sub-groups
+    QStringList themeList = s.childGroups();
+
+    themeList.sort(Qt::CaseSensitive);
+
+    // Populate schemes list and combo boxes from config file
+    for (int sc = 0; sc < themeList.count(); sc++)
+    {
+        qDebug() << themeList.at(sc);
+
+        // Ignore Factory scheme (shouldn't be present, but in case of accidents, or user fudging)
+        if (themeList.at(sc).compare("Factory"))
+        {
+            qDebug() << "Storing " << themeList.at(sc);
+            // Begin scheme specific group
+            s.beginGroup(themeList.at(sc));
+
+            // All keyboard mappings for this theme
+            QStringList keys = s.childKeys();
+
+            // Clear existing mappings from temporary map
+            theme.clear();
+
+            for (int kb = 0; kb < keys.count(); kb++)
+            {
+                // Keyboard maps stored as Shift+F1=F1; extract Q3270 function into thisKey
+                QString thisKey = s.value(keys.at(kb)).toString();
+
+                // Ensure it's a known function before we store it
+                if (functionList.contains(thisKey))
+                {
+
+                    // Append keyboard mapping to Q3270 function; if it doesn't exist, QMap creates one first
+                    theme[thisKey].append(keys.at(kb));
+                }
+            }
+
+            // Save theme, assuming it had valid mappings
+            if (theme.count() > 0)
+            {
+                themes.insert(themeList.at(sc), theme);
+                ui->keyboardThemes->addItem(themeList.at(sc));
+            }
+
+            // End theme specific group
+            s.endGroup();
+        }
+
+    }
+
+    // End themes main group
+    s.endGroup();
+
+    setTheme("Factory");
+
+}
+
+void KeyboardTheme::setTheme(QString newTheme)
+{
+    // If we don't know the name of the theme, fall back to Factory. This allows users to delete themes, but
+    // still leave them referenced in session configurations.
+    if (themes.find(newTheme)  == themes.end())
+    {
+        currentTheme = "Factory";
+    }
+    else
+    {
+        currentTheme = newTheme;
+    }
+
+    // Convenience variable to extract specified map
+    KeyboardMap thisMap = themes.find(currentTheme).value();
+
+    QMap<QString, QStringList>::ConstIterator i = thisMap.constBegin();
+
+    // Clear keyboard map table in dialog
+    ui->KeyboardMap->setRowCount(0);
+
+    int row = 0;
+
+    // Ensure that the "Unassigned" function is available to map keys
+    ui->KeyboardFunctionList->addItem("Unassigned");
+
+    while(i != thisMap.constEnd())
+    {
+        // Insert new row into table widget, and add details
+        ui->KeyboardMap->insertRow(row);
+        ui->KeyboardMap->setItem(row, 0, new QTableWidgetItem(i.key()));
+        ui->KeyboardMap->setItem(row, 1, new QTableWidgetItem(i.value().join(", ")));
+        i++;
+    }
+
+    ui->KeyboardMap->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
 }

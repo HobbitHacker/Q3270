@@ -41,14 +41,14 @@
     <addaction name="actionReconnect"/>
     <addaction name="actionDisconnect"/>
     <addaction name="separator"/>
-    <addaction name="actionTerminalSettings"/>
+    <addaction name="actionSessionPreferences"/>
    </widget>
    <widget class="QMenu" name="menuFont_Settings">
     <property name="title">
-     <string>Settings</string>
+     <string>Themes</string>
     </property>
-    <addaction name="actionPreferences"/>
-    <addaction name="actionThemes"/>
+    <addaction name="actionKeyboardThemes"/>
+    <addaction name="actionColourThemes"/>
    </widget>
    <widget class="QMenu" name="menuFile">
     <property name="title">
@@ -94,12 +94,12 @@
     <string>Connect...</string>
    </property>
   </action>
-  <action name="actionTerminalSettings">
+  <action name="actionSessionPreferences">
    <property name="enabled">
-    <bool>false</bool>
+    <bool>true</bool>
    </property>
    <property name="text">
-    <string>Terminal Settings</string>
+    <string>Preferences</string>
    </property>
   </action>
   <action name="actionDisconnect">
@@ -148,14 +148,14 @@
     <string>About Q3270...</string>
    </property>
   </action>
-  <action name="actionPreferences">
+  <action name="actionKeyboardThemes">
    <property name="text">
-    <string>Preferences</string>
+    <string>Keyboard</string>
    </property>
   </action>
-  <action name="actionThemes">
+  <action name="actionColourThemes">
    <property name="text">
-    <string>Themes</string>
+    <string>Colours</string>
    </property>
   </action>
   <action name="actionSave_Session">
@@ -172,10 +172,10 @@
  <resources/>
  <connections>
   <connection>
-   <sender>actionTerminalSettings</sender>
+   <sender>actionSessionPreferences</sender>
    <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
-   <slot>menuTerminalSettings()</slot>
+   <slot>menuSessionPreferences()</slot>
    <hints>
     <hint type="sourcelabel">
      <x>-1</x>
@@ -284,7 +284,7 @@
    </hints>
   </connection>
   <connection>
-   <sender>actionThemes</sender>
+   <sender>actionColourThemes</sender>
    <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
    <slot>menuColourTheme()</slot>
@@ -331,11 +331,27 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>actionKeyboardThemes</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>menuKeyboardTheme()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>821</x>
+     <y>518</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>menuConnect()</slot>
   <slot>menuQuit()</slot>
-  <slot>menuTerminalSettings()</slot>
+  <slot>menuSessionPreferences()</slot>
   <slot>menuSetFont()</slot>
   <slot>menuDisconnect()</slot>
   <slot>menuNew()</slot>
@@ -345,5 +361,6 @@
   <slot>menuColourTheme()</slot>
   <slot>menuSaveSession()</slot>
   <slot>menuOpenSession()</slot>
+  <slot>menuKeyboardTheme()</slot>
  </slots>
 </ui>

@@ -4,6 +4,8 @@
 #include <QDialog>
 #include <QObject>
 #include <QMap>
+#include <QSettings>
+#include <QDebug>
 
 
 namespace Ui {
@@ -26,7 +28,14 @@ class KeyboardTheme : public QDialog
 
         QMap<QString, KeyboardMap> themes;
 
+        QStringList functionList;
+
         KeyboardMap theme;
+        QString currentTheme;
+        int currentThemeIndex;
+
+        void setTheme(QString theme);
+
 };
 
 #endif // KEYBOARDTHEME_H

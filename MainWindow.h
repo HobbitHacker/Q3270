@@ -28,6 +28,7 @@
 #include "TerminalTab.h"
 #include "Host.h"
 #include "ColourTheme.h"
+#include "KeyboardTheme.h"
 #include "SessionManagement.h"
 
 QT_BEGIN_NAMESPACE
@@ -59,9 +60,10 @@ class MainWindow : public QMainWindow
     void menuConnect();
     void menuReconnect();
     void menuDisconnect();
-    void menuTerminalSettings();
+    void menuSessionPreferences();
 
-    // Settings menu
+    // Themes menu
+    void menuKeyboardTheme();
     void menuColourTheme();
 
     // The Help->About dialog
@@ -77,6 +79,7 @@ class MainWindow : public QMainWindow
     TerminalTab *terminal;
     Host *connectHost;
     ColourTheme *colourTheme;
+    KeyboardTheme *keyboardTheme;
 
     int maxMruCount;
 
