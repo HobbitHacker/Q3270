@@ -69,7 +69,10 @@ class ColourTheme : public QDialog
         QString currentThemeName;
         int currentThemeIndex;
 
-        bool error;
+        // Variables used to restore state, should the user presss cancel
+        QMap<QString, Colours> restoreThemes;
+        QString restoreThemeName;
+        int restoreThemeIndex;
 
         void setTheme(QString themeName);
 
@@ -84,6 +87,7 @@ class ColourTheme : public QDialog
         void colourDialog(QColor &c, QPushButton *b);
 
         void accept();
+        void reject();
 
 };
 

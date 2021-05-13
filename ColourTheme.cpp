@@ -144,10 +144,10 @@ ColourTheme::~ColourTheme()
 
 int ColourTheme::exec()
 {
-    for(int i = 0; i < ui->colourTheme->count(); i++)
-    {
-        qDebug() << "At " << i << " " << ui->colourTheme->itemText(i);
-    }
+    // Save state in the event of a cancel
+    restoreThemes = themes;
+    restoreThemeName = currentThemeName;
+    restoreThemeIndex = currentThemeIndex;
 
     return QDialog::exec();
 }
@@ -428,4 +428,18 @@ void ColourTheme::accept()
     settings.endGroup();
 
     QDialog::accept();
+}
+
+void ColourTheme::reject()
+{
+    // Restore state to before dialog displayed
+    themes = restoreThemes;
+    currentThemeName = restoreThemeName;
+
+    ui->colourTheme->clear();
+    ui->colourTheme->addItems(themes.keys());
+
+    setTheme(currentThemeName);
+
+    QDialog::reject();
 }
