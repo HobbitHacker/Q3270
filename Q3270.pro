@@ -24,6 +24,7 @@ SOURCES += \
     Glyph.cpp \
     Host.cpp \
     Keyboard.cpp \
+    KeyboardTheme.cpp \
     MainWindow.cpp \
     ProcessDataStream.cpp \
     SessionManagement.cpp \
@@ -39,6 +40,7 @@ HEADERS += \
     Glyph.h \
     Host.h \
     Keyboard.h \
+    KeyboardTheme.h \
     MainWindow.h \
     ProcessDataStream.h \
     Q3270.h \
@@ -52,7 +54,9 @@ FORMS += \
     About.ui \
     ColourTheme.ui \
     Host.ui \
+    KeyboardTheme.ui \
     MainWindow.ui \
+    NewTheme.ui \
     OpenSession.ui \
     SaveSession.ui \
     Settings.ui

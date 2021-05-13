@@ -93,7 +93,7 @@ KeyboardTheme::KeyboardTheme(QWidget *parent) : QDialog(parent), ui(new Ui::Keyb
 
     themeList.sort(Qt::CaseSensitive);
 
-    // Populate schemes list and combo boxes from config file
+    // Populate themes list and combo boxes from config file
     for (int sc = 0; sc < themeList.count(); sc++)
     {
         qDebug() << themeList.at(sc);
@@ -255,7 +255,7 @@ void KeyboardTheme::addTheme()
         {
             i++;
         }
-        newName = "New Scheme " + QString::number(i);
+        newName = "New Theme " + QString::number(i);
     }
 
     // Populate dialog box name

@@ -117,7 +117,7 @@ void SessionManagement::saveSettings(TerminalTab *terminal)
     // Each session is stored under the Sessions/<session name> key
     settings.beginGroup((save->sessionName->text()));
     settings.setValue("Description", save->lineEdit->text());
-    settings.setValue("ColourTheme", terminal->getColourScheme());
+    settings.setValue("ColourTheme", terminal->getColourTheme());
     settings.setValue("Address", terminal->address());
 
     // End group for session
@@ -160,8 +160,8 @@ void SessionManagement::openSession(TerminalTab *t)
         settings.beginGroup("Sessions");
         // Position at Session Name sub-group
         settings.beginGroup(load->tableWidget->item(load->tableWidget->currentRow(), 0)->text());
-        // Set colour scheme
-        t->setColourScheme(settings.value("ColourTheme").toString());
+        // Set colour theme
+        t->setColourTheme(settings.value("ColourTheme").toString());
     }
 
     delete load;

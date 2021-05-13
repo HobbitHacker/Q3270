@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Colour Schemes</string>
+   <string>Colour Themes</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
@@ -295,8 +295,8 @@
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>248</x>
-     <y>254</y>
+     <x>255</x>
+     <y>363</y>
     </hint>
     <hint type="destinationlabel">
      <x>157</x>
@@ -311,8 +311,8 @@
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>316</x>
-     <y>260</y>
+     <x>323</x>
+     <y>363</y>
     </hint>
     <hint type="destinationlabel">
      <x>286</x>
@@ -324,11 +324,11 @@
    <sender>colourDelete</sender>
    <signal>clicked()</signal>
    <receiver>ColourTheme</receiver>
-   <slot>deleteScheme()</slot>
+   <slot>deleteTheme()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>377</x>
-     <y>21</y>
+     <x>449</x>
+     <y>49</y>
     </hint>
     <hint type="destinationlabel">
      <x>228</x>
@@ -340,11 +340,11 @@
    <sender>colourNew</sender>
    <signal>clicked()</signal>
    <receiver>ColourTheme</receiver>
-   <slot>addScheme()</slot>
+   <slot>addTheme()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>228</x>
-     <y>21</y>
+     <x>300</x>
+     <y>49</y>
     </hint>
     <hint type="destinationlabel">
      <x>228</x>
@@ -354,9 +354,9 @@
   </connection>
  </connections>
  <slots>
-  <slot>schemeChanged(int)</slot>
-  <slot>addScheme()</slot>
-  <slot>deleteScheme()</slot>
-  <slot>schemeRenamed(QString)</slot>
+  <slot>themeChanged(int)</slot>
+  <slot>addTheme()</slot>
+  <slot>deleteTheme()</slot>
+  <slot>themeRenamed(QString)</slot>
  </slots>
 </ui>
