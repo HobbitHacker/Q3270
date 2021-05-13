@@ -21,7 +21,7 @@ class Settings : public QDialog
 
     public:
 
-        explicit Settings(QWidget *parent = nullptr);
+        explicit Settings(ColourTheme *colours, QWidget *parent = nullptr);
         ~Settings();
 
         void showForm(bool connected);
@@ -56,12 +56,10 @@ class Settings : public QDialog
 
         void changeFont(QFont f);
         void changeModel(int m);
-        void populateKeySequence(QTableWidgetItem *item);
-        void setKey();
-        void truncateShortcut();
         void saveSettings();
-        void colourSchemeChanged(int index);
-        void populateSchemeNames();
+        void colourThemeChanged(int index);
+        void populateThemeNames();
+        void manageColourThemes();
 
     private:
 
@@ -71,8 +69,8 @@ class Settings : public QDialog
 
         ColourTheme *colours;
 
-        QString colourSchemeName;
-        ColourTheme::Colours colourScheme;
+        QString colourThemeName;
+        ColourTheme::Colours colourTheme;
 
         QFont termFont;
         QFont qfdFont;
@@ -93,9 +91,6 @@ class Settings : public QDialog
 
         bool paletteChanged;
         bool keyboardChanged;
-
-        int lastRow;
-        int lastSeq;
 
         struct termTypes
         {

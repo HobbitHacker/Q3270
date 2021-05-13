@@ -63,7 +63,7 @@
       </sizepolicy>
      </property>
      <property name="currentIndex">
-      <number>2</number>
+      <number>3</number>
      </property>
      <widget class="QWidget" name="Terminal">
       <attribute name="title">
@@ -408,14 +408,14 @@
          <item>
           <widget class="QLabel" name="label_21">
            <property name="text">
-            <string>Colour Scheme</string>
+            <string>Colour Theme</string>
            </property>
           </widget>
          </item>
          <item>
           <layout class="QHBoxLayout" name="horizontalLayout_5">
            <item>
-            <widget class="QComboBox" name="colourScheme">
+            <widget class="QComboBox" name="colourTheme">
              <property name="editable">
               <bool>false</bool>
              </property>
@@ -427,12 +427,12 @@
             </widget>
            </item>
            <item>
-            <widget class="QPushButton" name="colourManage">
+            <widget class="QPushButton" name="manageColourThemes">
              <property name="enabled">
               <bool>true</bool>
              </property>
              <property name="text">
-              <string>Manage Schemes</string>
+              <string>Manage Themes</string>
              </property>
              <property name="autoDefault">
               <bool>false</bool>
@@ -716,7 +716,7 @@
        <string>Keyboard</string>
       </attribute>
       <layout class="QGridLayout" name="gridLayout_4">
-       <item row="0" column="0" colspan="4">
+       <item row="1" column="0" colspan="2">
         <widget class="QTableWidget" name="KeyboardMap">
          <property name="sizeAdjustPolicy">
           <enum>QAbstractScrollArea::AdjustToContents</enum>
@@ -748,53 +748,13 @@
          </column>
         </widget>
        </item>
-       <item row="5" column="3">
-        <widget class="QPushButton" name="setKeyboardMap">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-           <horstretch>1</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
+       <item row="0" column="0">
+        <widget class="QComboBox" name="keyboardThemes"/>
+       </item>
+       <item row="0" column="1">
+        <widget class="QPushButton" name="manageKeyboardThemes">
          <property name="text">
-          <string>Set</string>
-         </property>
-        </widget>
-       </item>
-       <item row="5" column="1">
-        <widget class="QComboBox" name="KeyboardFunctionList">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-           <horstretch>1</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-        </widget>
-       </item>
-       <item row="5" column="2">
-        <widget class="QKeySequenceEdit" name="keySequenceEdit">
-         <property name="enabled">
-          <bool>true</bool>
-         </property>
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-           <horstretch>1</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="0" colspan="2">
-        <widget class="QLabel" name="label_23">
-         <property name="text">
-          <string>Set Mapping</string>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="2" colspan="2">
-        <widget class="QLabel" name="LabelMultipleKeys">
-         <property name="text">
-          <string/>
+          <string>Manage Themes</string>
          </property>
         </widget>
        </item>
@@ -887,14 +847,46 @@
    </hints>
   </connection>
   <connection>
-   <sender>colourScheme</sender>
+   <sender>colourTheme</sender>
    <signal>currentIndexChanged(int)</signal>
    <receiver>Settings</receiver>
-   <slot>colourSchemeChanged(int)</slot>
+   <slot>colourThemeChanged(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>305</x>
-     <y>72</y>
+     <x>303</x>
+     <y>85</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>303</x>
+     <y>214</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>manageColourThemes</sender>
+   <signal>clicked()</signal>
+   <receiver>Settings</receiver>
+   <slot>manageColourThemes()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>449</x>
+     <y>73</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>303</x>
+     <y>214</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>keyboardThemes</sender>
+   <signal>currentIndexChanged(int)</signal>
+   <receiver>Settings</receiver>
+   <slot>keyboardThemeChanged(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>160</x>
+     <y>50</y>
     </hint>
     <hint type="destinationlabel">
      <x>303</x>
@@ -909,6 +901,9 @@
   <slot>changeBlinkSpeed(int)</slot>
   <slot>selectColour()</slot>
   <slot>saveSettings()</slot>
-  <slot>colourSchemeChanged(int)</slot>
+  <slot>colourThemeChanged(int)</slot>
+  <slot>manageColourThemes()</slot>
+  <slot>manageKeyboardThemes()</slot>
+  <slot>keyboardThemeChanged(int)</slot>
  </slots>
 </ui>

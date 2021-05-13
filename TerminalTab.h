@@ -44,11 +44,11 @@ class TerminalTab : public QWidget
         void setScaleFont(bool scale);
         void setColours(ColourTheme::Colours colours);
 
-        // Set colour scheme by name
-        void setColourScheme(QString schemeName);
+        // Set colour theme by name
+        void setColourTheme(QString themeName);
         
-        // Return current colour scheme name
-        inline QString getColourScheme()    { return colourTheme; };
+        // Return current colour theme name
+        inline QString getColourTheme()    { return colourTheme; };
 
         int getType();
         QString address();

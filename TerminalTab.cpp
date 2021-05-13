@@ -3,7 +3,7 @@
 TerminalTab::TerminalTab(QVBoxLayout *layout, ColourTheme *colours)
 {
     // Create Settings object
-    settings = new Settings();
+    settings = new Settings(colours);
 
     // Create terminal display and keyboard objects
     view = new TerminalView();
@@ -96,21 +96,24 @@ void TerminalTab::setScaleFont(bool scale)
 
 void TerminalTab::setColours(ColourTheme::Colours colours)
 {
-    for (int i = 0; i < 2; i++)
+    if (view->connected)
     {
-        screen[i]->setColourPalette(colours);
-        screen[i]->resetColours();
+        for (int i = 0; i < 2; i++)
+        {
+            screen[i]->setColourPalette(colours);
+            screen[i]->resetColours();
+        }
     }
 }
 
-void TerminalTab::setColourScheme(QString schemeName)
+void TerminalTab::setColourTheme(QString themeName)
 {
-    colourTheme = schemeName;
+    colourTheme = themeName;
 
-    // Set colour scheme by name; pass obtained scheme to setColours()
+    // Set colour theme by name; pass obtained theme to setColours()
     if (view->connected)
     {
-        setColours(colours->getScheme(schemeName));
+        setColours(colours->getTheme(themeName));
     }
 }
 
@@ -160,7 +163,7 @@ void TerminalTab::connectSession()
     connect(settings, &Settings::saveKeyboardSettings, kbd, &Keyboard::saveKeyboardSettings);
     connect(settings, &Settings::setStretch, view, &TerminalView::setStretch);
 
-    setColourScheme(colourTheme);
+    setColourTheme(colourTheme);
 
     for (int i = 0; i < 2; i++)
     {
