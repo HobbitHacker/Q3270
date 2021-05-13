@@ -72,9 +72,14 @@ KeyboardTheme::KeyboardTheme(QWidget *parent) : QDialog(parent), ui(new Ui::Keyb
 
     // Store all functions: this is the definitive list of Q3270 functions
     functionList = theme.keys();
+
+    // Ensure that the "Unassigned" function is available to map keys
+    ui->KeyboardFunctionList->addItem("Unassigned");
+
+    // Populate function list dropdown with available Q3270 functions
     ui->KeyboardFunctionList->addItems(functionList);
 
-    // Populate drop-down list with Factory keyboard layout
+    // Populate theme drop-down list with Factory keyboard layout
     ui->keyboardThemes->addItem("Factory");
 
     // Now add those from the config file
@@ -136,7 +141,11 @@ KeyboardTheme::KeyboardTheme(QWidget *parent) : QDialog(parent), ui(new Ui::Keyb
     // End themes main group
     s.endGroup();
 
+    // Set default theme
     setTheme("Factory");
+
+    // Initially sort by Q3270 function
+    ui->KeyboardMap->sortByColumn(0, Qt::AscendingOrder);
 
     // Popup dialog for new themes
     newTheme = new Ui::NewTheme();
@@ -147,6 +156,12 @@ KeyboardTheme::KeyboardTheme(QWidget *parent) : QDialog(parent), ui(new Ui::Keyb
     connect(newTheme->newName, &QLineEdit::textChanged, this, &KeyboardTheme::checkDuplicate);
     connect(newTheme->buttonBox, &QDialogButtonBox::accepted, &newThemePopUp, &QDialog::accept);
     connect(newTheme->buttonBox, &QDialogButtonBox::rejected, &newThemePopUp, &QDialog::reject);
+
+    // No "last chosen" keyboard row or key sequence; used to determine whether the next sequence
+    // is shown for multiply-mapped functions
+    lastRow = -1;
+    lastSeq = -1;
+
 
 }
 
@@ -163,6 +178,9 @@ void KeyboardTheme::setTheme(QString newTheme)
         currentTheme = newTheme;
     }
 
+    // Select it from the theme list
+    ui->keyboardThemes->setCurrentIndex(ui->keyboardThemes->findText(currentTheme));
+
     // Convenience variable to extract specified map
     KeyboardMap thisMap = themes.find(currentTheme).value();
 
@@ -173,19 +191,26 @@ void KeyboardTheme::setTheme(QString newTheme)
 
     int row = 0;
 
-    // Ensure that the "Unassigned" function is available to map keys
-    ui->KeyboardFunctionList->addItem("Unassigned");
-
     while(i != thisMap.constEnd())
     {
         // Insert new row into table widget, and add details
         ui->KeyboardMap->insertRow(row);
+        qDebug() << i.value();
         ui->KeyboardMap->setItem(row, 0, new QTableWidgetItem(i.key()));
         ui->KeyboardMap->setItem(row, 1, new QTableWidgetItem(i.value().join(", ")));
         i++;
+        row++;
     }
 
     ui->KeyboardMap->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+
+    // Clear last row displayed
+    lastRow = -1;
+    lastSeq = -1;
+
+    // Clear key sequence and message
+    ui->keySequenceEdit->clear();
+    ui->message->clear();
 }
 
 void KeyboardTheme::themeChanged(int index)
@@ -200,14 +225,20 @@ void KeyboardTheme::themeChanged(int index)
     // Update the keyboard map when the combobox changes
     setTheme(currentTheme);
 
-    // Disable delete for Factory theme
+    // Disable delete, set, keysequence and function dropdown for Factory theme
     if (currentThemeIndex == 0)
     {
         ui->deleteThemeButton->setDisabled(true);
+        ui->KeyboardFunctionList->setDisabled(true);
+        ui->keySequenceEdit->setDisabled(true);
+        ui->setKeyboardMap->setDisabled(true);
     }
     else
     {
         ui->deleteThemeButton->setEnabled(true);
+        ui->KeyboardFunctionList->setEnabled(true);
+        ui->keySequenceEdit->setEnabled(true);
+        ui->setKeyboardMap->setEnabled(true);
     }
 }
 
@@ -265,10 +296,186 @@ void KeyboardTheme::checkDuplicate()
 
 void KeyboardTheme::deleteTheme()
 {
+    // Remove theme from lists
+    themes.remove(ui->keyboardThemes->currentText());
+    ui->keyboardThemes->removeItem(currentThemeIndex);
+}
 
+int KeyboardTheme::exec()
+{
+    // Save the initial state, to be restored should the user press cancel
+    restoreThemeIndex = currentThemeIndex;
+    restoreTheme = currentTheme;
+    restoreThemes = themes;
+
+    return QDialog::exec();
 }
 
 void KeyboardTheme::accept()
 {
+    // Save settings
+    QSettings settings;
+
+    // Group for Colours
+    settings.beginGroup("KeyboardThemes");
+
+    // Clear any existing settings
+    settings.remove("");
+
+    QMap<QString, KeyboardMap>::const_iterator i = themes.constBegin();
+
+    while(i != themes.constEnd())
+    {
+        // Skip Factory theme
+        if (i.key().compare("Factory"))
+        {
+            // Start new group for each theme
+            settings.beginGroup(i.key());
+
+            // Convenience variable
+            theme = i.value();
+
+            // Pull out each key mapping
+            KeyboardMap::const_iterator j = theme.constBegin();
+
+            while(j != theme.constEnd())
+            {
+                // Pull out each key sequence
+                for(int k = 0; k < j.value().size(); k++)
+                {
+                    settings.setValue(j.value().at(k), j.key());
+                }
+
+                j++;
+            }
+
+            // End Theme group
+            settings.endGroup();
+        }
+
+        // Next theme
+        i++;
+
+    }
+
+    // Finish ColourThemes group
+    settings.endGroup();
+
+    QDialog::accept();
 
 }
+
+void KeyboardTheme::reject()
+{
+    // Restore initial state
+    themes = restoreThemes;
+
+    ui->keyboardThemes->clear();
+    ui->keyboardThemes->addItems(themes.keys());
+
+    setTheme(restoreTheme);
+
+    QDialog::reject();
+}
+
+void KeyboardTheme::populateKeySequence(QTableWidgetItem *item)
+{
+    //NOTE: This doesn't handle the custom left-ctrl/right-ctrl stuff
+
+    // Get current row number
+    int thisRow = item->row();
+
+    // Split the sequence by comma, to be able to display a rotating list of mappings
+    QStringList keyList = ui->KeyboardMap->item(thisRow, 1)->text().split(", ");
+
+    // If the row clicked is a different row to last time, set the sequence to the first mapping
+    if (thisRow != lastRow)
+    {
+        lastSeq = 0;
+    }
+    else
+    {
+        // Otherwise increase sequence to the next mapping, limited to the size of the list
+        if (++lastSeq >= keyList.size())
+            lastSeq = 0;
+    }
+
+    // Set the function list field on the form to show the function defined by the row
+    ui->KeyboardFunctionList->setCurrentIndex(ui->KeyboardFunctionList->findText(ui->KeyboardMap->item(thisRow, 0)->text()));
+
+    // If the key is mapped, display the key sequence, otherwise, blank it out
+    if (keyList.size() != 0)
+    {
+        ui->keySequenceEdit->setKeySequence(QKeySequence(keyList[lastSeq]));
+    }
+    else
+    {
+        ui->keySequenceEdit->clear();
+    }
+
+    // If there is only one mapping for this function, clear the message, otheriwse tell the user
+    // there's more
+    if (keyList.size() == 1)
+    {
+        ui->message->clear();
+    }
+    else
+    {
+        ui->message->setText("Click again for next key mapping");
+    }
+
+    // Set the last selected row to this one
+    lastRow = thisRow;
+
+}
+
+void KeyboardTheme::setKey()
+{
+    // Search through the theme to find out if the key is already mapped
+    QMap<QString, QStringList>::iterator i = theme.begin();
+
+    while(i != theme.end())
+    {
+        // Loop through the mapped keys
+        for (int s = 0; s < i.value().size(); s++)
+        {
+            // If the mapping is found, remove it because we can only have one key sequence mapped to a function
+            if (QKeySequence(i.value()[s]) == ui->keySequenceEdit->keySequence())
+            {
+                printf("Found %s as %s - removing\n", i.value()[s].toLatin1().data(), i.key().toLatin1().data());
+                fflush(stdout);
+                // Remove existing entry
+                i.value().removeAt(s);
+            }
+        }
+
+        // If the current key is the matching function, process it
+        if (!i.key().compare(ui->KeyboardFunctionList->currentText()))
+        {
+             // If the selected function was not 'Unassigned' - index 0 - then store the mapping
+             if (ui->KeyboardFunctionList->currentIndex() != 0)
+             {
+                 printf("Adding to %s\n", i.key().toLatin1().data());
+                 fflush(stdout);
+                 theme[i.key()].append(ui->keySequenceEdit->keySequence().toString());
+                 qDebug() << i.key() << i.value();
+             }
+        }
+        i++;
+    }
+
+    // Update themes
+    themes[currentTheme] = theme;
+
+    // Rebuild the table display (probably inefficient)
+    setTheme(currentTheme);
+}
+
+void KeyboardTheme::truncateShortcut()
+{
+    // Use only the first key sequence the user pressed
+    int value = ui->keySequenceEdit->keySequence()[0];
+    QKeySequence shortcut(value);
+    ui->keySequenceEdit->setKeySequence(shortcut);
+}
+

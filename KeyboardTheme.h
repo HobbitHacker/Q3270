@@ -9,6 +9,7 @@
 #include <QLineEdit>
 #include <QLabel>
 #include <QDialogButtonBox>
+#include <QTableWidgetItem>
 
 
 namespace Ui {
@@ -26,6 +27,8 @@ class KeyboardTheme : public QDialog
 
         KeyboardTheme(QWidget *parent = nullptr);
 
+        int exec();
+
     private:
 
         Ui::KeyboardTheme *ui;
@@ -41,6 +44,14 @@ class KeyboardTheme : public QDialog
         QString currentTheme;
         int currentThemeIndex;
 
+        int lastRow;
+        int lastSeq;
+
+        // Variables used to store state, to be restored should the user press cancel
+        QString restoreTheme;
+        QMap<QString, KeyboardMap> restoreThemes;
+        int restoreThemeIndex;
+
         void setTheme(QString theme);
 
     private slots:
@@ -49,8 +60,12 @@ class KeyboardTheme : public QDialog
         void addTheme();
         void deleteTheme();
         void checkDuplicate();
+        void populateKeySequence(QTableWidgetItem *item);
+        void setKey();
+        void truncateShortcut();
 
         void accept();
+        void reject();
 
 };
 
