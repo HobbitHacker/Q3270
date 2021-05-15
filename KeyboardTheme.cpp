@@ -161,15 +161,32 @@ KeyboardTheme::KeyboardTheme(QWidget *parent) : QDialog(parent), ui(new Ui::Keyb
     // is shown for multiply-mapped functions
     lastRow = -1;
     lastSeq = -1;
+}
 
+QStringList KeyboardTheme::getThemes()
+{
+    // Return a list of themes
+    return themes.keys();
+}
 
+KeyboardTheme::KeyboardMap KeyboardTheme::getTheme(QString keyboardThemeName)
+{
+    // Return theme, if it exists in the list, else return the Factory theme
+    if (themes.contains(keyboardThemeName))
+    {
+        return themes[keyboardThemeName];
+    }
+    else
+    {
+        return themes["Factory"];
+    }
 }
 
 void KeyboardTheme::setTheme(QString newTheme)
 {
     // If we don't know the name of the theme, fall back to Factory. This allows users to delete themes, but
     // still leave them referenced in session configurations.
-    if (themes.find(newTheme)  == themes.end())
+    if (!themes.contains(newTheme))
     {
         currentTheme = "Factory";
     }

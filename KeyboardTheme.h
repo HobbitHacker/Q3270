@@ -27,7 +27,11 @@ class KeyboardTheme : public QDialog
 
         KeyboardTheme(QWidget *parent = nullptr);
 
+        QStringList getThemes();
+        KeyboardMap getTheme(QString keyboardThemeName);
+
         int exec();
+
 
     private:
 

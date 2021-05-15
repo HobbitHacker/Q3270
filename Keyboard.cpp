@@ -37,9 +37,9 @@ void Keyboard::setMap()
     functionMap.insert("Tab",&Keyboard::tab);
     functionMap.insert("Backtab",&Keyboard::backtab);
 
-    functionMap.insert("Newline",&Keyboard::newline);
+    functionMap.insert("NewLine",&Keyboard::newline);
     functionMap.insert("Home",&Keyboard::home);
-    functionMap.insert("Endline", &Keyboard::endline);
+    functionMap.insert("EndLine", &Keyboard::endline);
 
     functionMap.insert("EraseEOF",&Keyboard::eraseEOF);
 
@@ -88,44 +88,6 @@ void Keyboard::setMap()
     functionMap.insert("Blah", &Keyboard::unlockKeyboard);
 
     setFactoryMaps();
-}
-
-QMap<QString, QStringList> Keyboard::getMap()
-{
-    QMap<QString, Keyboard::kbFunction>::const_iterator i = functionMap.constBegin();
-
-    QMap<QString, QStringList> thisMap;
-    QStringList keyList;
-
-    while(i != functionMap.constEnd())
-    {
-        keyList.clear();
-
-        getMapping(i.key(), keyList, defaultMap);
-        getMapping(i.key(), keyList, shiftMap);
-        getMapping(i.key(), keyList, ctrlMap);
-        getMapping(i.key(), keyList, altMap);
-        getMapping(i.key(), keyList, metaMap);
-
-        thisMap[i.key()] = keyList;
-        i++;
-    }
-
-    return thisMap;
-}
-
-void Keyboard::getMapping(QString key, QStringList &keyList, QMap<int, kbDets> map)
-{
-    QMap<int, kbDets>::const_iterator i = map.constBegin();
-    while(i != map.constEnd())
-    {
-        // NOTE: Should be case-insensitive?
-        if (!i->keyFunc.compare(key))
-        {
-            keyList.append(i.value().keySeq);
-        }
-        i++;
-    }
 }
 
 void Keyboard::clearBufferEntry()
@@ -772,8 +734,8 @@ void Keyboard::setFactoryMaps()
 
     setMapping("Home", "Home");
     setMapping("End", "EraseEOF");
-    setMapping("Return", "Newline");
-    setMapping("Ctrl+End", "Endline");
+    setMapping("Return", "NewLine");
+    setMapping("Ctrl+End", "EndLine");
 
     setMapping("F1", "F1");
     setMapping("F2", "F2");
@@ -823,19 +785,28 @@ void Keyboard::ruler()
     datastream->toggleRuler();
 }
 
-void Keyboard::setNewMap(QMap<QString, QStringList> newMap)
+void Keyboard::setTheme(KeyboardTheme::KeyboardMap theme)
 {
+    // Switch to a new keyboard map based on the theme
+
+    // Clear the existing maps
     defaultMap.clear();
     ctrlMap.clear();
     altMap.clear();
     shiftMap.clear();
     metaMap.clear();
 
-    QMap<QString, QStringList>::ConstIterator i = newMap.constBegin();
-    while(i != newMap.constEnd())
+    // Keyboard themes are defined as { Q3270 function, { key, key, key } }
+
+    KeyboardTheme::KeyboardMap::ConstIterator i = theme.constBegin();
+
+    // Iterate over the keyboard theme, and apply
+    while(i != theme.constEnd())
     {
+        // Each Q3270 function in the map may have multiple keys defined for it
         for (int s = 0; s < i.value().size(); s++)
         {
+            // Set mapping for this key to this function
             setMapping(i.value()[s], i.key());
         }
         i++;
@@ -845,21 +816,4 @@ void Keyboard::setNewMap(QMap<QString, QStringList> newMap)
 void Keyboard::clear()
 {
     datastream->processAID(IBM3270_AID_CLEAR, true);
-}
-
-void Keyboard::saveKeyboardSettings()
-{
-    QSettings s;
-
-    QList<QMap<int, kbDets>> kbs = { defaultMap, ctrlMap, shiftMap, altMap, metaMap };
-
-    for (int i = 0; i < kbs.size(); i++)
-    {
-        QMap<int, kbDets>::const_iterator k = kbs.at(i).constBegin();
-        while(k != kbs.at(i).constEnd())
-        {
-            s.setValue("keyboard/" + k.value().keySeq, k.value().keyFunc);
-            k++;
-        }
-    }
 }

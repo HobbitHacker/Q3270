@@ -9,17 +9,13 @@
 #include <QVector>
 #include <QMap>
 
-//TODO: Change to QMap / QList
-//#include <unordered_map>
-//#include <functional>
-
 #include "ProcessDataStream.h"
 #include "SocketConnection.h"
 #include "TerminalView.h"
 #include "Q3270.h"
+#include "KeyboardTheme.h"
 
-//#define CALL_MEMBER_FN(object,ptrToMember)  ((object).*(ptrToMember))
-
+// Left Ctrl and Right Ctrl hard wiring; this may break with non-X11 Windowing systems
 #define Q3270_LEFT_CTRL 65507
 #define Q3270_RIGHT_CTRL 65508
 
@@ -33,19 +29,16 @@ class Keyboard : public QObject
         void setMap();
         bool processKey();
         void setDataStream(ProcessDataStream *d);
-        QMap<QString, QStringList> getMap();
 
     signals:
         void setLock(QString xsystem);
         void setInsert(bool ins);
-        void saveKeyboardMapping(QString k, QString v);
 
     public slots:
         void unlockKeyboard();
         void lockKeyboard();
-        void setMapping(QString key, QString function);
-        void setNewMap(QMap<QString, QStringList> newMap);
-        void saveKeyboardSettings();
+
+        void setTheme(KeyboardTheme::KeyboardMap theme);
 
     protected:
         bool eventFilter( QObject *dist, QEvent *event );
@@ -156,7 +149,6 @@ class Keyboard : public QObject
         void clearBufferEntry();
 
         void setFactoryMaps();
-        void getMapping(QString keySeq, QStringList &list, QMap<int, kbDets>);
-
+        void setMapping(QString key, QString function);
 };
 #endif // KEYBOARD_H
