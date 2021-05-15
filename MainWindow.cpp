@@ -2,7 +2,7 @@
 #include "MainWindow.h"
 #include "ui_About.h"
 
-MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new(Ui::MainWindow))
+MainWindow::MainWindow(QString sessionName) : QMainWindow(nullptr), ui(new(Ui::MainWindow))
 {
     QCoreApplication::setOrganizationDomain("styles.homeip.net");
     QCoreApplication::setApplicationName("Q3270");
@@ -10,7 +10,40 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new(Ui::MainWi
 
     ui->setupUi(this);
 
+    // Read global settings
     QSettings settings;
+
+    settings.beginGroup("Global");
+
+    // Most-recently used; default to 10
+    maxMruCount = settings.value("MRUMax", 10).toInt();
+
+    // Most-recently used list; might be addresses or sessions
+    settings.beginGroup("MRUList");
+
+    // List of all entries
+    QStringList savedMRUList = settings.childKeys();
+
+    for(int i = 0; i < savedMRUList.count(); i++)
+    {
+
+        // Store "Address" or "Session" keys
+        if (!savedMRUList.at(i).compare("Address"))
+        {
+            QString thisAddress = QString::number(i + 1) + ". Host " + settings.value("Address").toString();
+            mruList.append(thisAddress);
+            ui->menuRecentSessions->addAction(thisAddress, this, &MainWindow::mruConnect);
+        }
+        else if (!savedMRUList.at(i).compare("Session"))
+        {
+            QString thisAddress = QString::number(i + 1) + ". Session " + settings.value("Session").toString();
+            mruList.append(thisAddress);
+            ui->menuRecentSessions->addAction(thisAddress, this, &MainWindow::mruConnect);
+        }
+    }
+
+    settings.endGroup();
+
 
     sessionGroup = new QActionGroup(this);
 
@@ -23,34 +56,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new(Ui::MainWi
     // Keyboard theme dialog
     keyboardTheme = new KeyboardTheme();
 
-    // Session settings dialog
-    
-
     restoreGeometry(settings.value("mainwindowgeometry").toByteArray());
     restoreState(settings.value("mainwindowstate").toByteArray());
 
-    if (settings.contains("mrumax"))
-    {
-        maxMruCount = settings.value("mrumax").toInt();
-    }
-    else
-    {
-        maxMruCount = 10;
-        settings.setValue("mrumax", 10);
-    }
-
-    int mruCount = settings.beginReadArray("mrulist");
-
-    for(int i = 0; i < mruCount; i++)
-    {
-        settings.setArrayIndex(i);
-
-        QString address = settings.value("address").toString();
-        mruList.append(address);
-        ui->menuRecentSessions->addAction(address, this, &MainWindow::mruConnect);
-    }
-
-    settings.endArray();
 /*
     if (applicationSettings.value("restorewindows", false).toBool())
     {
@@ -64,21 +72,21 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new(Ui::MainWi
             t->openConnection(applicationSettings.value("address").toString());
         }
 
-        ui->actionDisconnect->setEnabled(true);
-        ui->actionReconnect->setDisabled(true);
-        ui->actionConnect->setDisabled(true);
-
         applicationSettings.endArray();
 
     }
 */
 
-    terminal = new TerminalTab(ui->terminalLayout, colourTheme);
+    // Set defaults for Connect options
+    ui->actionDisconnect->setDisabled(true);
+    ui->actionReconnect->setDisabled(true);
+    ui->actionConnect->setEnabled(true);
+
+    terminal = new TerminalTab(ui->terminalLayout, colourTheme, keyboardTheme, sessionName);
 }
 
 void MainWindow::menuNew()
 {
-//    newTab();
     menuConnect();
 }
 
@@ -100,17 +108,37 @@ void MainWindow::menuOpenSession()
 
 void MainWindow::mruConnect()
 {
+    // Find the sending object - the line in the 'Recent' menu
     QAction *sender = (QAction *)QObject::sender();
 
-    QString address = sender->text();
+    // Will contain either session name or host address
+    QString address;
 
-    terminal->openConnection(address);
+    // Split the menu entry into parts: 1. Host 192.168.0.1:23 or 1. Session Fred
+    QStringList parts = sender->text().split(" ");
 
-    ui->actionDisconnect->setEnabled(true);
-    ui->actionReconnect->setDisabled(true);
-    ui->actionConnect->setDisabled(true);
+    // If this is a Host address, use that to connect to
+    if (!parts[1].compare("Host"))
+    {
+        // Pick up address and connect
+        address = parts[2];
+        terminal->openConnection(address);
 
-    updateMRUlist(address);
+        // Set Connect menu entries
+        ui->actionDisconnect->setEnabled(true);
+        ui->actionReconnect->setDisabled(true);
+        ui->actionConnect->setDisabled(true);
+    }
+    else
+    {
+        // It's a session name, so concatenate the remaining parts of the menu entry
+        for(int i = 2; i < parts.count(); i++)
+        {
+            address = address.append(parts[i] + " ");
+        }
+    }
+
+        updateMRUlist(terminal->address());
 }
 
 MainWindow::~MainWindow()
@@ -198,20 +226,34 @@ void MainWindow::updateMenuEntries()
 
 void MainWindow::updateMRUlist(QString address)
 {
+    // Clear existing MRU list
     ui->menuRecentSessions->clear();
 
-    int x = mruList.indexOf(address);
+    // Find if the entry was in the list
+    int index = mruList.indexOf(address);
 
-    if (x != -1)
+    // If it was, remove it
+    if (index != -1)
     {
-        mruList.removeAt(x);
+        mruList.removeAt(index);
     }
 
+    // Add the entry to the start of the MRU list
     mruList.prepend(address);
 
+    // Loop through the MRU list, for the maximum allowed MRU entries, or the number of MRU entries so far
     for(int i = 0; i < mruList.size() && i < maxMruCount; i++)
     {
-        ui->menuRecentSessions->addAction(mruList.at(i), this, [this]() { mruConnect(); } );
+        QString entry = QString::number(i + 1) + ". ";
+        if (mruList.at(i).startsWith("Session "))
+        {
+            entry += "Session ";
+        }
+        else
+        {
+            entry += "Host ";
+        }
+        ui->menuRecentSessions->addAction(entry + mruList.at(i), this, [this]() { mruConnect(); } );
     }
 
     QSettings applicationSettings;

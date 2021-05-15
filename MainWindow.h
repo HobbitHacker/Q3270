@@ -42,7 +42,7 @@ class MainWindow : public QMainWindow
   Q_OBJECT
   
   public:
-    MainWindow(QWidget *parent = nullptr);
+    MainWindow(QString sessionName = "");
     ~MainWindow();
 
   public slots:
@@ -87,7 +87,7 @@ class MainWindow : public QMainWindow
 
     Ui::MainWindow *ui;    
 
-    QList<QString> mruList;
+    QStringList mruList;
 };
  
 #endif
