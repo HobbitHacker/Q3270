@@ -134,29 +134,6 @@ Settings::~Settings()
     delete ui;
 }
 
-void Settings::setKeyboardMap(KeyboardTheme::KeyboardMap map)
-{
-    keyboardTheme = map;
-
-    KeyboardTheme::KeyboardMap::ConstIterator i = map.constBegin();
-
-    ui->KeyboardMap->setRowCount(0);
-
-    int row = 0;
-
-    while(i != map.constEnd())
-    {
-        ui->KeyboardMap->insertRow(row);
-        ui->KeyboardMap->setItem(row, 0, new QTableWidgetItem(i.key()));
-        ui->KeyboardMap->setItem(row, 1, new QTableWidgetItem(i.value().join(", ")));
-        printf("Function name %s mapped to %s\n",  i.key().toLatin1().data(), i.value().join(",").toLatin1().data());
-        fflush(stdout);
-        i++;
-    }
-
-    ui->KeyboardMap->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
-}
-
 void Settings::showForm(bool connected)
 {
     if (connected)
@@ -427,6 +404,9 @@ void Settings::keyboardThemeChanged(int index)
 
     // Get the newly selected theme from the KeyboardTheme object
     keyboardTheme = keyboards->getTheme(keyboardThemeName);
+
+    // Populate keyboard map table
+    keyboards->populateTable(ui->KeyboardMap, keyboardTheme);
 
     // Signify that if the user pressed OK, a colour theme change occurred
     keyboardThemeChangeFlag = true;

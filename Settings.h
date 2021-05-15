@@ -37,7 +37,6 @@ class Settings : public QDialog
         ColourTheme::Colours getColours();
         bool getFontScaling();
         bool getStretch();
-        void setKeyboardMap(QMap<QString, QStringList> map);
 
     signals:
 

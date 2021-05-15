@@ -198,28 +198,8 @@ void KeyboardTheme::setTheme(QString newTheme)
     // Select it from the theme list
     ui->keyboardThemes->setCurrentIndex(ui->keyboardThemes->findText(currentTheme));
 
-    // Convenience variable to extract specified map
-    KeyboardMap thisMap = themes.find(currentTheme).value();
-
-    QMap<QString, QStringList>::ConstIterator i = thisMap.constBegin();
-
-    // Clear keyboard map table in dialog
-    ui->KeyboardMap->setRowCount(0);
-
-    int row = 0;
-
-    while(i != thisMap.constEnd())
-    {
-        // Insert new row into table widget, and add details
-        ui->KeyboardMap->insertRow(row);
-        qDebug() << i.value();
-        ui->KeyboardMap->setItem(row, 0, new QTableWidgetItem(i.key()));
-        ui->KeyboardMap->setItem(row, 1, new QTableWidgetItem(i.value().join(", ")));
-        i++;
-        row++;
-    }
-
-    ui->KeyboardMap->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+    // Populate dialog table
+    populateTable(ui->KeyboardMap, themes.find(currentTheme).value());
 
     // Clear last row displayed
     lastRow = -1;
@@ -228,6 +208,29 @@ void KeyboardTheme::setTheme(QString newTheme)
     // Clear key sequence and message
     ui->keySequenceEdit->clear();
     ui->message->clear();
+}
+
+void KeyboardTheme::populateTable(QTableWidget *table, KeyboardTheme::KeyboardMap map)
+{
+    // Clear keyboard map table in dialog
+    table->setRowCount(0);
+
+    int row = 0;
+    KeyboardTheme::KeyboardMap::ConstIterator i = map.constBegin();
+
+    // Iterate over keyboard map and insert into table
+    while(i != map.constEnd())
+    {
+        // Insert new row into table widget, and add details
+        table->insertRow(row);
+        qDebug() << i.value();
+        table->setItem(row, 0, new QTableWidgetItem(i.key()));
+        table->setItem(row, 1, new QTableWidgetItem(i.value().join(", ")));
+        i++;
+        row++;
+    }
+
+    table->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
 }
 
 void KeyboardTheme::themeChanged(int index)
