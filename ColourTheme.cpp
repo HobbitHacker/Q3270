@@ -45,8 +45,6 @@ ColourTheme::ColourTheme(QWidget *parent) :
     // Populate Themes list and combo boxes from config file
     for (int sc = 0; sc < ThemeList.count(); sc++)
     {
-        qDebug() << ThemeList.at(sc);
-
         // Ignore Factory theme (shouldn't be present, but in case of accidents, or user fudging)
         if (ThemeList.at(sc).compare("Factory"))
         {
@@ -129,11 +127,6 @@ ColourTheme::ColourTheme(QWidget *parent) :
     setTheme("Factory");
 
     currentThemeIndex = 0;
-
-    for(int i = 0; i < ui->colourTheme->count(); i++)
-    {
-        qDebug() << "At " << i << " " << ui->colourTheme->itemText(i);
-    }
 }
 
 ColourTheme::~ColourTheme()
