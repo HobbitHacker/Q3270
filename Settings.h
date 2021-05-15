@@ -10,6 +10,7 @@
 
 #include "Q3270.h"
 #include "ColourTheme.h"
+#include "KeyboardTheme.h"
 
 namespace Ui {
     class Settings;
@@ -21,7 +22,7 @@ class Settings : public QDialog
 
     public:
 
-        explicit Settings(ColourTheme *colours, QWidget *parent = nullptr);
+        explicit Settings(ColourTheme *colours, KeyboardTheme *keyboards, QWidget *parent = nullptr);
         ~Settings();
 
         void showForm(bool connected);
@@ -45,10 +46,9 @@ class Settings : public QDialog
         void cursorBlinkSpeedChanged(int blinkSpeed);
         void coloursChanged(ColourTheme::Colours);
         void fontChanged();
-        void newMap(QMap<QString, QStringList> newMap);
+        void setKeyboardTheme(KeyboardTheme::KeyboardMap newTheme);
         void fontScalingChanged(bool fontScaling);
         void tempFontChange(QFont f);
-        void saveKeyboardSettings();
         void setCursorColour(bool inherit);
         void setStretch(bool stretch);
 
@@ -56,10 +56,15 @@ class Settings : public QDialog
 
         void changeFont(QFont f);
         void changeModel(int m);
-        void saveSettings();
+
         void colourThemeChanged(int index);
-        void populateThemeNames();
+        void keyboardThemeChanged(int index);
+
+        void populateColourThemeNames();
+        void populateKeyboardThemeNames();
+
         void manageColourThemes();
+        void manageKeyboardThemes();
 
     private:
 
@@ -68,16 +73,18 @@ class Settings : public QDialog
         QFontDialog *qfd;
 
         ColourTheme *colours;
+        KeyboardTheme *keyboards;
 
         QString colourThemeName;
         ColourTheme::Colours colourTheme;
+
+        QString keyboardThemeName;
+        KeyboardTheme::KeyboardMap keyboardTheme;
 
         QFont termFont;
         QFont qfdFont;
 
         QHash<ColourTheme::Colour, QPushButton *> colourButtons;
-
-        QMap<QString, QStringList> keyboardMap;
 
         int termType;
         int termX;
@@ -89,8 +96,8 @@ class Settings : public QDialog
         bool cursorInherit;
         bool stretchScreen;
 
-        bool paletteChanged;
-        bool keyboardChanged;
+        bool colourThemeChangeFlag;
+        bool keyboardThemeChangeFlag;
 
         struct termTypes
         {

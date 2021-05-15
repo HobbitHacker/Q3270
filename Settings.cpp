@@ -2,18 +2,16 @@
 #include "ui_Settings.h"
 #include "Settings.h"
 
-Settings::Settings(ColourTheme *colours, QWidget *parent) : QDialog(parent), ui(new Ui::Settings)
+Settings::Settings(ColourTheme *colours, KeyboardTheme *keyboards, QWidget *parent) : QDialog(parent), ui(new Ui::Settings)
 {
-    // All initial settings moved to here, extracted from QSettings, or set to default as needed.
-    // Other classes refer to this as needed.
-    // Separate option to Save Settings
-
     ui->setupUi(this);
     ui->TabsWidget->setCurrentIndex(0);
 
     QSettings applicationSettings;
 
+    // Store theme dialogs
     this->colours = colours;
+    this->keyboards = keyboards;
 
     // Model type
     if (applicationSettings.contains("terminal/model"))
@@ -104,15 +102,14 @@ Settings::Settings(ColourTheme *colours, QWidget *parent) : QDialog(parent), ui(
     colourButtons[ColourTheme::YELLOW]       = ui->colourYellow;
     colourButtons[ColourTheme::NEUTRAL]      = ui->colourWhite;
 
-    colours = new ColourTheme();
-
     // Colour the buttons, based on Settings
     colourThemeName = applicationSettings.value("ColourTheme", "Factory").toString();
     colourTheme = colours->getTheme(colourThemeName);
     colours->setButtonColours(colourTheme, colourButtons);
 
-    // Setup Manage Themes button
+    // Setup Manage Themes buttons
     connect(ui->manageColourThemes, &QPushButton::clicked, this, &Settings::manageColourThemes);
+    connect(ui->manageKeyboardThemes, &QPushButton::clicked, this, &Settings::manageKeyboardThemes);
 
     // Not connected to start with
     ui->terminalCols->setEnabled(true);
@@ -120,8 +117,6 @@ Settings::Settings(ColourTheme *colours, QWidget *parent) : QDialog(parent), ui(
     ui->terminalType->setEnabled(true);
 
     ui->cursorColour->setCheckState(cursorInherit == true ? Qt::Checked : Qt::Unchecked);
-
-    keyboardChanged = false;
 
     // Build a QFontDialog for use within our Settings dialog
     qfd = new QFontDialog();
@@ -139,11 +134,11 @@ Settings::~Settings()
     delete ui;
 }
 
-void Settings::setKeyboardMap(QMap<QString, QStringList> map)
+void Settings::setKeyboardMap(KeyboardTheme::KeyboardMap map)
 {
-    keyboardMap = map;
+    keyboardTheme = map;
 
-    QMap<QString, QStringList>::ConstIterator i = map.constBegin();
+    KeyboardTheme::KeyboardMap::ConstIterator i = map.constBegin();
 
     ui->KeyboardMap->setRowCount(0);
 
@@ -179,11 +174,14 @@ void Settings::showForm(bool connected)
 
     ui->cursorBlinkSpeed->setEnabled(ui->cursorBlink->QAbstractButton::isChecked());
 
-    paletteChanged = false;
+    // No changes to colours or keyboards
+    colourThemeChangeFlag = false;
+    keyboardThemeChangeFlag = false;
 
     qfd->setCurrentFont(termFont);
 
-    populateThemeNames();
+    populateColourThemeNames();
+    populateKeyboardThemeNames();
 
     this->exec();
 }
@@ -289,7 +287,7 @@ void Settings::accept()
         emit cursorBlinkSpeedChanged(blinkSpeed);
     }
 
-    if (paletteChanged)
+    if (colourThemeChangeFlag)
     {
         emit coloursChanged(colourTheme);
     }
@@ -313,9 +311,10 @@ void Settings::accept()
         emit fontScalingChanged(fontScaling);
     }
 
-    if (keyboardChanged)
+    // Signal keyboard update needed if user changed the keyboard theme
+    if (keyboardThemeChangeFlag)
     {
-        emit newMap(keyboardMap);
+        emit setKeyboardTheme(keyboardTheme);
     }
 
     if (ui->cursorColour->QAbstractButton::isChecked() != cursorInherit)
@@ -385,46 +384,19 @@ ColourTheme::Colours Settings::getColours()
     return colourTheme;
 }
 
-void Settings::saveSettings()
-{
-    QSettings qs;
-
-    qs.setValue("terminal/model", terms[termType].name);
-    qs.setValue("terminal/width", termX);
-    qs.setValue("terminal/height", termY);
-
-    qs.setValue("terminal/cursorblink", blink);
-    qs.setValue("terminal/cursorblinkspeed", blinkSpeed);
-
-    qs.setValue("font/name", termFont.family());
-    qs.setValue("font/style", termFont.styleName());
-    qs.setValue("font/size", termFont.pointSize());
-
-    qs.setValue("font/scale", ui->FontScaling->QAbstractButton::isChecked());
-
-    qs.setValue("terminal/stretch", ui->stretch->QAbstractButton::isChecked());
-
-    emit newMap(keyboardMap);
-    emit saveKeyboardSettings();
-
-    QMessageBox saved;
-    saved.setText("Settings saved");
-    saved.exec();
-
-}
-
 void Settings::colourThemeChanged(int index)
 {
     colourThemeName = ui->colourTheme->currentText();
     colourTheme = colours->getTheme(colourThemeName);
     colours->setButtonColours(colourTheme, colourButtons);
 
-    paletteChanged = true;
+    // Signify that if the user pressed OK, a colour theme change occurred
+    colourThemeChangeFlag = true;
 }
 
-
-void Settings::populateThemeNames()
+void Settings::populateColourThemeNames()
 {
+    // Refresh the Colour theme names
     ui->colourTheme->clear();
     ui->colourTheme->addItems(colours->getThemes());
 }
@@ -433,6 +405,35 @@ void Settings::manageColourThemes()
 {
     // Run the Colour Themes dialog
     colours->exec();
-    populateThemeNames();
+
+    // Refresh the colour theme names, in case they changed
+    populateColourThemeNames();
+
+    // Refresh the current colour theme, in case that changed
     emit coloursChanged(colourTheme);
+}
+
+void Settings::populateKeyboardThemeNames()
+{
+    // Refresh the Keyboard theme names
+    ui->keyboardThemes->clear();
+    ui->keyboardThemes->addItems(keyboards->getThemes());
+}
+
+void Settings::keyboardThemeChanged(int index)
+{
+    // Store the newly selected named
+    keyboardThemeName = ui->keyboardThemes->currentText();
+
+    // Get the newly selected theme from the KeyboardTheme object
+    keyboardTheme = keyboards->getTheme(keyboardThemeName);
+
+    // Signify that if the user pressed OK, a colour theme change occurred
+    keyboardThemeChangeFlag = true;
+}
+
+
+void Settings::manageKeyboardThemes()
+{
+    //
 }
