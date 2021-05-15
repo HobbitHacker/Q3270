@@ -118,6 +118,7 @@ void SessionManagement::saveSettings(TerminalTab *terminal)
     settings.beginGroup((save->sessionName->text()));
     settings.setValue("Description", save->lineEdit->text());
     settings.setValue("ColourTheme", terminal->getColourTheme());
+    settings.setValue("KeyboardTheme", terminal->getKeyboardTheme());
     settings.setValue("Address", terminal->address());
 
     // End group for session
@@ -156,15 +157,28 @@ void SessionManagement::openSession(TerminalTab *t)
     {
         QSettings settings;
 
-        // Position at Sessions group
-        settings.beginGroup("Sessions");
-        // Position at Session Name sub-group
-        settings.beginGroup(load->tableWidget->item(load->tableWidget->currentRow(), 0)->text());
-        // Set colour theme
-        t->setColourTheme(settings.value("ColourTheme").toString());
+        // Open named session
+        openSession(t, load->tableWidget->item(load->tableWidget->currentRow(), 0)->text());
     }
 
     delete load;
+}
+
+void SessionManagement::openSession(TerminalTab *t, QString sessionName)
+{
+    QSettings settings;
+
+    // Position at Sessions group
+    settings.beginGroup("Sessions");
+
+    // Position at Session Name sub-group
+    settings.beginGroup(sessionName);
+
+    // Set colour theme
+    t->setColourTheme(settings.value("ColourTheme").toString());
+    t->setKeyboardTheme(settings.value("KeyboardTheme").toString());
+    t->openConnection(settings.value("Host").toString());
+
 }
 
 void SessionManagement::openRowClicked(int x, int y)

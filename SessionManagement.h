@@ -30,6 +30,9 @@ class SessionManagement : public QDialog
         void openSession(TerminalTab *t);
         void saveSession(TerminalTab *t);
 
+        // Open a named session
+        void openSession(TerminalTab *t, QString sessionName);
+
     private:
 
         Ui::SaveSession *save;
