@@ -1,16 +1,20 @@
 #include "TerminalTab.h"
 
-TerminalTab::TerminalTab(QVBoxLayout *layout, ColourTheme *colours)
+TerminalTab::TerminalTab(QVBoxLayout *layout, ColourTheme *colours, KeyboardTheme *keyboards, QString sessionName)
 {
-    // Create Settings object
-    settings = new Settings(colours);
-
     // Create terminal display and keyboard objects
     view = new TerminalView();
     kbd = new Keyboard(view);
 
-    // Save ColourTheme object
+    // Create Settings object
+    settings = new Settings(colours, keyboards);
+
+    // Save Theme objects
     this->colours = colours;
+    this->keyboards = keyboards;
+
+    // Save 'Session' name
+    this->sessionName = sessionName;
 
     // Map settings signals to their target slots
     connect(settings, &Settings::coloursChanged, this, &TerminalTab::setColours);
@@ -18,7 +22,7 @@ TerminalTab::TerminalTab(QVBoxLayout *layout, ColourTheme *colours)
     connect(settings, &Settings::tempFontChange, this, &TerminalTab::setCurrentFont);
     connect(settings, &Settings::cursorBlinkChanged, view, &TerminalView::setBlink);
     connect(settings, &Settings::cursorBlinkSpeedChanged, view, &TerminalView::setBlinkSpeed);
-    connect(settings, &Settings::newMap, kbd, &Keyboard::setNewMap);
+    connect(settings, &Settings::setKeyboardTheme, kbd, &Keyboard::setTheme);
 
     // Build "Not Connected" display
     gs = new QGraphicsScene();
@@ -64,7 +68,6 @@ TerminalTab::~TerminalTab()
 
 void TerminalTab::showForm()
 {
-    settings->setKeyboardMap(kbd->getMap());
     settings->showForm(view->connected);
 }
 
@@ -117,6 +120,14 @@ void TerminalTab::setColourTheme(QString themeName)
     }
 }
 
+void TerminalTab::setKeyboardTheme(QString themeName)
+{
+    keyboardTheme = themeName;
+
+    // Set keyboard theme by name; pass obtained theme to setKeyboard()
+
+}
+
 void TerminalTab::openConnection(QString host, int port, QString luName)
 {
     tabHost = host;
@@ -160,7 +171,6 @@ void TerminalTab::connectSession()
 
     kbd->setDataStream(datastream);
 
-    connect(settings, &Settings::saveKeyboardSettings, kbd, &Keyboard::saveKeyboardSettings);
     connect(settings, &Settings::setStretch, view, &TerminalView::setStretch);
 
     setColourTheme(colourTheme);

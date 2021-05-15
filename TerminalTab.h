@@ -7,6 +7,7 @@
 #include "SocketConnection.h"
 #include "Keyboard.h"
 #include "Settings.h"
+#include "ColourTheme.h"
 
 #include <QSettings>
 #include <QHostInfo>
@@ -14,15 +15,12 @@
 #include <QVBoxLayout>
 #include <QMenuBar>
 
-#include <ColourTheme.h>
-
 class TerminalTab : public QWidget
 {
-
     Q_OBJECT
 
     public:
-        TerminalTab(QVBoxLayout *v, ColourTheme *colours);
+        TerminalTab(QVBoxLayout *v, ColourTheme *colours, KeyboardTheme *keyboards, QString sessionName);
         ~TerminalTab();
 
         void openConnection(QString host, int port, QString luName);
@@ -44,11 +42,13 @@ class TerminalTab : public QWidget
         void setScaleFont(bool scale);
         void setColours(ColourTheme::Colours colours);
 
-        // Set colour theme by name
+        // Set themes by name
         void setColourTheme(QString themeName);
+        void setKeyboardTheme(QString themeName);
         
-        // Return current colour theme name
+        // Return current theme names
         inline QString getColourTheme()    { return colourTheme; };
+        inline QString getKeyboardTheme()  { return keyboardTheme; };
 
         int getType();
         QString address();
@@ -56,8 +56,6 @@ class TerminalTab : public QWidget
         void showForm();
 
         TerminalView *view;
-
-        QColor palette[8];
 
     signals:
         void connectionClosed();
@@ -80,6 +78,8 @@ class TerminalTab : public QWidget
         DisplayScreen *screen[2];
 
         ColourTheme *colours;
+        KeyboardTheme *keyboards;
+
         Settings *settings;
 
         bool altScreen;
@@ -92,8 +92,12 @@ class TerminalTab : public QWidget
         int tabPort;
         QString tabLU;
         
-        // Current colour theme
+        // Current themes
         QString colourTheme;
+        QString keyboardTheme;
+
+        // Session name
+        QString sessionName;
 
         bool resizeFont;
 
