@@ -65,6 +65,13 @@ class SessionManagement : public QDialog
 
         // Triggered when Open table row clicked; used to enable OK button
         void openRowClicked(int row, int column);
+
+        // Delete session button
+        void deleteSession();
+
+        // Triggered when Manage Sessions table row clicked; used to enable Delete button
+        void manageRowClicked(int row, int column);
+
 };
 
 #endif // SESSIONMANAGEMENT_H

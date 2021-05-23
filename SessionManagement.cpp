@@ -225,7 +225,32 @@ void SessionManagement::manageSessions()
     // Populate UI table with session details
     populateTable(manage->sessionList);
 
+    // Signals we are interested in
+    connect(manage->deleteSession, &QPushButton::clicked, this, &SessionManagement::deleteSession);
+    connect(manage->sessionList, &QTableWidget::cellClicked, this, &SessionManagement::manageRowClicked);
+
     m.exec();
+}
+
+void SessionManagement::deleteSession()
+{
+    QSettings settings;
+
+    // Narrow to Sessions group
+    settings.beginGroup("Sessions");
+
+    settings.remove(manage->sessionList->item(manage->sessionList->currentRow(), 0)->text());
+
+    populateTable(manage->sessionList);
+
+    manage->deleteSession->setDisabled(true);
+
+}
+
+void SessionManagement::manageRowClicked(int x, int y)
+{
+    // Enable the Delete Session button when a row is clicked
+    manage->deleteSession->setEnabled(true);
 }
 
 /*
