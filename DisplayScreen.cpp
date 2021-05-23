@@ -609,7 +609,6 @@ void DisplayScreen::setFieldAttrs(int start)
 
     resetFieldAttrs(start);
 
-    //TODO should store the field attributes?
     glyph.at(start)->setText(IBM3270_CHAR_NULL, IBM3270_CHAR_NULL, false);
     uscore.at(start)->setVisible(false);
 }
