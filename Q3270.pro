@@ -56,6 +56,7 @@ FORMS += \
     Host.ui \
     KeyboardTheme.ui \
     MainWindow.ui \
+    ManageSessions.ui \
     NewTheme.ui \
     OpenSession.ui \
     SaveSession.ui \

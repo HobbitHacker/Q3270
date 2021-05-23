@@ -1,6 +1,7 @@
 #include "SessionManagement.h"
 #include "ui_SaveSession.h"
 #include "ui_OpenSession.h"
+#include "ui_ManageSessions.h"
 
 SessionManagement::SessionManagement() : QDialog()
 {
@@ -25,7 +26,6 @@ void SessionManagement::saveSession(TerminalTab *terminal)
     save = new Ui::SaveSession;
 
     save->setupUi(&saveDialog);
-    saveDialog.show();
 
     // Signals we are interested in
     connect(save->sessionName, &QLineEdit::textChanged, this, &SessionManagement::saveSessionNameEdited);
@@ -126,6 +126,12 @@ void SessionManagement::saveSettings(TerminalTab *terminal)
 
     // End group for all sessions
     settings.endGroup();
+
+
+    //TODO: Valid characters in session name
+
+    // Store session name
+    sessionName = save->sessionName->text();
 }
 
 /*
@@ -141,7 +147,6 @@ void SessionManagement::openSession(TerminalTab *t)
     load = new Ui::OpenSession;
 
     load->setupUi(&openDialog);
-    openDialog.show();
 
     // Signals we are interested in
     connect(load->tableWidget, &QTableWidget::cellClicked, this, &SessionManagement::openRowClicked);
@@ -159,6 +164,9 @@ void SessionManagement::openSession(TerminalTab *t)
 
         // Open named session
         openSession(t, load->tableWidget->item(load->tableWidget->currentRow(), 0)->text());
+
+        // Save session name
+        sessionName = load->tableWidget->item(load->tableWidget->currentColumn(), 0)->text();
     }
 
     delete load;
@@ -168,22 +176,56 @@ void SessionManagement::openSession(TerminalTab *t, QString sessionName)
 {
     QSettings settings;
 
+    qDebug() << settings.fileName();
+    qDebug() << settings.group();
+
     // Position at Sessions group
     settings.beginGroup("Sessions");
 
+    qDebug() << settings.childKeys();
+
     // Position at Session Name sub-group
     settings.beginGroup(sessionName);
+
+    qDebug() << settings.group();
+   qDebug() << settings.value("ColourTheme");
+    qDebug() << settings.value("KeybaordTheme");
+    qDebug() << settings.value("Host");
+
+    if (settings.childKeys().isEmpty())
+    {
+        return;
+    }
 
     // Set colour theme
     t->setColourTheme(settings.value("ColourTheme").toString());
     t->setKeyboardTheme(settings.value("KeyboardTheme").toString());
     t->openConnection(settings.value("Host").toString());
+    t->setSessionName(sessionName);
 
+    // Update MRU entries
+    emit sessionOpened("Session " + sessionName);
 }
 
 void SessionManagement::openRowClicked(int x, int y)
 {
     load->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(true);
+}
+
+void SessionManagement::manageSessions()
+{
+    // Dialog for sessions management
+    QDialog m;
+
+    // Build UI
+    manage = new Ui::ManageSessions;
+
+    manage->setupUi(&m);
+
+    // Populate UI table with session details
+    populateTable(manage->sessionList);
+
+    m.exec();
 }
 
 /*

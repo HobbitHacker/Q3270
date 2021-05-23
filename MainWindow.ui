@@ -60,9 +60,12 @@
      </property>
     </widget>
     <addaction name="actionOpen_Session"/>
+    <addaction name="actionOpen_Duplicate_Session"/>
     <addaction name="actionNew"/>
     <addaction name="menuRecentSessions"/>
     <addaction name="actionSave_Session"/>
+    <addaction name="separator"/>
+    <addaction name="actionManage_Sessions"/>
     <addaction name="separator"/>
     <addaction name="actionQuit"/>
    </widget>
@@ -166,6 +169,16 @@
   <action name="actionOpen_Session">
    <property name="text">
     <string>Open Session...</string>
+   </property>
+  </action>
+  <action name="actionOpen_Duplicate_Session">
+   <property name="text">
+    <string>Open Duplicate Session</string>
+   </property>
+  </action>
+  <action name="actionManage_Sessions">
+   <property name="text">
+    <string>Manage Sessions...</string>
    </property>
   </action>
  </widget>
@@ -347,6 +360,38 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>actionOpen_Duplicate_Session</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>menuDuplicate()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>821</x>
+     <y>518</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionManage_Sessions</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>menuManageSessions()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>821</x>
+     <y>518</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>menuConnect()</slot>
@@ -362,5 +407,7 @@
   <slot>menuSaveSession()</slot>
   <slot>menuOpenSession()</slot>
   <slot>menuKeyboardTheme()</slot>
+  <slot>menuDuplicate()</slot>
+  <slot>menuManageSessions()</slot>
  </slots>
 </ui>

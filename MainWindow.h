@@ -32,62 +32,75 @@
 #include "SessionManagement.h"
 
 QT_BEGIN_NAMESPACE
+
 namespace Ui { class MainWindow; }
+
 QT_END_NAMESPACE
 
 #define MRU_COUNT 10
 
 class MainWindow : public QMainWindow
 {
+
   Q_OBJECT
   
   public:
-    MainWindow(QString sessionName = "");
-    ~MainWindow();
+
+      struct Session {
+          MainWindow *mw;
+          QString session;
+      };
+
+      MainWindow(MainWindow::Session  = { nullptr, ""} );
+      ~MainWindow();
 
   public slots:
-    void closeEvent(QCloseEvent *c);
+
+      void closeEvent(QCloseEvent *c);
+      void updateMRUlist(QString address);
 
   private slots:
-    //File menu
-    void menuNew();
-    void mruConnect();
-    void menuSaveSession();
-    void menuOpenSession();
-    void menuQuit();
 
-    // Session menu
-    void menuConnect();
-    void menuReconnect();
-    void menuDisconnect();
-    void menuSessionPreferences();
+      //File menu
+      void menuNew();
+      void menuDuplicate();
+      void mruConnect();
+      void menuSaveSession();
+      void menuOpenSession();
+      void menuManageSessions();
+      void menuQuit();
 
-    // Themes menu
-    void menuKeyboardTheme();
-    void menuColourTheme();
+      // Session menu
+      void menuConnect();
+      void menuReconnect();
+      void menuDisconnect();
+      void menuSessionPreferences();
 
-    // The Help->About dialog
-    void menuAbout();
+      // Themes menu
+      void menuKeyboardTheme();
+      void menuColourTheme();
 
-    // Triggered by windows being activated
-    void updateMenuEntries();
+      // The Help->About dialog
+      void menuAbout();
+
+      // Triggered by windows being activated
+      void updateMenuEntries();
 
   private:
 
-    void updateMRUlist(QString address);
+      TerminalTab *terminal;
+      Host *connectHost;
+      ColourTheme *colourTheme;
+      KeyboardTheme *keyboardTheme;
+      SessionManagement *sm;
 
-    TerminalTab *terminal;
-    Host *connectHost;
-    ColourTheme *colourTheme;
-    KeyboardTheme *keyboardTheme;
+      int maxMruCount;
 
-    int maxMruCount;
+      QActionGroup *sessionGroup;
 
-    QActionGroup *sessionGroup;
+      Ui::MainWindow *ui;
 
-    Ui::MainWindow *ui;    
-
-    QStringList mruList;
+      QStringList mruList;
 };
  
 #endif

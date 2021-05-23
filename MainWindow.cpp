@@ -2,8 +2,9 @@
 #include "MainWindow.h"
 #include "ui_About.h"
 
-MainWindow::MainWindow(QString sessionName) : QMainWindow(nullptr), ui(new(Ui::MainWindow))
+MainWindow::MainWindow(MainWindow::Session s) : QMainWindow(nullptr), ui(new(Ui::MainWindow))
 {
+
     QCoreApplication::setOrganizationDomain("styles.homeip.net");
     QCoreApplication::setApplicationName("Q3270");
     QCoreApplication::setOrganizationName("andyWare");
@@ -13,37 +14,36 @@ MainWindow::MainWindow(QString sessionName) : QMainWindow(nullptr), ui(new(Ui::M
     // Read global settings
     QSettings settings;
 
-    settings.beginGroup("Global");
-
     // Most-recently used; default to 10
     maxMruCount = settings.value("MRUMax", 10).toInt();
 
     // Most-recently used list; might be addresses or sessions
-    settings.beginGroup("MRUList");
+    int mruCount = settings.beginReadArray("RecentlyUsed");
 
-    // List of all entries
-    QStringList savedMRUList = settings.childKeys();
-
-    for(int i = 0; i < savedMRUList.count(); i++)
+    for(int i = 0; i < mruCount; i++)
     {
+        settings.setArrayIndex(i);
 
-        // Store "Address" or "Session" keys
-        if (!savedMRUList.at(i).compare("Address"))
+        // Pick up each Recently Used entry
+        QString thisEntry = settings.value("Entry").toString();
+
+        // Store the entry
+        mruList.append(thisEntry);
+
+        // Insert an entry MRU menu list with a number
+        // If it starts with Session, use as is, otherwise, it's an address, so add 'Host' to the menu entry
+        if (thisEntry.startsWith("Session"))
         {
-            QString thisAddress = QString::number(i + 1) + ". Host " + settings.value("Address").toString();
-            mruList.append(thisAddress);
-            ui->menuRecentSessions->addAction(thisAddress, this, &MainWindow::mruConnect);
+            thisEntry = QString::number(i + 1) + ". " + thisEntry;
         }
-        else if (!savedMRUList.at(i).compare("Session"))
+        else
         {
-            QString thisAddress = QString::number(i + 1) + ". Session " + settings.value("Session").toString();
-            mruList.append(thisAddress);
-            ui->menuRecentSessions->addAction(thisAddress, this, &MainWindow::mruConnect);
+            thisEntry = QString::number(i + 1) + ". Host " + thisEntry;
         }
+        ui->menuRecentSessions->addAction(thisEntry, this, &MainWindow::mruConnect);
     }
 
-    settings.endGroup();
-
+    settings.endArray();
 
     sessionGroup = new QActionGroup(this);
 
@@ -55,6 +55,12 @@ MainWindow::MainWindow(QString sessionName) : QMainWindow(nullptr), ui(new(Ui::M
 
     // Keyboard theme dialog
     keyboardTheme = new KeyboardTheme();
+
+    // Session Management dialog
+    sm = new SessionManagement();
+
+    // Update MRU entries if the user opens a session
+    connect(sm, &SessionManagement::sessionOpened, this, &MainWindow::updateMRUlist);
 
     restoreGeometry(settings.value("mainwindowgeometry").toByteArray());
     restoreState(settings.value("mainwindowstate").toByteArray());
@@ -82,28 +88,69 @@ MainWindow::MainWindow(QString sessionName) : QMainWindow(nullptr), ui(new(Ui::M
     ui->actionReconnect->setDisabled(true);
     ui->actionConnect->setEnabled(true);
 
-    terminal = new TerminalTab(ui->terminalLayout, colourTheme, keyboardTheme, sessionName);
+    terminal = new TerminalTab(ui->terminalLayout, colourTheme, keyboardTheme, s.session);
+
+    // If a session name was passed to the MainWindow, open it
+    if (!s.session.isEmpty())
+    {
+        sm->openSession(terminal, s.session);
+    }
+
+    // If there's none but this window, it must be initial start
+    if (s.mw == nullptr)
+    {
+        int autoStart = settings.beginReadArray("AutoStart");
+        for(int i = 0; i < autoStart; i++)
+        {
+            settings.setArrayIndex(i);
+
+            // If there's more than one window to be opened, start a new one, but for the first one,
+            // open the named session.
+            if (i > 0)
+            {
+                MainWindow *newWindow = new MainWindow({ this, settings.value("Session").toString() } );
+                newWindow->show();
+            }
+            else
+            {
+                sm->openSession(terminal, settings.value("Session").toString());
+            }
+        }
+
+        settings.endArray();
+    }
+
+
 }
 
 void MainWindow::menuNew()
 {
-    menuConnect();
+    MainWindow *newWindow = new MainWindow( { this, "" });
+    newWindow->show();
+}
+
+void MainWindow::menuDuplicate()
+{
+    MainWindow *newWindow = new MainWindow({ this, terminal->getSessionName() });
+    newWindow->show();
 }
 
 void MainWindow::menuSaveSession()
 {
-    // Save session dialog
-    SessionManagement sm;
-
-    sm.saveSession(terminal);
+    // Save Session dialog
+    sm->saveSession(terminal);
 }
 
 void MainWindow::menuOpenSession()
 {
-    // Open session dialog
-    SessionManagement sm;
+    // Open Session dialog
+    sm->openSession(terminal);
+}
 
-    sm.openSession(terminal);
+void MainWindow::menuManageSessions()
+{
+    // Manage Sessions Dialog
+    sm->manageSessions();
 }
 
 void MainWindow::mruConnect()
@@ -136,9 +183,15 @@ void MainWindow::mruConnect()
         {
             address = address.append(parts[i] + " ");
         }
+        // Remove trailing spaces added above
+        address.chop(1);
+
+        // Open the session
+        sm->openSession(terminal, address);
     }
 
-        updateMRUlist(terminal->address());
+    // Update recently used list
+    updateMRUlist("Session " + address);
 }
 
 MainWindow::~MainWindow()
@@ -245,11 +298,8 @@ void MainWindow::updateMRUlist(QString address)
     for(int i = 0; i < mruList.size() && i < maxMruCount; i++)
     {
         QString entry = QString::number(i + 1) + ". ";
-        if (mruList.at(i).startsWith("Session "))
-        {
-            entry += "Session ";
-        }
-        else
+        // If it's not a session entry, add 'Host' to the entry
+        if (!mruList.at(i).startsWith("Session "))
         {
             entry += "Host ";
         }
@@ -258,11 +308,11 @@ void MainWindow::updateMRUlist(QString address)
 
     QSettings applicationSettings;
 
-    applicationSettings.beginWriteArray("mrulist");
+    applicationSettings.beginWriteArray("RecentlyUsed");
     for(int i = 0; i < mruList.size() && i < maxMruCount; i++)
     {
         applicationSettings.setArrayIndex(i);
-        applicationSettings.setValue("address", mruList.at(i));
+        applicationSettings.setValue("Entry", mruList.at(i));
     }
     applicationSettings.endArray();
 }

@@ -50,6 +50,10 @@ class TerminalTab : public QWidget
         inline QString getColourTheme()    { return colourTheme; };
         inline QString getKeyboardTheme()  { return keyboardTheme; };
 
+        // Return current session name
+        inline QString getSessionName()    { return sessionName; };
+        inline void    setSessionName(QString sessionName) { this->sessionName = sessionName; };
+
         int getType();
         QString address();
 

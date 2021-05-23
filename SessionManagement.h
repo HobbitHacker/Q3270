@@ -15,6 +15,7 @@
 namespace Ui {
     class SaveSession;
     class OpenSession;
+    class ManageSessions;
 }
 
 class SessionManagement : public QDialog
@@ -26,17 +27,27 @@ class SessionManagement : public QDialog
         explicit SessionManagement();
         ~SessionManagement();
 
-        // Dialogs to open and to save a session
+        // Dialogs to open and save sessions
         void openSession(TerminalTab *t);
         void saveSession(TerminalTab *t);
 
         // Open a named session
         void openSession(TerminalTab *t, QString sessionName);
 
+        // Manage sessions
+        void manageSessions();
+
+   signals:
+
+        void sessionOpened(QString session);
+
     private:
 
         Ui::SaveSession *save;
         Ui::OpenSession *load;
+        Ui::ManageSessions *manage;
+
+        QString sessionName;
 
         // Save session details
         void saveSettings(TerminalTab *terminal);
