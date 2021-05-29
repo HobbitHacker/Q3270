@@ -62,27 +62,6 @@ MainWindow::MainWindow(MainWindow::Session s) : QMainWindow(nullptr), ui(new(Ui:
     // Update MRU entries if the user opens a session
     connect(sm, &SessionManagement::sessionOpened, this, &MainWindow::updateMRUlist);
 
-    restoreGeometry(settings.value("mainwindowgeometry").toByteArray());
-    restoreState(settings.value("mainwindowstate").toByteArray());
-
-/*
-    if (applicationSettings.value("restorewindows", false).toBool())
-    {
-        int sessionCount = applicationSettings.beginReadArray("sessions");
-        for (int i = 0; i < sessionCount; i++)
-        {
-            applicationSettings.setArrayIndex(i);
-
-            TerminalTab *t = newTab();
-            t->restoreGeometry(applicationSettings.value("geometry").toByteArray());
-            t->openConnection(applicationSettings.value("address").toString());
-        }
-
-        applicationSettings.endArray();
-
-    }
-*/
-
     // Set defaults for Connect options
     ui->actionDisconnect->setDisabled(true);
     ui->actionReconnect->setDisabled(true);
@@ -90,9 +69,11 @@ MainWindow::MainWindow(MainWindow::Session s) : QMainWindow(nullptr), ui(new(Ui:
 
     terminal = new TerminalTab(ui->terminalLayout, colourTheme, keyboardTheme, s.session);
 
-    // If a session name was passed to the MainWindow, open it
+    // If a session name was passed to the MainWindow, restore the window size/position
+    // and open it
     if (!s.session.isEmpty())
     {
+        restoreGeometry(settings.value(s.session + "/WindowGeometry").toByteArray());
         sm->openSession(terminal, s.session);
     }
 
