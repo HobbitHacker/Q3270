@@ -16,6 +16,8 @@ namespace Ui {
     class SaveSession;
     class OpenSession;
     class ManageSessions;
+    class AutoStart;
+    class AutoStartAdd;
 }
 
 class SessionManagement : public QDialog
@@ -40,12 +42,15 @@ class SessionManagement : public QDialog
    signals:
 
         void sessionOpened(QString session);
+        void autoStartAddToList(int row);
 
     private:
 
         Ui::SaveSession *save;
         Ui::OpenSession *load;
         Ui::ManageSessions *manage;
+        Ui::AutoStart *autostart;
+        Ui::AutoStartAdd *add;
 
         QString sessionName;
 
@@ -56,6 +61,9 @@ class SessionManagement : public QDialog
         void populateTable(QTableWidget *table);
 
     private slots:
+
+        // Manage Autostart list - button on Manage Sessions dialog
+        void manageAutoStartList();
 
         // Triggered when session name edited; used to enable/disable OK button
         void saveSessionNameEdited(QString name);
@@ -71,6 +79,21 @@ class SessionManagement : public QDialog
 
         // Triggered when Manage Sessions table row clicked; used to enable Delete button
         void manageRowClicked(int row, int column);
+
+        // Triggered when Autostart list row clicked; used to enable Delete button
+        void autoStartCellClicked(int row, int column);
+
+        // Autostart Add button
+        void addAutoStart();
+
+        // Autostart Delete button
+        void deleteAutoStart();
+
+        // Triggered when Autostart Add list row clicked; used to enable OK button
+        void autoStartAddCellClicked(int row, int col);
+
+        // Emitted when a row is added to the autostart list
+        void autoStartRowAdded(int row);
 
 };
 

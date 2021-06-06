@@ -52,6 +52,8 @@ HEADERS += \
 
 FORMS += \
     About.ui \
+    AutoStart.ui \
+    AutoStartAdd.ui \
     ColourTheme.ui \
     Host.ui \
     KeyboardTheme.ui \

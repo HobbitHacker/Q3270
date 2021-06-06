@@ -2,6 +2,18 @@
 #include "ui_SaveSession.h"
 #include "ui_OpenSession.h"
 #include "ui_ManageSessions.h"
+#include "ui_AutoStart.h"
+#include "ui_AutoStartAdd.h"
+
+/**
+ * @brief SessionManagement::SessionManagement
+ *
+ * This class handles all aspects of Session management:
+ *
+ *    - Save & Load sessions
+ *    - Delete session
+ *    - Add/Delete to the Autostart list
+ */
 
 SessionManagement::SessionManagement() : QDialog()
 {
@@ -34,7 +46,7 @@ void SessionManagement::saveSession(TerminalTab *terminal)
     // Default to OK button being disabled
     save->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
 
-    // Populate supplied name into dialog box
+    // Clear session name
     save->sessionName->setText("");
 
     // Build table
@@ -142,7 +154,7 @@ void SessionManagement::saveSettings(TerminalTab *terminal)
 void SessionManagement::openSession(TerminalTab *t)
 {
     // Build UI
-    QDialog openDialog(0, 0);
+    QDialog openDialog;
 
     load = new Ui::OpenSession;
 
@@ -212,6 +224,12 @@ void SessionManagement::openRowClicked(int x, int y)
     load->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(true);
 }
 
+
+/*
+ * Manage Session Methods
+ *
+ */
+
 void SessionManagement::manageSessions()
 {
     // Dialog for sessions management
@@ -228,8 +246,11 @@ void SessionManagement::manageSessions()
     // Signals we are interested in
     connect(manage->deleteSession, &QPushButton::clicked, this, &SessionManagement::deleteSession);
     connect(manage->sessionList, &QTableWidget::cellClicked, this, &SessionManagement::manageRowClicked);
+    connect(manage->buttonManageAutoStart, &QPushButton::clicked, this, &SessionManagement::manageAutoStartList);
 
     m.exec();
+
+    delete manage;
 }
 
 void SessionManagement::deleteSession()
@@ -239,10 +260,16 @@ void SessionManagement::deleteSession()
     // Narrow to Sessions group
     settings.beginGroup("Sessions");
 
+    // Remove selected item
     settings.remove(manage->sessionList->item(manage->sessionList->currentRow(), 0)->text());
 
+    // Clear group filter
+    settings.endGroup();
+
+    // Re-populate table
     populateTable(manage->sessionList);
 
+    // Reset delete button
     manage->deleteSession->setDisabled(true);
 
 }
@@ -253,9 +280,157 @@ void SessionManagement::manageRowClicked(int x, int y)
     manage->deleteSession->setEnabled(true);
 }
 
+
+/*
+ * Manage Autostart Session Methods
+ *
+ */
+
+void SessionManagement::manageAutoStartList()
+{
+    QSettings settings;
+
+    // Used to access the session details
+    QSettings sessionSettings;
+
+    // Focus on the sessions
+    sessionSettings.beginGroup("Sessions");
+
+    // Dialog for autostart list management
+    QDialog a;
+
+    // Build UI
+    autostart = new Ui::AutoStart;
+
+    autostart->setupUi(&a);
+
+    // Read the sessions in the autostart list
+    int ac = settings.beginReadArray("AutoStart");
+
+    // Clear the dialog table
+    autostart->sessionList->setRowCount(0);
+
+    for (int i = 0;i < ac; i++)
+    {
+        // Get the session name from the AutoStart array in the config file
+        settings.setArrayIndex(i);
+        QString thisEntry = settings.value("Session").toString();
+
+        // Pick up the description from the Session's details in the config file
+        sessionSettings.beginGroup(thisEntry);
+        QString thisDesc = sessionSettings.value("Description").toString();
+        sessionSettings.endGroup();
+
+        // Populate the dialog table
+        autostart->sessionList->insertRow(i);
+        autostart->sessionList->setItem(i, 0, new QTableWidgetItem(thisEntry));
+        autostart->sessionList->setItem(i, 1, new QTableWidgetItem(thisDesc));
+
+    }
+
+    // Finish AutoStart group
+    settings.endArray();
+
+    // Make table fit across dialog
+    autostart->sessionList->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+
+    // Add, Delete and Row Select button signals
+    connect(autostart->sessionList, &QTableWidget::cellClicked, this, &SessionManagement::autoStartCellClicked);
+    connect(autostart->addButton, &QPushButton::clicked, this, &SessionManagement::addAutoStart);
+    connect(autostart->deleteButton, &QPushButton::clicked, this, &SessionManagement::deleteAutoStart);
+
+    // Signal when a new row is added to the autostart list
+    connect(this, &SessionManagement::autoStartAddToList, this, &SessionManagement::autoStartRowAdded);
+
+    // Process dialog
+    if (a.exec() == QDialog::Accepted)
+    {
+        // Clear the autostart array
+        settings.remove("AutoStart");
+
+        // Create new autostart list
+        settings.beginWriteArray("AutoStart");
+
+        for (int i = 0;i < autostart->sessionList->rowCount(); i++)
+        {
+            // Insert the value from the table (note description not stored)
+            settings.setArrayIndex(i);
+            settings.setValue("Session", autostart->sessionList->item(i, 0)->text());
+        }
+
+        // Finish AutoStart group
+        settings.endArray();
+    }
+
+    // Tidy up
+    delete autostart;
+}
+
+void SessionManagement::autoStartRowAdded(int row)
+{
+    // Insert a new row to Autostart table
+    autostart->sessionList->insertRow(autostart->sessionList->rowCount());
+
+    // Create copies of table items (items cannot be owned by multiple tables)
+    QTableWidgetItem *as1 = add->sessionList->item(add->sessionList->currentRow(), 0)->clone();
+    QTableWidgetItem *as2 = add->sessionList->item(add->sessionList->currentRow(), 1)->clone();
+
+    // Add details to row just added (rowCount - 1 is new row, zero based)
+    autostart->sessionList->setItem(autostart->sessionList->rowCount() - 1, 0, as1);
+    autostart->sessionList->setItem(autostart->sessionList->rowCount() - 1, 1, as2);
+}
+
+void SessionManagement::autoStartCellClicked(int row, int col)
+{
+    // Enable Delete button when a cell is selected
+    autostart->deleteButton->setEnabled(true);
+}
+
+void SessionManagement::addAutoStart()
+{
+
+    // Build dialog for adding a new autostart session to the list.
+    QDialog a;
+
+    add = new Ui::AutoStartAdd;
+
+    add->setupUi(&a);
+
+    // Default to OK button being disabled
+    add->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
+
+    // Populate the table
+    populateTable(add->sessionList);
+
+    //  Enable OK button if a cell is selected
+    connect(add->sessionList, &QTableWidget::cellClicked, this, &SessionManagement::autoStartAddCellClicked);
+
+    if (a.exec() == QDialog::Accepted)
+    {
+        emit autoStartAddToList(add->sessionList->currentRow());
+    }
+
+    delete add;
+}
+
+void SessionManagement::autoStartAddCellClicked(int x, int y)
+{
+    // Enable OK button
+    add->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(true);
+}
+
+void SessionManagement::deleteAutoStart()
+{
+    // Remove currently selected row
+    autostart->sessionList->removeRow(autostart->sessionList->currentRow());
+
+    // Disable delete button again, now selected row is gone
+    autostart->deleteButton->setDisabled(true);
+}
+
+
 /*
  * Utility Methods
- *
  */
 
 void SessionManagement::populateTable(QTableWidget *table)
