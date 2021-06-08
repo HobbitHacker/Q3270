@@ -44,7 +44,7 @@ class SessionManagement : public QDialog
         void sessionOpened(QString session);
         void autoStartAddToList(int row);
 
-    private:
+   private:
 
         Ui::SaveSession *save;
         Ui::OpenSession *load;

@@ -73,8 +73,10 @@ MainWindow::MainWindow(MainWindow::Session s) : QMainWindow(nullptr), ui(new(Ui:
     // and open it
     if (!s.session.isEmpty())
     {
+        //TODO: Decide if Window Geometry is just going to mean that a session always has the same pos etc on screen
+        //TODO: Use QWidget.resize and QWidget.move instead. See QSettings doc
         restoreGeometry(settings.value(s.session + "/WindowGeometry").toByteArray());
-        sm->openSession(terminal, s.session);
+        sm->openSession(terminal, QUrl::fromPercentEncoding(s.session.toLatin1()));
     }
 
     // If there's none but this window, it must be initial start
@@ -94,7 +96,7 @@ MainWindow::MainWindow(MainWindow::Session s) : QMainWindow(nullptr), ui(new(Ui:
             }
             else
             {
-                sm->openSession(terminal, settings.value("Session").toString());
+                sm->openSession(terminal, QUrl::fromPercentEncoding(settings.value("Session").toString().toLatin1()));
             }
         }
 

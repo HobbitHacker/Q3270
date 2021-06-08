@@ -25,9 +25,10 @@ SessionManagement::~SessionManagement()
 
 }
 
-/*
+/**
+ * --------------------------------------------------------------------------------------
  * Save Session Methods
- *
+ * --------------------------------------------------------------------------------------
  */
 
 void SessionManagement::saveSession(TerminalTab *terminal)
@@ -146,9 +147,10 @@ void SessionManagement::saveSettings(TerminalTab *terminal)
     sessionName = save->sessionName->text();
 }
 
-/*
+/**
+ * --------------------------------------------------------------------------------------
  * Open Session Methods
- *
+ * --------------------------------------------------------------------------------------
  */
 
 void SessionManagement::openSession(TerminalTab *t)
@@ -225,9 +227,10 @@ void SessionManagement::openRowClicked(int x, int y)
 }
 
 
-/*
+/**
+ * --------------------------------------------------------------------------------------
  * Manage Session Methods
- *
+ * --------------------------------------------------------------------------------------
  */
 
 void SessionManagement::manageSessions()
@@ -248,13 +251,18 @@ void SessionManagement::manageSessions()
     connect(manage->sessionList, &QTableWidget::cellClicked, this, &SessionManagement::manageRowClicked);
     connect(manage->buttonManageAutoStart, &QPushButton::clicked, this, &SessionManagement::manageAutoStartList);
 
-    m.exec();
+    if (m.exec() == QDialog::Accepted)
+    {
+        // TODO: Save sessions when OK pressed; for now, Delete is actioned at point of
+        // pressing the Delete button
+    }
 
     delete manage;
 }
 
 void SessionManagement::deleteSession()
 {
+
     QSettings settings;
 
     // Narrow to Sessions group
@@ -280,10 +288,10 @@ void SessionManagement::manageRowClicked(int x, int y)
     manage->deleteSession->setEnabled(true);
 }
 
-
-/*
+/**
+ * --------------------------------------------------------------------------------------
  * Manage Autostart Session Methods
- *
+ * --------------------------------------------------------------------------------------
  */
 
 void SessionManagement::manageAutoStartList()
