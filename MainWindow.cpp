@@ -77,6 +77,14 @@ MainWindow::MainWindow(MainWindow::Session s) : QMainWindow(nullptr), ui(new(Ui:
         //TODO: Use QWidget.resize and QWidget.move instead. See QSettings doc
         restoreGeometry(settings.value(s.session + "/WindowGeometry").toByteArray());
         sm->openSession(terminal, QUrl::fromPercentEncoding(s.session.toLatin1()));
+
+        // Enable Save Session menu item
+        ui->actionSave_Session->setEnabled(true);
+    }
+    else
+    {
+        // This is not a named session, so disable Save Session menu item
+        ui->actionSave_Session->setDisabled(true);
     }
 
     // If there's none but this window, it must be initial start
@@ -97,6 +105,7 @@ MainWindow::MainWindow(MainWindow::Session s) : QMainWindow(nullptr), ui(new(Ui:
             else
             {
                 sm->openSession(terminal, QUrl::fromPercentEncoding(settings.value("Session").toString().toLatin1()));
+                ui->actionSave_Session->setEnabled(true);
             }
         }
 
@@ -120,14 +129,19 @@ void MainWindow::menuDuplicate()
 
 void MainWindow::menuSaveSession()
 {
-    // Save Session dialog
-    sm->saveSession(terminal);
+    sm->saveSettings(terminal);
+}
+
+void MainWindow::menuSaveSessionAs()
+{
+    // Save Session dialog, setting the Save Session menu entry dis/enabled
+    ui->actionSave_Session->setEnabled(sm->saveSessionAs(terminal));
 }
 
 void MainWindow::menuOpenSession()
 {
     // Open Session dialog
-    sm->openSession(terminal);
+    ui->actionSave_Session->setEnabled(sm->openSession(terminal));
 }
 
 void MainWindow::menuManageSessions()

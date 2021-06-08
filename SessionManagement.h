@@ -29,9 +29,12 @@ class SessionManagement : public QDialog
         explicit SessionManagement();
         ~SessionManagement();
 
-        // Dialogs to open and save sessions
-        void openSession(TerminalTab *t);
-        void saveSession(TerminalTab *t);
+        // Dialogs to open and save sessions; return true if session opened/saved
+        bool openSession(TerminalTab *t);
+        bool saveSessionAs(TerminalTab *t);
+
+        // Save current named session details
+        void saveSettings(TerminalTab *terminal);
 
         // Open a named session
         void openSession(TerminalTab *t, QString sessionName);
@@ -52,10 +55,9 @@ class SessionManagement : public QDialog
         Ui::AutoStart *autostart;
         Ui::AutoStartAdd *add;
 
+        // Session name / description once session opened
         QString sessionName;
-
-        // Save session details
-        void saveSettings(TerminalTab *terminal);
+        QString sessionDesc;
 
         // Populate QTableWidget with session details
         void populateTable(QTableWidget *table);

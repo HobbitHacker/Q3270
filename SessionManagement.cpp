@@ -31,7 +31,7 @@ SessionManagement::~SessionManagement()
  * --------------------------------------------------------------------------------------
  */
 
-void SessionManagement::saveSession(TerminalTab *terminal)
+bool SessionManagement::saveSessionAs(TerminalTab *terminal)
 {
     // Build UI
     QDialog saveDialog;
@@ -85,16 +85,30 @@ void SessionManagement::saveSession(TerminalTab *terminal)
             if (saveIt)
             {
                 //  User either chose a unique name or confirmed overwrite
+
+                // Store session name and description in case it changed
+                sessionName = save->sessionName->text();
+                sessionDesc = save->lineEdit->text();
+
+                // Save settings
                 saveSettings(terminal);
                 delete save;
-                return;
+                return true;
             }
         }
         else
         {
             // User pressed cancel
             delete save;
-            return;
+
+            // Return true if this was a named session beforehand
+            if (!sessionName.isNull())
+            {
+                return true;
+            }
+
+            // Not a named session
+            return false;
         }
     }
 }
@@ -128,8 +142,8 @@ void SessionManagement::saveSettings(TerminalTab *terminal)
     settings.beginGroup("Sessions");
 
     // Each session is stored under the Sessions/<session name> key
-    settings.beginGroup((save->sessionName->text()));
-    settings.setValue("Description", save->lineEdit->text());
+    settings.beginGroup(sessionName);
+    settings.setValue("Description", sessionDesc);
     settings.setValue("ColourTheme", terminal->getColourTheme());
     settings.setValue("KeyboardTheme", terminal->getKeyboardTheme());
     settings.setValue("Address", terminal->address());
@@ -153,7 +167,7 @@ void SessionManagement::saveSettings(TerminalTab *terminal)
  * --------------------------------------------------------------------------------------
  */
 
-void SessionManagement::openSession(TerminalTab *t)
+bool SessionManagement::openSession(TerminalTab *t)
 {
     // Build UI
     QDialog openDialog;
@@ -179,11 +193,25 @@ void SessionManagement::openSession(TerminalTab *t)
         // Open named session
         openSession(t, load->tableWidget->item(load->tableWidget->currentRow(), 0)->text());
 
-        // Save session name
-        sessionName = load->tableWidget->item(load->tableWidget->currentColumn(), 0)->text();
+        // Save session name and description
+        sessionName = load->tableWidget->item(load->tableWidget->currentRow(), 0)->text();
+        sessionDesc = load->tableWidget->item(load->tableWidget->currentRow(), 1)->text();
+
+        delete load;
+
+        return true;
     }
 
     delete load;
+
+    // If this was a named session beforehand, return true
+    if (!sessionName.isNull())
+    {
+        return true;
+    }
+
+    // Not a named session
+    return false;
 }
 
 void SessionManagement::openSession(TerminalTab *t, QString sessionName)

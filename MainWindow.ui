@@ -59,11 +59,12 @@
       <string>Recent Sessions</string>
      </property>
     </widget>
+    <addaction name="actionNew"/>
     <addaction name="actionOpen_Session"/>
     <addaction name="actionOpen_Duplicate_Session"/>
-    <addaction name="actionNew"/>
-    <addaction name="menuRecentSessions"/>
     <addaction name="actionSave_Session"/>
+    <addaction name="actionSave_SessionAs"/>
+    <addaction name="menuRecentSessions"/>
     <addaction name="separator"/>
     <addaction name="actionManage_Sessions"/>
     <addaction name="separator"/>
@@ -115,7 +116,7 @@
   </action>
   <action name="actionNew">
    <property name="text">
-    <string>New Session...</string>
+    <string>New Window...</string>
    </property>
   </action>
   <action name="actionTabs">
@@ -161,9 +162,9 @@
     <string>Colours</string>
    </property>
   </action>
-  <action name="actionSave_Session">
+  <action name="actionSave_SessionAs">
    <property name="text">
-    <string>Save Session...</string>
+    <string>Save Session As...</string>
    </property>
   </action>
   <action name="actionOpen_Session">
@@ -179,6 +180,11 @@
   <action name="actionManage_Sessions">
    <property name="text">
     <string>Manage Sessions...</string>
+   </property>
+  </action>
+  <action name="actionSave_Session">
+   <property name="text">
+    <string>Save Session</string>
    </property>
   </action>
  </widget>
@@ -313,10 +319,10 @@
    </hints>
   </connection>
   <connection>
-   <sender>actionSave_Session</sender>
+   <sender>actionSave_SessionAs</sender>
    <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
-   <slot>menuSaveSession()</slot>
+   <slot>menuSaveSessionAs()</slot>
    <hints>
     <hint type="sourcelabel">
      <x>-1</x>
@@ -392,6 +398,22 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>actionSave_Session</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>menuSaveSession()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>821</x>
+     <y>518</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>menuConnect()</slot>
@@ -404,10 +426,11 @@
   <slot>menuReconnect()</slot>
   <slot>menuAbout()</slot>
   <slot>menuColourTheme()</slot>
-  <slot>menuSaveSession()</slot>
+  <slot>menuSaveSessionAs()</slot>
   <slot>menuOpenSession()</slot>
   <slot>menuKeyboardTheme()</slot>
   <slot>menuDuplicate()</slot>
   <slot>menuManageSessions()</slot>
+  <slot>menuSaveSession()</slot>
  </slots>
 </ui>

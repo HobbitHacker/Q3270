@@ -65,6 +65,7 @@ class MainWindow : public QMainWindow
       void menuNew();
       void menuDuplicate();
       void mruConnect();
+      void menuSaveSessionAs();
       void menuSaveSession();
       void menuOpenSession();
       void menuManageSessions();
