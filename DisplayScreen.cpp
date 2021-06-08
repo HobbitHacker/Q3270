@@ -542,7 +542,7 @@ void DisplayScreen::setField(int pos, unsigned char c, bool sfe)
         attrs.append("mdt,");
     }
 
-    qDebug() << attrs.chopped(attrs.length() - 1);
+//    qDebug() << attrs.chopped(attrs.length() - 1);
 
     if (!sfe)
     {
