@@ -377,8 +377,7 @@ void Keyboard::cursorLeft()
 
 void Keyboard::backspace()
 {
-    //TODO: Stop cursor at field position
-    cursorLeft();
+    datastream->backspace();
 }
 
 void Keyboard::enter()

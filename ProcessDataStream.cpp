@@ -1019,6 +1019,22 @@ void ProcessDataStream::moveCursor(int x, int y, bool absolute)
     emit cursorMoved(cursor_x, cursor_y);
 }
 
+void ProcessDataStream::backspace()
+{
+    // If we're at a protected field, do nothing
+    if (screen->isProtected(cursor_pos))
+        return;
+
+    // Discover whether the previous cursor position is a field start
+    int tempCursorPos = cursor_pos == 0 ? screenSize : cursor_pos - 1;
+
+    if (screen->isFieldStart(tempCursorPos))
+        return;
+
+    // Backspace one character
+    moveCursor(-1 , 0);
+}
+
 void ProcessDataStream::tab(int offset)
 {
     int nf = screen->findNextUnprotectedField(cursor_pos + offset);
@@ -1046,7 +1062,8 @@ void ProcessDataStream::backtab()
 
 void ProcessDataStream::home()
 {
-    int nf = screen->findNextUnprotectedField(0);
+    // Find first field on screen; this might be position 0, so we need to look starting at the last screen pos
+    int nf = screen->findNextUnprotectedField(screenSize - 1);
     cursor_y = (nf / screen_x);
     cursor_x = nf - (cursor_y * screen_x);
 

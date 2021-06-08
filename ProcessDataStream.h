@@ -61,6 +61,7 @@ class ProcessDataStream : public QObject
         void newline();
         void toggleRuler();
         void endline();
+        void backspace();
 
         void showFields();
 
