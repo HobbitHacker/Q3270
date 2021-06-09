@@ -69,6 +69,9 @@ MainWindow::MainWindow(MainWindow::Session s) : QMainWindow(nullptr), ui(new(Ui:
 
     terminal = new TerminalTab(ui->terminalLayout, colourTheme, keyboardTheme, s.session);
 
+    // Refresh menu entries if disconnected
+    connect(terminal, &TerminalTab::connectionChanged, this, &MainWindow::setConnectMenuEntries);
+
     // If a session name was passed to the MainWindow, restore the window size/position
     // and open it
     if (!s.session.isEmpty())
@@ -80,6 +83,9 @@ MainWindow::MainWindow(MainWindow::Session s) : QMainWindow(nullptr), ui(new(Ui:
 
         // Enable Save Session menu item
         ui->actionSave_Session->setEnabled(true);
+
+        // Disable/Enable Reconnect etc menu entries
+        setConnectMenuEntries();
     }
     else
     {
@@ -105,7 +111,13 @@ MainWindow::MainWindow(MainWindow::Session s) : QMainWindow(nullptr), ui(new(Ui:
             else
             {
                 sm->openSession(terminal, QUrl::fromPercentEncoding(settings.value("Session").toString().toLatin1()));
+
+                // Enable Save Session menu entry
                 ui->actionSave_Session->setEnabled(true);
+
+                // Disable/Enable Reconnect etc menu entries
+                setConnectMenuEntries();
+
             }
         }
 
@@ -258,7 +270,7 @@ void MainWindow::menuAbout()
     delete about;
 }
 
-void MainWindow::updateMenuEntries()
+void MainWindow::setConnectMenuEntries()
 {
     if (terminal->view->connected)
     {

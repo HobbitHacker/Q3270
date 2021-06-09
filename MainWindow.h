@@ -85,7 +85,7 @@ class MainWindow : public QMainWindow
       void menuAbout();
 
       // Triggered by windows being activated
-      void updateMenuEntries();
+      void setConnectMenuEntries();
 
   private:
 

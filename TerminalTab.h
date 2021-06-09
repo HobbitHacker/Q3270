@@ -62,7 +62,7 @@ class TerminalTab : public QWidget
         TerminalView *view;
 
     signals:
-        void connectionClosed();
+        void connectionChanged();
         void windowClosed(TerminalTab *t);
 
     private slots:

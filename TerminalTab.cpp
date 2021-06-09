@@ -207,11 +207,8 @@ void TerminalTab::connectSession()
     view->installEventFilter(kbd);
 
     view->setConnected();
-/*
-    actionConnect->setEnabled(false);
-    actionReconnect->setEnabled(false);
-    actionDisconnect->setEnabled(true);
-    */
+
+    emit connectionChanged();
 }
 
 void TerminalTab::closeConnection()
@@ -231,12 +228,8 @@ void TerminalTab::closeConnection()
 
     delete screen[0];
     delete screen[1];
-/*
-    actionConnect->setEnabled(true);
-    actionReconnect->setEnabled(true);
-    actionDisconnect->setEnabled(false);
-*/
-    emit connectionClosed();
+
+    emit connectionChanged();
 }
 
 QString TerminalTab::address()
