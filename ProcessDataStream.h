@@ -114,6 +114,12 @@ class ProcessDataStream : public QObject
         bool wsfProcessing;
         int wsfLen;
 
+        // True if the previous byte/byte sequence was a command; used for PT processing
+        bool lastWasCmd;
+
+        // True if the last Program Tab operation hit the end of the display
+        bool lastPTwrapped;
+
         void setScreen(bool alternate = false);
 
         void placeChar();
@@ -131,12 +137,13 @@ class ProcessDataStream : public QObject
         void processRM();
 
         /* 3270 Orders */
-        /* TODO: 3270 Orders MF, PT */
         void processSF();
         void processSFE();
         void processSBA();
         void processSA();
+        void processMF();
         void processIC();
+        void processPT();
         void processRA();
         void processEUA();
         void processGE();

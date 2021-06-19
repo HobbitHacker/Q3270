@@ -27,11 +27,13 @@
 
 /* 3270 Orders */
 #define IBM3270_SF   0x1D   /* Start Field */
-#define IBM3270_SBA  0x11   /* Set Buffer Address */
 #define IBM3270_SFE  0x29   /* Start Field Extended */
-#define IBM3270_IC   0x13   /* Insert Cursor */
-#define IBM3270_RA   0x3C   /* Repeat to Address */
+#define IBM3270_SBA  0x11   /* Set Buffer Address */
 #define IBM3270_SA   0x28   /* Set Attribute */
+#define IBM3270_MF   0x2C   /* Modify field */
+#define IBM3270_IC   0x13   /* Insert Cursor */
+#define IBM3270_PT   0x05   /* Program Tab */
+#define IBM3270_RA   0x3C   /* Repeat to Address */
 #define IBM3270_EUA  0x12   /* Erase Unprotected to Address */
 #define IBM3270_GE   0x08   /* Graphic Escape */
 

@@ -29,6 +29,8 @@ ProcessDataStream::ProcessDataStream(TerminalView *t)
     cursor_pos = 0;
 
     lastAID = IBM3270_AID_NOAID;
+    lastWasCmd = false;
+
     setScreen();
 }
 
@@ -84,6 +86,7 @@ void ProcessDataStream::processStream(QByteArray &b, bool tn3270e)
         }
     }
 
+    // Process the incoming WRITE command
     switch((uchar) *buffer)
     {
         case IBM3270_EW:
@@ -158,24 +161,30 @@ void ProcessDataStream::processOrders()
 {
     switch((uchar) *buffer)
     {
+        /* TODO: 3270 Order MF */
         case IBM3270_SF:
-            buffer++;
             processSF();
-            break;
-        case IBM3270_SBA:
-            processSBA();
             break;
         case IBM3270_SFE:
             processSFE();
             break;
-        case IBM3270_IC:
-            processIC();
-            break;
-        case IBM3270_RA:
-            processRA();
+        case IBM3270_SBA:
+            processSBA();
             break;
         case IBM3270_SA:
             processSA();
+            break;
+        case IBM3270_MF:
+            printf("\n\n[** Unimplemented MF order **]\n\n");
+            break;
+        case IBM3270_IC:
+            processIC();
+            break;
+        case IBM3270_PT:
+            processPT();
+            break;
+        case IBM3270_RA:
+            processRA();
             break;
         case IBM3270_EUA:
             processEUA();
@@ -188,12 +197,24 @@ void ProcessDataStream::processOrders()
     }
 }
 
+/*!
+ *
+ * \fn void processWCC()
+ *
+ * This processes the Write Control Character from the datastream, following WRITE or ERASE WRITE commands.
+ *
+ * The WCC character contains the following bits:
+ *    Reset
+ *    Reset MDT
+ *    Restore Keyboard
+ *    Alarm
+ *
+ */
 void ProcessDataStream::processWCC()
 {
-    std::string c;
-
     uchar wcc = *buffer;
 
+    //TODO: Handle RESET
     int reset = (wcc>>6)&1;
 
     printf("[");
@@ -235,6 +256,8 @@ void ProcessDataStream::processWCC()
         printf("alarm");
     }
     printf("]");
+
+    lastWasCmd = true;
 }
 
 
@@ -334,12 +357,14 @@ void ProcessDataStream::processSF()
 {
     printf("[Start Field:");
 
-    screen->setField(primary_pos, *buffer, false);
+    screen->setField(primary_pos, *++buffer, false);
 
     printf("]");
     fflush(stdout);
 
     incPos();
+
+    lastWasCmd = true;
 }
 
 void ProcessDataStream::processSFE()
@@ -402,8 +427,11 @@ void ProcessDataStream::processSFE()
         }
         fflush(stdout);
     }
+
     screen->setFieldAttrs(primary_pos);
     incPos();
+
+    lastWasCmd = true;
 }
 
 void ProcessDataStream::processSBA()
@@ -423,6 +451,8 @@ void ProcessDataStream::processSBA()
     primary_y = (primary_pos / screen_x);
     primary_x = primary_pos - (primary_y * screen_x);
     printf("%d,%d]", primary_x, primary_y);
+
+    lastWasCmd = true;
 }
 
 void ProcessDataStream::processSA()
@@ -430,11 +460,110 @@ void ProcessDataStream::processSA()
     uchar extendedType = *++buffer;
     uchar extendedValue = *++buffer;
     screen->setCharAttr(extendedType, extendedValue);
+
+    lastWasCmd = true;
+}
+
+void ProcessDataStream::processMF()
+{
+    lastWasCmd = true;
 }
 
 void ProcessDataStream::processIC()
 {
+    printf("[InsertCursor(%d,%d)]", primary_x, primary_y);
     moveCursor(primary_x, primary_y, true);
+
+    lastWasCmd = true;
+}
+
+/*!
+ * \fn void processPT()
+ *
+ * Performs a Program Tab (PT) function.
+ *
+ * PT behvaves in different ways, depending on what the previous command/order was.
+ *
+ * The PT order advances the current buffer address to the address of the first
+ * character position of the next unprotected field. If PT is issued when the current
+ * buffer address is the location of a field attribute of an unprotected field, the buffer
+ * advances to the next location of that field (one location). In addition, if PT does not
+ * immediately follow a command, order, or order sequence (such as after the WCC,
+ * IC, and RA respectively), nulls are inserted in the buffer from the current buffer
+ * address to the end of the field, regardless of the value of bit 2
+ * (protected/unprotected) of the field attribute for the field. When PT immediately
+ * follows a command, order, or order sequence, the buffer is not modified.
+ *
+ * The PT order resets the character attribute to its default value for each character
+ * set to nulls.
+ *
+ * The display stops its search for an unprotected field at the last location in the
+ * character buffer. If a field attribute for an unprotected field is not found, the buffer
+ * address is set to O. (If the display finds a field attribute for an unprotected field in
+ * the last buffer location, the buffer address is also set to 0.)
+ *
+ * To continue the search for an unprotected field, a second PT order must be issued
+ * immediately following the first one; in reply, the display begins its search at buffer
+ * location O. If, as a result of a PT order, the display is still inserting nulls in each
+ * character location when it terminates at the last buffer location, a new PT order
+ * continues to insert nulls from buffer address 0 to the end of the current field.
+ *
+ */
+void ProcessDataStream::processPT()
+{
+    //TODO: <PT><PT> is not catered for properly
+    printf("[Program Tab]");
+    buffer++;
+
+    // If the current position is a field start and not protected, move one position
+    if (screen->isFieldStart(primary_pos) && !screen->isProtected(primary_pos))
+    {
+        incPos();
+        lastPTwrapped = false;
+        return;
+    }
+
+    int nextField = screen->findNextUnprotectedField(primary_pos);
+
+    // Skip field attribute byte, wrapping if need
+    nextField = (nextField + 1) % screenSize;
+
+    // If the field we found is before the current position, we stop at location 0
+    if (nextField < primary_pos)
+    {
+        nextField = 0;
+    }
+
+    // If the last byte processed from the buffer was not a command, we clear the current field
+    // - regardless of protection.
+
+    if (!lastWasCmd)
+    {
+        int i;
+
+        // Fill buffer will nulls until either the start of the next field or the end of the screen
+        for(i = nextField; i < screenSize && !screen->isFieldStart(i); i++)
+        {
+            screen->setChar(i, IBM3270_CHAR_NULL, false, false);
+        }
+
+        // If we hit the end of the screen, record that
+        if (i == screenSize - 1)
+        {
+            lastPTwrapped = true;
+        }
+    }
+    else
+    {
+        lastPTwrapped = false;
+    }
+
+    // Adjust position according to the field we found
+    primary_pos = nextField;
+    primary_y = (primary_pos / screen_x);
+    primary_x = primary_pos - (primary_y * screen_x);
+
+    lastWasCmd = true;
 }
 
 void ProcessDataStream::processRA()
@@ -480,6 +609,8 @@ void ProcessDataStream::processRA()
     primary_pos = endPos % screenSize;
     primary_y = (primary_pos / screen_x);
     primary_x = primary_pos - (primary_y * screen_x);
+
+    lastWasCmd = true;
 }
 
 void ProcessDataStream::processEUA()
@@ -492,6 +623,8 @@ void ProcessDataStream::processEUA()
 
     screen->eraseUnprotected(primary_pos, stopAddress);
     restoreKeyboard = true;
+
+    lastWasCmd = true;
 }
 
 void ProcessDataStream::processGE()
@@ -501,6 +634,8 @@ void ProcessDataStream::processGE()
     placeChar((uchar) *++buffer);
     printf("]");
     fflush(stdout);
+
+    lastWasCmd = false;
 }
 
 void ProcessDataStream::WSFoutbound3270DS()
@@ -939,6 +1074,8 @@ void ProcessDataStream::placeChar(uchar ebcdic)
     }
 
     incPos();
+
+    lastWasCmd = false;
 }
 
 void ProcessDataStream::incPos()
