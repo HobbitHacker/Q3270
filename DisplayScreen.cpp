@@ -17,7 +17,7 @@ DisplayScreen::DisplayScreen(int screen_x, int screen_y, ColourTheme::Colours co
 
     // Default settings
     fontScaling = true;
-    ruler = false;
+    ruler = RulerStyle::OFF;
     blinkShow = false;
     cursorShow = true;
     cursorColour = true;
@@ -897,17 +897,28 @@ void DisplayScreen::setStatusInsert(bool ins)
 
 void DisplayScreen::toggleRuler()
 {
-    ruler = !ruler;
-
-    if (ruler)
+    // Switch ruler style to next one: OFF -> CROSSHAIR -> VERTICAL -> HORIZONTAL -> OFF
+    switch(ruler)
     {
-        crosshair_X.show();
-        crosshair_Y.show();
-    }
-    else
-    {
-        crosshair_X.hide();
-        crosshair_Y.hide();
+        case OFF:
+            ruler = CROSSHAIR;
+            crosshair_X.show();
+            crosshair_Y.show();
+            break;
+        case CROSSHAIR:
+            ruler = VERTICAL;
+            crosshair_X.hide();
+            crosshair_Y.show();
+            break;
+        case VERTICAL:
+            ruler = HORIZONTAL;
+            crosshair_X.show();
+            crosshair_Y.hide();
+            break;
+        default:
+            crosshair_X.hide();
+            crosshair_Y.hide();
+            ruler = OFF;
     }
 }
 

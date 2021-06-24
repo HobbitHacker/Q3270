@@ -300,9 +300,16 @@ class DisplayScreen : public QGraphicsScene
 
         bool geActive;              // Next character is Graphic Escape
 
-        // TODO Implement different sorts of crosshairs
-        bool ruler;                  /* Whether the crosshairs are shown. */
-                                     /* 0 - off, 1 - horizontal, 2 - vertical, 3 - crosshair */
+        enum RulerStyle
+        {
+            OFF         = 0,
+            CROSSHAIR   = 1,
+            VERTICAL    = 2,
+            HORIZONTAL = 3
+
+        };
+        RulerStyle ruler;                  /* Whether the crosshairs are shown. */
+
 
         /* Character Attributes in effect */
         bool useCharAttr;
