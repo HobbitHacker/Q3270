@@ -233,7 +233,7 @@ void SessionManagement::openSession(TerminalTab *t, QString sessionName)
         t->setColourTheme(settings.value("ColourTheme").toString());
         t->setKeyboardTheme(settings.value("KeyboardTheme").toString());
 
-        t->openConnection(settings.value("Host").toString());
+        t->openConnection(settings.value("Address").toString());
         t->setSessionName(sessionName);
 
         // Update MRU entries
@@ -483,12 +483,11 @@ void SessionManagement::populateTable(QTableWidget *table)
         // Extract session description
         settings.beginGroup(sessionList.at(i));
 
-        QString description = settings.value("Description").toString();
-
         // Add session details to table
         table->insertRow(i);
         table->setItem(i, 0, new QTableWidgetItem(sessionList.at(i)));
-        table->setItem(i, 1, new QTableWidgetItem(description));
+        table->setItem(i, 1, new QTableWidgetItem(settings.value("Description").toString()));
+        table->setItem(i, 2, new QTableWidgetItem(settings.value("Address").toString()));
 
         // End group for this session
         settings.endGroup();

@@ -30,12 +30,17 @@
      </property>
      <column>
       <property name="text">
-       <string>New Column</string>
+       <string>Session Name</string>
       </property>
      </column>
      <column>
       <property name="text">
        <string>Description</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Address</string>
       </property>
      </column>
     </widget>
