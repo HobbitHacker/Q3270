@@ -69,6 +69,8 @@ class TerminalTab : public QWidget
 
         void closeEvent(QCloseEvent *closeEvent);
         void setCurrentFont(QFont f);
+        void rulerStyle(DisplayScreen::RulerStyle r);
+        void rulerChanged(bool on);
 
     private:
 

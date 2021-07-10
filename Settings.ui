@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>607</width>
-    <height>430</height>
+    <height>396</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -45,158 +45,141 @@
              <property name="title">
               <string>Terminal Characteristics</string>
              </property>
-             <widget class="QLabel" name="label_7">
-              <property name="geometry">
-               <rect>
-                <x>10</x>
-                <y>20</y>
-                <width>138</width>
-                <height>31</height>
-               </rect>
-              </property>
-              <property name="font">
-               <font>
-                <weight>75</weight>
-                <bold>true</bold>
-               </font>
-              </property>
-              <property name="text">
-               <string>Model</string>
-              </property>
-             </widget>
-             <widget class="QComboBox" name="terminalType">
-              <property name="geometry">
-               <rect>
-                <x>30</x>
-                <y>50</y>
-                <width>138</width>
-                <height>31</height>
-               </rect>
-              </property>
-              <property name="frame">
-               <bool>true</bool>
-              </property>
+             <layout class="QVBoxLayout" name="verticalLayout_6">
               <item>
-               <property name="text">
-                <string>Model 2 (24x80)</string>
-               </property>
+               <widget class="QLabel" name="label_7">
+                <property name="font">
+                 <font>
+                  <weight>75</weight>
+                  <bold>true</bold>
+                 </font>
+                </property>
+                <property name="text">
+                 <string>Model</string>
+                </property>
+               </widget>
               </item>
               <item>
-               <property name="text">
-                <string>Model 3 (32x80)</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>Model 4 (43x80)</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>Model 5 (27x132)</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>Dynamic</string>
-               </property>
-              </item>
-             </widget>
-             <widget class="QLabel" name="label_5">
-              <property name="geometry">
-               <rect>
-                <x>10</x>
-                <y>90</y>
-                <width>138</width>
-                <height>21</height>
-               </rect>
-              </property>
-              <property name="font">
-               <font>
-                <weight>75</weight>
-                <bold>true</bold>
-               </font>
-              </property>
-              <property name="text">
-               <string>Dynamic Size</string>
-              </property>
-             </widget>
-             <widget class="QWidget" name="gridLayoutWidget">
-              <property name="geometry">
-               <rect>
-                <x>30</x>
-                <y>110</y>
-                <width>160</width>
-                <height>80</height>
-               </rect>
-              </property>
-              <layout class="QGridLayout" name="gridLayout_3">
-               <item row="1" column="2">
-                <widget class="QSpinBox" name="terminalCols">
-                 <property name="maximum">
-                  <number>999</number>
-                 </property>
-                </widget>
-               </item>
-               <item row="0" column="2">
-                <widget class="QLabel" name="label_9">
+               <widget class="QComboBox" name="terminalType">
+                <property name="frame">
+                 <bool>true</bool>
+                </property>
+                <item>
                  <property name="text">
-                  <string>Columns</string>
+                  <string>Model 2 (24x80)</string>
                  </property>
-                </widget>
-               </item>
-               <item row="1" column="0">
-                <widget class="QSpinBox" name="terminalRows">
-                 <property name="maximum">
-                  <number>999</number>
-                 </property>
-                </widget>
-               </item>
-               <item row="1" column="1">
-                <widget class="QLabel" name="label_6">
+                </item>
+                <item>
                  <property name="text">
-                  <string>x</string>
+                  <string>Model 3 (32x80)</string>
                  </property>
-                 <property name="alignment">
-                  <set>Qt::AlignCenter</set>
-                 </property>
-                </widget>
-               </item>
-               <item row="0" column="0">
-                <widget class="QLabel" name="label_8">
+                </item>
+                <item>
                  <property name="text">
-                  <string>Rows</string>
+                  <string>Model 4 (43x80)</string>
                  </property>
-                </widget>
-               </item>
-               <item row="2" column="1">
-                <spacer name="verticalSpacer">
-                 <property name="orientation">
-                  <enum>Qt::Vertical</enum>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Model 5 (27x132)</string>
                  </property>
-                 <property name="sizeHint" stdset="0">
-                  <size>
-                   <width>20</width>
-                   <height>40</height>
-                  </size>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Dynamic</string>
                  </property>
-                </spacer>
-               </item>
-              </layout>
-             </widget>
-             <widget class="QCheckBox" name="stretch">
-              <property name="geometry">
-               <rect>
-                <x>10</x>
-                <y>220</y>
-                <width>231</width>
-                <height>23</height>
-               </rect>
-              </property>
-              <property name="text">
-               <string>Stretch screen to fit window</string>
-              </property>
-             </widget>
+                </item>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLabel" name="label_5">
+                <property name="font">
+                 <font>
+                  <weight>75</weight>
+                  <bold>true</bold>
+                 </font>
+                </property>
+                <property name="text">
+                 <string>Dynamic Size</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <layout class="QGridLayout" name="gridLayout_3">
+                <item row="1" column="0">
+                 <widget class="QSpinBox" name="terminalRows">
+                  <property name="maximum">
+                   <number>999</number>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="1">
+                 <widget class="QLabel" name="label_6">
+                  <property name="text">
+                   <string>x</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignCenter</set>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="2">
+                 <widget class="QLabel" name="label_9">
+                  <property name="text">
+                   <string>Columns</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="2">
+                 <widget class="QSpinBox" name="terminalCols">
+                  <property name="maximum">
+                   <number>999</number>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="0">
+                 <widget class="QLabel" name="label_8">
+                  <property name="text">
+                   <string>Rows</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="3">
+                 <spacer name="horizontalSpacer_2">
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>40</width>
+                    <height>20</height>
+                   </size>
+                  </property>
+                 </spacer>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <widget class="QCheckBox" name="stretch">
+                <property name="text">
+                 <string>Stretch screen to fit window</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <spacer name="verticalSpacer">
+                <property name="orientation">
+                 <enum>Qt::Vertical</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>20</width>
+                  <height>40</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+             </layout>
             </widget>
            </item>
            <item>
@@ -207,17 +190,45 @@
                 <string>Cursor Settings</string>
                </property>
                <layout class="QGridLayout" name="gridLayout_5">
-                <item row="2" column="0">
-                 <widget class="QLabel" name="label">
-                  <property name="text">
-                   <string>Blink Speed</string>
-                  </property>
-                 </widget>
-                </item>
                 <item row="0" column="0" colspan="2">
                  <widget class="QCheckBox" name="cursorColour">
                   <property name="text">
                    <string>Inherit colour of underlying character</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="3" column="0" colspan="2">
+                 <widget class="QSlider" name="cursorBlinkSpeed">
+                  <property name="minimum">
+                   <number>1</number>
+                  </property>
+                  <property name="maximum">
+                   <number>4</number>
+                  </property>
+                  <property name="singleStep">
+                   <number>1</number>
+                  </property>
+                  <property name="pageStep">
+                   <number>1</number>
+                  </property>
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                  <property name="invertedAppearance">
+                   <bool>false</bool>
+                  </property>
+                  <property name="tickPosition">
+                   <enum>QSlider::TicksBelow</enum>
+                  </property>
+                  <property name="tickInterval">
+                   <number>1</number>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="0">
+                 <widget class="QLabel" name="label">
+                  <property name="text">
+                   <string>Blink Speed</string>
                   </property>
                  </widget>
                 </item>
@@ -255,33 +266,56 @@
                   </property>
                  </widget>
                 </item>
-                <item row="3" column="0" colspan="2">
-                 <widget class="QSlider" name="cursorBlinkSpeed">
-                  <property name="minimum">
-                   <number>1</number>
-                  </property>
-                  <property name="maximum">
-                   <number>4</number>
-                  </property>
-                  <property name="singleStep">
-                   <number>1</number>
-                  </property>
-                  <property name="pageStep">
-                   <number>1</number>
-                  </property>
+                <item row="6" column="0" colspan="2">
+                 <layout class="QGridLayout" name="gridLayout_6">
+                  <item row="0" column="4">
+                   <widget class="QComboBox" name="crosshair">
+                    <property name="enabled">
+                     <bool>false</bool>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="0" column="3">
+                   <widget class="QLabel" name="label_22">
+                    <property name="text">
+                     <string>Style</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="0" column="1">
+                   <widget class="QCheckBox" name="rulerOn">
+                    <property name="text">
+                     <string>Display Ruler</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="0" column="2">
+                   <spacer name="horizontalSpacer">
+                    <property name="orientation">
+                     <enum>Qt::Horizontal</enum>
+                    </property>
+                    <property name="sizeHint" stdset="0">
+                     <size>
+                      <width>40</width>
+                      <height>20</height>
+                     </size>
+                    </property>
+                   </spacer>
+                  </item>
+                 </layout>
+                </item>
+                <item row="5" column="0">
+                 <spacer name="verticalSpacer_4">
                   <property name="orientation">
-                   <enum>Qt::Horizontal</enum>
+                   <enum>Qt::Vertical</enum>
                   </property>
-                  <property name="invertedAppearance">
-                   <bool>false</bool>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>20</width>
+                    <height>40</height>
+                   </size>
                   </property>
-                  <property name="tickPosition">
-                   <enum>QSlider::TicksBelow</enum>
-                  </property>
-                  <property name="tickInterval">
-                   <number>1</number>
-                  </property>
-                 </widget>
+                 </spacer>
                 </item>
                </layout>
               </widget>
@@ -874,6 +908,22 @@
     <hint type="destinationlabel">
      <x>303</x>
      <y>214</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>rulerOn</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>crosshair</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>385</x>
+     <y>215</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>545</x>
+     <y>215</y>
     </hint>
    </hints>
   </connection>

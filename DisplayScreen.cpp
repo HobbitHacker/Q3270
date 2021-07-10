@@ -17,7 +17,8 @@ DisplayScreen::DisplayScreen(int screen_x, int screen_y, ColourTheme::Colours co
 
     // Default settings
     fontScaling = true;
-    ruler = RulerStyle::OFF;
+    ruler = RulerStyle::CROSSHAIR;
+    rulerOn = false;
     blinkShow = false;
     cursorShow = true;
     cursorColour = true;
@@ -895,36 +896,62 @@ void DisplayScreen::setStatusInsert(bool ins)
     }
 }
 
+/*!
+ * \brief DisplayScreen::rulerMode
+ * \details Called when Settings changes ruler to on or off.
+ * \param on - whether ruler is shown or not
+ */
+void DisplayScreen::rulerMode(bool on)
+{
+
+    rulerOn = on;
+    setRuler();
+}
+
+void DisplayScreen::setRulerStyle(RulerStyle rulerStyle)
+{
+    this->ruler = rulerStyle;
+    setRuler();
+}
+
 void DisplayScreen::toggleRuler()
 {
-    // Switch ruler style to next one: OFF -> CROSSHAIR -> VERTICAL -> HORIZONTAL -> OFF
-    switch(ruler)
+    // Invert ruler
+    rulerOn = !rulerOn;
+
+    setRuler();
+}
+
+void DisplayScreen::setRuler()
+{
+    //
+    if (rulerOn)
     {
-        case OFF:
-            ruler = CROSSHAIR;
-            crosshair_X.show();
-            crosshair_Y.show();
-            break;
-        case CROSSHAIR:
-            ruler = VERTICAL;
-            crosshair_X.hide();
-            crosshair_Y.show();
-            break;
-        case VERTICAL:
-            ruler = HORIZONTAL;
-            crosshair_X.show();
-            crosshair_Y.hide();
-            break;
-        default:
-            crosshair_X.hide();
-            crosshair_Y.hide();
-            ruler = OFF;
+        switch(ruler)
+        {
+            case CROSSHAIR:
+                crosshair_X.show();
+                crosshair_Y.show();
+                break;
+            case VERTICAL:
+                crosshair_X.hide();
+                crosshair_Y.show();
+                break;
+            case HORIZONTAL:
+                crosshair_X.show();
+                crosshair_Y.hide();
+        }
+    }
+    else
+    {
+        crosshair_X.hide();
+        crosshair_Y.hide();
     }
 }
 
 void DisplayScreen::drawRuler(int x, int y)
 {
-    if (ruler)
+    if (rulerOn)
     {
        crosshair_X.setPos((qreal) x * gridSize_X, 0);
        crosshair_Y.setPos(0 , (qreal) (y + 1) * gridSize_Y);

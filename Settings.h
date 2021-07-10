@@ -7,10 +7,12 @@
 #include <QSettings>
 #include <QMessageBox>
 #include <QTableWidgetItem>
+#include <QMap>
 
 #include "Q3270.h"
 #include "ColourTheme.h"
 #include "KeyboardTheme.h"
+#include "DisplayScreen.h"
 
 namespace Ui {
     class Settings;
@@ -38,6 +40,9 @@ class Settings : public QDialog
         bool getFontScaling();
         bool getStretch();
 
+        bool getRulerOn()                          { return rulerOn; }
+        DisplayScreen::RulerStyle getRulerStyle()  { return ruler; }
+
     signals:
 
         void terminalChanged(int type, int x, int y);
@@ -50,6 +55,9 @@ class Settings : public QDialog
         void tempFontChange(QFont f);
         void setCursorColour(bool inherit);
         void setStretch(bool stretch);
+
+        void rulerChanged(bool showRuler);
+        void rulerStyle(DisplayScreen::RulerStyle r);
 
     private slots:
 
@@ -85,15 +93,22 @@ class Settings : public QDialog
 
         QHash<ColourTheme::Colour, QPushButton *> colourButtons;
 
+        // Used to populate the combobox with nice names
+        QMap<QString, DisplayScreen::RulerStyle> comboRulerStyle;
+
         int termType;
         int termX;
         int termY;
 
-        int blinkSpeed;
-        bool blink;
-        bool fontScaling;
-        bool cursorInherit;
-        bool stretchScreen;
+        // Terminal behaviours
+        int blinkSpeed;                     // Speed of cursor blink
+        bool blink;                         // Whether cursor blinks
+        bool fontScaling;                   // Scale font to Window
+        bool cursorInherit;                 // Whether the cursor colour mirrors the character foreground colour
+        bool stretchScreen;                 // Whether to stretch the 3270 screen to fit the window
+        bool backSpaceStop;                 // Whether backspace stops at the field start position
+        bool rulerOn;                       // Whether crosshairs are shown
+        DisplayScreen::RulerStyle ruler;    // Style of crosshairs
 
         bool colourThemeChangeFlag;
         bool keyboardThemeChangeFlag;

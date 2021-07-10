@@ -18,6 +18,13 @@ class DisplayScreen : public QGraphicsScene
     Q_OBJECT
 
     public:
+
+        enum RulerStyle {
+            CROSSHAIR,
+            VERTICAL,
+            HORIZONTAL
+        };
+
         DisplayScreen(int screen_x, int screen_y, ColourTheme::Colours);
         ~DisplayScreen();
 
@@ -70,8 +77,12 @@ class DisplayScreen : public QGraphicsScene
         void setColourPalette(ColourTheme::Colours c);
         void resetColours();
         void setFontScaling(bool fontScaling);
+
         void toggleRuler();
         void drawRuler(int x, int y);
+        void setRuler();
+        void rulerMode(bool on);
+        void setRulerStyle(RulerStyle rulerStyle);
 
         void getScreen(QByteArray &buffer);
 
@@ -300,15 +311,8 @@ class DisplayScreen : public QGraphicsScene
 
         bool geActive;              // Next character is Graphic Escape
 
-        enum RulerStyle
-        {
-            OFF         = 0,
-            CROSSHAIR   = 1,
-            VERTICAL    = 2,
-            HORIZONTAL = 3
-
-        };
-        RulerStyle ruler;                  /* Whether the crosshairs are shown. */
+        bool rulerOn;               // Whether crosshair is displayed
+        RulerStyle ruler;           // Style of crosshair
 
 
         /* Character Attributes in effect */

@@ -13,6 +13,14 @@ Settings::Settings(ColourTheme *colours, KeyboardTheme *keyboards, QWidget *pare
     this->colours = colours;
     this->keyboards = keyboards;
 
+    // Set up combo box for crosshair types
+    comboRulerStyle.insert("Crosshairs", DisplayScreen::RulerStyle::CROSSHAIR);
+    comboRulerStyle.insert("Vertical", DisplayScreen::RulerStyle::VERTICAL);
+    comboRulerStyle.insert("Horizontal", DisplayScreen::RulerStyle::HORIZONTAL);
+
+    // Populate combo box
+    ui->crosshair->addItems(comboRulerStyle.keys());
+
     // Model type
     if (applicationSettings.contains("terminal/model"))
     {
@@ -47,14 +55,11 @@ Settings::Settings(ColourTheme *colours, KeyboardTheme *keyboards, QWidget *pare
     }
 
     // Cursor colour inheritance
-    if (applicationSettings.contains("terminal/cursorinheritcolour"))
-    {
-        cursorInherit = applicationSettings.value("terminal/cusorinheritcolour").toBool();
-    }
-    else
-    {
-        cursorInherit = true;
-    }
+    cursorInherit = applicationSettings.value("terminal/cusorinheritcolour", true).toBool();
+
+    // Crosshair style and enabled or not
+    rulerOn = applicationSettings.value("terminal/RulerDisplayed", false).toBool();
+    ui->crosshair->setCurrentText(applicationSettings.value("terminal/RulerStyle", "Crosshairs").toString());
 
     termFont = QFont("ibm3270", 8);
 
@@ -262,6 +267,20 @@ void Settings::accept()
     {
         blinkSpeed = ui->cursorBlinkSpeed->value();
         emit cursorBlinkSpeedChanged(blinkSpeed);
+    }
+
+    // Detect whether crosshairs on or off
+    if (ui->rulerOn->QAbstractButton::isChecked() != rulerOn)
+    {
+        rulerOn = ui->rulerOn->QAbstractButton::isChecked();
+        emit rulerChanged(rulerOn);
+    }
+
+    // Detect change of style of crosshairs
+    if (comboRulerStyle.value(ui->crosshair->currentText()) != ruler)
+    {
+        ruler = comboRulerStyle.value(ui->crosshair->currentText());
+        emit rulerStyle(ruler);
     }
 
     if (colourThemeChangeFlag)

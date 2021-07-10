@@ -23,6 +23,8 @@ TerminalTab::TerminalTab(QVBoxLayout *layout, ColourTheme *colours, KeyboardThem
     connect(settings, &Settings::cursorBlinkChanged, view, &TerminalView::setBlink);
     connect(settings, &Settings::cursorBlinkSpeedChanged, view, &TerminalView::setBlinkSpeed);
     connect(settings, &Settings::setKeyboardTheme, kbd, &Keyboard::setTheme);
+    connect(settings, &Settings::rulerStyle, this, &TerminalTab::rulerStyle);
+    connect(settings, &Settings::rulerChanged, this, &TerminalTab::rulerChanged);
 
     // Build "Not Connected" display
     gs = new QGraphicsScene();
@@ -128,6 +130,26 @@ void TerminalTab::setKeyboardTheme(QString themeName)
 
 }
 
+void TerminalTab::rulerChanged(bool on)
+{
+    // Switch ruler on or off apporpriately
+    if (view->connected)
+    {
+        screen[0]->rulerMode(on);
+        screen[1]->rulerMode(on);
+    }
+}
+
+void TerminalTab::rulerStyle(DisplayScreen::RulerStyle rulerStyle)
+{
+    // Change ruler style to match settings
+    if (view->connected)
+    {
+        screen[0]->setRulerStyle(rulerStyle);
+        screen[1]->setRulerStyle(rulerStyle);
+    }
+}
+
 void TerminalTab::openConnection(QString host, int port, QString luName)
 {
     tabHost = host;
@@ -179,6 +201,8 @@ void TerminalTab::connectSession()
     {
         screen[i]->setFontScaling(settings->getFontScaling());
         screen[i]->setFont(settings->getFont());
+        screen[i]->rulerMode(settings->getRulerOn());
+        screen[i]->setRulerStyle(settings->getRulerStyle());
 
         connect(datastream, &ProcessDataStream::cursorMoved, screen[i], &DisplayScreen::showStatusCursorPosition);
 
