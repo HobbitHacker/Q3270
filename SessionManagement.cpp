@@ -133,6 +133,10 @@ void SessionManagement::saveRowClicked(int row, int column)
     save->lineEdit->setText(save->tableWidget->item(row, 1)->text());
 }
 
+/*!
+ * \brief SessionManagement::saveSettings
+ * \param terminal
+ */
 void SessionManagement::saveSettings(TerminalTab *terminal)
 {
 
@@ -153,7 +157,6 @@ void SessionManagement::saveSettings(TerminalTab *terminal)
 
     // End group for all sessions
     settings.endGroup();
-
 
     //TODO: Valid characters in session name
 
@@ -218,35 +221,28 @@ void SessionManagement::openSession(TerminalTab *t, QString sessionName)
 {
     QSettings settings;
 
-    qDebug() << settings.fileName();
-    qDebug() << settings.group();
-
     // Position at Sessions group
     settings.beginGroup("Sessions");
-
-    qDebug() << settings.childKeys();
 
     // Position at Session Name sub-group
     settings.beginGroup(sessionName);
 
-    qDebug() << settings.group();
-   qDebug() << settings.value("ColourTheme");
-    qDebug() << settings.value("KeybaordTheme");
-    qDebug() << settings.value("Host");
+    if (!settings.childKeys().isEmpty())
+    { 
+        // Set themes
+        t->setColourTheme(settings.value("ColourTheme").toString());
+        t->setKeyboardTheme(settings.value("KeyboardTheme").toString());
 
-    if (settings.childKeys().isEmpty())
-    {
-        return;
+        t->openConnection(settings.value("Host").toString());
+        t->setSessionName(sessionName);
+
+        // Update MRU entries
+        emit sessionOpened("Session " + sessionName);
+
     }
 
-    // Set colour theme
-    t->setColourTheme(settings.value("ColourTheme").toString());
-    t->setKeyboardTheme(settings.value("KeyboardTheme").toString());
-    t->openConnection(settings.value("Host").toString());
-    t->setSessionName(sessionName);
-
-    // Update MRU entries
-    emit sessionOpened("Session " + sessionName);
+    settings.endGroup();
+    settings.endGroup();
 }
 
 void SessionManagement::openRowClicked(int x, int y)

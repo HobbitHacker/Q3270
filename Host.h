@@ -15,6 +15,8 @@ class Host : public QDialog
         explicit Host(QWidget *parent = nullptr);
         ~Host();
 
+        void updateAddress(QString newAddress);
+
         QString hostName;
         int port;
         QString luName;

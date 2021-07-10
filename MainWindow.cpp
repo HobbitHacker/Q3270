@@ -112,7 +112,9 @@ MainWindow::MainWindow(MainWindow::Session s) : QMainWindow(nullptr), ui(new(Ui:
             {
                 sm->openSession(terminal, QUrl::fromPercentEncoding(settings.value("Session").toString().toLatin1()));
 
-                // Enable Save Session menu entry
+                connectHost->updateAddress(terminal->address());
+
+                // Enable Save Session menu entry as it's a named session
                 ui->actionSave_Session->setEnabled(true);
 
                 // Disable/Enable Reconnect etc menu entries
@@ -167,9 +169,6 @@ void MainWindow::mruConnect()
     // Find the sending object - the line in the 'Recent' menu
     QAction *sender = (QAction *)QObject::sender();
 
-    // Will contain either session name or host address
-    QString address;
-
     // Split the menu entry into parts: 1. Host 192.168.0.1:23 or 1. Session Fred
     QStringList parts = sender->text().split(" ");
 
@@ -177,30 +176,43 @@ void MainWindow::mruConnect()
     if (!parts[1].compare("Host"))
     {
         // Pick up address and connect
-        address = parts[2];
-        terminal->openConnection(address);
+        terminal->openConnection(parts[2]);
 
         // Set Connect menu entries
         ui->actionDisconnect->setEnabled(true);
         ui->actionReconnect->setDisabled(true);
         ui->actionConnect->setDisabled(true);
+
+        // Not a named session, so can't save it as one (use Save Session As.. instead)
+        ui->actionSave_Session->setDisabled(true);
+
+        // Update recently used list
+        updateMRUlist("Host " + parts[2]);
     }
     else
     {
+        // Will contain either session name or host address
+        QString address;
+
         // It's a session name, so concatenate the remaining parts of the menu entry
+        // as the session name may have embedded spaces
         for(int i = 2; i < parts.count(); i++)
         {
             address = address.append(parts[i] + " ");
         }
-        // Remove trailing spaces added above
+
+        // Remove last trailing space added above
         address.chop(1);
 
-        // Open the session
+        // Open the session, which also emits an update to the MRU list
         sm->openSession(terminal, address);
+
+        // It's a named session, so can save it
+        ui->actionSave_Session->setEnabled(true);
     }
 
-    // Update recently used list
-    updateMRUlist("Session " + address);
+    // Update the address on the Host form
+    connectHost->updateAddress(terminal->address());
 }
 
 MainWindow::~MainWindow()
