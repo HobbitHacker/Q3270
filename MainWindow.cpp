@@ -12,20 +12,20 @@ MainWindow::MainWindow(MainWindow::Session s) : QMainWindow(nullptr), ui(new(Ui:
     ui->setupUi(this);
 
     // Read global settings
-    QSettings settings;
+    QSettings savedSettings;
 
     // Most-recently used; default to 10
-    maxMruCount = settings.value("MRUMax", 10).toInt();
+    maxMruCount = savedSettings.value("MRUMax", 10).toInt();
 
     // Most-recently used list; might be addresses or sessions
-    int mruCount = settings.beginReadArray("RecentlyUsed");
+    int mruCount = savedSettings.beginReadArray("RecentlyUsed");
 
     for(int i = 0; i < mruCount; i++)
     {
-        settings.setArrayIndex(i);
+        savedSettings.setArrayIndex(i);
 
         // Pick up each Recently Used entry
-        QString thisEntry = settings.value("Entry").toString();
+        QString thisEntry = savedSettings.value("Entry").toString();
 
         // Store the entry
         mruList.append(thisEntry);
@@ -43,7 +43,7 @@ MainWindow::MainWindow(MainWindow::Session s) : QMainWindow(nullptr), ui(new(Ui:
         ui->menuRecentSessions->addAction(thisEntry, this, &MainWindow::mruConnect);
     }
 
-    settings.endArray();
+    savedSettings.endArray();
 
     sessionGroup = new QActionGroup(this);
 
@@ -56,8 +56,11 @@ MainWindow::MainWindow(MainWindow::Session s) : QMainWindow(nullptr), ui(new(Ui:
     // Keyboard theme dialog
     keyboardTheme = new KeyboardTheme();
 
+    // Create Settings object
+    settings = new Settings(colourTheme, keyboardTheme);
+
     // Session Management dialog
-    sm = new SessionManagement();
+    sm = new SessionManagement(settings);
 
     // Update MRU entries if the user opens a session
     connect(sm, &SessionManagement::sessionOpened, this, &MainWindow::updateMRUlist);
@@ -67,7 +70,7 @@ MainWindow::MainWindow(MainWindow::Session s) : QMainWindow(nullptr), ui(new(Ui:
     ui->actionReconnect->setDisabled(true);
     ui->actionConnect->setEnabled(true);
 
-    terminal = new TerminalTab(ui->terminalLayout, colourTheme, keyboardTheme, s.session);
+    terminal = new TerminalTab(ui->terminalLayout, settings, colourTheme, keyboardTheme, s.session);
 
     // Refresh menu entries if disconnected
     connect(terminal, &TerminalTab::connectionChanged, this, &MainWindow::setConnectMenuEntries);
@@ -78,7 +81,7 @@ MainWindow::MainWindow(MainWindow::Session s) : QMainWindow(nullptr), ui(new(Ui:
     {
         //TODO: Decide if Window Geometry is just going to mean that a session always has the same pos etc on screen
         //TODO: Use QWidget.resize and QWidget.move instead. See QSettings doc
-        restoreGeometry(settings.value(s.session + "/WindowGeometry").toByteArray());
+        restoreGeometry(savedSettings.value(s.session + "/WindowGeometry").toByteArray());
         sm->openSession(terminal, QUrl::fromPercentEncoding(s.session.toLatin1()));
 
         // Enable Save Session menu item
@@ -96,21 +99,21 @@ MainWindow::MainWindow(MainWindow::Session s) : QMainWindow(nullptr), ui(new(Ui:
     // If there's none but this window, it must be initial start
     if (s.mw == nullptr)
     {
-        int autoStart = settings.beginReadArray("AutoStart");
+        int autoStart = savedSettings.beginReadArray("AutoStart");
         for(int i = 0; i < autoStart; i++)
         {
-            settings.setArrayIndex(i);
+            savedSettings.setArrayIndex(i);
 
             // If there's more than one window to be opened, start a new one, but for the first one,
             // open the named session.
             if (i > 0)
             {
-                MainWindow *newWindow = new MainWindow({ this, settings.value("Session").toString() } );
+                MainWindow *newWindow = new MainWindow({ this, savedSettings.value("Session").toString() } );
                 newWindow->show();
             }
             else
             {
-                sm->openSession(terminal, QUrl::fromPercentEncoding(settings.value("Session").toString().toLatin1()));
+                sm->openSession(terminal, QUrl::fromPercentEncoding(savedSettings.value("Session").toString().toLatin1()));
 
                 connectHost->updateAddress(terminal->address());
 
@@ -123,7 +126,7 @@ MainWindow::MainWindow(MainWindow::Session s) : QMainWindow(nullptr), ui(new(Ui:
             }
         }
 
-        settings.endArray();
+        savedSettings.endArray();
     }
 
 

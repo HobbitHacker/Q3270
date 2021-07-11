@@ -13,11 +13,13 @@
  *    - Save & Load sessions
  *    - Delete session
  *    - Add/Delete to the Autostart list
+ *
+ * Sessions contain all custom settings
  */
 
-SessionManagement::SessionManagement() : QDialog()
+SessionManagement::SessionManagement(Settings *settings) : QDialog()
 {
-
+    this->settings = settings;
 }
 
 SessionManagement::~SessionManagement()

@@ -11,6 +11,7 @@
 #include <QTableWidget>
 
 #include "TerminalTab.h"
+#include "Settings.h"
 
 namespace Ui {
     class SaveSession;
@@ -26,7 +27,7 @@ class SessionManagement : public QDialog
 
     public:
 
-        explicit SessionManagement();
+        explicit SessionManagement(Settings *settings);
         ~SessionManagement();
 
         // Dialogs to open and save sessions; return true if session opened/saved
@@ -58,6 +59,8 @@ class SessionManagement : public QDialog
         // Session name / description once session opened
         QString sessionName;
         QString sessionDesc;
+
+        Settings *settings;
 
         // Populate QTableWidget with session details
         void populateTable(QTableWidget *table);

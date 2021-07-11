@@ -1,17 +1,15 @@
 #include "TerminalTab.h"
 
-TerminalTab::TerminalTab(QVBoxLayout *layout, ColourTheme *colours, KeyboardTheme *keyboards, QString sessionName)
+TerminalTab::TerminalTab(QVBoxLayout *layout, Settings *settings, ColourTheme *colours, KeyboardTheme *keyboards, QString sessionName)
 {
     // Create terminal display and keyboard objects
     view = new TerminalView();
     kbd = new Keyboard(view);
 
-    // Create Settings object
-    settings = new Settings(colours, keyboards);
-
-    // Save Theme objects
+    // Save Themes and Settings objects
     this->colours = colours;
     this->keyboards = keyboards;
+    this->settings = settings;
 
     // Save 'Session' name
     this->sessionName = sessionName;
