@@ -46,8 +46,9 @@ class Settings : public QDialog
         QString getAddress();
         void setAddress(QString address);
 
-        QString getColourTheme()                    { return colourThemeName; }
-        QString getKeyboardTheme()                  { return keyboardThemeName; }
+        QString getColourTheme()                   { return colourThemeName; }
+        QString getKeyboardTheme()                 { return keyboardThemeName; }
+        QString getModel()                         { return terms[termType].name; }
 
     signals:
 

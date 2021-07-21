@@ -153,6 +153,9 @@ void SessionManagement::saveSettings()
     s.setValue("ColourTheme", settings->getColourTheme());
     s.setValue("KeyboardTheme", settings->getKeyboardTheme());
     s.setValue("Address", settings->getAddress());
+    s.setValue("TerminalModel", settings->getModel());
+    s.setValue("TerminalX", settings->getTermX());
+    s.setValue("TerminalY", settings->getTermY());
 
     // End group for session
     s.endGroup();
