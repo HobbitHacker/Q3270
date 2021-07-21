@@ -26,7 +26,6 @@
 #include "Settings.h"
 #include "Q3270.h"
 #include "TerminalTab.h"
-#include "Host.h"
 #include "ColourTheme.h"
 #include "KeyboardTheme.h"
 #include "SessionManagement.h"
@@ -73,7 +72,6 @@ class MainWindow : public QMainWindow
 
       // Session menu
       void menuConnect();
-      void menuReconnect();
       void menuDisconnect();
       void menuSessionPreferences();
 
@@ -84,13 +82,15 @@ class MainWindow : public QMainWindow
       // The Help->About dialog
       void menuAbout();
 
-      // Triggered by windows being activated
-      void setConnectMenuEntries();
+      // Triggered by Terminal on connection state, and Settings if Hostname is empty
+      void enableConnectMenu(bool state);
+
+      // Triggered by Terminal on disconnection
+      void disableDisconnectMenu();
 
   private:
 
       TerminalTab *terminal;
-      Host *connectHost;
       ColourTheme *colourTheme;
       KeyboardTheme *keyboardTheme;
       SessionManagement *sm;

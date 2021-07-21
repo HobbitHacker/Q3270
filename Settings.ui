@@ -20,6 +20,20 @@
    <string>Dialog</string>
   </property>
   <layout class="QFormLayout" name="formLayout_2">
+   <item row="2" column="1">
+    <layout class="QHBoxLayout" name="ButtonLayout">
+     <property name="spacing">
+      <number>6</number>
+     </property>
+     <item>
+      <widget class="QDialogButtonBox" name="buttonBox">
+       <property name="standardButtons">
+        <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
    <item row="0" column="1">
     <widget class="QTabWidget" name="TabsWidget">
      <property name="sizePolicy">
@@ -31,6 +45,80 @@
      <property name="currentIndex">
       <number>0</number>
      </property>
+     <widget class="QWidget" name="connection">
+      <attribute name="title">
+       <string>Connection</string>
+      </attribute>
+      <layout class="QGridLayout" name="gridLayout_8" rowstretch="0,0,0,0">
+       <item row="2" column="1">
+        <widget class="QLineEdit" name="hostLU">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="1">
+        <widget class="QLineEdit" name="hostPort">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="0">
+        <widget class="QLabel" name="label_23">
+         <property name="text">
+          <string>Hostname or IP address</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0">
+        <widget class="QLabel" name="label_24">
+         <property name="text">
+          <string>Port</string>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="1">
+        <spacer name="verticalSpacer_5">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>40</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item row="2" column="0">
+        <widget class="QLabel" name="label_25">
+         <property name="text">
+          <string>LU Name</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="1">
+        <widget class="QLineEdit" name="hostName">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
      <widget class="QWidget" name="Terminal">
       <attribute name="title">
        <string>Terminal</string>
@@ -781,22 +869,44 @@
      </widget>
     </widget>
    </item>
-   <item row="2" column="1">
-    <layout class="QHBoxLayout" name="ButtonLayout">
-     <property name="spacing">
-      <number>6</number>
-     </property>
-     <item>
-      <widget class="QDialogButtonBox" name="buttonBox">
-       <property name="standardButtons">
-        <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
-       </property>
-      </widget>
-     </item>
-    </layout>
-   </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>hostName</tabstop>
+  <tabstop>hostPort</tabstop>
+  <tabstop>hostLU</tabstop>
+  <tabstop>terminalType</tabstop>
+  <tabstop>terminalRows</tabstop>
+  <tabstop>terminalCols</tabstop>
+  <tabstop>stretch</tabstop>
+  <tabstop>cursorColour</tabstop>
+  <tabstop>cursorBlink</tabstop>
+  <tabstop>cursorBlinkSpeed</tabstop>
+  <tabstop>rulerOn</tabstop>
+  <tabstop>crosshair</tabstop>
+  <tabstop>deleteSameLine</tabstop>
+  <tabstop>backspaceStop</tabstop>
+  <tabstop>comboBox</tabstop>
+  <tabstop>FontScaling</tabstop>
+  <tabstop>colourTheme</tabstop>
+  <tabstop>manageColourThemes</tabstop>
+  <tabstop>baseUnprotected</tabstop>
+  <tabstop>baseProtected</tabstop>
+  <tabstop>baseUnprotectedIntensify</tabstop>
+  <tabstop>baseProtectedIntensify</tabstop>
+  <tabstop>colourBlack</tabstop>
+  <tabstop>colourBlue</tabstop>
+  <tabstop>colourRed</tabstop>
+  <tabstop>colourPink</tabstop>
+  <tabstop>colourGreen</tabstop>
+  <tabstop>colourTurq</tabstop>
+  <tabstop>colourYellow</tabstop>
+  <tabstop>colourWhite</tabstop>
+  <tabstop>keyboardThemes</tabstop>
+  <tabstop>manageKeyboardThemes</tabstop>
+  <tabstop>KeyboardMap</tabstop>
+  <tabstop>TabsWidget</tabstop>
+ </tabstops>
  <resources/>
  <connections>
   <connection>

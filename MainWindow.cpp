@@ -47,9 +47,6 @@ MainWindow::MainWindow(MainWindow::Session s) : QMainWindow(nullptr), ui(new(Ui:
 
     sessionGroup = new QActionGroup(this);
 
-    // Host connection dialog
-    connectHost = new Host();
-
     // Colour theme dialog
     colourTheme = new ColourTheme();
 
@@ -65,15 +62,17 @@ MainWindow::MainWindow(MainWindow::Session s) : QMainWindow(nullptr), ui(new(Ui:
     // Update MRU entries if the user opens a session
     connect(sm, &SessionManagement::sessionOpened, this, &MainWindow::updateMRUlist);
 
+    // Change Connect menu entry when connected, or when user fills in hostname field in Settings
+    connect(settings, &Settings::connectValid, this, &MainWindow::enableConnectMenu);
+
     // Set defaults for Connect options
     ui->actionDisconnect->setDisabled(true);
-    ui->actionReconnect->setDisabled(true);
-    ui->actionConnect->setEnabled(true);
+    ui->actionConnect->setDisabled(true);
 
     terminal = new TerminalTab(ui->terminalLayout, settings, colourTheme, keyboardTheme, s.session);
 
     // Refresh menu entries if disconnected
-    connect(terminal, &TerminalTab::connectionChanged, this, &MainWindow::setConnectMenuEntries);
+    connect(terminal, &TerminalTab::disconnected, this, &MainWindow::disableDisconnectMenu);
 
     // If a session name was passed to the MainWindow, restore the window size/position
     // and open it
@@ -88,7 +87,7 @@ MainWindow::MainWindow(MainWindow::Session s) : QMainWindow(nullptr), ui(new(Ui:
         ui->actionSave_Session->setEnabled(true);
 
         // Disable/Enable Reconnect etc menu entries
-        setConnectMenuEntries();
+        ui->actionDisconnect->setEnabled(true);
     }
     else
     {
@@ -113,16 +112,17 @@ MainWindow::MainWindow(MainWindow::Session s) : QMainWindow(nullptr), ui(new(Ui:
             }
             else
             {
+                //TODO check if we actually need the fromPercentEncoding
                 sm->openSession(terminal, QUrl::fromPercentEncoding(savedSettings.value("Session").toString().toLatin1()));
 
-                connectHost->updateAddress(terminal->address());
+                // Update settings form with new address
+                settings->setAddress(QUrl::fromPercentEncoding(savedSettings.value("Session").toString().toLatin1()));
 
                 // Enable Save Session menu entry as it's a named session
                 ui->actionSave_Session->setEnabled(true);
 
                 // Disable/Enable Reconnect etc menu entries
-                setConnectMenuEntries();
-
+                ui->actionDisconnect->setEnabled(true);
             }
         }
 
@@ -146,7 +146,7 @@ void MainWindow::menuDuplicate()
 
 void MainWindow::menuSaveSession()
 {
-    sm->saveSettings(terminal);
+    sm->saveSettings();
 }
 
 void MainWindow::menuSaveSessionAs()
@@ -183,7 +183,6 @@ void MainWindow::mruConnect()
 
         // Set Connect menu entries
         ui->actionDisconnect->setEnabled(true);
-        ui->actionReconnect->setDisabled(true);
         ui->actionConnect->setDisabled(true);
 
         // Not a named session, so can't save it as one (use Save Session As.. instead)
@@ -191,6 +190,9 @@ void MainWindow::mruConnect()
 
         // Update recently used list
         updateMRUlist("Host " + parts[2]);
+
+        // Update the address on the Host form
+        settings->setAddress(parts[2]);
     }
     else
     {
@@ -210,40 +212,34 @@ void MainWindow::mruConnect()
         // Open the session, which also emits an update to the MRU list
         sm->openSession(terminal, address);
 
+        // Update the address on the Host form
+        settings->setAddress(address);
+
         // It's a named session, so can save it
         ui->actionSave_Session->setEnabled(true);
     }
-
-    // Update the address on the Host form
-    connectHost->updateAddress(terminal->address());
 }
 
 MainWindow::~MainWindow()
 {
+    //FIXME: delete of other objects obtained with 'new'
     delete ui;
-    delete connectHost;
 }
 
 void MainWindow::menuConnect()
 {
-
-    if (connectHost->exec() == QDialog::Accepted)
+    if (settings->getAddress().isEmpty())
     {
-        terminal->openConnection(connectHost->hostName, connectHost->port, connectHost->luName);
-        updateMRUlist((connectHost->luName.compare("") ? connectHost->luName + "@" : "") + connectHost->hostName + ":" + QString::number(connectHost->port));
+        terminal->showForm();
+    }
+
+    if (!settings->getAddress().isEmpty())
+    {
+        terminal->openConnection(settings->getAddress());
+
         ui->actionDisconnect->setEnabled(true);
         ui->actionConnect->setDisabled(true);
-        ui->actionReconnect->setDisabled(true);
     }
-}
-
-void MainWindow::menuReconnect()
-{
-    terminal->connectSession();
-
-    ui->actionConnect->setDisabled(true);
-    ui->actionDisconnect->setEnabled(true);
-    ui->actionReconnect->setDisabled(true);
 }
 
 void MainWindow::menuDisconnect()
@@ -252,7 +248,6 @@ void MainWindow::menuDisconnect()
 
     ui->actionDisconnect->setDisabled(true);
     ui->actionConnect->setEnabled(true);
-    ui->actionReconnect->setEnabled(true);
 }
 
 void MainWindow::menuSessionPreferences()
@@ -272,7 +267,7 @@ void MainWindow::menuKeyboardTheme()
 
 void MainWindow::menuAbout()
 {
-    QDialog *about = new QDialog(0,0);
+    QDialog *about = new QDialog;
     Ui::About *ab = new Ui::About;
     ab->setupUi(about);
 
@@ -285,20 +280,17 @@ void MainWindow::menuAbout()
     delete about;
 }
 
-void MainWindow::setConnectMenuEntries()
+// Signalled when the Settings object's address is updated
+void MainWindow::enableConnectMenu(bool state)
 {
-    if (terminal->view->connected)
-    {
-        ui->actionDisconnect->setEnabled(true);
-        ui->actionConnect->setDisabled(true);
-        ui->actionReconnect->setDisabled(true);
-    }
-    else
-    {
-        ui->actionReconnect->setEnabled(true);
-        ui->actionDisconnect->setDisabled(true);
-        ui->actionConnect->setEnabled(true);
-    }
+    ui->actionConnect->setEnabled(state);
+}
+
+// Signalled when the Terminal is disconnected
+void MainWindow::disableDisconnectMenu()
+{
+    ui->actionDisconnect->setDisabled(true);
+    ui->actionConnect->setEnabled(true);
 }
 
 void MainWindow::updateMRUlist(QString address)

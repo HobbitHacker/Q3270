@@ -93,7 +93,7 @@ bool SessionManagement::saveSessionAs(TerminalTab *terminal)
                 sessionDesc = save->lineEdit->text();
 
                 // Save settings
-                saveSettings(terminal);
+                saveSettings();
                 delete save;
                 return true;
             }
@@ -139,26 +139,26 @@ void SessionManagement::saveRowClicked(int row, int column)
  * \brief SessionManagement::saveSettings
  * \param terminal
  */
-void SessionManagement::saveSettings(TerminalTab *terminal)
+void SessionManagement::saveSettings()
 {
 
-    QSettings settings;
+    QSettings s;
 
     // Sessions are stored under the "Sessions" key, under their key of their name
-    settings.beginGroup("Sessions");
+    s.beginGroup("Sessions");
 
     // Each session is stored under the Sessions/<session name> key
-    settings.beginGroup(sessionName);
-    settings.setValue("Description", sessionDesc);
-    settings.setValue("ColourTheme", terminal->getColourTheme());
-    settings.setValue("KeyboardTheme", terminal->getKeyboardTheme());
-    settings.setValue("Address", terminal->address());
+    s.beginGroup(sessionName);
+    s.setValue("Description", sessionDesc);
+    s.setValue("ColourTheme", settings->getColourTheme());
+    s.setValue("KeyboardTheme", settings->getKeyboardTheme());
+    s.setValue("Address", settings->getAddress());
 
     // End group for session
-    settings.endGroup();
+    s.endGroup();
 
     // End group for all sessions
-    settings.endGroup();
+    s.endGroup();
 
     //TODO: Valid characters in session name
 

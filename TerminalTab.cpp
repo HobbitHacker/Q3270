@@ -150,35 +150,29 @@ void TerminalTab::rulerStyle(DisplayScreen::RulerStyle rulerStyle)
 
 void TerminalTab::openConnection(QString host, int port, QString luName)
 {
-    tabHost = host;
-    tabPort = port;
-    tabLU = luName;
-
-    connectSession();
+    connectSession(host, port, luName);
 }
 
 void TerminalTab::openConnection(QString address)
 {
     if (address.contains("@"))
     {
-       tabLU = address.section("@", 0, 0);
-       tabHost = address.section("@", 1, 1).section(":", 0, 0);
-       tabPort = address.section(":", 1, 1).toInt();
+        connectSession(address.section("@", 1, 1).section(":", 0, 0),
+                       address.section(":", 1, 1).toInt(),
+                       address.section("@", 0, 0));
+
     }
     else
     {
-        tabLU = "";
-        tabHost = address.section(":", 0, 0);
-        tabPort = address.section(":", 1, 1).toInt();
+        connectSession(address.section(":", 0, 0),
+                       address.section(":", 1, 1).toInt(),
+                       "");
     }
-
-    connectSession();
-
 }
 
-void TerminalTab::connectSession()
+void TerminalTab::connectSession(QString host, int port, QString luName)
 {
-    setWindowTitle(windowTitle().append(" [").append(address()).append("]"));
+    setWindowTitle(windowTitle().append(" [").append(host).append("]"));
 
     screen[0] = new DisplayScreen(80, 24, settings->getColours());
     screen[1] = new DisplayScreen(settings->getTermX(), settings->getTermY(), settings->getColours());
@@ -215,11 +209,11 @@ void TerminalTab::connectSession()
     view->setBlink(settings->getBlink());
     view->setBlinkSpeed(settings->getBlinkSpeed());
 
-    QHostInfo hi = QHostInfo::fromName(tabHost);
+    QHostInfo hi = QHostInfo::fromName(host);
 
     //TODO clazy warnings
     QList<QHostAddress> addresses = hi.addresses();
-    socket->connectMainframe(addresses.first(), tabPort, tabLU, datastream);
+    socket->connectMainframe(addresses.first(), port, luName, datastream);
 
     connect(socket, &SocketConnection::dataStreamComplete, datastream, &ProcessDataStream::processStream);
     connect(socket, &SocketConnection::disconnected3270, this, &TerminalTab::closeConnection);
@@ -229,8 +223,6 @@ void TerminalTab::connectSession()
     view->installEventFilter(kbd);
 
     view->setConnected();
-
-    emit connectionChanged();
 }
 
 void TerminalTab::closeConnection()
@@ -251,19 +243,7 @@ void TerminalTab::closeConnection()
     delete screen[0];
     delete screen[1];
 
-    emit connectionChanged();
-}
-
-QString TerminalTab::address()
-{
-    if (tabLU.isEmpty())
-    {
-        return tabHost + ":" + QString::number(tabPort);
-    }
-    else
-    {
-        return tabLU + "@" + tabHost + ":" + QString::number(tabPort);
-    }
+    emit disconnected();
 }
 
 void TerminalTab::closeEvent(QCloseEvent *closeEvent)

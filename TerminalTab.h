@@ -25,7 +25,7 @@ class TerminalTab : public QWidget
 
         void openConnection(QString host, int port, QString luName);
         void openConnection(QString address);
-        void connectSession();
+        void connectSession(QString host, int port, QString luName);
         void closeConnection();
 
         int terminalWidth();
@@ -55,14 +55,13 @@ class TerminalTab : public QWidget
         inline void    setSessionName(QString sessionName) { this->sessionName = sessionName; };
 
         int getType();
-        QString address();
 
         void showForm();
 
         TerminalView *view;
 
     signals:
-        void connectionChanged();
+        void disconnected();
         void windowClosed(TerminalTab *t);
 
     private slots:
@@ -93,10 +92,6 @@ class TerminalTab : public QWidget
         QLabel *cursorAddress;
         QLabel *syslock;
         QLabel *insMode;
-
-        QString tabHost;
-        int tabPort;
-        QString tabLU;
         
         // Current themes
         QString colourTheme;

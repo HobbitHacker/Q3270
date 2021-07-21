@@ -43,6 +43,12 @@ class Settings : public QDialog
         bool getRulerOn()                          { return rulerOn; }
         DisplayScreen::RulerStyle getRulerStyle()  { return ruler; }
 
+        QString getAddress();
+        void setAddress(QString address);
+
+        QString getColourTheme()                    { return colourThemeName; }
+        QString getKeyboardTheme()                  { return keyboardThemeName; }
+
     signals:
 
         void terminalChanged(int type, int x, int y);
@@ -58,6 +64,9 @@ class Settings : public QDialog
 
         void rulerChanged(bool showRuler);
         void rulerStyle(DisplayScreen::RulerStyle r);
+
+        // Emitted when hostname field is not blank
+        void connectValid(bool state);
 
     private slots:
 
@@ -92,6 +101,11 @@ class Settings : public QDialog
         QFont qfdFont;
 
         QHash<ColourTheme::Colour, QPushButton *> colourButtons;
+
+        // Host address parts
+        QString hostName;
+        int hostPort;
+        QString hostLU;
 
         // Used to populate the combobox with nice names
         QMap<QString, DisplayScreen::RulerStyle> comboRulerStyle;

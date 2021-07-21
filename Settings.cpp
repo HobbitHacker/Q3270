@@ -13,7 +13,7 @@ Settings::Settings(ColourTheme *colours, KeyboardTheme *keyboards, QWidget *pare
     this->colours = colours;
     this->keyboards = keyboards;
 
-    // Set up combo box for crosshair types
+    // Set up vector to coordinate combox box for crosshair types
     comboRulerStyle.insert("Crosshairs", DisplayScreen::RulerStyle::CROSSHAIR);
     comboRulerStyle.insert("Vertical", DisplayScreen::RulerStyle::VERTICAL);
     comboRulerStyle.insert("Horizontal", DisplayScreen::RulerStyle::HORIZONTAL);
@@ -141,17 +141,26 @@ Settings::~Settings()
 
 void Settings::showForm(bool connected)
 {
+    // Certain fields can't be changed without a disconnect/reconnect
     if (connected)
     {
         ui->terminalCols->setDisabled(true);
         ui->terminalRows->setDisabled(true);
         ui->terminalType->setDisabled(true);
+
+        ui->hostName->setDisabled(true);
+        ui->hostPort->setDisabled(true);
+        ui->hostLU->setDisabled(true);
     }
     else
     {
         ui->terminalCols->setEnabled(true);
         ui->terminalRows->setEnabled(true);
         ui->terminalType->setEnabled(true);
+
+        ui->hostName->setEnabled(true);
+        ui->hostPort->setEnabled(true);
+        ui->hostLU->setEnabled(true);
     }
 
     ui->cursorBlinkSpeed->setEnabled(ui->cursorBlink->QAbstractButton::isChecked());
@@ -167,6 +176,63 @@ void Settings::showForm(bool connected)
 
     this->exec();
 }
+
+void Settings::setAddress(QString newAddress)
+{
+
+    // Determine if the supplied address contains an '@' denoting the LU to be used.
+    //
+    // Addresses can be of the form:
+    //
+    //   0700@localhost:3270
+    //   console@1.2.3.4:23
+    //   1.2.3.4:23
+
+    if (newAddress.contains("@"))
+    {
+        ui->hostLU->setText(newAddress.section("@", 0, 0));
+        ui->hostName->setText(newAddress.section("@", 1, 1).section(":", 0, 0));
+        ui->hostPort->setText(newAddress.section(":", 1, 1));
+    } else
+    {
+        ui->hostLU->setText("");
+        ui->hostName->setText(newAddress.section(":", 0, 0));
+        ui->hostPort->setText(newAddress.section(":", 1, 1));
+    }
+
+    hostName = ui->hostName->text();
+    hostLU = ui->hostLU->text();
+    hostPort = ui->hostPort->text().toInt();
+
+    if (hostName.isEmpty())
+    {
+        emit connectValid(false);
+    }
+    else
+    {
+        emit connectValid(true);
+    }
+}
+
+QString Settings::getAddress()
+{
+    // Return empty string if we don't have a hostname
+    if (hostName.isEmpty())
+    {
+        return "";
+    }
+
+    // Return address, allowing for optional LU name
+    if (hostLU.isEmpty())
+    {
+        return hostName + ":" + QString::number(hostPort);
+    } else
+    {
+        return hostLU + "@" + hostName + ":" + QString::number(hostPort);
+    }
+}
+
+
 
 void Settings::changeModel(int model)
 {
@@ -248,6 +314,11 @@ void Settings::changeFont(QFont newFont)
 
 void Settings::accept()
 {
+
+    hostName = ui->hostName->text();
+    hostPort = ui->hostPort->text().toInt();
+    hostLU   = ui->hostLU->text();
+
     if (ui->terminalType->currentIndex() != termType || termX != ui->terminalCols->value() || termY != ui->terminalRows->value())
     {
         termType = ui->terminalType->currentIndex();
@@ -318,6 +389,11 @@ void Settings::accept()
         cursorInherit = ui->cursorColour->QAbstractButton::isChecked();
 
         emit setCursorColour(cursorInherit);
+    }
+
+    if (!hostName.isEmpty())
+    {
+        emit connectValid(true);
     }
 
     emit setStretch(ui->stretch);

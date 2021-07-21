@@ -22,7 +22,6 @@ SOURCES += \
     ColourTheme.cpp \
     DisplayScreen.cpp \
     Glyph.cpp \
-    Host.cpp \
     Keyboard.cpp \
     KeyboardTheme.cpp \
     MainWindow.cpp \
@@ -38,7 +37,6 @@ HEADERS += \
     ColourTheme.h \
     DisplayScreen.h \
     Glyph.h \
-    Host.h \
     Keyboard.h \
     KeyboardTheme.h \
     MainWindow.h \
@@ -55,7 +53,6 @@ FORMS += \
     AutoStart.ui \
     AutoStartAdd.ui \
     ColourTheme.ui \
-    Host.ui \
     KeyboardTheme.ui \
     MainWindow.ui \
     ManageSessions.ui \

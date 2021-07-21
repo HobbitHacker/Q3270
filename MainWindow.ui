@@ -38,7 +38,6 @@
      <string>Session</string>
     </property>
     <addaction name="actionConnect"/>
-    <addaction name="actionReconnect"/>
     <addaction name="actionDisconnect"/>
     <addaction name="separator"/>
     <addaction name="actionSessionPreferences"/>
@@ -95,7 +94,7 @@
     <bool>false</bool>
    </property>
    <property name="text">
-    <string>Connect...</string>
+    <string>Connect</string>
    </property>
   </action>
   <action name="actionSessionPreferences">
@@ -262,22 +261,6 @@
    <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
    <slot>menuNew()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>821</x>
-     <y>518</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>actionReconnect</sender>
-   <signal>triggered()</signal>
-   <receiver>MainWindow</receiver>
-   <slot>menuReconnect()</slot>
    <hints>
     <hint type="sourcelabel">
      <x>-1</x>

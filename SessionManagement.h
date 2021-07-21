@@ -35,7 +35,7 @@ class SessionManagement : public QDialog
         bool saveSessionAs(TerminalTab *t);
 
         // Save current named session details
-        void saveSettings(TerminalTab *terminal);
+        void saveSettings();
 
         // Open a named session
         void openSession(TerminalTab *t, QString sessionName);
