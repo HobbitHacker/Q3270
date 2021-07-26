@@ -29,19 +29,34 @@ class Settings : public QDialog
 
         void showForm(bool connected);
 
-        bool getBlink();
-        int getBlinkSpeed();
-        bool getInherit();
+        bool getBlink()                            { return blink; }
+        void setBlink(bool blink);
+
+        int getBlinkSpeed()                        { return blinkSpeed; }
+        void setBlinkSpeed(int blinkSpeed);
+
+        bool getInherit()                          { return cursorInherit; }
+        void setInherit(bool inherit);
+
         int getTermX();
         int getTermY();
         QString getTermName();
+
         QFont getFont();
+        void setFont(QFont font);
+
         ColourTheme::Colours getColours();
-        bool getFontScaling();
-        bool getStretch();
+
+        bool getFontScaling()                      { return fontScaling; }
+        void setFontScaling(bool scale);
+
+        bool getStretch()                          { return stretchScreen; }
 
         bool getRulerOn()                          { return rulerOn; }
+        void setRulerOn(bool rulerOn);
+
         DisplayScreen::RulerStyle getRulerStyle()  { return ruler; }
+        void setRulerStyle(DisplayScreen::RulerStyle);
 
         QString getAddress();
         void setAddress(QString address);
@@ -49,6 +64,9 @@ class Settings : public QDialog
         QString getColourTheme()                   { return colourThemeName; }
         QString getKeyboardTheme()                 { return keyboardThemeName; }
         QString getModel()                         { return terms[termType].name; }
+
+        void setTerminalModel(QString model);
+        void setTerminalSize(int x, int y);
 
     signals:
 
@@ -72,7 +90,7 @@ class Settings : public QDialog
     private slots:
 
         void changeFont(QFont f);
-        void changeModel(int m);
+        void setTerminalModel(int m);
 
         void colourThemeChanged(int index);
         void keyboardThemeChanged(int index);
@@ -145,9 +163,6 @@ class Settings : public QDialog
 
         void accept();
         void reject();
-
-        void changeModel(QString model);
-        void changeSize(int x, int y);
 
 };
 

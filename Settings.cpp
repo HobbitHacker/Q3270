@@ -18,79 +18,32 @@ Settings::Settings(ColourTheme *colours, KeyboardTheme *keyboards, QWidget *pare
     comboRulerStyle.insert("Vertical", DisplayScreen::RulerStyle::VERTICAL);
     comboRulerStyle.insert("Horizontal", DisplayScreen::RulerStyle::HORIZONTAL);
 
-    // Populate combo box
+    // Populate combo box from vector keys
     ui->crosshair->addItems(comboRulerStyle.keys());
 
-    // Model type
-    if (applicationSettings.contains("terminal/model"))
-    {
-        termX = applicationSettings.value("terminal/width").toInt();
-        termY = applicationSettings.value("terminal/height").toInt();
-        changeModel(applicationSettings.value("terminal/model").toString());
-        stretchScreen = applicationSettings.value("terminal/stretch").toBool();
-
-    }
-    else
-    {
-        termX = 80;
-        termY = 24;
-        changeModel("Model2");
-    }
+    // Terminal Model type
+    termX = 80;
+    termY = 24;
+    setTerminalModel("Model2");
 
     // Cursor blink enabled & speed
-    if (applicationSettings.contains("terminal/cursorblink"))
-    {
-        blink = applicationSettings.value("terminal/cursorblink").toBool();
-        blinkSpeed = applicationSettings.value("terminal/cursorblinkspeed").toInt();
-        ui->cursorBlink->setChecked(blink);
-        ui->cursorBlinkSpeed->setSliderPosition(blinkSpeed);
-
-    }
-    else
-    {
-        blink = true;
-        blinkSpeed = 4;
-        ui->cursorBlink->setChecked(true);
-        ui->cursorBlinkSpeed->setSliderPosition(4);
-    }
+    blink = true;
+    blinkSpeed = 4;
+    ui->cursorBlink->setChecked(true);
+    ui->cursorBlinkSpeed->setSliderPosition(4);
 
     // Cursor colour inheritance
-    cursorInherit = applicationSettings.value("terminal/cusorinheritcolour", true).toBool();
+    cursorInherit = true;
 
     // Crosshair style and enabled or not
-    rulerOn = applicationSettings.value("terminal/RulerDisplayed", false).toBool();
-    ui->crosshair->setCurrentText(applicationSettings.value("terminal/RulerStyle", "Crosshairs").toString());
+    rulerOn = false;
+    ruler = DisplayScreen::CROSSHAIR;
 
     termFont = QFont("ibm3270", 8);
 
-    // Font
-    if (applicationSettings.contains("font/name"))
-    {
-        printf("%s\n%s\n%d\n", applicationSettings.value("font/name").toString().toLatin1().data(), applicationSettings.value("font/style").toString().toLatin1().data(), applicationSettings.value("font/size").toInt());
-        fflush(stdout);
-        termFont.setFamily(applicationSettings.value("font/name").toString());
-        termFont.setStyleName(applicationSettings.value("font/style").toString());
-        termFont.setPointSize(applicationSettings.value("font/size").toInt());
-    }
-    else
-    {
-        termFont.setFamily("ibm3270");
-        termFont.setStyleName("Regular");
-        termFont.setPointSize(32);
-    }
-
     // Font scaling
-    if (applicationSettings.contains("font/scale"))
-    {
-        fontScaling = applicationSettings.value("font/scale").toString() == "true" ? true : false;
-        ui->FontScaling->setCheckState(fontScaling ?  Qt::Checked : Qt::Unchecked);
-
-    }
-    else
-    {
-        ui->FontScaling->setCheckState(Qt::Checked);
-        fontScaling = true;
-    }
+    ui->FontScaling->setCheckState(Qt::Checked);
+    fontScaling = true;
 
     // Set up a list of buttons for use in setButtonColours
     colourButtons[ColourTheme::UNPROTECTED_NORMAL]      = ui->baseUnprotected;
@@ -234,7 +187,7 @@ QString Settings::getAddress()
 
 
 
-void Settings::changeModel(int model)
+void Settings::setTerminalModel(int model)
 {
     /* Model types from dialog are 0 - 4 where 0 - 3 are Models 2 - 5 and 4 is dynamic */
     printf("Model = %d", model);
@@ -278,7 +231,7 @@ void Settings::changeModel(int model)
     ui->terminalRows->setValue(termY);
 }
 
-void Settings::changeModel(QString type)
+void Settings::setTerminalModel(QString type)
 {
     for (int i = 0; i < 5; i++)
     {
@@ -295,7 +248,7 @@ void Settings::changeModel(QString type)
     termType = 0;
 }
 
-void Settings::changeSize(int x, int y)
+void Settings::setTerminalSize(int x, int y)
 {
     if (termType != 4)
     {
@@ -431,19 +384,35 @@ QString Settings::getTermName()
     return terms[termType].term;
 }
 
-int Settings::getBlinkSpeed()
+void Settings::setBlinkSpeed(int blinkSpeed)
 {
-    return blinkSpeed;
+    this->blinkSpeed = blinkSpeed;
 }
 
-bool Settings::getBlink()
+void Settings::setBlink(bool blink)
 {
-    return blink;
+    this->blink = blink;
 }
 
-bool Settings::getFontScaling()
+void Settings::setInherit(bool inherit)
 {
-    return fontScaling;
+    this->cursorInherit = inherit;
+}
+
+void Settings::setRulerOn(bool rulerOn)
+{
+    this->rulerOn = rulerOn;
+}
+
+void Settings::setFont(QFont font)
+{
+    termFont = font;
+    emit fontChanged();
+}
+
+void Settings::setFontScaling(bool scale)
+{
+    fontScaling = scale;
 }
 
 bool Settings::getStretch()

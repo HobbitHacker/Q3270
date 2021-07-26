@@ -156,6 +156,16 @@ void SessionManagement::saveSettings()
     s.setValue("TerminalModel", settings->getModel());
     s.setValue("TerminalX", settings->getTermX());
     s.setValue("TerminalY", settings->getTermY());
+    s.setValue("CursorBlink", settings->getBlink());
+    s.setValue("CursorBlinkSpeed", settings->getBlinkSpeed());
+    s.setValue("CursorInheritColour", settings->getInherit());
+    s.setValue("Ruler", settings->getRulerOn());
+    s.setValue("RulerStyle", settings->getRulerStyle());
+    s.setValue("Font", settings->getFont().family());
+    s.setValue("FontSize", settings->getFont().pointSize());
+    s.setValue("FontStyle", settings->getFontScaling());
+    s.setValue("FontScaling", settings->getFontScaling());
+    s.setValue("ScreenStretch", settings->getStretch());
 
     // End group for session
     s.endGroup();
@@ -224,21 +234,45 @@ bool SessionManagement::openSession(TerminalTab *t)
 
 void SessionManagement::openSession(TerminalTab *t, QString sessionName)
 {
-    QSettings settings;
+    QSettings s;
 
     // Position at Sessions group
-    settings.beginGroup("Sessions");
+    s.beginGroup("Sessions");
 
     // Position at Session Name sub-group
-    settings.beginGroup(sessionName);
+    s.beginGroup(sessionName);
 
-    if (!settings.childKeys().isEmpty())
+    if (!s.childKeys().isEmpty())
     { 
         // Set themes
-        t->setColourTheme(settings.value("ColourTheme").toString());
-        t->setKeyboardTheme(settings.value("KeyboardTheme").toString());
+        t->setColourTheme(s.value("ColourTheme").toString());
+        t->setKeyboardTheme(s.value("KeyboardTheme").toString());
 
-        t->openConnection(settings.value("Address").toString());
+        // Set terminal characteristics
+        settings->setTerminalModel(s.value("TerminalModel").toString());
+        settings->setTerminalSize(s.value("TerminalX").toInt(), s.value("TerminalY").toInt());
+
+        // Cursor settings
+        settings->setBlink(s.value("CursorBlink").toBool());
+        settings->setBlinkSpeed(s.value("CursorBlinkSpeed").toInt());
+        settings->setInherit(s.value("CursorInheritColour").toBool());
+
+        // Ruler
+        settings->setRulerOn(s.value("Ruler").toBool());
+        settings->setRulerStyle(s.value("RulerStyle").value<DisplayScreen::RulerStyle>());
+
+        // Font settings
+        QFont f;
+        f.setFamily(s.value("Font").toString());
+        f.setPointSize(s.value("FontSize").toInt());
+        f.setStyleName(s.value("FontStyle").toString());
+
+        settings->setFont(f);
+
+        settings->setFontScaling(s.value("FontScaling").toBool());
+        settings->setStretch(s.value("ScreenStretch").toBool());
+
+        t->openConnection(s.value("Address").toString());
         t->setSessionName(sessionName);
 
         // Update MRU entries
@@ -246,8 +280,8 @@ void SessionManagement::openSession(TerminalTab *t, QString sessionName)
 
     }
 
-    settings.endGroup();
-    settings.endGroup();
+    s.endGroup();
+    s.endGroup();
 }
 
 void SessionManagement::openRowClicked(int x, int y)
