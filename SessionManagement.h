@@ -12,6 +12,7 @@
 
 #include "TerminalTab.h"
 #include "Settings.h"
+#include "DisplayScreen.h"
 
 namespace Ui {
     class SaveSession;
