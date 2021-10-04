@@ -25,6 +25,8 @@ class DisplayScreen : public QGraphicsScene
             HORIZONTAL
         };
 
+        Q_ENUM(RulerStyle)
+
         DisplayScreen(int screen_x, int screen_y, ColourTheme::Colours);
         ~DisplayScreen();
 
