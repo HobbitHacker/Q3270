@@ -204,7 +204,7 @@ bool SessionManagement::openSession(TerminalTab *t)
     populateTable(load->tableWidget);
 
     // Process open request if 'OK' (or double-clicked)
-    if (openDialog.exec() != QDialogButtonBox::Cancel)
+    if (openDialog.exec() != QDialog::Rejected)
     {
         QSettings settings;
 
