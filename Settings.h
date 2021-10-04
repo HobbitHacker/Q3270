@@ -56,7 +56,7 @@ class Settings : public QDialog
         void setRulerOn(bool rulerOn);
 
         DisplayScreen::RulerStyle getRulerStyle()  { return ruler; }
-        void setRulerStyle(DisplayScreen::RulerStyle);
+        void setRulerStyle(DisplayScreen::RulerStyle r);
 
         QString getAddress();
         void setAddress(QString address);
