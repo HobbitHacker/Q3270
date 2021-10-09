@@ -10,8 +10,8 @@ DisplayScreen::DisplayScreen(int screen_x, int screen_y, ColourTheme::Colours co
     this->screen_x = screen_x;
     this->screen_y = screen_y;
 
-    gridSize_X = 50;
-    gridSize_Y = 50;
+    gridSize_X = 640 / screen_x;
+    gridSize_Y = 480 / screen_y;
 
     screenPos_max = screen_x * screen_y;
 
@@ -152,34 +152,43 @@ void DisplayScreen::setFont(QFont font)
     termFont = font;
     QTransform tr;
 
+    font.setKerning(false);
+    font.setLetterSpacing(QFont::AbsoluteSpacing, 0);
+
     if (fontScaling)
     {
         QFontMetrics fm = QFontMetrics(font);
 //        QRectF boxRect = QRectF(0, 0, fm->maxWidth(), fm->lineSpacing() * 0.99);
-        QRectF charBounds = fm.boundingRect("┼");
-        QRectF boxRect = QRectF(0, 0, fm.width("┼", 1) - 1, fm.lineSpacing() - 5);
+        QRectF charRect = fm.boundingRect("┼");
+        QRectF boxRect = QRectF(0, 0, fm.horizontalAdvance("┼", 1), fm.height());
 
-        printf("DisplayScreen   : charBounds (┼) =  %f x %f\n   boxRect = %f x %f\n", charBounds.x(), charBounds.y(), boxRect.width(), boxRect.height());
-        printf("Font Width (┼)        : %d\n",fm.width("┼"));
+        printf("DisplayScreen   : boxRect    (┼) =  %f x %f at %f x %f\n", boxRect.width(), boxRect.height(), boxRect.x(), boxRect.y());
+        printf("DisplayScreen   : charBounds (┼) =  %f x %f at %f x %f\n", charRect.width(), charRect.height(), charRect.x(), charRect.y());
+        printf("Font Width (┼)        : %d\n",fm.horizontalAdvance("┼"));
         printf("Font Height (┼)       : %d\n",fm.height());
         printf("Font Line Spacing (┼) : %d\n",fm.lineSpacing());
         printf("Font Max Width        : %d\n", fm.maxWidth());
         printf("Font Descent          : %d\n", fm.descent());
         printf("Font Ascent           : %d\n", fm.ascent());
+        printf("Gridsize              : %f x %f\n", gridSize_X, gridSize_Y);
 
         fflush(stdout);
 
-        tr.scale(gridSize_X / boxRect.width(), gridSize_Y / boxRect.height());
+        tr.scale(gridSize_X / charRect.width(), gridSize_Y / charRect.height());
     }
     else
     {
         tr.scale(1,1);
     }
 
+
+    QPointF centre = glyph.at(0)->boundingRect().center();
+
     for (int i = 0; i < screenPos_max; i++)
     {
         glyph.at(i)->setFont(QFont(font));
         glyph.at(i)->setTransform(tr);
+        glyph.at(i)->setPos(centre);
     }
 }
 
