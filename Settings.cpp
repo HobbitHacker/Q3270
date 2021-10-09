@@ -404,6 +404,11 @@ void Settings::setRulerOn(bool rulerOn)
     this->rulerOn = rulerOn;
 }
 
+void Settings::setRulerStyle(DisplayScreen::RulerStyle r)
+{
+    this->ruler = r;
+}
+
 void Settings::setFont(QFont font)
 {
     termFont = font;
@@ -413,11 +418,6 @@ void Settings::setFont(QFont font)
 void Settings::setFontScaling(bool scale)
 {
     fontScaling = scale;
-}
-
-bool Settings::getStretch()
-{
-    return stretchScreen;
 }
 
 ColourTheme::Colours Settings::getColours()
