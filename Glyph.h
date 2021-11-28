@@ -20,6 +20,8 @@ class Glyph : public QObject, public QGraphicsSimpleTextItem
         Glyph(int x, int y, QGraphicsItem* parent);
         QRectF boundingRect() const;
 
+//        void paint(QPainter *p, const QStyleOptionGraphicsItem *o, QWidget *w = 0);
+
         enum { Type = UserType + 1 };
 
         int type() const;

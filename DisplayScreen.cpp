@@ -10,8 +10,8 @@ DisplayScreen::DisplayScreen(int screen_x, int screen_y, ColourTheme::Colours co
     this->screen_x = screen_x;
     this->screen_y = screen_y;
 
-    gridSize_X = 640 / screen_x;
-    gridSize_Y = 480 / screen_y;
+    gridSize_X = 640*5 / screen_x;
+    gridSize_Y = 480*5 / screen_y;
 
     screenPos_max = screen_x * screen_y;
 
@@ -39,6 +39,8 @@ DisplayScreen::DisplayScreen(int screen_x, int screen_y, ColourTheme::Colours co
             qreal x_pos = x * gridSize_X;
 
             cell.replace(pos, new QGraphicsRectItem(0, 0, gridSize_X, gridSize_Y));
+//            cell.replace(pos, new QGraphicsRectItem(0, 0, 1, 1));
+            cell.at(pos)->setBrush(QBrush(Qt::red));
             cell.at(pos)->setPen(Qt::NoPen);
             cell.at(pos)->setPos(x_pos, y_pos);
 
@@ -157,24 +159,25 @@ void DisplayScreen::setFont(QFont font)
 
     if (fontScaling)
     {
-        QFontMetrics fm = QFontMetrics(font);
+        QFontMetricsF fm = QFontMetrics(font);
 //        QRectF boxRect = QRectF(0, 0, fm->maxWidth(), fm->lineSpacing() * 0.99);
         QRectF charRect = fm.boundingRect("┼");
         QRectF boxRect = QRectF(0, 0, fm.horizontalAdvance("┼", 1), fm.height());
 
         printf("DisplayScreen   : boxRect    (┼) =  %f x %f at %f x %f\n", boxRect.width(), boxRect.height(), boxRect.x(), boxRect.y());
         printf("DisplayScreen   : charBounds (┼) =  %f x %f at %f x %f\n", charRect.width(), charRect.height(), charRect.x(), charRect.y());
-        printf("Font Width (┼)        : %d\n",fm.horizontalAdvance("┼"));
-        printf("Font Height (┼)       : %d\n",fm.height());
-        printf("Font Line Spacing (┼) : %d\n",fm.lineSpacing());
-        printf("Font Max Width        : %d\n", fm.maxWidth());
-        printf("Font Descent          : %d\n", fm.descent());
-        printf("Font Ascent           : %d\n", fm.ascent());
+        printf("Font Width (┼)        : %f\n",fm.horizontalAdvance("┼"));
+        printf("Font Height (┼)       : %f\n",fm.height());
+        printf("Font Leading (┼)      : %f\n",fm.leading());
+        printf("Font Line Spacing (┼) : %f\n",fm.lineSpacing());
+        printf("Font Max Width        : %f\n", fm.maxWidth());
+        printf("Font Descent          : %f\n", fm.descent());
+        printf("Font Ascent           : %f\n", fm.ascent());
         printf("Gridsize              : %f x %f\n", gridSize_X, gridSize_Y);
 
         fflush(stdout);
 
-        tr.scale(gridSize_X / charRect.width(), gridSize_Y / charRect.height());
+        tr.scale(charRect.width(), charRect.height());
     }
     else
     {

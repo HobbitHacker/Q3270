@@ -31,3 +31,8 @@ int Glyph::type() const
 {
     return Type;
 }
+
+/*void Glyph::paint(QPainter *painter, const QStyleOptionGraphicsItem * option, QWidget * widget) {
+    painter->translate(-boundingRect().width() / 2, -boundingRect().height() / 2);
+    QGraphicsSimpleTextItem::paint(painter, option, widget);
+}*/
