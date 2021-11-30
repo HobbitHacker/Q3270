@@ -213,9 +213,6 @@ void MainWindow::mruConnect()
         // Open the session, which also emits an update to the MRU list
         sm->openSession(terminal, address);
 
-        // Update the address on the Host form
-        settings->setAddress(address);
-
         // It's a named session, so can save it
         ui->actionSave_Session->setEnabled(true);
     }

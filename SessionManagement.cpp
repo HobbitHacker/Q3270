@@ -275,6 +275,9 @@ void SessionManagement::openSession(TerminalTab *t, QString sessionName)
         t->openConnection(s.value("Address").toString());
         t->setSessionName(sessionName);
 
+        // Update Settings form with address
+        settings->setAddress(s.value("Address").toString());
+
         // Update MRU entries
         emit sessionOpened("Session " + sessionName);
 
