@@ -8,7 +8,7 @@ SocketConnection::SocketConnection(QString termName)
     this->termName = termName;
 	
     // Forward the connected and disconnected signals
-//    connect(dataSocket, &QTcpSocket::connected, this, &SocketConnection::connected);
+    connect(dataSocket, &QTcpSocket::connected, this, &SocketConnection::opened);
     connect(dataSocket, &QTcpSocket::disconnected, this, &SocketConnection::closed);
 
     connect(dataSocket, &QTcpSocket::readyRead, this, &SocketConnection::onReadyRead);
@@ -26,9 +26,14 @@ SocketConnection::~SocketConnection()
     dataSocket->deleteLater();
 }
 
+void SocketConnection::opened()
+{
+    emit connectionStarted();
+}
+
 void SocketConnection::closed()
 {
-    emit disconnected3270();
+    emit connectionEnded();
 }
 
 void SocketConnection::disconnectMainframe()

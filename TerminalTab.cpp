@@ -42,7 +42,7 @@ TerminalTab::TerminalTab(QVBoxLayout *layout, Settings *settings, ColourTheme *c
 
     // Centre "Not Connected" based on font size. 640x480 halved, less the size of the font
     QFontMetrics fm(font);
-    int xPos = 320 - fm.width(ncMessage->text()) / 2;
+    int xPos = 320 - fm.horizontalAdvance(ncMessage->text()) / 2;
     int yPos = 240 - fm.height() / 2;
     ncMessage->setPos(xPos, yPos);
 
@@ -183,6 +183,10 @@ void TerminalTab::connectSession(QString host, int port, QString luName)
     datastream = new ProcessDataStream(view);
     socket = new SocketConnection(settings->getTermName());
 
+    connect(socket, &SocketConnection::dataStreamComplete, datastream, &ProcessDataStream::processStream);
+    connect(socket, &SocketConnection::connectionStarted, this, &TerminalTab::connected);
+    connect(socket, &SocketConnection::connectionEnded, this, &TerminalTab::closeConnection);
+
     kbd->setDataStream(datastream);
 
     connect(settings, &Settings::setStretch, view, &TerminalView::setStretch);
@@ -215,9 +219,6 @@ void TerminalTab::connectSession(QString host, int port, QString luName)
     QList<QHostAddress> addresses = hi.addresses();
     socket->connectMainframe(addresses.first(), port, luName, datastream);
 
-    connect(socket, &SocketConnection::dataStreamComplete, datastream, &ProcessDataStream::processStream);
-    connect(socket, &SocketConnection::disconnected3270, this, &TerminalTab::closeConnection);
-
     kbd->setMap();
 
     view->installEventFilter(kbd);
@@ -228,7 +229,7 @@ void TerminalTab::connectSession(QString host, int port, QString luName)
 void TerminalTab::closeConnection()
 {
     disconnect(socket, &SocketConnection::dataStreamComplete, datastream, &ProcessDataStream::processStream);
-    disconnect(socket, &SocketConnection::disconnected3270, this, &TerminalTab::closeConnection);
+    disconnect(socket, &SocketConnection::connectionEnded, this, &TerminalTab::closeConnection);
 
     socket->disconnectMainframe();
 
@@ -244,6 +245,11 @@ void TerminalTab::closeConnection()
     delete screen[1];
 
     emit disconnected();
+}
+
+void TerminalTab::connected()
+{
+    emit connectionEstablished();
 }
 
 void TerminalTab::closeEvent(QCloseEvent *closeEvent)

@@ -85,7 +85,8 @@ class MainWindow : public QMainWindow
       // Triggered by Terminal on connection state, and Settings if Hostname is empty
       void enableConnectMenu(bool state);
 
-      // Triggered by Terminal on disconnection
+      // Triggered by Terminal on connection/disconnection
+      void enableDisconnectMenu();
       void disableDisconnectMenu();
 
   private:

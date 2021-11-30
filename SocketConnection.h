@@ -35,10 +35,12 @@ class SocketConnection : public QObject
     public slots:
         void connectMainframe(const QHostAddress &address, quint16 port, QString luName, ProcessDataStream *d);
         void disconnectMainframe();
+        void opened();
         void closed();
 
     signals:
-        void disconnected3270();
+        void connectionStarted();
+        void connectionEnded();
         void dataStreamComplete(QByteArray &b, bool tn3270e);
         void error(QAbstractSocket::SocketError socketError);
 

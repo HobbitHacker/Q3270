@@ -26,7 +26,6 @@ class TerminalTab : public QWidget
         void openConnection(QString host, int port, QString luName);
         void openConnection(QString address);
         void connectSession(QString host, int port, QString luName);
-        void closeConnection();
 
         int terminalWidth();
         int terminalHeight();
@@ -61,8 +60,14 @@ class TerminalTab : public QWidget
         TerminalView *view;
 
     signals:
+        void connectionEstablished();
         void disconnected();
         void windowClosed(TerminalTab *t);
+
+    public slots:
+
+        void connected();
+        void closeConnection();
 
     private slots:
 

@@ -71,8 +71,9 @@ MainWindow::MainWindow(MainWindow::Session s) : QMainWindow(nullptr), ui(new(Ui:
 
     terminal = new TerminalTab(ui->terminalLayout, settings, colourTheme, keyboardTheme, s.session);
 
-    // Refresh menu entries if disconnected
+    // Refresh menu entries if connected/disconnected
     connect(terminal, &TerminalTab::disconnected, this, &MainWindow::disableDisconnectMenu);
+    connect(terminal, &TerminalTab::connectionEstablished, this, &MainWindow::enableDisconnectMenu);
 
     // If a session name was passed to the MainWindow, restore the window size/position
     // and open it
@@ -286,12 +287,20 @@ void MainWindow::enableConnectMenu(bool state)
     ui->actionConnect->setEnabled(state);
 }
 
+// Signalled when the Terminal is connected
+void MainWindow::enableDisconnectMenu()
+{
+    ui->actionDisconnect->setEnabled(true);
+    ui->actionConnect->setDisabled(true);
+}
+
 // Signalled when the Terminal is disconnected
 void MainWindow::disableDisconnectMenu()
 {
     ui->actionDisconnect->setDisabled(true);
     ui->actionConnect->setEnabled(true);
 }
+
 
 void MainWindow::updateMRUlist(QString address)
 {
