@@ -163,7 +163,7 @@ void DisplayScreen::setFont(QFont font)
 //        QRectF boxRect = QRectF(0, 0, fm->maxWidth(), fm->lineSpacing() * 0.99);
         QRectF charRect = fm.boundingRect("┼");
         QRectF boxRect = QRectF(0, 0, fm.horizontalAdvance("┼", 1), fm.height());
-
+/*
         printf("DisplayScreen   : boxRect    (┼) =  %f x %f at %f x %f\n", boxRect.width(), boxRect.height(), boxRect.x(), boxRect.y());
         printf("DisplayScreen   : charBounds (┼) =  %f x %f at %f x %f\n", charRect.width(), charRect.height(), charRect.x(), charRect.y());
         printf("Font Width (┼)        : %f\n",fm.horizontalAdvance("┼"));
@@ -176,8 +176,8 @@ void DisplayScreen::setFont(QFont font)
         printf("Gridsize              : %f x %f\n", gridSize_X, gridSize_Y);
 
         fflush(stdout);
-
-        tr.scale(charRect.width(), charRect.height());
+*/
+        tr.scale(gridSize_X / boxRect.width(), gridSize_Y / boxRect.height());
     }
     else
     {
