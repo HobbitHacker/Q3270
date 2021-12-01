@@ -172,11 +172,6 @@ void SessionManagement::saveSettings()
 
     // End group for all sessions
     s.endGroup();
-
-    //TODO: Valid characters in session name
-
-    // Store session name
-    sessionName = save->sessionName->text();
 }
 
 /**
@@ -277,6 +272,10 @@ void SessionManagement::openSession(TerminalTab *t, QString sessionName)
 
         // Update Settings form with address
         settings->setAddress(s.value("Address").toString());
+
+        // Store name and description for later
+        this->sessionName = sessionName;
+        this->sessionDesc = s.value("Description").toString();
 
         // Update MRU entries
         emit sessionOpened("Session " + sessionName);

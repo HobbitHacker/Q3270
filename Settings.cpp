@@ -257,6 +257,9 @@ void Settings::setTerminalSize(int x, int y)
 
     terms[4].x = x;
     terms[4].y = y;
+
+    termX = x;
+    termY = y;
 }
 
 void Settings::changeFont(QFont newFont)
