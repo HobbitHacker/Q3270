@@ -42,17 +42,23 @@ DisplayScreen::DisplayScreen(int screen_x, int screen_y, ColourTheme::Colours co
 //            cell.replace(pos, new QGraphicsRectItem(0, 0, 1, 1));
             cell.at(pos)->setBrush(QBrush(Qt::red));
             cell.at(pos)->setPen(Qt::NoPen);
-            cell.at(pos)->setPos(x_pos, y_pos);
+            cell.at(pos)->setZValue(0);
 
-            glyph.replace(pos, new Glyph(x_pos, y_pos, cell.at(pos)));
+//            glyph.replace(pos, new Glyph(x_pos, y_pos, cell.at(pos)));
+            glyph.replace(pos, new Glyph(x, y, NULL));
             glyph.at(pos)->setFlag(QGraphicsItem::ItemIsSelectable);
+            glyph.at(pos)->setZValue(2);
 
             uscore.replace(pos, new QGraphicsLineItem(0, 0, gridSize_X, 0));
             uscore.at(pos)->setZValue(1);
-            uscore.at(pos)->setPos(x_pos, y_pos + gridSize_Y);
 
+            addItem(glyph.at(pos));
             addItem(uscore.at(pos));
             addItem(cell.at(pos));
+
+            cell.at(pos)->setPos(x_pos, y_pos);
+            glyph.at(pos)->setPos(x_pos, y_pos);
+            uscore.at(pos)->setPos(x_pos, y_pos + gridSize_Y);
         }
     }
 
@@ -161,7 +167,7 @@ void DisplayScreen::setFont(QFont font)
     {
         QFontMetricsF fm = QFontMetrics(font);
 //        QRectF boxRect = QRectF(0, 0, fm->maxWidth(), fm->lineSpacing() * 0.99);
-        QRectF charRect = fm.boundingRect("┼");
+//        QRectF charRect = fm.boundingRect("┼");
         QRectF boxRect = QRectF(0, 0, fm.horizontalAdvance("┼", 1), fm.height());
 /*
         printf("DisplayScreen   : boxRect    (┼) =  %f x %f at %f x %f\n", boxRect.width(), boxRect.height(), boxRect.x(), boxRect.y());
@@ -184,14 +190,10 @@ void DisplayScreen::setFont(QFont font)
         tr.scale(1,1);
     }
 
-
-    QPointF centre = glyph.at(0)->boundingRect().center();
-
     for (int i = 0; i < screenPos_max; i++)
     {
         glyph.at(i)->setFont(QFont(font));
         glyph.at(i)->setTransform(tr);
-        glyph.at(i)->setPos(centre);
     }
 }
 
