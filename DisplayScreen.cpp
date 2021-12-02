@@ -688,6 +688,22 @@ int DisplayScreen::resetFieldAttrs(int start)
     return lastField;
 }
 
+/* Reset all MDTs in the display; it's probably faster to just loop through the entire buffer
+ * rather than calling findNextField()
+ *
+ */
+void DisplayScreen::resetMDTs()
+{
+    for (int i = 0; i < screenPos_max; i++)
+    {
+        if (glyph.at(i)->isFieldStart() & glyph.at(i)->isMdtOn())
+        {
+            glyph.at(i)->setMDT(false);
+        }
+
+    }
+}
+
 
 bool DisplayScreen::insertChar(int pos, unsigned char c, bool insertMode)
 {
@@ -1117,7 +1133,7 @@ void DisplayScreen::getModifiedFields(QByteArray &buffer)
 
                     addPosToBuffer(buffer, nextPos);
 
-                    glyph.at(thisField)->setMDT(false);
+//                    glyph.at(thisField)->setMDT(false);
 
                     do
                     {

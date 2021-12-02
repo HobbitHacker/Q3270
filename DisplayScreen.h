@@ -40,6 +40,10 @@ class DisplayScreen : public QGraphicsScene
 
         void resetExtendedHilite(int pos);
         void resetExtended(int pos);
+        void resetCharAttr();
+        void resetColours();
+        int resetFieldAttrs(int start);
+        void resetMDTs();
 
         void setExtendedColour(int pos, bool foreground, unsigned char c);
         void setExtendedHilite(int pos);
@@ -55,8 +59,6 @@ class DisplayScreen : public QGraphicsScene
         int findNextUnprotectedField(int pos);
         int findPrevUnprotectedField(int pos);
 
-        void resetCharAttr();
-
         bool insertChar(int pos, unsigned char c, bool insertMode);
         void deleteChar(int pos);
         void eraseEOF(int pos);
@@ -66,7 +68,6 @@ class DisplayScreen : public QGraphicsScene
         void setCursor(int pos);
         void showCursor();
         void setFieldAttrs(int startPos);
-        int resetFieldAttrs(int start);
 
         unsigned char getChar(int pos);
 
@@ -77,7 +78,6 @@ class DisplayScreen : public QGraphicsScene
         void clear();
         void setFont(QFont font);
         void setColourPalette(ColourTheme::Colours c);
-        void resetColours();
         void setFontScaling(bool fontScaling);
 
         void toggleRuler();

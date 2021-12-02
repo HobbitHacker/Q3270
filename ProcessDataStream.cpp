@@ -235,6 +235,7 @@ void ProcessDataStream::processWCC()
             printf(",");
         }
         printf("reset MDT");
+        screen->resetMDTs();
     }
 
     if (restoreKeyboard)
