@@ -591,7 +591,7 @@ void DisplayScreen::setExtendedColour(int pos, bool foreground, unsigned char c)
 {
     //TODO: Default colour?
     glyph.at(pos)->setColour((ColourTheme::Colour)(c&7));
-    glyph.at(pos)->setReverse(!foreground);
+//    glyph.at(pos)->setReverse(!foreground);
     if(foreground)
     {
         printf(" %s]", colName[glyph.at(pos)->getColour()]);
@@ -657,7 +657,7 @@ int DisplayScreen::resetFieldAttrs(int start)
 
         glyph.at(offset)->setCharAttrs(false);
 
-        if (glyph.at(offset)->isDisplay())
+        if (glyph.at(offset)->isDisplay() & !glyph.at(offset)->isFieldStart())
         {
             if (glyph.at(offset)->isReverse())
             {
