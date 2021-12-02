@@ -541,7 +541,7 @@ void ProcessDataStream::processPT()
     {
         int i;
 
-        // Fill buffer will nulls until either the start of the next field or the end of the screen
+        // Fill buffer with nulls until either the start of the next field or the end of the screen
         for(i = nextField; i < screenSize && !screen->isFieldStart(i); i++)
         {
             screen->setChar(i, IBM3270_CHAR_NULL, false, false);
