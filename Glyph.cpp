@@ -14,7 +14,7 @@ QRectF Glyph::boundingRect() const
 
 void Glyph::setText(const QString text, unsigned char ebcdic, bool graphic)
 {
-    if (ebcdic == 0x00)
+    if (ebcdic == 0x00 || !isDisplay())
     {
         QGraphicsSimpleTextItem::setText(" ");
     }
