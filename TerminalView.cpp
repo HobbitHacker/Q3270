@@ -30,7 +30,7 @@ TerminalView::TerminalView()
 void TerminalView::resizeEvent(QResizeEvent *event)
 {
     fit();
-    QGraphicsView::resizeEvent(event);
+//    QGraphicsView::resizeEvent(event);
 }
 
 void TerminalView::setScaleFont(bool scale)

@@ -39,6 +39,7 @@ Settings::Settings(ColourTheme *colours, KeyboardTheme *keyboards, QWidget *pare
     rulerOn = false;
     ruler = DisplayScreen::CROSSHAIR;
 
+    // Default font
     termFont = QFont("ibm3270", 8);
 
     // Font scaling
@@ -75,6 +76,8 @@ Settings::Settings(ColourTheme *colours, KeyboardTheme *keyboards, QWidget *pare
     ui->terminalType->setEnabled(true);
 
     ui->cursorColour->setCheckState(cursorInherit == true ? Qt::Checked : Qt::Unchecked);
+
+    // TODO: "Enter" when displaying font selection causes font dialog to vanish from widget
 
     // Build a QFontDialog for use within our Settings dialog
     qfd = new QFontDialog();
@@ -267,6 +270,20 @@ void Settings::changeFont(QFont newFont)
     emit tempFontChange(newFont);
 }
 
+QString Settings::getCodePage()
+{
+    return cp.getCodePage();
+}
+
+void Settings::setCodePage(QString codepage)
+{
+    cp.setCodePage(codepage);
+}
+
+CodePage * Settings::codePage()
+{
+    return &cp;
+}
 
 void Settings::accept()
 {

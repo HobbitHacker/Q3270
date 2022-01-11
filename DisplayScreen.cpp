@@ -1,6 +1,6 @@
 #include "DisplayScreen.h"
 
-DisplayScreen::DisplayScreen(int screen_x, int screen_y, ColourTheme::Colours colours)
+DisplayScreen::DisplayScreen(int screen_x, int screen_y, ColourTheme::Colours colours, CodePage *cp)
 {
 
     palette = colours;
@@ -39,13 +39,11 @@ DisplayScreen::DisplayScreen(int screen_x, int screen_y, ColourTheme::Colours co
             qreal x_pos = x * gridSize_X;
 
             cell.replace(pos, new QGraphicsRectItem(0, 0, gridSize_X, gridSize_Y));
-//            cell.replace(pos, new QGraphicsRectItem(0, 0, 1, 1));
             cell.at(pos)->setBrush(QBrush(Qt::red));
             cell.at(pos)->setPen(Qt::NoPen);
             cell.at(pos)->setZValue(0);
 
-//            glyph.replace(pos, new Glyph(x_pos, y_pos, cell.at(pos)));
-            glyph.replace(pos, new Glyph(x, y, NULL));
+            glyph.replace(pos, new Glyph(x, y, cp, NULL));
             glyph.at(pos)->setFlag(QGraphicsItem::ItemIsSelectable);
             glyph.at(pos)->setZValue(2);
 
@@ -91,7 +89,7 @@ DisplayScreen::DisplayScreen(int screen_x, int screen_y, ColourTheme::Colours co
     crosshair_Y.hide();
 
     // Build status bar
-    int statusPos = (screen_y * gridSize_Y);
+    int statusPos = (screen_y * gridSize_Y + 2);
 
     statusBar.setLine(0, 0, screen_x * gridSize_X, 0);
     statusBar.setPos(0, statusPos++);
@@ -166,23 +164,7 @@ void DisplayScreen::setFont(QFont font)
     if (fontScaling)
     {
         QFontMetricsF fm = QFontMetrics(font);
-//        QRectF boxRect = QRectF(0, 0, fm->maxWidth(), fm->lineSpacing() * 0.99);
-//        QRectF charRect = fm.boundingRect("┼");
         QRectF boxRect = QRectF(0, 0, fm.horizontalAdvance("┼", 1), fm.height());
-/*
-        printf("DisplayScreen   : boxRect    (┼) =  %f x %f at %f x %f\n", boxRect.width(), boxRect.height(), boxRect.x(), boxRect.y());
-        printf("DisplayScreen   : charBounds (┼) =  %f x %f at %f x %f\n", charRect.width(), charRect.height(), charRect.x(), charRect.y());
-        printf("Font Width (┼)        : %f\n",fm.horizontalAdvance("┼"));
-        printf("Font Height (┼)       : %f\n",fm.height());
-        printf("Font Leading (┼)      : %f\n",fm.leading());
-        printf("Font Line Spacing (┼) : %f\n",fm.lineSpacing());
-        printf("Font Max Width        : %f\n", fm.maxWidth());
-        printf("Font Descent          : %f\n", fm.descent());
-        printf("Font Ascent           : %f\n", fm.ascent());
-        printf("Gridsize              : %f x %f\n", gridSize_X, gridSize_Y);
-
-        fflush(stdout);
-*/
         tr.scale(gridSize_X / boxRect.width(), gridSize_Y / boxRect.height());
     }
     else
@@ -237,13 +219,7 @@ void DisplayScreen::clear()
 {
     for(int i = 0; i < screenPos_max; i++)
     {
-        cell.at(i)->setBrush(palette[ColourTheme::BLACK]);
-
         uscore.at(i)->setVisible(false);
-
-        glyph.at(i)->setColour(ColourTheme::BLUE);
-        glyph.at(i)->setBrush(palette[ColourTheme::BLUE]);
-        glyph.at(i)->setText(0x00, 0x00, false);
 
         glyph.at(i)->setFieldStart(false);
 
@@ -259,7 +235,14 @@ void DisplayScreen::clear()
         glyph.at(i)->setReverse(false);
         glyph.at(i)->setBlink(false);
 
-        glyph.at(i)->setCharAttrs(false);
+        glyph.at(i)->resetCharAttrs();
+
+        cell.at(i)->setBrush(palette[ColourTheme::BLACK]);
+
+        glyph.at(i)->setColour(ColourTheme::BLUE);
+        glyph.at(i)->setBrush(palette[ColourTheme::BLUE]);
+        glyph.at(i)->setText(0x00);
+
     }
     resetCharAttr();
 
@@ -269,40 +252,60 @@ void DisplayScreen::clear()
 void DisplayScreen::setChar(int pos, short unsigned int c, bool move, bool fromKB)
 {
 
-    int lastField;
+    int lastField = findField(pos);
 
     if (glyph.at(pos)->isFieldStart())
     {
         glyph.at(pos)->setFieldStart(false);
-        lastField = resetFieldAttrs(pos);
-    }
-    else
-    {
-        lastField = findField(pos);
     }
 
-    glyph.at(pos)->setCharAttrs(false);
+    glyph.at(pos)->resetCharAttrs();
+
+    // Set character attribute flags if applicable
+    if (!fromKB && useCharAttr)
+    {
+        if (!charAttr.colour_default)
+        {
+            glyph.at(pos)->setCharAttrs(true, Glyph::CharAttr::COLOUR);
+        }
+        if (!charAttr.blink_default)
+        {
+            glyph.at(pos)->setCharAttrs(true, Glyph::CharAttr::EXTENDED);
+        }
+        if (!charAttr.reverse_default)
+        {
+            glyph.at(pos)->setCharAttrs(true, Glyph::CharAttr::EXTENDED);
+        }
+        if (!charAttr.uscore_default)
+        {
+            glyph.at(pos)->setCharAttrs(true, Glyph::CharAttr::EXTENDED);
+        }
+    }
+
+    // Non-display comes from field attribute
+    glyph.at(pos)->setDisplay(glyph.at(lastField)->isDisplay());
+
+    // Choose a graphic character if needed
+    glyph.at(pos)->setGraphic(geActive);
+
     if (!fromKB)
     {
-        glyph.at(pos)->setCharAttrs(useCharAttr);
-    }
-
-    if(!geActive)
-    {
-        glyph.at(pos)->setText(EBCDICtoASCIImap[c], c, false);
+        glyph.at(pos)->setText(c);
     }
     else
     {
-        glyph.at(pos)->setText(EBCDICtoASCIImapge[c], c, true);
-        geActive = false;
+        glyph.at(pos)->setTextFromKB(c);
     }
 
+    geActive = false;
+
+    // If the character is not moving (delete/insert action) set character attributes if applicable
     if (!move)
     {
-        if (glyph.at(pos)->hasCharAttrs())
+        // If character colour attributes are present, use them
+        if (glyph.at(pos)->hasCharAttrs(Glyph::CharAttr::COLOUR))
         {
-            // Set colour
-
+            // Colour
             if (!charAttr.colour_default)
             {
                 glyph.at(pos)->setColour(charAttr.colNum);
@@ -311,7 +314,14 @@ void DisplayScreen::setChar(int pos, short unsigned int c, bool move, bool fromK
             {
                 glyph.at(pos)->setColour(glyph.at(lastField)->getColour());
             }
+        }
+        else
+        {
+            glyph.at(pos)->setColour(glyph.at(lastField)->getColour());
+        }
 
+        if (glyph.at(pos)->hasCharAttrs(Glyph::CharAttr::EXTENDED))
+        {
             // Reverse video
             if (!charAttr.reverse_default)
             {
@@ -331,12 +341,22 @@ void DisplayScreen::setChar(int pos, short unsigned int c, bool move, bool fromK
             {
                 glyph.at(pos)->setUScore(glyph.at(lastField)->isUScore());
             }
+
+            // Blink
+            if (!charAttr.blink_default)
+            {
+                glyph.at(pos)->setBlink(charAttr.blink);
+            }
+            else
+            {
+                glyph.at(pos)->setBlink(glyph.at(lastField)->isBlink());
+            }
         }
         else
         {
             glyph.at(pos)->setUScore(glyph.at(lastField)->isUScore());
             glyph.at(pos)->setReverse(glyph.at(lastField)->isReverse());
-            glyph.at(pos)->setColour(glyph.at(lastField)->getColour());
+            glyph.at(pos)->setBlink(glyph.at(lastField)->isBlink());
         }
     }
 
@@ -445,7 +465,7 @@ void DisplayScreen::setCharAttr(unsigned char extendedType, unsigned char extend
                 charAttr.colour = palette[(ColourTheme::Colour)(extendedValue&7)];
                 charAttr.colNum = (ColourTheme::Colour)(extendedValue&7);
                 charAttr.colour_default = false;
-                printf("fg colour %s", colName[charAttr.colNum]);
+                printf("fg colour %s (extendedValue %02X)", colName[charAttr.colNum], extendedValue);
             }
             break;
         case IBM3270_EXT_BG_COLOUR:
@@ -487,6 +507,7 @@ void DisplayScreen::setGraphicEscape()
 
 void DisplayScreen::setField(int pos, unsigned char c, bool sfe)
 {
+    // Set field attribute flags
     glyph.at(pos)->setProtected((c>>5) & 1);
     glyph.at(pos)->setNumeric((c>>4) & 1);
     glyph.at(pos)->setDisplay((((c>>2)&3) != 3));
@@ -496,8 +517,10 @@ void DisplayScreen::setField(int pos, unsigned char c, bool sfe)
     glyph.at(pos)->setExtended(sfe);
     glyph.at(pos)->setFieldStart(true);
 
-    glyph.at(pos)->setCharAttrs(false);
+    // Field attributes do not have character attributes
+    glyph.at(pos)->resetCharAttrs();
 
+    // If it's not an Extended Field, set colours accordingly
     if (!sfe)
     {
         if (glyph.at(pos)->isProtected() && !glyph.at(pos)->isIntensify())
@@ -517,6 +540,8 @@ void DisplayScreen::setField(int pos, unsigned char c, bool sfe)
             glyph.at(pos)->setColour(ColourTheme::UNPROTECTED_INTENSIFIED); /* Unrprotected, Intensified (Red) */
         }
 
+        // If the display receives an SF order, it sets the associated extended
+        // field attribute to its default value.
         glyph.at(pos)->setUScore(false);
         glyph.at(pos)->setReverse(false);
         glyph.at(pos)->setBlink(false);
@@ -557,13 +582,14 @@ void DisplayScreen::setField(int pos, unsigned char c, bool sfe)
         attrs.append("mdt,");
     }
 
-//    qDebug() << attrs.chopped(attrs.length() - 1);
+    printf("%s", attrs.toLatin1().data());
+    fflush(stdout);
 
-    if (!sfe)
+/*    if (!sfe)
     {
         setFieldAttrs(pos);
     }
-
+*/
 }
 
 void DisplayScreen::resetExtended(int pos)
@@ -622,15 +648,16 @@ void DisplayScreen::setFieldAttrs(int start)
 {
     glyph.at(start)->setFieldStart(true);
 
-    resetFieldAttrs(start);
+    // resetFieldAttrs(start);
 
-    glyph.at(start)->setText(IBM3270_CHAR_NULL, IBM3270_CHAR_NULL, false);
+    glyph.at(start)->setText(IBM3270_CHAR_NULL);
     uscore.at(start)->setVisible(false);
 }
 
 
 int DisplayScreen::resetFieldAttrs(int start)
 {
+
     int lastField = findField(start);
 
     int endPos = start + screenPos_max;
@@ -655,7 +682,7 @@ int DisplayScreen::resetFieldAttrs(int start)
         glyph.at(offset)->setBlink(glyph.at(lastField)->isBlink());
         glyph.at(offset)->setReverse(glyph.at(lastField)->isReverse());
 
-        glyph.at(offset)->setCharAttrs(false);
+        glyph.at(offset)->resetCharAttrs();
 
         if (glyph.at(offset)->isDisplay() & !glyph.at(offset)->isFieldStart())
         {
@@ -688,6 +715,62 @@ int DisplayScreen::resetFieldAttrs(int start)
     return lastField;
 }
 
+void DisplayScreen::cascadeAttrs(int start)
+{
+    int endPos = start + screenPos_max;
+
+    for(int i = start; i < endPos; i++)
+    {
+        int offset = i % screenPos_max;
+
+        if (glyph.at(offset)->isFieldStart() && i > start)
+        {
+            return;
+        }
+
+        glyph.at(offset)->setProtected(glyph.at(start)->isProtected());
+        glyph.at(offset)->setMDT(glyph.at(start)->isMdtOn());
+        glyph.at(offset)->setNumeric(glyph.at(start)->isNumeric());
+        glyph.at(offset)->setPenSelect(glyph.at(start)->isPenSelect());
+        glyph.at(offset)->setDisplay(glyph.at(start)->isDisplay());
+
+        glyph.at(offset)->setColour(glyph.at(start)->getColour());
+        glyph.at(offset)->setUScore(glyph.at(start)->isUScore());
+        glyph.at(offset)->setBlink(glyph.at(start)->isBlink());
+        glyph.at(offset)->setReverse(glyph.at(start)->isReverse());
+
+        glyph.at(offset)->resetCharAttrs();
+
+        if (glyph.at(offset)->isDisplay() & !glyph.at(offset)->isFieldStart())
+        {
+            if (glyph.at(offset)->isReverse())
+            {
+                cell.at(offset)->setBrush(palette[glyph.at(offset)->getColour()]);
+                glyph.at(offset)->setBrush(palette[ColourTheme::BLACK]);
+            }
+            else
+            {
+                cell.at(offset)->setBrush(palette[ColourTheme::BLACK]);
+                glyph.at(offset)->setBrush(palette[glyph.at(offset)->getColour()]);
+            }
+            if (glyph.at(offset)->isUScore())
+            {
+                uscore.at(offset)->setPen(QPen(palette[glyph.at(offset)->getColour()],0));
+            }
+            else
+            {
+                uscore.at(offset)->setVisible(false);
+            }
+        }
+        else
+        {
+            cell.at(offset)->setBrush(palette[ColourTheme::BLACK]);
+            glyph.at(offset)->setBrush(palette[ColourTheme::BLACK]);
+        }
+    }
+
+}
+
 /* Reset all MDTs in the display; it's probably faster to just loop through the entire buffer
  * rather than calling findNextField()
  *
@@ -704,7 +787,15 @@ void DisplayScreen::resetMDTs()
     }
 }
 
-
+/**
+ * @brief DisplayScreen::insertChar
+ *        Inserts or overwrites a character at the specified position, resetting field attributes if
+ *        required.
+ * @param pos - position at which to insert character
+ * @param c - character to be inserted
+ * @param insertMode - true for insert, false for overtype
+ * @return true if insert was successful, false if field protected or not enough space for insert mode
+ */
 bool DisplayScreen::insertChar(int pos, unsigned char c, bool insertMode)
 {
     if (glyph.at(pos)->isProtected() || glyph.at(pos)->isFieldStart())
@@ -759,7 +850,10 @@ bool DisplayScreen::insertChar(int pos, unsigned char c, bool insertMode)
             glyph.at(offset)->setBlink(glyph.at(offsetPrev)->isBlink());
             glyph.at(offset)->setReverse(glyph.at(offsetPrev)->isReverse());
 
-            glyph.at(offset)->setCharAttrs(glyph.at(offsetPrev)->hasCharAttrs());
+            glyph.at(offset)->setCharAttrs(glyph.at(offsetPrev)->hasCharAttrs(Glyph::CharAttr::EXTENDED), Glyph::CharAttr::EXTENDED);
+            glyph.at(offset)->setCharAttrs(glyph.at(offsetPrev)->hasCharAttrs(Glyph::CharAttr::COLOUR), Glyph::CharAttr::COLOUR);
+            glyph.at(offset)->setCharAttrs(glyph.at(offsetPrev)->hasCharAttrs(Glyph::CharAttr::CHARSET), Glyph::CharAttr::CHARSET);
+            glyph.at(offset)->setCharAttrs(glyph.at(offsetPrev)->hasCharAttrs(Glyph::CharAttr::TRANSPARANCY), Glyph::CharAttr::TRANSPARANCY);
 
             geActive = glyph.at(offsetPrev)->isGraphic();
             setChar(offset, glyph.at(offsetPrev)->getEBCDIC(), true, false);
@@ -769,7 +863,7 @@ bool DisplayScreen::insertChar(int pos, unsigned char c, bool insertMode)
 
     glyph.at(thisField)->setMDT(true);
 
-    setChar(pos, ASCIItoEBCDICmap[c], false, true);
+    setChar(pos, c, false, true);
 
     return true;
 }
@@ -823,14 +917,17 @@ void DisplayScreen::deleteChar(int pos)
         glyph.at(offset)->setBlink(glyph.at(offsetNext)->isBlink());
         glyph.at(offset)->setReverse(glyph.at(offsetNext)->isReverse());
 
-        glyph.at(offset)->setCharAttrs(glyph.at(offsetNext)->hasCharAttrs());
+        glyph.at(offset)->setCharAttrs(glyph.at(offsetNext)->hasCharAttrs(Glyph::CharAttr::EXTENDED), Glyph::CharAttr::EXTENDED);
+        glyph.at(offset)->setCharAttrs(glyph.at(offsetNext)->hasCharAttrs(Glyph::CharAttr::COLOUR), Glyph::CharAttr::COLOUR);
+        glyph.at(offset)->setCharAttrs(glyph.at(offsetNext)->hasCharAttrs(Glyph::CharAttr::CHARSET), Glyph::CharAttr::CHARSET);
+        glyph.at(offset)->setCharAttrs(glyph.at(offsetNext)->hasCharAttrs(Glyph::CharAttr::TRANSPARANCY), Glyph::CharAttr::TRANSPARANCY);
 
         bool tmpGE = geActive;
         setChar(offset, glyph.at(offsetNext)->getEBCDIC(), true, false);
         geActive = tmpGE;
     }
 
-    glyph.at(endPos - 1)->setText(IBM3270_CHAR_NULL, IBM3270_CHAR_NULL, false);
+    glyph.at(endPos - 1)->setText(IBM3270_CHAR_NULL);
     glyph.at(findField(pos))->setMDT(true);
 }
 
@@ -846,7 +943,7 @@ void DisplayScreen::eraseEOF(int pos)
     /* Blank field */
     for(int i = pos; i < nextField; i++)
     {
-        glyph.at(i % screenPos_max)->setText(0x00, 0x00, false);
+        glyph.at(i % screenPos_max)->setText(0x00);
     }
 
     glyph.at(findField(pos))->setMDT(true);
@@ -873,7 +970,7 @@ void DisplayScreen::eraseUnprotected(int start, int end)
         }
         else
         {
-                glyph.at(i)->setText(" ", IBM3270_CHAR_SPACE, false);
+                glyph.at(i)->setText(IBM3270_CHAR_SPACE);
         }
     }
 }

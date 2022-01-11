@@ -150,6 +150,7 @@ class ProcessDataStream : public QObject
 
         int extractBufferAddress();
         void incPos();
+        void processFieldAttribute(uchar type, uchar value);
 
         void removeCursor();
         void addCursor();

@@ -6,8 +6,11 @@
 #include <QDebug>
 
 #include <QObject>
-#include <QTcpSocket>
+#include <QSslSocket>
 #include <QDataStream>
+
+#include <QSslConfiguration>
+#include <QSslCipher>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -33,7 +36,7 @@ class SocketConnection : public QObject
         void sendResponse(QByteArray &b);
 
     public slots:
-        void connectMainframe(const QHostAddress &address, quint16 port, QString luName, ProcessDataStream *d);
+        void connectMainframe(QString &address, quint16 port, QString luName, ProcessDataStream *d);
         void disconnectMainframe();
         void opened();
         void closed();
@@ -46,6 +49,8 @@ class SocketConnection : public QObject
 
     private slots:
         void onReadyRead();
+        void sslErrors(const QList<QSslError> &errors);
+        void socketStateChanged(QAbstractSocket::SocketState state);
 
     private:
 
@@ -70,6 +75,7 @@ class SocketConnection : public QObject
         bool tn3270e_Mode;
 
         TelnetState telnetState;
+//        QSslSocket *dataSocket;
         QTcpSocket *dataSocket;
         QDataStream dataStream;
         ProcessDataStream *displayDataStream;

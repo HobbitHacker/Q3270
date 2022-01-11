@@ -8,6 +8,7 @@
 #include "Keyboard.h"
 #include "Settings.h"
 #include "ColourTheme.h"
+#include "CodePage.h"
 
 #include <QSettings>
 #include <QHostInfo>
@@ -79,6 +80,7 @@ class TerminalTab : public QWidget
     private:
 
         Keyboard *kbd;
+        CodePage *cp;
 
         QGraphicsScene *gs;
 

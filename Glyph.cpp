@@ -1,10 +1,12 @@
 #include "Glyph.h"
 #include <QDebug>
 
-Glyph::Glyph(int x, int y, QGraphicsItem* parent) : QGraphicsSimpleTextItem(parent)
+Glyph::Glyph(int x, int y, CodePage *cp, QGraphicsItem* parent) : QGraphicsSimpleTextItem(parent)
 {
     pos_x = x;
     pos_y = y;
+
+    this->cp = cp;
 }
 
 QRectF Glyph::boundingRect() const
@@ -12,7 +14,7 @@ QRectF Glyph::boundingRect() const
     return QGraphicsSimpleTextItem::boundingRect();
 }
 
-void Glyph::setText(const QString text, unsigned char ebcdic, bool graphic)
+void Glyph::setText(uchar ebcdic)
 {
     if (ebcdic == 0x00 || !isDisplay())
     {
@@ -20,11 +22,63 @@ void Glyph::setText(const QString text, unsigned char ebcdic, bool graphic)
     }
     else
     {
-        QGraphicsSimpleTextItem::setText(text);
+        if (!graphic)
+        {
+            QGraphicsSimpleTextItem::setText(cp->getUnicodeChar(ebcdic));
+        }
+        else
+        {
+            QGraphicsSimpleTextItem::setText(cp->getUnicodeGraphicChar(ebcdic));
+        }
     }
 
-    this->graphic = graphic;
     this->ebcdic = ebcdic;
+}
+
+void Glyph::setTextFromKB(uchar ascii)
+{
+    setText(cp->getEBCDIC(ascii));
+}
+
+void Glyph::setCharAttrs(bool c, Glyph::CharAttr ca)
+{
+    switch(ca)
+    {
+        case EXTENDED:
+            charAttrExtended = c;
+            break;
+        case COLOUR:
+            charAttrColour = c;
+            break;
+        case CHARSET:
+            charAttrCharSet = c;
+            break;
+        case TRANSPARANCY:
+            charAttrTransparency = c;
+    }
+}
+
+bool Glyph::hasCharAttrs(Glyph::CharAttr ca)
+{
+    switch(ca)
+    {
+        case EXTENDED:
+            return charAttrExtended;
+        case COLOUR:
+            return charAttrColour;
+        case CHARSET:
+            return charAttrCharSet;
+        case TRANSPARANCY:
+            return charAttrTransparency;
+    }
+}
+
+void Glyph::resetCharAttrs()
+{
+    charAttrExtended     = false;
+    charAttrColour       = false;
+    charAttrCharSet      = false;
+    charAttrTransparency = false;
 }
 
 int Glyph::type() const

@@ -13,6 +13,7 @@
 #include "ColourTheme.h"
 #include "KeyboardTheme.h"
 #include "DisplayScreen.h"
+#include "CodePage.h"
 
 namespace Ui {
     class Settings;
@@ -44,6 +45,10 @@ class Settings : public QDialog
 
         QFont getFont();
         void setFont(QFont font);
+
+        QString getCodePage();
+        void setCodePage(QString codepage);
+        CodePage *codePage();
 
         ColourTheme::Colours getColours();
 
@@ -115,6 +120,8 @@ class Settings : public QDialog
 
         QString keyboardThemeName;
         KeyboardTheme::KeyboardMap keyboardTheme;
+
+        CodePage cp;
 
         QFont termFont;
         QFont qfdFont;

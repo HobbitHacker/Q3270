@@ -19,6 +19,7 @@ DEFINES += QT_DEPRECATED_WARNINGS \
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    CodePage.cpp \
     ColourTheme.cpp \
     DisplayScreen.cpp \
     Glyph.cpp \
@@ -34,6 +35,7 @@ SOURCES += \
     SocketConnection.cpp
 
 HEADERS += \
+    CodePage.h \
     ColourTheme.h \
     DisplayScreen.h \
     Glyph.h \

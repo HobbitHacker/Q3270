@@ -5,6 +5,7 @@ TerminalTab::TerminalTab(QVBoxLayout *layout, Settings *settings, ColourTheme *c
     // Create terminal display and keyboard objects
     view = new TerminalView();
     kbd = new Keyboard(view);
+    cp = new CodePage();
 
     // Save Themes and Settings objects
     this->colours = colours;
@@ -174,8 +175,8 @@ void TerminalTab::connectSession(QString host, int port, QString luName)
 {
     setWindowTitle(windowTitle().append(" [").append(host).append("]"));
 
-    screen[0] = new DisplayScreen(80, 24, settings->getColours());
-    screen[1] = new DisplayScreen(settings->getTermX(), settings->getTermY(), settings->getColours());
+    screen[0] = new DisplayScreen(80, 24, settings->getColours(), settings->codePage());
+    screen[1] = new DisplayScreen(settings->getTermX(), settings->getTermY(), settings->getColours(), settings->codePage());
 
     view->setScenes(screen[0], screen[1]);
     view->setAlternateScreen(false);
@@ -213,11 +214,7 @@ void TerminalTab::connectSession(QString host, int port, QString luName)
     view->setBlink(settings->getBlink());
     view->setBlinkSpeed(settings->getBlinkSpeed());
 
-    QHostInfo hi = QHostInfo::fromName(host);
-
-    //TODO clazy warnings
-    QList<QHostAddress> addresses = hi.addresses();
-    socket->connectMainframe(addresses.first(), port, luName, datastream);
+    socket->connectMainframe(host, port, luName, datastream);
 
     kbd->setMap();
 

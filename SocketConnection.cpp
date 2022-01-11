@@ -2,16 +2,17 @@
 
 SocketConnection::SocketConnection(QString termName)
 {
+//    dataSocket = new QSslSocket(this);
     dataSocket = new QTcpSocket(this);
 	telnetState = TELNET_STATE_DATA;
 
     this->termName = termName;
 	
     // Forward the connected and disconnected signals
-    connect(dataSocket, &QTcpSocket::connected, this, &SocketConnection::opened);
-    connect(dataSocket, &QTcpSocket::disconnected, this, &SocketConnection::closed);
+    connect(dataSocket, &QSslSocket::connected, this, &SocketConnection::opened);
+    connect(dataSocket, &QSslSocket::disconnected, this, &SocketConnection::closed);
 
-    connect(dataSocket, &QTcpSocket::readyRead, this, &SocketConnection::onReadyRead);
+    connect(dataSocket, &QSslSocket::readyRead, this, &SocketConnection::onReadyRead);
     // Forward the error signal, QOverload is necessary as error() is overloaded, see the Qt docs
 //    connect(dataSocket, QOverload<QAbstractSocket::SocketError>::of(&QAbstractSocket::errorOccurred), this, &SocketConnection::error);
 
@@ -20,8 +21,8 @@ SocketConnection::SocketConnection(QString termName)
 
 SocketConnection::~SocketConnection()
 {
-    disconnect(dataSocket, &QTcpSocket::disconnected, this, &SocketConnection::closed);
-    disconnect(dataSocket, &QTcpSocket::readyRead, this, &SocketConnection::onReadyRead);
+    disconnect(dataSocket, &QSslSocket::disconnected, this, &SocketConnection::closed);
+    disconnect(dataSocket, &QSslSocket::readyRead, this, &SocketConnection::onReadyRead);
 
     dataSocket->deleteLater();
 }
@@ -40,19 +41,49 @@ void SocketConnection::disconnectMainframe()
 {
 
     disconnect(displayDataStream, &ProcessDataStream::bufferReady, this, &SocketConnection::sendResponse);
-    disconnect(dataSocket, &QTcpSocket::readyRead, this, &SocketConnection::onReadyRead);
+    disconnect(dataSocket, &QSslSocket::readyRead, this, &SocketConnection::onReadyRead);
 
     dataSocket->disconnectFromHost();
 }
 
 
-void SocketConnection::connectMainframe(const QHostAddress &address, quint16 port, QString luName, ProcessDataStream *d)
+void SocketConnection::connectMainframe(QString &address, quint16 port, QString luName, ProcessDataStream *d)
 {
+/*    QList<QSslCipher> c = dataSocket->sslConfiguration().supportedCiphers();
+    for(int i=0; i<c.size();i++)
+    {
+        qDebug() << c.at(i);
+    }
+    connect(dataSocket, &QSslSocket::stateChanged, this, &SocketConnection::socketStateChanged);
+    connect(dataSocket, QOverload<const QList<QSslError> &>::of(&QSslSocket::sslErrors), this, &SocketConnection::sslErrors);
+    dataSocket->connectToHostEncrypted(address, port);
+    disconnect(dataSocket, QOverload<const QList<QSslError> &>::of(&QSslSocket::sslErrors), this, &SocketConnection::sslErrors);*/
     dataSocket->connectToHost(address, port);
     displayDataStream = d;
     connect(displayDataStream, &ProcessDataStream::bufferReady, this, &SocketConnection::sendResponse);
     this->luName = luName;
 }
+
+void SocketConnection::sslErrors(const QList<QSslError> &errors)
+{
+    for(int i = 0; i < errors.size(); i++)
+    {
+        qDebug() << errors.at(i);
+    }
+}
+
+void SocketConnection::socketStateChanged(QAbstractSocket::SocketState state)
+{
+/*    qDebug() << state;
+
+    QList<QSslError> e = dataSocket->sslHandshakeErrors();
+
+    for(int i = 0; i < e.size(); i++)
+    {
+        qDebug() << e.at(i);
+    }*/
+}
+
 
 void SocketConnection::onReadyRead()
 {

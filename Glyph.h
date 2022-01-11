@@ -9,6 +9,7 @@
 
 #include "Q3270.h"
 #include "ColourTheme.h"
+#include "CodePage.h"
 
 class Glyph : public QObject, public QGraphicsSimpleTextItem
 {
@@ -17,16 +18,26 @@ class Glyph : public QObject, public QGraphicsSimpleTextItem
 
     public:
 
-        Glyph(int x, int y, QGraphicsItem* parent);
+    Glyph(int x, int y, CodePage *cp, QGraphicsItem* parent);
         QRectF boundingRect() const;
 
 //        void paint(QPainter *p, const QStyleOptionGraphicsItem *o, QWidget *w = 0);
 
         enum { Type = UserType + 1 };
 
+        // Attributes that may have character-specific attributes
+        enum CharAttr
+        {
+            EXTENDED,
+            COLOUR,
+            CHARSET,
+            TRANSPARANCY
+        };
+
         int type() const;
 
-        void setText(const QString text, uchar ebcdic, bool graphic);
+        void setText(uchar ebcdic);
+        void setTextFromKB(uchar ascii);
 
         // Getters, inline for speed
         inline uchar getEBCDIC()                        { return ebcdic; };
@@ -48,7 +59,7 @@ class Glyph : public QObject, public QGraphicsSimpleTextItem
         inline bool isReverse()                         { return reverse; };
         inline bool isBlink()                           { return blink; };
 
-        inline bool hasCharAttrs()                      { return charAttr; };
+        bool hasCharAttrs(Glyph::CharAttr ca);
 
         // Setters, inline for speed
         inline void setColour(ColourTheme::Colour c)    { colNum = c; };
@@ -65,13 +76,17 @@ class Glyph : public QObject, public QGraphicsSimpleTextItem
         inline void setReverse(bool r)                  { reverse = r; };
         inline void setBlink(bool b)                    { blink = b; };
 
-        inline void setCharAttrs(bool c)                { charAttr = c; };
+        void setCharAttrs(bool c, Glyph::CharAttr ca);
+        void resetCharAttrs();
 
     private:
 
         // X & Y screen position
         int pos_x;
         int pos_y;
+
+        // Codepage
+        CodePage *cp;
 
         // EBCDIC code for this character
         uchar ebcdic;
@@ -96,8 +111,11 @@ class Glyph : public QObject, public QGraphicsSimpleTextItem
         bool reverse;
         bool blink;
 
-        /* Character Attribute in effect */
-        bool charAttr;
+        /* Character Attributes in effect */
+        bool charAttrExtended;
+        bool charAttrColour;
+        bool charAttrCharSet;
+        bool charAttrTransparency;
 
         // Colour of glyph
         ColourTheme::Colour colNum;
