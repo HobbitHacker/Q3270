@@ -94,6 +94,7 @@ class DisplayScreen : public QGraphicsScene
 
         void dumpFields();
         void dumpDisplay();
+        void dumpInfo(int pos);
 
     public slots:
 

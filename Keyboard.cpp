@@ -84,6 +84,7 @@ void Keyboard::setMap()
 
     functionMap.insert("Copy",&Keyboard::copy);
     functionMap.insert("Paste",&Keyboard::paste);
+    functionMap.insert("Info", &Keyboard::info);
 
     functionMap.insert("Blah", &Keyboard::unlockKeyboard);
 
@@ -639,6 +640,11 @@ void Keyboard::paste()
     }
 }
 
+void Keyboard::info()
+{
+    datastream->showInfo();
+}
+
 void Keyboard::setMapping(QString key, QString function)
 {
     int keyCode;
@@ -777,6 +783,7 @@ void Keyboard::setFactoryMaps()
 
     setMapping("Ctrl+C", "Copy");
     setMapping("Ctrl+V", "Paste");
+    setMapping("Ctrl+I", "Info");
 }
 
 void Keyboard::ruler()

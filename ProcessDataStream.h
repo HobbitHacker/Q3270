@@ -64,6 +64,7 @@ class ProcessDataStream : public QObject
         void backspace();
 
         void showFields();
+        void showInfo();
 
         void resetMDTs();
 

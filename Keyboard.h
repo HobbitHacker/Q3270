@@ -142,6 +142,7 @@ class Keyboard : public QObject
 
         void copy();
         void paste();
+        void info();
 
         void nextKey();
         bool needtoWait(QKeyEvent *q);

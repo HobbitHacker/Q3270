@@ -259,6 +259,8 @@ void ProcessDataStream::processWCC()
     }
     printf("]");
 
+    screen->resetCharAttr();
+
     lastWasCmd = true;
 }
 
@@ -1297,6 +1299,12 @@ void ProcessDataStream::toggleRuler()
 {
     screen->toggleRuler();
     screen->drawRuler(cursor_x, cursor_y);
+}
+
+
+void ProcessDataStream::showInfo()
+{
+    screen->dumpInfo(cursor_pos);
 }
 
 void ProcessDataStream::processAID(int aid, bool shortRead)

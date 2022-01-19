@@ -252,12 +252,9 @@ void DisplayScreen::clear()
 void DisplayScreen::setChar(int pos, short unsigned int c, bool move, bool fromKB)
 {
 
-    int lastField = findField(pos);
+    glyph.at(pos)->setFieldStart(false);
 
-    if (glyph.at(pos)->isFieldStart())
-    {
-        glyph.at(pos)->setFieldStart(false);
-    }
+    int lastField = findField(pos);
 
     glyph.at(pos)->resetCharAttrs();
 
@@ -284,6 +281,9 @@ void DisplayScreen::setChar(int pos, short unsigned int c, bool move, bool fromK
 
     // Non-display comes from field attribute
     glyph.at(pos)->setDisplay(glyph.at(lastField)->isDisplay());
+
+    // Protected comes from the field attribute
+    glyph.at(pos)->setProtected(glyph.at(lastField)->isProtected());
 
     // Choose a graphic character if needed
     glyph.at(pos)->setGraphic(geActive);
@@ -498,6 +498,8 @@ void DisplayScreen::resetCharAttr()
     charAttr.reverse_default = true;
     charAttr.uscore_default = true;
     charAttr.colour_default = true;
+
+    useCharAttr = false;
 }
 
 void DisplayScreen::setGraphicEscape()
@@ -1333,6 +1335,36 @@ void DisplayScreen::dumpDisplay()
 
     printf("\n---- SCREEN ----\n");
     fflush(stdout);
+}
+
+void DisplayScreen::dumpInfo(int pos)
+{
+    int y = pos / screen_x;
+    int x = pos - y * screen_x;
+    printf("\nCell at %d (%d, %d)\n", pos, x, y);
+    printf("    Character: %s (hex %2.2X EBCDIC %2.2X)", glyph.at(pos)->text().toLatin1().data(),glyph.at(pos)->text().toLatin1().at(0),glyph.at(pos)->getEBCDIC());
+    printf("    Field : %d\n    MDT: %d\n    Protected: %d\n    Numeric: %d\n    Autoskip: %d\n    Display: %d\n",
+                glyph.at(pos)->isFieldStart(),
+                glyph.at(pos)->isMdtOn(),
+                glyph.at(pos)->isProtected(),
+                glyph.at(pos)->isNumeric(),
+                glyph.at(pos)->isAutoSkip(),
+                glyph.at(pos)->isDisplay());
+    printf("    Extended: %d\n    Intensify: %d\n    UScore: %d\n    Reverse: %d\n    Blink: %d\n",
+                glyph.at(pos)->isExtended(),
+                glyph.at(pos)->isIntensify(),
+                glyph.at(pos)->isUScore(),
+                glyph.at(pos)->isReverse(),
+                glyph.at(pos)->isBlink());
+    printf("    Character Attributes: Extended %d CharSet %d Colour %d\n    Colour: %d\n    Graphic: %d\n",
+                glyph.at(pos)->hasCharAttrs(Glyph::EXTENDED),
+                glyph.at(pos)->hasCharAttrs(Glyph::CHARSET),
+                glyph.at(pos)->hasCharAttrs(Glyph::COLOUR),
+                glyph.at(pos)->getColour(),
+                glyph.at(pos)->isGraphic());
+
+    fflush(stdout);
+
 }
 
 void DisplayScreen::getScreen(QByteArray &buffer)
