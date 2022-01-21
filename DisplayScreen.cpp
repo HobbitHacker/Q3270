@@ -1214,6 +1214,12 @@ int DisplayScreen::findPrevUnprotectedField(int pos)
     return pos - 1;
 }
 
+
+/**
+ *  @brief DisplayScreen::getModifiedFields
+ *         Utility method to extract all modified fields from the screen and add them to the provided buffer
+ *  @param buffer - address of a QByteArray to which the modified fields are appended
+ */
 void DisplayScreen::getModifiedFields(QByteArray &buffer)
 {
     for(int i = 0; i < screenPos_max; i++)
@@ -1232,8 +1238,6 @@ void DisplayScreen::getModifiedFields(QByteArray &buffer)
 
                     addPosToBuffer(buffer, nextPos);
 
-//                    glyph.at(thisField)->setMDT(false);
-
                     do
                     {
                         uchar b = glyph.at(thisField++)->getEBCDIC();
@@ -1242,6 +1246,13 @@ void DisplayScreen::getModifiedFields(QByteArray &buffer)
                             buffer.append(b);
                         }
                         thisField = thisField % screenPos_max;
+                        //FIXME: Not sure this is right. This was a quick hack to cater for there being only one unprotected
+                        //       field on the screen.
+                        if (thisField == i)
+                        {
+                            printf("Wrapped!");
+                            return;
+                        }
                     }
                     while(!glyph.at(thisField)->isFieldStart());
                 }
