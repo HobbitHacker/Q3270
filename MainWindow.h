@@ -96,6 +96,7 @@ class MainWindow : public QMainWindow
       KeyboardTheme *keyboardTheme;
       SessionManagement *sm;
       Settings *settings;
+      CodePage *codePage;
 
       int maxMruCount;
 

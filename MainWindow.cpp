@@ -53,8 +53,11 @@ MainWindow::MainWindow(MainWindow::Session s) : QMainWindow(nullptr), ui(new(Ui:
     // Keyboard theme dialog
     keyboardTheme = new KeyboardTheme();
 
+    // Codepages
+    codePage = new CodePage();
+
     // Create Settings object
-    settings = new Settings(colourTheme, keyboardTheme);
+    settings = new Settings(colourTheme, keyboardTheme, codePage);
 
     // Session Management dialog
     sm = new SessionManagement(settings);
@@ -69,7 +72,7 @@ MainWindow::MainWindow(MainWindow::Session s) : QMainWindow(nullptr), ui(new(Ui:
     ui->actionDisconnect->setDisabled(true);
     ui->actionConnect->setDisabled(true);
 
-    terminal = new TerminalTab(ui->terminalLayout, settings, colourTheme, keyboardTheme, s.session);
+    terminal = new TerminalTab(ui->terminalLayout, settings, colourTheme, keyboardTheme, codePage, s.session);
 
     // Refresh menu entries if connected/disconnected
     connect(terminal, &TerminalTab::disconnected, this, &MainWindow::disableDisconnectMenu);

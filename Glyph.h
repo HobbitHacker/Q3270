@@ -79,6 +79,8 @@ class Glyph : public QObject, public QGraphicsSimpleTextItem
         void setCharAttrs(bool c, Glyph::CharAttr ca);
         void resetCharAttrs();
 
+        void refreshCodePage();
+
     private:
 
         // X & Y screen position

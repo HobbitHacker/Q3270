@@ -104,6 +104,7 @@ class DisplayScreen : public QGraphicsScene
         void showStatusCursorPosition(int x,int y);
         void setStatusInsert(bool ins);
         void setCursorColour(bool inherit);
+        void setCodePage();
 
     private:
 

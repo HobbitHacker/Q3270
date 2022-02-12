@@ -21,7 +21,7 @@ class TerminalTab : public QWidget
     Q_OBJECT
 
     public:
-        TerminalTab(QVBoxLayout *v, Settings *settings, ColourTheme *colours, KeyboardTheme *keyboards, QString sessionName);
+        TerminalTab(QVBoxLayout *v, Settings *settings, ColourTheme *colours, KeyboardTheme *keyboards, CodePage *cp, QString sessionName);
         ~TerminalTab();
 
         void openConnection(QString host, int port, QString luName);

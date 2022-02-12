@@ -52,6 +52,7 @@ class TerminalView : public QGraphicsView
     public slots:
 
         void setStretch(bool stretch);
+        void changeCodePage();
 
     private slots:
 

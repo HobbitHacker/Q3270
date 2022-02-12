@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>607</width>
-    <height>396</height>
+    <width>679</width>
+    <height>549</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -138,7 +138,6 @@
                <widget class="QLabel" name="label_7">
                 <property name="font">
                  <font>
-                  <weight>75</weight>
                   <bold>true</bold>
                  </font>
                 </property>
@@ -183,7 +182,6 @@
                <widget class="QLabel" name="label_5">
                 <property name="font">
                  <font>
-                  <weight>75</weight>
                   <bold>true</bold>
                  </font>
                 </property>
@@ -253,6 +251,21 @@
                  <string>Stretch screen to fit window</string>
                 </property>
                </widget>
+              </item>
+              <item>
+               <widget class="QLabel" name="label_26">
+                <property name="font">
+                 <font>
+                  <bold>true</bold>
+                 </font>
+                </property>
+                <property name="text">
+                 <string>Terminal Code Page</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QComboBox" name="CodePages"/>
               </item>
               <item>
                <spacer name="verticalSpacer">

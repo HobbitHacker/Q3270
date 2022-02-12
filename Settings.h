@@ -25,7 +25,7 @@ class Settings : public QDialog
 
     public:
 
-        explicit Settings(ColourTheme *colours, KeyboardTheme *keyboards, QWidget *parent = nullptr);
+        explicit Settings(ColourTheme *colours, KeyboardTheme *keyboards, CodePage *codepage, QWidget *parent = nullptr);
         ~Settings();
 
         void showForm(bool connected);
@@ -85,6 +85,7 @@ class Settings : public QDialog
         void tempFontChange(QFont f);
         void setCursorColour(bool inherit);
         void setStretch(bool stretch);
+        void codePageChanged();
 
         void rulerChanged(bool showRuler);
         void rulerStyle(DisplayScreen::RulerStyle r);
@@ -114,14 +115,13 @@ class Settings : public QDialog
 
         ColourTheme *colours;
         KeyboardTheme *keyboards;
+        CodePage *codepage;
 
         QString colourThemeName;
         ColourTheme::Colours colourTheme;
 
         QString keyboardThemeName;
         KeyboardTheme::KeyboardMap keyboardTheme;
-
-        CodePage cp;
 
         QFont termFont;
         QFont qfdFont;
@@ -148,10 +148,12 @@ class Settings : public QDialog
         bool stretchScreen;                 // Whether to stretch the 3270 screen to fit the window
         bool backSpaceStop;                 // Whether backspace stops at the field start position
         bool rulerOn;                       // Whether crosshairs are shown
+
         DisplayScreen::RulerStyle ruler;    // Style of crosshairs
 
         bool colourThemeChangeFlag;
         bool keyboardThemeChangeFlag;
+        int formCodePage;
 
         struct termTypes
         {

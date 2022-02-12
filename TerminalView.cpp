@@ -131,6 +131,13 @@ int TerminalView::getBlinkSpeed()
     return blinkSpeed;
 }
 
+void TerminalView::changeCodePage()
+{
+    if (connected)
+        current->setCodePage();
+    }
+
+
 void TerminalView::clearSelection()
 {
     if (selection.count() > 0)

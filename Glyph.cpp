@@ -35,6 +35,11 @@ void Glyph::setText(uchar ebcdic)
     this->ebcdic = ebcdic;
 }
 
+void Glyph::refreshCodePage()
+{
+    setText(ebcdic);
+}
+
 void Glyph::setTextFromKB(uchar ascii)
 {
     setText(cp->getEBCDIC(ascii));
@@ -71,6 +76,9 @@ bool Glyph::hasCharAttrs(Glyph::CharAttr ca)
         case TRANSPARANCY:
             return charAttrTransparency;
     }
+
+    //TODO: Should never happen, so throw an exception
+    return false;
 }
 
 void Glyph::resetCharAttrs()

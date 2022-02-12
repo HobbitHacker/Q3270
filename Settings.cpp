@@ -2,7 +2,7 @@
 #include "ui_Settings.h"
 #include "Settings.h"
 
-Settings::Settings(ColourTheme *colours, KeyboardTheme *keyboards, QWidget *parent) : QDialog(parent), ui(new Ui::Settings)
+Settings::Settings(ColourTheme *colours, KeyboardTheme *keyboards, CodePage *codepage, QWidget *parent) : QDialog(parent), ui(new Ui::Settings)
 {
     ui->setupUi(this);
     ui->TabsWidget->setCurrentIndex(0);
@@ -12,6 +12,7 @@ Settings::Settings(ColourTheme *colours, KeyboardTheme *keyboards, QWidget *pare
     // Store theme dialogs
     this->colours = colours;
     this->keyboards = keyboards;
+    this->codepage = codepage;
 
     // Set up vector to coordinate combox box for crosshair types
     comboRulerStyle.insert("Crosshairs", DisplayScreen::RulerStyle::CROSSHAIR);
@@ -85,6 +86,9 @@ Settings::Settings(ColourTheme *colours, KeyboardTheme *keyboards, QWidget *pare
     qfd->setOption(QFontDialog::NoButtons);
     qfd->setOption(QFontDialog::DontUseNativeDialog);
 
+    // Populate code page list
+    ui->CodePages->addItems(codepage->getCodePageList().keys());
+
 //    connect(qfd, &QFontDialog::currentFontChanged, this, &Settings::fontChanged);
 
     ui->verticalLayout_5->addWidget(qfd);
@@ -129,6 +133,9 @@ void Settings::showForm(bool connected)
 
     populateColourThemeNames();
     populateKeyboardThemeNames();
+
+    ui->CodePages->setCurrentIndex(ui->CodePages->findText(codepage->getCodePage()));
+    formCodePage = ui->CodePages->currentIndex();
 
     this->exec();
 }
@@ -188,6 +195,10 @@ QString Settings::getAddress()
     }
 }
 
+CodePage* Settings::codePage()
+{
+    return codepage;
+}
 
 
 void Settings::setTerminalModel(int model)
@@ -270,21 +281,6 @@ void Settings::changeFont(QFont newFont)
     emit tempFontChange(newFont);
 }
 
-QString Settings::getCodePage()
-{
-    return cp.getCodePage();
-}
-
-void Settings::setCodePage(QString codepage)
-{
-    cp.setCodePage(codepage);
-}
-
-CodePage * Settings::codePage()
-{
-    return &cp;
-}
-
 void Settings::accept()
 {
 
@@ -362,6 +358,12 @@ void Settings::accept()
         cursorInherit = ui->cursorColour->QAbstractButton::isChecked();
 
         emit setCursorColour(cursorInherit);
+    }
+
+    if (ui->CodePages->currentIndex() != formCodePage)
+    {
+        codepage->setCodePage(ui->CodePages->currentText());
+        emit codePageChanged();
     }
 
     if (!hostName.isEmpty())

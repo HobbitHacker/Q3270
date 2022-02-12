@@ -1,31 +1,55 @@
 #include "CodePage.h"
 
-CodePage::CodePage(int cp)
+CodePage::CodePage()
 {
-    currentCodePage = 037;
+    // Set default to IBM--037
+    setCodePage("IBM-037");
 }
 
 QString CodePage::getUnicodeChar(uchar ebcdic)
 {
-    return cp037[ebcdic];
+    return cpList[currentCodePage].fromEBCDIC[ebcdic];
 }
 
 QString CodePage::getUnicodeGraphicChar(uchar ebcdic)
 {
-    return cp310[ebcdic];
+    // GE characters are from the first code page; hard code the return source
+    return cpList[0].fromEBCDIC[ebcdic];
 }
 
 uchar CodePage::getEBCDIC(uchar ascii)
 {
-    return ASCIItoCP037[ascii];
+    return cpList[currentCodePage].toEBCDIC[ascii];
 }
 
 void CodePage::setCodePage(QString codepage)
 {
-
+    for(int i = 0; i < CODEPAGE_COUNT; i++)
+    {
+        if (cpList[i].displayName == codepage)
+        {
+            currentCodePage = i;
+            return;
+        }
+    }
 }
 
 QString CodePage::getCodePage()
 {
-    return "IBM-037";
+    return cpList[currentCodePage].displayName;
+}
+
+QMap<QString, QString> CodePage::getCodePageList()
+{
+    QMap<QString, QString> cl;
+
+    for(int i = 0; i < CODEPAGE_COUNT; i++)
+    {
+        if (cpList[i].selectable)
+        {
+            cl.insert(cpList[i].displayName, cpList[i].cpName);
+        }
+    }
+
+    return cl;
 }

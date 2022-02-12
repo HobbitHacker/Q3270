@@ -179,6 +179,14 @@ void DisplayScreen::setFont(QFont font)
     }
 }
 
+void DisplayScreen::setCodePage()
+{
+    for (int i = 0; i < screenPos_max; i++)
+    {
+        glyph.at(i)->refreshCodePage();
+    }
+}
+
 void DisplayScreen::setColourPalette(ColourTheme::Colours c)
 {
     palette = c;
