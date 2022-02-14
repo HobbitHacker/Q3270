@@ -166,6 +166,7 @@ void SessionManagement::saveSettings()
     s.setValue("FontStyle", settings->getFontScaling());
     s.setValue("FontScaling", settings->getFontScaling());
     s.setValue("ScreenStretch", settings->getStretch());
+    s.setValue("Codepage",settings->getCodePage());
 
     // End group for session
     s.endGroup();
@@ -246,6 +247,7 @@ void SessionManagement::openSession(TerminalTab *t, QString sessionName)
         // Set terminal characteristics
         settings->setTerminalModel(s.value("TerminalModel").toString());
         settings->setTerminalSize(s.value("TerminalX").toInt(), s.value("TerminalY").toInt());
+        settings->setCodePage(s.value("Codepage").toString());
 
         // Cursor settings
         settings->setBlink(s.value("CursorBlink").toBool());

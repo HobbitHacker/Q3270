@@ -4,6 +4,15 @@
 #include <QString>
 #include <QMap>
 
+/**
+ * @brief The CodePage class
+ *
+ * @details This class is used to convert from EBCDIC to a Unicode character, or from an entered keyboard character
+ *          to EBCDIC.
+ *
+ *          It's probably not the best way to do it, but it works.
+ */
+
 class CodePage
 {
 public:
