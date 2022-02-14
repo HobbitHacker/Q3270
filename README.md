@@ -7,5 +7,7 @@ Aimed at the IBM mainframe (MVS, OS/390, z/OS, VM, zVM, call it what you will), 
 program is intended to be used to access computers running those operating systems, 
 via the TN3270 protocol.
 
-It's (yet) as feature rich as other emulators, but it is (in my limited cases) usuable for
+It's not (yet) as feature rich as other emulators, but it is (in my limited cases) usuable for
 things like MVS 3.8j under Hercules. 
+
+I've used it for at least MVS 3.8j and VM/370.
