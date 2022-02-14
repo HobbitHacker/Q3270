@@ -70,3 +70,6 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 
 RESOURCES += \
     Q3270.qrc
+
+DISTFILES += \
+    README.md
