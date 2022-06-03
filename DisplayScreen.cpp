@@ -819,6 +819,34 @@ bool DisplayScreen::insertChar(int pos, unsigned char c, bool insertMode)
 
     if (insertMode)
     {
+        /** TODO:
+         *
+         *  Insert only works when there is a null character in the field. If the field
+         *  contains spaces, they don't count. The code below searches for the first null
+         *  in the field, allowing the insert to happen only if it finds one.
+         *
+         *  There is some initial code here to check the last character of a field to see
+         *  if it's a space or a null (in which case, the insert could succeed).
+         *
+         *  x3270 has an option for 'blank fill' which allows a space at the end of field
+         *  to be lost when inserting characters; otherwise there must be a null.
+         *
+         *  What happens when there is a null in the middle of a field, but characters to
+         *  the right? Theoretically, when an insert operation happens, the characters to
+         *  the right of the insert point are moved to occupy the null (which is lost) and the
+         *  characters to the right of the null remain in situ. This might be overthinking it!
+         *
+         *  Perhaps this should be broken into two tests - if the last char is a null, insert;
+         *  If the option to 'blank fill' is enabled, if the last char is a space, insert
+         *  otherwise it's overflow.
+         **/
+        int nextField = findNextField(pos);
+        printf("This Field at: %d,%d, next field at %d,%d - last byte of this field %02X\n", (int)(thisField/screen_x), (int)(thisField-((int)(thisField/screen_x)*screen_x)), (int)(nextField/screen_x), (int)(nextField-((int)(nextField/screen_x)*screen_x)), glyph.at(nextField - 1)->getEBCDIC() );
+        uchar lastChar = glyph.at(nextField - 1)->getEBCDIC();
+        if (lastChar != IBM3270_CHAR_NULL && lastChar != IBM3270_CHAR_SPACE)
+        {
+            // Insert not okay
+        }
         int endPos = -1;
         for(int i = pos; i < (pos + screenPos_max); i++)
         {
@@ -855,11 +883,14 @@ bool DisplayScreen::insertChar(int pos, unsigned char c, bool insertMode)
             glyph.at(offset)->setPenSelect(glyph.at(offsetPrev)->isPenSelect());
             glyph.at(offset)->setDisplay(glyph.at(offsetPrev)->isDisplay());
 
+            /* NOTE: These should already have been set for the entire field. Not convinced they
+             * need to move.. */
             glyph.at(offset)->setColour(glyph.at(offsetPrev)->getColour());
             glyph.at(offset)->setUScore(glyph.at(offsetPrev)->isUScore());
             glyph.at(offset)->setBlink(glyph.at(offsetPrev)->isBlink());
             glyph.at(offset)->setReverse(glyph.at(offsetPrev)->isReverse());
 
+            /* Character attributes move with the insert */
             glyph.at(offset)->setCharAttrs(glyph.at(offsetPrev)->hasCharAttrs(Glyph::CharAttr::EXTENDED), Glyph::CharAttr::EXTENDED);
             glyph.at(offset)->setCharAttrs(glyph.at(offsetPrev)->hasCharAttrs(Glyph::CharAttr::COLOUR), Glyph::CharAttr::COLOUR);
             glyph.at(offset)->setCharAttrs(glyph.at(offsetPrev)->hasCharAttrs(Glyph::CharAttr::CHARSET), Glyph::CharAttr::CHARSET);
