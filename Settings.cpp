@@ -447,6 +447,17 @@ ColourTheme::Colours Settings::getColours()
     return colourTheme;
 }
 
+QString Settings::getCodePage()
+{
+    return codepage->getCodePage();
+}
+
+void Settings::setCodePage(QString codepage)
+{
+    this->codepage->setCodePage(codepage);
+    emit codePageChanged();
+}
+
 void Settings::colourThemeChanged(int index)
 {
     colourThemeName = ui->colourTheme->currentText();
