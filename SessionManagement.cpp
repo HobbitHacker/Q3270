@@ -267,7 +267,7 @@ void SessionManagement::openSession(TerminalTab *t, QString sessionName)
         settings->setFont(f);
 
         settings->setFontScaling(s.value("FontScaling").toBool());
-        settings->setStretch(s.value("ScreenStretch").toBool());
+        emit settings->setStretch(s.value("ScreenStretch").toBool());
 
         t->openConnection(s.value("Address").toString());
         t->setSessionName(sessionName);
@@ -317,6 +317,9 @@ void SessionManagement::manageSessions()
     connect(manage->deleteSession, &QPushButton::clicked, this, &SessionManagement::deleteSession);
     connect(manage->sessionList, &QTableWidget::cellClicked, this, &SessionManagement::manageRowClicked);
     connect(manage->buttonManageAutoStart, &QPushButton::clicked, this, &SessionManagement::manageAutoStartList);
+
+    // Signal when a new row is added to the autostart list
+    connect(this, &SessionManagement::autoStartAddToList, this, &SessionManagement::autoStartRowAdded);
 
     if (m.exec() == QDialog::Accepted)
     {
@@ -383,7 +386,7 @@ void SessionManagement::manageAutoStartList()
     int ac = settings.beginReadArray("AutoStart");
 
     // Clear the dialog table
-    autostart->sessionList->setRowCount(0);
+    autostart->sessionList->clearContents();
 
     for (int i = 0;i < ac; i++)
     {
@@ -414,9 +417,6 @@ void SessionManagement::manageAutoStartList()
     connect(autostart->addButton, &QPushButton::clicked, this, &SessionManagement::addAutoStart);
     connect(autostart->deleteButton, &QPushButton::clicked, this, &SessionManagement::deleteAutoStart);
 
-    // Signal when a new row is added to the autostart list
-    connect(this, &SessionManagement::autoStartAddToList, this, &SessionManagement::autoStartRowAdded);
-
     // Process dialog
     if (a.exec() == QDialog::Accepted)
     {
@@ -444,6 +444,8 @@ void SessionManagement::manageAutoStartList()
 void SessionManagement::autoStartRowAdded(int row)
 {
     // Insert a new row to Autostart table
+    qDebug() << autostart->sessionList->rowCount();
+
     autostart->sessionList->insertRow(autostart->sessionList->rowCount());
 
     // Create copies of table items (items cannot be owned by multiple tables)
@@ -518,7 +520,7 @@ void SessionManagement::populateTable(QTableWidget *table)
     QStringList sessionList = settings.childGroups();
 
     // Empty table first
-    table->setRowCount(0);
+    table->clearContents();
 
     // Populate session table
     for(int i = 0;i < sessionList.count(); i++)
