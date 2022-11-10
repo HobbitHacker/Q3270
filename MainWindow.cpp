@@ -119,9 +119,6 @@ MainWindow::MainWindow(MainWindow::Session s) : QMainWindow(nullptr), ui(new(Ui:
                 //TODO check if we actually need the fromPercentEncoding
                 sm->openSession(terminal, QUrl::fromPercentEncoding(savedSettings.value("Session").toString().toLatin1()));
 
-                // Update settings form with new address
-                settings->setAddress(QUrl::fromPercentEncoding(savedSettings.value("Session").toString().toLatin1()));
-
                 // Enable Save Session menu entry as it's a named session
                 ui->actionSave_Session->setEnabled(true);
 
