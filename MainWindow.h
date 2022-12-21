@@ -23,12 +23,13 @@
 #include "ProcessDataStream.h"
 #include "Keyboard.h"
 #include "TerminalView.h"
-#include "Settings.h"
+#include "PreferencesDialog.h"
 #include "Q3270.h"
 #include "TerminalTab.h"
 #include "ColourTheme.h"
 #include "KeyboardTheme.h"
 #include "SessionManagement.h"
+#include "ActiveSettings.h"
 
 QT_BEGIN_NAMESPACE
 
@@ -95,8 +96,9 @@ class MainWindow : public QMainWindow
       ColourTheme *colourTheme;
       KeyboardTheme *keyboardTheme;
       SessionManagement *sm;
-      Settings *settings;
+      PreferencesDialog *settings;
       CodePage *codePage;
+      ActiveSettings *activeSettings;
 
       int maxMruCount;
 

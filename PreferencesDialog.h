@@ -1,5 +1,5 @@
-#ifndef SETTINGS_H
-#define SETTINGS_H
+#ifndef PREFERENCESDIALOG_H
+#define PREFERENCESDIALOG_H
 
 #include <QDialog>
 #include <QColorDialog>
@@ -14,24 +14,22 @@
 #include "KeyboardTheme.h"
 #include "DisplayScreen.h"
 #include "CodePage.h"
+#include "ActiveSettings.h"
 
 namespace Ui {
-    class Settings;
+    class PreferencesDialog;
 }
 
-class Settings : public QDialog
+class PreferencesDialog : public QDialog
 {
         Q_OBJECT
 
     public:
 
-        explicit Settings(ColourTheme *colours, KeyboardTheme *keyboards, CodePage *codepage, QWidget *parent = nullptr);
-        ~Settings();
+        explicit PreferencesDialog(ColourTheme *colours, KeyboardTheme *keyboards, ActiveSettings *activeSettings, CodePage *codepage, QWidget *parent = nullptr);
+        ~PreferencesDialog();
 
         void showForm(bool connected);
-
-        bool getBlink()                            { return blink; }
-        void setBlink(bool blink);
 
         int getBlinkSpeed()                        { return blinkSpeed; }
         void setBlinkSpeed(int blinkSpeed);
@@ -57,9 +55,6 @@ class Settings : public QDialog
 
         bool getStretch()                          { return stretchScreen; }
 
-        bool getRulerOn()                          { return rulerOn; }
-        void setRulerOn(bool rulerOn);
-
         DisplayScreen::RulerStyle getRulerStyle()  { return ruler; }
         void setRulerStyle(DisplayScreen::RulerStyle r);
 
@@ -76,7 +71,6 @@ class Settings : public QDialog
     signals:
 
         void terminalChanged(int type, int x, int y);
-        void cursorBlinkChanged(bool blink, int blinkSpeed);
         void cursorBlinkSpeedChanged(int blinkSpeed);
         void coloursChanged(ColourTheme::Colours);
         void fontChanged();
@@ -87,7 +81,6 @@ class Settings : public QDialog
         void setStretch(bool stretch);
         void codePageChanged();
 
-        void rulerChanged(bool showRuler);
         void rulerStyle(DisplayScreen::RulerStyle r);
 
         // Emitted when hostname field is not blank
@@ -109,7 +102,7 @@ class Settings : public QDialog
 
     private:
 
-        Ui::Settings *ui;
+        Ui::PreferencesDialog *ui;
 
         QFontDialog *qfd;
 
@@ -122,6 +115,8 @@ class Settings : public QDialog
 
         QString keyboardThemeName;
         KeyboardTheme::KeyboardMap keyboardTheme;
+
+        ActiveSettings *activeSettings;
 
         QFont termFont;
         QFont qfdFont;
@@ -175,4 +170,4 @@ class Settings : public QDialog
 
 };
 
-#endif // SETTINGS_H
+#endif // PREFERENCESDIALOG_H

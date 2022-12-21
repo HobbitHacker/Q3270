@@ -6,9 +6,10 @@
 #include "Q3270.h"
 #include "SocketConnection.h"
 #include "Keyboard.h"
-#include "Settings.h"
+#include "PreferencesDialog.h"
 #include "ColourTheme.h"
 #include "CodePage.h"
+#include "ActiveSettings.h"
 
 #include <QSettings>
 #include <QHostInfo>
@@ -21,7 +22,7 @@ class TerminalTab : public QWidget
     Q_OBJECT
 
     public:
-        TerminalTab(QVBoxLayout *v, Settings *settings, ColourTheme *colours, KeyboardTheme *keyboards, CodePage *cp, QString sessionName);
+        TerminalTab(QVBoxLayout *v, PreferencesDialog *settings, ActiveSettings *activeSettings, ColourTheme *colours, KeyboardTheme *keyboards, CodePage *cp, QString sessionName);
         ~TerminalTab();
 
         void openConnection(QString host, int port, QString luName);
@@ -92,7 +93,9 @@ class TerminalTab : public QWidget
         ColourTheme *colours;
         KeyboardTheme *keyboards;
 
-        Settings *settings;
+        PreferencesDialog *settings;
+
+        ActiveSettings *activeSettings;
 
         bool altScreen;
 

@@ -1,8 +1,7 @@
+#include "ui_PreferencesDialog.h"
+#include "PreferencesDialog.h"
 
-#include "ui_Settings.h"
-#include "Settings.h"
-
-Settings::Settings(ColourTheme *colours, KeyboardTheme *keyboards, CodePage *codepage, QWidget *parent) : QDialog(parent), ui(new Ui::Settings)
+PreferencesDialog::PreferencesDialog(ColourTheme *colours, KeyboardTheme *keyboards, ActiveSettings *activeSettings, CodePage *codepage, QWidget *parent) : QDialog(parent), ui(new Ui::PreferencesDialog)
 {
     ui->setupUi(this);
     ui->TabsWidget->setCurrentIndex(0);
@@ -13,6 +12,7 @@ Settings::Settings(ColourTheme *colours, KeyboardTheme *keyboards, CodePage *cod
     this->colours = colours;
     this->keyboards = keyboards;
     this->codepage = codepage;
+    this->activeSettings = activeSettings;
 
     // Set up vector to coordinate combox box for crosshair types
     comboRulerStyle.insert("Crosshairs", DisplayScreen::RulerStyle::CROSSHAIR);
@@ -22,16 +22,18 @@ Settings::Settings(ColourTheme *colours, KeyboardTheme *keyboards, CodePage *cod
     // Populate combo box from vector keys
     ui->crosshair->addItems(comboRulerStyle.keys());
 
+    // Factory default settings from here
+
     // Terminal Model type
     termX = 80;
     termY = 24;
     setTerminalModel("Model2");
 
     // Cursor blink enabled & speed
-    blink = true;
+    blink = false;
     blinkSpeed = 4;
-    ui->cursorBlink->setChecked(true);
-    ui->cursorBlinkSpeed->setSliderPosition(4);
+    ui->cursorBlink->setChecked(blink);
+    ui->cursorBlinkSpeed->setSliderPosition(blinkSpeed);
 
     // Cursor colour inheritance
     cursorInherit = true;
@@ -68,8 +70,8 @@ Settings::Settings(ColourTheme *colours, KeyboardTheme *keyboards, CodePage *cod
     colours->setButtonColours(colourTheme, colourButtons);
 
     // Setup Manage Themes buttons
-    connect(ui->manageColourThemes, &QPushButton::clicked, this, &Settings::manageColourThemes);
-    connect(ui->manageKeyboardThemes, &QPushButton::clicked, this, &Settings::manageKeyboardThemes);
+    connect(ui->manageColourThemes, &QPushButton::clicked, this, &PreferencesDialog::manageColourThemes);
+    connect(ui->manageKeyboardThemes, &QPushButton::clicked, this, &PreferencesDialog::manageKeyboardThemes);
 
     // Not connected to start with
     ui->terminalCols->setEnabled(true);
@@ -94,12 +96,12 @@ Settings::Settings(ColourTheme *colours, KeyboardTheme *keyboards, CodePage *cod
     ui->verticalLayout_5->addWidget(qfd);
 }
 
-Settings::~Settings()
+PreferencesDialog::~PreferencesDialog()
 {
     delete ui;
 }
 
-void Settings::showForm(bool connected)
+void PreferencesDialog::showForm(bool connected)
 {
     // Certain fields can't be changed without a disconnect/reconnect
     if (connected)
@@ -140,7 +142,7 @@ void Settings::showForm(bool connected)
     this->exec();
 }
 
-void Settings::setAddress(QString newAddress)
+void PreferencesDialog::setAddress(QString newAddress)
 {
 
     // Determine if the supplied address contains an '@' denoting the LU to be used.
@@ -177,7 +179,7 @@ void Settings::setAddress(QString newAddress)
     }
 }
 
-QString Settings::getAddress()
+QString PreferencesDialog::getAddress()
 {
     // Return empty string if we don't have a hostname
     if (hostName.isEmpty())
@@ -195,13 +197,13 @@ QString Settings::getAddress()
     }
 }
 
-CodePage* Settings::codePage()
+CodePage* PreferencesDialog::codePage()
 {
     return codepage;
 }
 
 
-void Settings::setTerminalModel(int model)
+void PreferencesDialog::setTerminalModel(int model)
 {
     /* Model types from dialog are 0 - 4 where 0 - 3 are Models 2 - 5 and 4 is dynamic */
     printf("Model = %d", model);
@@ -245,7 +247,7 @@ void Settings::setTerminalModel(int model)
     ui->terminalRows->setValue(termY);
 }
 
-void Settings::setTerminalModel(QString type)
+void PreferencesDialog::setTerminalModel(QString type)
 {
     for (int i = 0; i < 5; i++)
     {
@@ -262,7 +264,7 @@ void Settings::setTerminalModel(QString type)
     termType = 0;
 }
 
-void Settings::setTerminalSize(int x, int y)
+void PreferencesDialog::setTerminalSize(int x, int y)
 {
     if (termType != 4)
     {
@@ -276,12 +278,12 @@ void Settings::setTerminalSize(int x, int y)
     termY = y;
 }
 
-void Settings::changeFont(QFont newFont)
+void PreferencesDialog::changeFont(QFont newFont)
 {
     emit tempFontChange(newFont);
 }
 
-void Settings::accept()
+void PreferencesDialog::accept()
 {
 
     hostName = ui->hostName->text();
@@ -298,9 +300,7 @@ void Settings::accept()
 
     if (ui->cursorBlink->QAbstractButton::isChecked() != blink)
     {
-        blink = ui->cursorBlink->QAbstractButton::isChecked();
-        blinkSpeed = ui->cursorBlinkSpeed->value();
-        emit cursorBlinkChanged(blink, blinkSpeed);
+        activeSettings->setCursorBlink(ui->cursorBlink->QAbstractButton::isChecked());
     }
 
     if (ui->cursorBlinkSpeed->value() != blinkSpeed)
@@ -312,8 +312,7 @@ void Settings::accept()
     // Detect whether crosshairs on or off
     if (ui->rulerOn->QAbstractButton::isChecked() != rulerOn)
     {
-        rulerOn = ui->rulerOn->QAbstractButton::isChecked();
-        emit rulerChanged(rulerOn);
+        activeSettings->setRulerOn(ui->rulerOn->QAbstractButton::isChecked());
     }
 
     // Detect change of style of crosshairs
@@ -377,88 +376,78 @@ void Settings::accept()
 
 }
 
-void Settings::reject()
+void PreferencesDialog::reject()
 {
     emit tempFontChange(termFont);
 
     QDialog::reject();
 }
 
-int Settings::getTermX()
+int PreferencesDialog::getTermX()
 {
     return termX;
 }
 
-int Settings::getTermY()
+int PreferencesDialog::getTermY()
 {
     return termY;
 }
 
-QFont Settings::getFont()
+QFont PreferencesDialog::getFont()
 {
     printf("%s\n%s\n%d\n", termFont.family().toLatin1().data(), termFont.styleName().toLatin1().data(), termFont.pointSize());
     fflush(stdout);
     return termFont;
 }
 
-QString Settings::getTermName()
+QString PreferencesDialog::getTermName()
 {
     return terms[termType].term;
 }
 
-void Settings::setBlinkSpeed(int blinkSpeed)
+void PreferencesDialog::setBlinkSpeed(int blinkSpeed)
 {
     this->blinkSpeed = blinkSpeed;
 }
 
-void Settings::setBlink(bool blink)
-{
-    this->blink = blink;
-}
-
-void Settings::setInherit(bool inherit)
+void PreferencesDialog::setInherit(bool inherit)
 {
     this->cursorInherit = inherit;
 }
 
-void Settings::setRulerOn(bool rulerOn)
-{
-    this->rulerOn = rulerOn;
-}
-
-void Settings::setRulerStyle(DisplayScreen::RulerStyle r)
+void PreferencesDialog::setRulerStyle(DisplayScreen::RulerStyle r)
 {
     this->ruler = r;
 }
 
-void Settings::setFont(QFont font)
+void PreferencesDialog::setFont(QFont font)
 {
     termFont = font;
     emit fontChanged();
 }
 
-void Settings::setFontScaling(bool scale)
+void PreferencesDialog::setFontScaling(bool scale)
 {
     fontScaling = scale;
 }
 
-ColourTheme::Colours Settings::getColours()
+ColourTheme::Colours PreferencesDialog::getColours()
 {
     return colourTheme;
 }
 
-QString Settings::getCodePage()
+QString PreferencesDialog::getCodePage()
 {
     return codepage->getCodePage();
 }
 
-void Settings::setCodePage(QString codepage)
+void PreferencesDialog::setCodePage(QString codepage)
 {
     this->codepage->setCodePage(codepage);
     emit codePageChanged();
 }
 
-void Settings::colourThemeChanged(int index)
+void PreferencesDialog::colourThemeChanged(int index)
 {
     colourThemeName = ui->colourTheme->currentText();
     colourTheme = colours->getTheme(colourThemeName);
@@ -468,14 +457,14 @@ void Settings::colourThemeChanged(int index)
     colourThemeChangeFlag = true;
 }
 
-void Settings::populateColourThemeNames()
+void PreferencesDialog::populateColourThemeNames()
 {
     // Refresh the Colour theme names
     ui->colourTheme->clear();
     ui->colourTheme->addItems(colours->getThemes());
 }
 
-void Settings::manageColourThemes()
+void PreferencesDialog::manageColourThemes()
 {
     // Run the Colour Themes dialog
     colours->exec();
@@ -487,14 +476,14 @@ void Settings::manageColourThemes()
     emit coloursChanged(colourTheme);
 }
 
-void Settings::populateKeyboardThemeNames()
+void PreferencesDialog::populateKeyboardThemeNames()
 {
     // Refresh the Keyboard theme names
     ui->keyboardThemes->clear();
     ui->keyboardThemes->addItems(keyboards->getThemes());
 }
 
-void Settings::keyboardThemeChanged(int index)
+void PreferencesDialog::keyboardThemeChanged(int index)
 {
     // Store the newly selected named
     keyboardThemeName = ui->keyboardThemes->currentText();
@@ -510,7 +499,7 @@ void Settings::keyboardThemeChanged(int index)
 }
 
 
-void Settings::manageKeyboardThemes()
+void PreferencesDialog::manageKeyboardThemes()
 {
     //
 }

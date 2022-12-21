@@ -126,11 +126,6 @@ void TerminalView::setBlinkSpeed(int speed)
     }
 }
 
-int TerminalView::getBlinkSpeed()
-{
-    return blinkSpeed;
-}
-
 void TerminalView::changeCodePage()
 {
     if (connected)

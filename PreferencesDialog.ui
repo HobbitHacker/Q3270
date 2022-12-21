@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>Settings</class>
- <widget class="QDialog" name="Settings">
+ <class>PreferencesDialog</class>
+ <widget class="QDialog" name="PreferencesDialog">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -925,7 +925,7 @@
   <connection>
    <sender>buttonBox</sender>
    <signal>rejected()</signal>
-   <receiver>Settings</receiver>
+   <receiver>PreferencesDialog</receiver>
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -941,7 +941,7 @@
   <connection>
    <sender>buttonBox</sender>
    <signal>accepted()</signal>
-   <receiver>Settings</receiver>
+   <receiver>PreferencesDialog</receiver>
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -957,7 +957,7 @@
   <connection>
    <sender>terminalType</sender>
    <signal>currentIndexChanged(int)</signal>
-   <receiver>Settings</receiver>
+   <receiver>PreferencesDialog</receiver>
    <slot>changeModel(int)</slot>
    <hints>
     <hint type="sourcelabel">
@@ -989,7 +989,7 @@
   <connection>
    <sender>colourTheme</sender>
    <signal>currentIndexChanged(int)</signal>
-   <receiver>Settings</receiver>
+   <receiver>PreferencesDialog</receiver>
    <slot>colourThemeChanged(int)</slot>
    <hints>
     <hint type="sourcelabel">
@@ -1005,7 +1005,7 @@
   <connection>
    <sender>manageColourThemes</sender>
    <signal>clicked()</signal>
-   <receiver>Settings</receiver>
+   <receiver>PreferencesDialog</receiver>
    <slot>manageColourThemes()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -1021,7 +1021,7 @@
   <connection>
    <sender>keyboardThemes</sender>
    <signal>currentIndexChanged(int)</signal>
-   <receiver>Settings</receiver>
+   <receiver>PreferencesDialog</receiver>
    <slot>keyboardThemeChanged(int)</slot>
    <hints>
     <hint type="sourcelabel">

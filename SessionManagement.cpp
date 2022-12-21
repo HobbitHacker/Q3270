@@ -17,9 +17,10 @@
  * Sessions contain all custom settings
  */
 
-SessionManagement::SessionManagement(Settings *settings) : QDialog()
+SessionManagement::SessionManagement(PreferencesDialog *settings, ActiveSettings *activeSettings) : QDialog()
 {
     this->settings = settings;
+    this->activeSettings = activeSettings;
 }
 
 SessionManagement::~SessionManagement()
@@ -156,10 +157,10 @@ void SessionManagement::saveSettings()
     s.setValue("TerminalModel", settings->getModel());
     s.setValue("TerminalX", settings->getTermX());
     s.setValue("TerminalY", settings->getTermY());
-    s.setValue("CursorBlink", settings->getBlink());
+    s.setValue("CursorBlink", activeSettings->getCursorBlink());
     s.setValue("CursorBlinkSpeed", settings->getBlinkSpeed());
     s.setValue("CursorInheritColour", settings->getInherit());
-    s.setValue("Ruler", settings->getRulerOn());
+    s.setValue("Ruler", activeSettings->getRulerOn());
     s.setValue("RulerStyle", settings->getRulerStyle());
     s.setValue("Font", settings->getFont().family());
     s.setValue("FontSize", settings->getFont().pointSize());
@@ -250,12 +251,12 @@ void SessionManagement::openSession(TerminalTab *t, QString sessionName)
         settings->setCodePage(s.value("Codepage").toString());
 
         // Cursor settings
-        settings->setBlink(s.value("CursorBlink").toBool());
+        activeSettings->setCursorBlink(s.value("CursorBlink").toBool());
         settings->setBlinkSpeed(s.value("CursorBlinkSpeed").toInt());
         settings->setInherit(s.value("CursorInheritColour").toBool());
 
         // Ruler
-        settings->setRulerOn(s.value("Ruler").toBool());
+        activeSettings->setRulerOn(s.value("Ruler").toBool());
         settings->setRulerStyle(s.value("RulerStyle").value<DisplayScreen::RulerStyle>());
 
         // Font settings

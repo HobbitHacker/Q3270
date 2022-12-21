@@ -14,6 +14,8 @@ MainWindow::MainWindow(MainWindow::Session s) : QMainWindow(nullptr), ui(new(Ui:
     // Read global settings
     QSettings savedSettings;
 
+    activeSettings = new ActiveSettings();
+
     // Most-recently used; default to 10
     maxMruCount = savedSettings.value("MRUMax", 10).toInt();
 
@@ -56,23 +58,23 @@ MainWindow::MainWindow(MainWindow::Session s) : QMainWindow(nullptr), ui(new(Ui:
     // Codepages
     codePage = new CodePage();
 
-    // Create Settings object
-    settings = new Settings(colourTheme, keyboardTheme, codePage);
+    // Preferences dialog
+    settings = new PreferencesDialog(colourTheme, keyboardTheme, activeSettings, codePage);
 
     // Session Management dialog
-    sm = new SessionManagement(settings);
+    sm = new SessionManagement(settings, activeSettings);
 
     // Update MRU entries if the user opens a session
     connect(sm, &SessionManagement::sessionOpened, this, &MainWindow::updateMRUlist);
 
     // Change Connect menu entry when connected, or when user fills in hostname field in Settings
-    connect(settings, &Settings::connectValid, this, &MainWindow::enableConnectMenu);
+    connect(settings, &PreferencesDialog::connectValid, this, &MainWindow::enableConnectMenu);
 
     // Set defaults for Connect options
     ui->actionDisconnect->setDisabled(true);
     ui->actionConnect->setDisabled(true);
 
-    terminal = new TerminalTab(ui->terminalLayout, settings, colourTheme, keyboardTheme, codePage, s.session);
+    terminal = new TerminalTab(ui->terminalLayout, settings, activeSettings, colourTheme, keyboardTheme, codePage, s.session);
 
     // Refresh menu entries if connected/disconnected
     connect(terminal, &TerminalTab::disconnected, this, &MainWindow::disableDisconnectMenu);
@@ -130,6 +132,7 @@ MainWindow::MainWindow(MainWindow::Session s) : QMainWindow(nullptr), ui(new(Ui:
         savedSettings.endArray();
     }
 
+    qDebug() << ui->centralwidget->size();
 
 }
 

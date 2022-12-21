@@ -1,12 +1,13 @@
 #include "TerminalTab.h"
 
-TerminalTab::TerminalTab(QVBoxLayout *layout, Settings *settings, ColourTheme *colours, KeyboardTheme *keyboards, CodePage *cp, QString sessionName)
+TerminalTab::TerminalTab(QVBoxLayout *layout, PreferencesDialog *settings, ActiveSettings *activeSettings, ColourTheme *colours, KeyboardTheme *keyboards, CodePage *cp, QString sessionName)
 {
     // Create terminal display and keyboard objects
     view = new TerminalView();
     kbd = new Keyboard(view);
 
     // Save Themes and Settings objects
+    this->activeSettings = activeSettings;
     this->colours = colours;
     this->keyboards = keyboards;
     this->settings = settings;
@@ -16,15 +17,16 @@ TerminalTab::TerminalTab(QVBoxLayout *layout, Settings *settings, ColourTheme *c
     this->sessionName = sessionName;
 
     // Map settings signals to their target slots
-    connect(settings, &Settings::coloursChanged, this, &TerminalTab::setColours);
-    connect(settings, &Settings::fontChanged, this, &TerminalTab::setFont);
-    connect(settings, &Settings::tempFontChange, this, &TerminalTab::setCurrentFont);
-    connect(settings, &Settings::cursorBlinkChanged, view, &TerminalView::setBlink);
-    connect(settings, &Settings::cursorBlinkSpeedChanged, view, &TerminalView::setBlinkSpeed);
-    connect(settings, &Settings::codePageChanged, view, &TerminalView::changeCodePage);
-    connect(settings, &Settings::setKeyboardTheme, kbd, &Keyboard::setTheme);
-    connect(settings, &Settings::rulerStyle, this, &TerminalTab::rulerStyle);
-    connect(settings, &Settings::rulerChanged, this, &TerminalTab::rulerChanged);
+    connect(settings, &PreferencesDialog::coloursChanged, this, &TerminalTab::setColours);
+    connect(settings, &PreferencesDialog::fontChanged, this, &TerminalTab::setFont);
+    connect(settings, &PreferencesDialog::tempFontChange, this, &TerminalTab::setCurrentFont);
+    connect(settings, &PreferencesDialog::cursorBlinkSpeedChanged, view, &TerminalView::setBlinkSpeed);
+    connect(settings, &PreferencesDialog::codePageChanged, view, &TerminalView::changeCodePage);
+    connect(settings, &PreferencesDialog::setKeyboardTheme, kbd, &Keyboard::setTheme);
+    connect(settings, &PreferencesDialog::rulerStyle, this, &TerminalTab::rulerStyle);
+
+    connect(activeSettings, &ActiveSettings::rulerChanged, this, &TerminalTab::rulerChanged);
+    connect(activeSettings, &ActiveSettings::cursorBlinkChanged, view, &TerminalView::setBlink);
 
     // Build "Not Connected" display
     gs = new QGraphicsScene();
@@ -47,8 +49,6 @@ TerminalTab::TerminalTab(QVBoxLayout *layout, Settings *settings, ColourTheme *c
     int xPos = 320 - fm.horizontalAdvance(ncMessage->text()) / 2;
     int yPos = 240 - fm.height() / 2;
     ncMessage->setPos(xPos, yPos);
-
-    gs->addItem(ncMessage);
 
     // Set "Not Connected" as the initially displayed scene
     view->setScene(gs);
@@ -191,7 +191,7 @@ void TerminalTab::connectSession(QString host, int port, QString luName)
 
     kbd->setDataStream(datastream);
 
-    connect(settings, &Settings::setStretch, view, &TerminalView::setStretch);
+    connect(settings, &PreferencesDialog::setStretch, view, &TerminalView::setStretch);
 
     setColourTheme(colourTheme);
 
@@ -199,7 +199,7 @@ void TerminalTab::connectSession(QString host, int port, QString luName)
     {
         screen[i]->setFontScaling(settings->getFontScaling());
         screen[i]->setFont(settings->getFont());
-        screen[i]->rulerMode(settings->getRulerOn());
+        screen[i]->rulerMode(activeSettings->getRulerOn());
         screen[i]->setRulerStyle(settings->getRulerStyle());
 
         connect(datastream, &ProcessDataStream::cursorMoved, screen[i], &DisplayScreen::showStatusCursorPosition);
@@ -207,12 +207,12 @@ void TerminalTab::connectSession(QString host, int port, QString luName)
         connect(kbd, &Keyboard::setLock, screen[i], &DisplayScreen::setStatusXSystem);
         connect(kbd, &Keyboard::setInsert, screen[i], &DisplayScreen::setStatusInsert);
 
-        connect(settings, &Settings::fontScalingChanged, screen[i], &DisplayScreen::setFontScaling);
-        connect(settings, &Settings::setCursorColour, screen[i], &DisplayScreen::setCursorColour);
+        connect(settings, &PreferencesDialog::fontScalingChanged, screen[i], &DisplayScreen::setFontScaling);
+        connect(settings, &PreferencesDialog::setCursorColour, screen[i], &DisplayScreen::setCursorColour);
 
     }
 
-    view->setBlink(settings->getBlink());
+    view->setBlink(activeSettings->getCursorBlink());
     view->setBlinkSpeed(settings->getBlinkSpeed());
 
     socket->connectMainframe(host, port, luName, datastream);

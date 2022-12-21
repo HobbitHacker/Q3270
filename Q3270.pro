@@ -19,6 +19,7 @@ DEFINES += QT_DEPRECATED_WARNINGS \
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    ActiveSettings.cpp \
     CodePage.cpp \
     ColourTheme.cpp \
     DisplayScreen.cpp \
@@ -26,15 +27,16 @@ SOURCES += \
     Keyboard.cpp \
     KeyboardTheme.cpp \
     MainWindow.cpp \
+    PreferencesDialog.cpp \
     ProcessDataStream.cpp \
     SessionManagement.cpp \
-    Settings.cpp \
     TerminalTab.cpp \
     TerminalView.cpp \
     main.cpp \
     SocketConnection.cpp
 
 HEADERS += \
+    ActiveSettings.h \
     CodePage.h \
     ColourTheme.h \
     DisplayScreen.h \
@@ -42,10 +44,10 @@ HEADERS += \
     Keyboard.h \
     KeyboardTheme.h \
     MainWindow.h \
+    PreferencesDialog.h \
     ProcessDataStream.h \
     Q3270.h \
     SessionManagement.h \
-    Settings.h \
     TerminalTab.h \
     TerminalView.h \
     SocketConnection.h
@@ -60,8 +62,8 @@ FORMS += \
     ManageSessions.ui \
     NewTheme.ui \
     OpenSession.ui \
-    SaveSession.ui \
-    Settings.ui
+    PreferencesDialog.ui \
+    SaveSession.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

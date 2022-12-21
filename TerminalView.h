@@ -23,7 +23,6 @@ class TerminalView : public QGraphicsView
         void copyText();
 
         void setScaleFont(bool scale);
-        int  getBlinkSpeed();
         void setBlinkSpeed(int speed);
         bool getBlink();
         bool getStretch();
