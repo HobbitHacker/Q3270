@@ -1,9 +1,10 @@
 #ifndef N3270_H
 #define N3270_H
 
-#include <QColor>
+#include <QObject>
 
 /* 3270 Write Commands */
+#include "qobjectdefs.h"
 #define IBM3270_W    0xF1  /* Write */
 #define IBM3270_EW   0xF5  /* Erase Write */
 #define IBM3270_EWA  0x7E  /* Erase/Write Alternate */
@@ -158,5 +159,9 @@ enum Indicators {
     InsertMode,
     GoElsewhere
 };
+
+#define Q3270_RULER_CROSSHAIR   0
+#define Q3270_RULER_VERTICAL    1
+#define Q3270_RULER_HORIZONTAL  3
 
 #endif // N3270_H

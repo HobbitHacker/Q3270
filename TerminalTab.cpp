@@ -1,3 +1,5 @@
+#include "Q3270.h"
+
 #include "TerminalTab.h"
 
 TerminalTab::TerminalTab(QVBoxLayout *layout, PreferencesDialog *settings, ActiveSettings *activeSettings, ColourTheme *colours, KeyboardTheme *keyboards, CodePage *cp, QString sessionName)
@@ -20,13 +22,13 @@ TerminalTab::TerminalTab(QVBoxLayout *layout, PreferencesDialog *settings, Activ
     connect(settings, &PreferencesDialog::coloursChanged, this, &TerminalTab::setColours);
     connect(settings, &PreferencesDialog::fontChanged, this, &TerminalTab::setFont);
     connect(settings, &PreferencesDialog::tempFontChange, this, &TerminalTab::setCurrentFont);
-    connect(settings, &PreferencesDialog::cursorBlinkSpeedChanged, view, &TerminalView::setBlinkSpeed);
     connect(settings, &PreferencesDialog::codePageChanged, view, &TerminalView::changeCodePage);
     connect(settings, &PreferencesDialog::setKeyboardTheme, kbd, &Keyboard::setTheme);
-    connect(settings, &PreferencesDialog::rulerStyle, this, &TerminalTab::rulerStyle);
 
+    connect(activeSettings, &ActiveSettings::rulerStyleChanged, this, &TerminalTab::rulerStyle);
     connect(activeSettings, &ActiveSettings::rulerChanged, this, &TerminalTab::rulerChanged);
     connect(activeSettings, &ActiveSettings::cursorBlinkChanged, view, &TerminalView::setBlink);
+    connect(activeSettings, &ActiveSettings::cursorBlinkSpeedChanged, view, &TerminalView::setBlinkSpeed);
 
     // Build "Not Connected" display
     gs = new QGraphicsScene();
@@ -140,7 +142,7 @@ void TerminalTab::rulerChanged(bool on)
     }
 }
 
-void TerminalTab::rulerStyle(DisplayScreen::RulerStyle rulerStyle)
+void TerminalTab::rulerStyle(int rulerStyle)
 {
     // Change ruler style to match settings
     if (view->connected)
@@ -200,7 +202,7 @@ void TerminalTab::connectSession(QString host, int port, QString luName)
         screen[i]->setFontScaling(settings->getFontScaling());
         screen[i]->setFont(settings->getFont());
         screen[i]->rulerMode(activeSettings->getRulerOn());
-        screen[i]->setRulerStyle(settings->getRulerStyle());
+        screen[i]->setRulerStyle(activeSettings->getRulerStyle());
 
         connect(datastream, &ProcessDataStream::cursorMoved, screen[i], &DisplayScreen::showStatusCursorPosition);
 
@@ -208,12 +210,12 @@ void TerminalTab::connectSession(QString host, int port, QString luName)
         connect(kbd, &Keyboard::setInsert, screen[i], &DisplayScreen::setStatusInsert);
 
         connect(settings, &PreferencesDialog::fontScalingChanged, screen[i], &DisplayScreen::setFontScaling);
-        connect(settings, &PreferencesDialog::setCursorColour, screen[i], &DisplayScreen::setCursorColour);
+        connect(activeSettings, &ActiveSettings::cursorInheritChanged, screen[i], &DisplayScreen::setCursorColour);
 
     }
 
     view->setBlink(activeSettings->getCursorBlink());
-    view->setBlinkSpeed(settings->getBlinkSpeed());
+    view->setBlinkSpeed(activeSettings->getCursorBlinkSpeed());
 
     socket->connectMainframe(host, port, luName, datastream);
 

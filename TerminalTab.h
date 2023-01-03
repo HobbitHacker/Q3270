@@ -3,7 +3,6 @@
 
 #include "ProcessDataStream.h"
 #include "TerminalView.h"
-#include "Q3270.h"
 #include "SocketConnection.h"
 #include "Keyboard.h"
 #include "PreferencesDialog.h"
@@ -75,7 +74,7 @@ class TerminalTab : public QWidget
 
         void closeEvent(QCloseEvent *closeEvent);
         void setCurrentFont(QFont f);
-        void rulerStyle(DisplayScreen::RulerStyle r);
+        void rulerStyle(int r);
         void rulerChanged(bool on);
 
     private:

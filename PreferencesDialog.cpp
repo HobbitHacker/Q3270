@@ -1,3 +1,5 @@
+#include "Q3270.h"
+
 #include "ui_PreferencesDialog.h"
 #include "PreferencesDialog.h"
 
@@ -15,9 +17,9 @@ PreferencesDialog::PreferencesDialog(ColourTheme *colours, KeyboardTheme *keyboa
     this->activeSettings = activeSettings;
 
     // Set up vector to coordinate combox box for crosshair types
-    comboRulerStyle.insert("Crosshairs", DisplayScreen::RulerStyle::CROSSHAIR);
-    comboRulerStyle.insert("Vertical", DisplayScreen::RulerStyle::VERTICAL);
-    comboRulerStyle.insert("Horizontal", DisplayScreen::RulerStyle::HORIZONTAL);
+    comboRulerStyle.insert("Crosshairs", Q3270_RULER_CROSSHAIR);
+    comboRulerStyle.insert("Vertical", Q3270_RULER_VERTICAL);
+    comboRulerStyle.insert("Horizontal", Q3270_RULER_HORIZONTAL);
 
     // Populate combo box from vector keys
     ui->crosshair->addItems(comboRulerStyle.keys());
@@ -28,19 +30,6 @@ PreferencesDialog::PreferencesDialog(ColourTheme *colours, KeyboardTheme *keyboa
     termX = 80;
     termY = 24;
     setTerminalModel("Model2");
-
-    // Cursor blink enabled & speed
-    blink = false;
-    blinkSpeed = 4;
-    ui->cursorBlink->setChecked(blink);
-    ui->cursorBlinkSpeed->setSliderPosition(blinkSpeed);
-
-    // Cursor colour inheritance
-    cursorInherit = true;
-
-    // Crosshair style and enabled or not
-    rulerOn = false;
-    ruler = DisplayScreen::CROSSHAIR;
 
     // Default font
     termFont = QFont("ibm3270", 8);
@@ -77,8 +66,6 @@ PreferencesDialog::PreferencesDialog(ColourTheme *colours, KeyboardTheme *keyboa
     ui->terminalCols->setEnabled(true);
     ui->terminalRows->setEnabled(true);
     ui->terminalType->setEnabled(true);
-
-    ui->cursorColour->setCheckState(cursorInherit == true ? Qt::Checked : Qt::Unchecked);
 
     // TODO: "Enter" when displaying font selection causes font dialog to vanish from widget
 
@@ -124,6 +111,11 @@ void PreferencesDialog::showForm(bool connected)
         ui->hostPort->setEnabled(true);
         ui->hostLU->setEnabled(true);
     }
+
+    // Cursor blink enabled & speed
+    ui->cursorBlink->setChecked(activeSettings->getCursorBlink());
+    ui->cursorBlinkSpeed->setSliderPosition(activeSettings->getCursorBlinkSpeed());
+    ui->cursorColour->setChecked(activeSettings->getCursorInherit());
 
     ui->cursorBlinkSpeed->setEnabled(ui->cursorBlink->QAbstractButton::isChecked());
 
@@ -298,29 +290,11 @@ void PreferencesDialog::accept()
         emit terminalChanged(termType, termX, termY);
     }
 
-    if (ui->cursorBlink->QAbstractButton::isChecked() != blink)
-    {
-        activeSettings->setCursorBlink(ui->cursorBlink->QAbstractButton::isChecked());
-    }
-
-    if (ui->cursorBlinkSpeed->value() != blinkSpeed)
-    {
-        blinkSpeed = ui->cursorBlinkSpeed->value();
-        emit cursorBlinkSpeedChanged(blinkSpeed);
-    }
-
-    // Detect whether crosshairs on or off
-    if (ui->rulerOn->QAbstractButton::isChecked() != rulerOn)
-    {
-        activeSettings->setRulerOn(ui->rulerOn->QAbstractButton::isChecked());
-    }
-
-    // Detect change of style of crosshairs
-    if (comboRulerStyle.value(ui->crosshair->currentText()) != ruler)
-    {
-        ruler = comboRulerStyle.value(ui->crosshair->currentText());
-        emit rulerStyle(ruler);
-    }
+    activeSettings->setCursorBlink(ui->cursorBlink->QAbstractButton::isChecked());
+    activeSettings->setCursorBlinkSpeed(ui->cursorBlinkSpeed->value());
+    activeSettings->setRulerOn(ui->rulerOn->QAbstractButton::isChecked());
+    activeSettings->setRulerStyle(comboRulerStyle.value(ui->crosshair->currentText()));
+    activeSettings->setCursorInherit(ui->cursorColour->QAbstractButton::isChecked());
 
     if (colourThemeChangeFlag)
     {
@@ -350,13 +324,6 @@ void PreferencesDialog::accept()
     if (keyboardThemeChangeFlag)
     {
         emit setKeyboardTheme(keyboardTheme);
-    }
-
-    if (ui->cursorColour->QAbstractButton::isChecked() != cursorInherit)
-    {
-        cursorInherit = ui->cursorColour->QAbstractButton::isChecked();
-
-        emit setCursorColour(cursorInherit);
     }
 
     if (ui->CodePages->currentIndex() != formCodePage)
@@ -403,21 +370,6 @@ QFont PreferencesDialog::getFont()
 QString PreferencesDialog::getTermName()
 {
     return terms[termType].term;
-}
-
-void PreferencesDialog::setBlinkSpeed(int blinkSpeed)
-{
-    this->blinkSpeed = blinkSpeed;
-}
-
-void PreferencesDialog::setInherit(bool inherit)
-{
-    this->cursorInherit = inherit;
-}
-
-void PreferencesDialog::setRulerStyle(DisplayScreen::RulerStyle r)
-{
-    this->ruler = r;
 }
 
 void PreferencesDialog::setFont(QFont font)

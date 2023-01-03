@@ -158,10 +158,10 @@ void SessionManagement::saveSettings()
     s.setValue("TerminalX", settings->getTermX());
     s.setValue("TerminalY", settings->getTermY());
     s.setValue("CursorBlink", activeSettings->getCursorBlink());
-    s.setValue("CursorBlinkSpeed", settings->getBlinkSpeed());
-    s.setValue("CursorInheritColour", settings->getInherit());
+    s.setValue("CursorBlinkSpeed", activeSettings->getCursorBlinkSpeed());
+    s.setValue("CursorInheritColour", activeSettings->getCursorInherit());
     s.setValue("Ruler", activeSettings->getRulerOn());
-    s.setValue("RulerStyle", settings->getRulerStyle());
+    s.setValue("RulerStyle", activeSettings->getRulerStyle());
     s.setValue("Font", settings->getFont().family());
     s.setValue("FontSize", settings->getFont().pointSize());
     s.setValue("FontStyle", settings->getFontScaling());
@@ -252,12 +252,12 @@ void SessionManagement::openSession(TerminalTab *t, QString sessionName)
 
         // Cursor settings
         activeSettings->setCursorBlink(s.value("CursorBlink").toBool());
-        settings->setBlinkSpeed(s.value("CursorBlinkSpeed").toInt());
-        settings->setInherit(s.value("CursorInheritColour").toBool());
+        activeSettings->setCursorBlinkSpeed(s.value("CursorBlinkSpeed").toInt());
+        activeSettings->setCursorInherit(s.value("CursorInheritColour").toBool());
 
         // Ruler
         activeSettings->setRulerOn(s.value("Ruler").toBool());
-        settings->setRulerStyle(s.value("RulerStyle").value<DisplayScreen::RulerStyle>());
+        activeSettings->setRulerStyle(s.value("RulerStyle").toInt());
 
         // Font settings
         QFont f;

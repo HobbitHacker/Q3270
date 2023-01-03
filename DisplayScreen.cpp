@@ -1,3 +1,5 @@
+#include "Q3270.h"
+
 #include "DisplayScreen.h"
 
 DisplayScreen::DisplayScreen(int screen_x, int screen_y, ColourTheme::Colours colours, CodePage *cp)
@@ -17,7 +19,7 @@ DisplayScreen::DisplayScreen(int screen_x, int screen_y, ColourTheme::Colours co
 
     // Default settings
     fontScaling = true;
-    ruler = RulerStyle::CROSSHAIR;
+    ruler = Q3270_RULER_CROSSHAIR;
     rulerOn = false;
     blinkShow = false;
     cursorShow = true;
@@ -1076,7 +1078,7 @@ void DisplayScreen::rulerMode(bool on)
     setRuler();
 }
 
-void DisplayScreen::setRulerStyle(RulerStyle rulerStyle)
+void DisplayScreen::setRulerStyle(int rulerStyle)
 {
     this->ruler = rulerStyle;
     setRuler();
@@ -1097,15 +1099,15 @@ void DisplayScreen::setRuler()
     {
         switch(ruler)
         {
-            case CROSSHAIR:
+            case Q3270_RULER_CROSSHAIR:
                 crosshair_X.show();
                 crosshair_Y.show();
                 break;
-            case VERTICAL:
+            case Q3270_RULER_VERTICAL:
                 crosshair_X.hide();
                 crosshair_Y.show();
                 break;
-            case HORIZONTAL:
+            case Q3270_RULER_HORIZONTAL:
                 crosshair_X.show();
                 crosshair_Y.hide();
         }

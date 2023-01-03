@@ -12,7 +12,6 @@
 
 #include "TerminalTab.h"
 #include "PreferencesDialog.h"
-#include "DisplayScreen.h"
 #include "ActiveSettings.h"
 
 namespace Ui {

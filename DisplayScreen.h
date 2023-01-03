@@ -10,7 +10,6 @@
 #include <QTimer>
 
 #include "Glyph.h"
-#include "Q3270.h"
 #include "ColourTheme.h"
 #include "CodePage.h"
 
@@ -19,14 +18,6 @@ class DisplayScreen : public QGraphicsScene
     Q_OBJECT
 
     public:
-
-        enum RulerStyle {
-            CROSSHAIR,
-            VERTICAL,
-            HORIZONTAL
-        };
-
-        Q_ENUM(RulerStyle)
 
         DisplayScreen(int screen_x, int screen_y, ColourTheme::Colours, CodePage *cp);
         ~DisplayScreen();
@@ -86,7 +77,7 @@ class DisplayScreen : public QGraphicsScene
         void drawRuler(int x, int y);
         void setRuler();
         void rulerMode(bool on);
-        void setRulerStyle(RulerStyle rulerStyle);
+        void setRulerStyle(int rulerStyle);
 
         void getScreen(QByteArray &buffer);
 
@@ -140,8 +131,8 @@ class DisplayScreen : public QGraphicsScene
 
         bool geActive;              // Next character is Graphic Escape
 
-        bool rulerOn;               // Whether crosshair is displayed
-        RulerStyle ruler;           // Style of crosshair
+        bool rulerOn;               // Whether ruler is displayed
+        int ruler;                  // Style of ruler
 
 
         /* Character Attributes in effect */
