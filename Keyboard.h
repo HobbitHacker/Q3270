@@ -10,9 +10,7 @@
 #include <QMap>
 
 #include "ProcessDataStream.h"
-#include "SocketConnection.h"
 #include "TerminalView.h"
-#include "Q3270.h"
 #include "KeyboardTheme.h"
 
 // Left Ctrl and Right Ctrl hard wiring; this may break with non-X11 Windowing systems
@@ -25,7 +23,9 @@ class Keyboard : public QObject
     Q_OBJECT
 
     public:
-        Keyboard(TerminalView *v);
+
+        Keyboard(KeyboardTheme *keyboardTheme);
+
         void setMap();
         bool processKey();
         void setDataStream(ProcessDataStream *d);
@@ -33,12 +33,14 @@ class Keyboard : public QObject
     signals:
         void setLock(QString xsystem);
         void setInsert(bool ins);
+        void copyText();
 
     public slots:
         void unlockKeyboard();
         void lockKeyboard();
+        void setConnected(bool state);
 
-        void setTheme(KeyboardTheme::KeyboardMap theme);
+        void setTheme(QString theme);
 
     protected:
         bool eventFilter( QObject *dist, QEvent *event );
@@ -67,11 +69,11 @@ class Keyboard : public QObject
         };
 
         ProcessDataStream *datastream;
-        TerminalView *view;
+        KeyboardTheme *keyboardTheme;
 
         QClipboard *clip;       // Clipboard
 
-        QMap<int,kbDets> defaultMap;
+        QMap<int, kbDets> defaultMap;
         QMap<int, kbDets> altMap;
         QMap<int, kbDets> ctrlMap;
         QMap<int, kbDets> shiftMap;
@@ -88,6 +90,7 @@ class Keyboard : public QObject
         bool lock;
         bool insMode;
         bool waitRelease;
+        bool connectedState;        // Whether the session is connected or not
 
         void cursorUp();
         void cursorDown();

@@ -57,12 +57,17 @@ MainWindow::MainWindow(MainWindow::Session s) : QMainWindow(nullptr), ui(new(Ui:
 
     // Codepages
     codePage = new CodePage();
+    keyboard = new Keyboard(keyboardTheme);
 
     // Preferences dialog
-    settings = new PreferencesDialog(colourTheme, keyboardTheme, activeSettings, codePage);
+    settings = new PreferencesDialog(colourTheme, keyboardTheme, activeSettings);
+
+    // FIXME: is this bad?
+    // Populate code page list
+    settings->populateCodePages(codePage->getCodePageList());
 
     // Session Management dialog
-    sm = new SessionManagement(settings, activeSettings);
+    sm = new SessionManagement(activeSettings);
 
     // Update MRU entries if the user opens a session
     connect(sm, &SessionManagement::sessionOpened, this, &MainWindow::updateMRUlist);
@@ -74,11 +79,18 @@ MainWindow::MainWindow(MainWindow::Session s) : QMainWindow(nullptr), ui(new(Ui:
     ui->actionDisconnect->setDisabled(true);
     ui->actionConnect->setDisabled(true);
 
-    terminal = new TerminalTab(ui->terminalLayout, settings, activeSettings, colourTheme, keyboardTheme, codePage, s.session);
+    terminal = new TerminalTab(ui->terminalLayout, activeSettings, codePage, keyboard, colourTheme, s.session);
 
-    // Refresh menu entries if connected/disconnected
+    //TODO: These came from TerminalTab but not all the objects, particularly the keyboard, are defined here yet.
+    // Map settings signals to their target slots
+    connect(settings, &PreferencesDialog::tempFontChange, terminal, &TerminalTab::setCurrentFont);
+
+    // Enable/Disable menu entries if connected/disconnected
     connect(terminal, &TerminalTab::disconnected, this, &MainWindow::disableDisconnectMenu);
+    connect(terminal, &TerminalTab::disconnected, settings, &PreferencesDialog::disconnected);
+
     connect(terminal, &TerminalTab::connectionEstablished, this, &MainWindow::enableDisconnectMenu);
+    connect(terminal, &TerminalTab::connectionEstablished, settings, &PreferencesDialog::connected);
 
     // If a session name was passed to the MainWindow, restore the window size/position
     // and open it
@@ -156,7 +168,7 @@ void MainWindow::menuSaveSession()
 void MainWindow::menuSaveSessionAs()
 {
     // Save Session dialog, setting the Save Session menu entry dis/enabled
-    ui->actionSave_Session->setEnabled(sm->saveSessionAs(terminal));
+    ui->actionSave_Session->setEnabled(sm->saveSessionAs());
 }
 
 void MainWindow::menuOpenSession()
@@ -196,7 +208,7 @@ void MainWindow::mruConnect()
         updateMRUlist("Host " + parts[2]);
 
         // Update the address on the Host form
-        settings->setAddress(parts[2]);
+        activeSettings->setHostAddress(parts[2]);
     }
     else
     {
@@ -229,14 +241,14 @@ MainWindow::~MainWindow()
 
 void MainWindow::menuConnect()
 {
-    if (settings->getAddress().isEmpty())
+    if (activeSettings->getHostAddress().isEmpty())
     {
-        terminal->showForm();
+        settings->showForm();
     }
 
-    if (!settings->getAddress().isEmpty())
+    if (!activeSettings->getHostAddress().isEmpty())
     {
-        terminal->openConnection(settings->getAddress());
+        terminal->openConnection(activeSettings->getHostAddress());
 
         ui->actionDisconnect->setEnabled(true);
         ui->actionConnect->setDisabled(true);
@@ -253,7 +265,7 @@ void MainWindow::menuDisconnect()
 
 void MainWindow::menuSessionPreferences()
 {
-    terminal->showForm();
+    settings->showForm();
 }
 
 void MainWindow::menuColourTheme()
@@ -349,8 +361,6 @@ void MainWindow::menuQuit()
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
-    disconnect(this, "&updateMenuEntries()");
-
     QSettings applicationSettings;
 
     applicationSettings.setValue("mainwindowgeometry", saveGeometry());

@@ -173,25 +173,27 @@ void ColourTheme::setTheme(QString ThemeName)
         ui->baseColours->setEnabled(true);
     }
 
-    setButtonColours(currentTheme, colourButtons);
+    setButtonColours(colourButtons, currentThemeName);
 }
 
-void ColourTheme::setButtonColours(Colours theme, QHash<Colour, QPushButton *> buttons)
+void ColourTheme::setButtonColours(QHash<Colour, QPushButton *> theme, QString themeName)
 {
-    // Change colour swatches
-    buttons[UNPROTECTED_NORMAL]->setStyleSheet(QString("background-color: %1;").arg(theme[UNPROTECTED_NORMAL].name()));
-    buttons[PROTECTED_NORMAL]->setStyleSheet(QString("background-color: %1;").arg(theme[PROTECTED_NORMAL].name()));
-    buttons[UNPROTECTED_INTENSIFIED]->setStyleSheet(QString("background-color: %1;").arg(theme[UNPROTECTED_INTENSIFIED].name()));
-    buttons[PROTECTED_INTENSIFIED]->setStyleSheet(QString("background-color: %1;").arg(theme[PROTECTED_INTENSIFIED].name()));
+    Colours thisTheme = getTheme(themeName);
 
-    buttons[BLACK]->setStyleSheet(QString("background-color: %1;").arg(theme[BLACK].name()));
-    buttons[BLUE]->setStyleSheet(QString("background-color: %1;").arg(theme[BLUE].name()));
-    buttons[RED]->setStyleSheet(QString("background-color: %1;").arg(theme[RED].name()));
-    buttons[MAGENTA]->setStyleSheet(QString("background-color: %1;").arg(theme[MAGENTA].name()));
-    buttons[GREEN]->setStyleSheet(QString("background-color: %1;").arg(theme[GREEN].name()));
-    buttons[CYAN]->setStyleSheet(QString("background-color: %1;").arg(theme[CYAN].name()));
-    buttons[YELLOW]->setStyleSheet(QString("background-color: %1;").arg(theme[YELLOW].name()));
-    buttons[NEUTRAL]->setStyleSheet(QString("background-color: %1;").arg(theme[NEUTRAL].name()));
+    // Change colour swatches
+    theme[UNPROTECTED_NORMAL]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[UNPROTECTED_NORMAL].name()));
+    theme[PROTECTED_NORMAL]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[PROTECTED_NORMAL].name()));
+    theme[UNPROTECTED_INTENSIFIED]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[UNPROTECTED_INTENSIFIED].name()));
+    theme[PROTECTED_INTENSIFIED]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[PROTECTED_INTENSIFIED].name()));
+
+    theme[BLACK]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[BLACK].name()));
+    theme[BLUE]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[BLUE].name()));
+    theme[RED]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[RED].name()));
+    theme[MAGENTA]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[MAGENTA].name()));
+    theme[GREEN]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[GREEN].name()));
+    theme[CYAN]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[CYAN].name()));
+    theme[YELLOW]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[YELLOW].name()));
+    theme[NEUTRAL]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[NEUTRAL].name()));
 }
 
 

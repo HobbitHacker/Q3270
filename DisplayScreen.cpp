@@ -2,13 +2,8 @@
 
 #include "DisplayScreen.h"
 
-DisplayScreen::DisplayScreen(int screen_x, int screen_y, ColourTheme::Colours colours, CodePage *cp)
+DisplayScreen::DisplayScreen(int screen_x, int screen_y, CodePage *cp)
 {
-
-    palette = colours;
-
-    setBackgroundBrush(palette[ColourTheme::BLACK]);
-
     this->screen_x = screen_x;
     this->screen_y = screen_y;
 
@@ -24,6 +19,9 @@ DisplayScreen::DisplayScreen(int screen_x, int screen_y, ColourTheme::Colours co
     blinkShow = false;
     cursorShow = true;
     cursorColour = true;
+
+    setBackgroundBrush(QBrush(Qt::black));
+
 
     // Build 3270 display matrix
     glyph.resize(screenPos_max);
@@ -202,7 +200,7 @@ void DisplayScreen::resetColours()
         {
             cell.at(i)->setBrush(palette[glyph.at(i)->getColour()]);
             glyph.at(i)->setBrush(palette[ColourTheme::BLACK]);
-            printf("<reverse>");
+//            printf("<reverse>");
         }
         else
         {
@@ -1035,7 +1033,10 @@ void DisplayScreen::setCursorColour(bool inherit)
 void DisplayScreen::setCursor(int pos)
 {
     cursor.setParentItem(cell.at(pos));
-    cursor.setBrush(palette[glyph.at(pos)->getColour()]);
+    if (cursorColour)
+    {
+        cursor.setBrush(palette[glyph.at(pos)->getColour()]);
+    }
     cursor.setPos(cell.at(pos)->boundingRect().left(), cell.at(pos)->boundingRect().top());
 }
 

@@ -19,7 +19,7 @@ class DisplayScreen : public QGraphicsScene
 
     public:
 
-        DisplayScreen(int screen_x, int screen_y, ColourTheme::Colours, CodePage *cp);
+        DisplayScreen(int screen_x, int screen_y, CodePage *cp);
         ~DisplayScreen();
 
         int width();

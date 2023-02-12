@@ -29,7 +29,7 @@ class KeyboardTheme : public QDialog
 
         QStringList getThemes();
         KeyboardMap getTheme(QString keyboardThemeName);
-        void populateTable(QTableWidget *table, KeyboardMap map);
+        void populateTable(QTableWidget *table, QString mapName);
 
         int exec();
 

@@ -1,6 +1,6 @@
 #include "Keyboard.h"
 
-Keyboard::Keyboard(TerminalView *view)
+Keyboard::Keyboard(KeyboardTheme *keyboardTheme) : keyboardTheme(keyboardTheme)
 {    
     lock = false;
     insMode = false;
@@ -9,8 +9,6 @@ Keyboard::Keyboard(TerminalView *view)
     bufferEnd = 0;
     keyCount  = 0;
     waitRelease = false;
-
-    this->view = view;
 
     clearBufferEntry();
     setMap();
@@ -127,8 +125,8 @@ bool Keyboard::eventFilter( QObject *dist, QEvent *event )
 
     QKeyEvent *keyEvent = static_cast<QKeyEvent *>(event);
 
-    printf("Keyboard        : Type: %s   Count: %d   Key: %d   Native: %d Modifiers: %d   nativeModifiers: %d   nativeVirtualKey: %d    text: %s (%2.2X)    Mapped:%d\n", event->type() == QEvent::KeyPress ? "Press" : "Release", keyEvent->count(), keyEvent->key(), keyEvent->nativeScanCode(), keyEvent->modifiers(), keyEvent->nativeModifiers(), keyEvent->nativeVirtualKey(), keyEvent->text().toLatin1().data(), keyEvent->text().toLatin1().data()[0], kbBuffer[bufferEnd].isMapped);
-    fflush(stdout);
+//    printf("Keyboard        : Type: %s   Count: %d   Key: %d   Native: %d Modifiers: %d   nativeModifiers: %d   nativeVirtualKey: %d    text: %s (%2.2X)    Mapped:%d\n", event->type() == QEvent::KeyPress ? "Press" : "Release", keyEvent->count(), keyEvent->key(), keyEvent->nativeScanCode(), keyEvent->modifiers(), keyEvent->nativeModifiers(), keyEvent->nativeVirtualKey(), keyEvent->text().toLatin1().data(), keyEvent->text().toLatin1().data()[0], kbBuffer[bufferEnd].isMapped);
+//    fflush(stdout);
 
     // If we need to wait for a key to be released (from a previous key press)
     // check to see if the event was a key press. If so, and it generated a character,
@@ -175,7 +173,7 @@ bool Keyboard::processKey()
 
     kbBuffer[bufferEnd].isMapped = kbBuffer[bufferEnd].map->contains(key);
 
-    printf("Keyboard        : isSimpleText: %d - Key is mapped: %d\n", kbBuffer[bufferEnd].keyChar,kbBuffer[bufferEnd].isMapped);
+    //printf("Keyboard        : isSimpleText: %d - Key is mapped: %d\n", kbBuffer[bufferEnd].keyChar,kbBuffer[bufferEnd].isMapped);
 
     if (!kbBuffer[bufferEnd].isMapped)
     {
@@ -193,7 +191,7 @@ bool Keyboard::processKey()
     printf("Keyboard        : Keycount incremented. Key: %d isMapped: %d, mustMap: %d\n", kbBuffer[bufferEnd].key, kbBuffer[bufferEnd].isMapped, kbBuffer[bufferEnd].mustMap);
     fflush(stdout);
 
-    if ((kbBuffer[bufferEnd].key != 0  || kbBuffer[bufferEnd].isMapped) && view->connected)
+    if ((kbBuffer[bufferEnd].key != 0  || kbBuffer[bufferEnd].isMapped) && connectedState)
     {
 
         // Store target mapping if key is mapped
@@ -613,9 +611,19 @@ void Keyboard::endline()
     datastream->endline();
 }
 
+void Keyboard::clear()
+{
+    datastream->processAID(IBM3270_AID_CLEAR, true);
+}
+
 void Keyboard::copy()
 {
-    view->copyText();
+    emit copyText();
+}
+
+void Keyboard::ruler()
+{
+    datastream->toggleRuler();
 }
 
 void Keyboard::paste()
@@ -786,12 +794,7 @@ void Keyboard::setFactoryMaps()
     setMapping("Ctrl+I", "Info");
 }
 
-void Keyboard::ruler()
-{
-    datastream->toggleRuler();
-}
-
-void Keyboard::setTheme(KeyboardTheme::KeyboardMap theme)
+void Keyboard::setTheme(QString theme)
 {
     // Switch to a new keyboard map based on the theme
 
@@ -804,10 +807,12 @@ void Keyboard::setTheme(KeyboardTheme::KeyboardMap theme)
 
     // Keyboard themes are defined as { Q3270 function, { key, key, key } }
 
-    KeyboardTheme::KeyboardMap::ConstIterator i = theme.constBegin();
+    KeyboardTheme::KeyboardMap kbm = keyboardTheme->getTheme(theme);
+
+    KeyboardTheme::KeyboardMap::ConstIterator i = kbm.constBegin();
 
     // Iterate over the keyboard theme, and apply
-    while(i != theme.constEnd())
+    while(i != kbm.constEnd())
     {
         // Each Q3270 function in the map may have multiple keys defined for it
         for (int s = 0; s < i.value().size(); s++)
@@ -819,7 +824,7 @@ void Keyboard::setTheme(KeyboardTheme::KeyboardMap theme)
     }
 }
 
-void Keyboard::clear()
+void Keyboard::setConnected(bool state)
 {
-    datastream->processAID(IBM3270_AID_CLEAR, true);
+    connectedState = state;
 }

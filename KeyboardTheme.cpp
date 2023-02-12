@@ -199,7 +199,7 @@ void KeyboardTheme::setTheme(QString newTheme)
     ui->keyboardThemes->setCurrentIndex(ui->keyboardThemes->findText(currentTheme));
 
     // Populate dialog table
-    populateTable(ui->KeyboardMap, themes.find(currentTheme).value());
+    populateTable(ui->KeyboardMap, currentTheme);
 
     // Clear last row displayed
     lastRow = -1;
@@ -210,12 +210,14 @@ void KeyboardTheme::setTheme(QString newTheme)
     ui->message->clear();
 }
 
-void KeyboardTheme::populateTable(QTableWidget *table, KeyboardTheme::KeyboardMap map)
+void KeyboardTheme::populateTable(QTableWidget *table, QString mapName)
 {
     // Clear keyboard map table in dialog
     table->setRowCount(0);
 
     int row = 0;
+
+    KeyboardTheme::KeyboardMap map = getTheme(mapName);
     KeyboardTheme::KeyboardMap::ConstIterator i = map.constBegin();
 
     // Iterate over keyboard map and insert into table

@@ -43,7 +43,7 @@
       </sizepolicy>
      </property>
      <property name="currentIndex">
-      <number>1</number>
+      <number>0</number>
      </property>
      <widget class="QWidget" name="connection">
       <attribute name="title">
@@ -53,14 +53,14 @@
        <item row="2" column="1">
         <widget class="QLineEdit" name="hostLU">
          <property name="enabled">
-          <bool>false</bool>
+          <bool>true</bool>
          </property>
         </widget>
        </item>
        <item row="1" column="1">
         <widget class="QLineEdit" name="hostPort">
          <property name="enabled">
-          <bool>false</bool>
+          <bool>true</bool>
          </property>
          <property name="sizePolicy">
           <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
@@ -107,7 +107,7 @@
        <item row="0" column="1">
         <widget class="QLineEdit" name="hostName">
          <property name="enabled">
-          <bool>false</bool>
+          <bool>true</bool>
          </property>
          <property name="sizePolicy">
           <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
@@ -194,6 +194,9 @@
                <layout class="QGridLayout" name="gridLayout_3">
                 <item row="1" column="0">
                  <widget class="QSpinBox" name="terminalRows">
+                  <property name="enabled">
+                   <bool>false</bool>
+                  </property>
                   <property name="maximum">
                    <number>999</number>
                   </property>
@@ -218,6 +221,9 @@
                 </item>
                 <item row="1" column="2">
                  <widget class="QSpinBox" name="terminalCols">
+                  <property name="enabled">
+                   <bool>false</bool>
+                  </property>
                   <property name="maximum">
                    <number>999</number>
                   </property>
@@ -869,7 +875,7 @@
         </widget>
        </item>
        <item row="0" column="0">
-        <widget class="QComboBox" name="keyboardThemes"/>
+        <widget class="QComboBox" name="keyboardTheme"/>
        </item>
        <item row="0" column="1">
         <widget class="QPushButton" name="manageKeyboardThemes">
@@ -915,7 +921,7 @@
   <tabstop>colourTurq</tabstop>
   <tabstop>colourYellow</tabstop>
   <tabstop>colourWhite</tabstop>
-  <tabstop>keyboardThemes</tabstop>
+  <tabstop>keyboardTheme</tabstop>
   <tabstop>manageKeyboardThemes</tabstop>
   <tabstop>KeyboardMap</tabstop>
   <tabstop>TabsWidget</tabstop>
@@ -958,7 +964,7 @@
    <sender>terminalType</sender>
    <signal>currentIndexChanged(int)</signal>
    <receiver>PreferencesDialog</receiver>
-   <slot>changeModel(int)</slot>
+   <slot>terminalModelDropDownChanged(int)</slot>
    <hints>
     <hint type="sourcelabel">
      <x>122</x>
@@ -990,7 +996,7 @@
    <sender>colourTheme</sender>
    <signal>currentIndexChanged(int)</signal>
    <receiver>PreferencesDialog</receiver>
-   <slot>colourThemeChanged(int)</slot>
+   <slot>colourThemeDropDownChanged(int)</slot>
    <hints>
     <hint type="sourcelabel">
      <x>303</x>
@@ -1019,10 +1025,10 @@
    </hints>
   </connection>
   <connection>
-   <sender>keyboardThemes</sender>
+   <sender>keyboardTheme</sender>
    <signal>currentIndexChanged(int)</signal>
    <receiver>PreferencesDialog</receiver>
-   <slot>keyboardThemeChanged(int)</slot>
+   <slot>keyboardThemeDropDownChanged(int)</slot>
    <hints>
     <hint type="sourcelabel">
      <x>160</x>
@@ -1052,14 +1058,14 @@
   </connection>
  </connections>
  <slots>
-  <slot>changeModel(int)</slot>
+  <slot>terminalModelDropDownChanged(int)</slot>
   <slot>changeBlink(int)</slot>
   <slot>changeBlinkSpeed(int)</slot>
   <slot>selectColour()</slot>
   <slot>saveSettings()</slot>
-  <slot>colourThemeChanged(int)</slot>
+  <slot>colourThemeDropDownChanged(int)</slot>
   <slot>manageColourThemes()</slot>
   <slot>manageKeyboardThemes()</slot>
-  <slot>keyboardThemeChanged(int)</slot>
+  <slot>keyboardThemeDropDownChanged(int)</slot>
  </slots>
 </ui>

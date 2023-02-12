@@ -17,10 +17,11 @@
  * Sessions contain all custom settings
  */
 
-SessionManagement::SessionManagement(PreferencesDialog *settings, ActiveSettings *activeSettings) : QDialog()
+SessionManagement::SessionManagement(ActiveSettings *activeSettings) :
+    QDialog() ,
+    activeSettings(activeSettings)
 {
-    this->settings = settings;
-    this->activeSettings = activeSettings;
+
 }
 
 SessionManagement::~SessionManagement()
@@ -34,7 +35,7 @@ SessionManagement::~SessionManagement()
  * --------------------------------------------------------------------------------------
  */
 
-bool SessionManagement::saveSessionAs(TerminalTab *terminal)
+bool SessionManagement::saveSessionAs()
 {
     // Build UI
     QDialog saveDialog;
@@ -129,7 +130,7 @@ void SessionManagement::saveSessionNameEdited(QString name)
     }
 }
 
-void SessionManagement::saveRowClicked(int row, int column)
+void SessionManagement::saveRowClicked(int row, [[maybe_unused]] int column)
 {
     // Populate text fields from table cells
     save->sessionName->setText(save->tableWidget->item(row, 0)->text());
@@ -151,23 +152,23 @@ void SessionManagement::saveSettings()
     // Each session is stored under the Sessions/<session name> key
     s.beginGroup(sessionName);
     s.setValue("Description", sessionDesc);
-    s.setValue("ColourTheme", settings->getColourTheme());
-    s.setValue("KeyboardTheme", settings->getKeyboardTheme());
-    s.setValue("Address", settings->getAddress());
-    s.setValue("TerminalModel", settings->getModel());
-    s.setValue("TerminalX", settings->getTermX());
-    s.setValue("TerminalY", settings->getTermY());
+    s.setValue("ColourTheme", activeSettings->getColourThemeName());
+    s.setValue("KeyboardTheme", activeSettings->getKeyboardThemeName());
+    s.setValue("Address", activeSettings->getHostAddress());
+    s.setValue("TerminalModel", activeSettings->getTerminalModelName());
+    s.setValue("TerminalX", activeSettings->getTerminalX());
+    s.setValue("TerminalY", activeSettings->getTerminalY());
     s.setValue("CursorBlink", activeSettings->getCursorBlink());
     s.setValue("CursorBlinkSpeed", activeSettings->getCursorBlinkSpeed());
-    s.setValue("CursorInheritColour", activeSettings->getCursorInherit());
+    s.setValue("CursorInheritColour", activeSettings->getCursorColourInherit());
     s.setValue("Ruler", activeSettings->getRulerOn());
     s.setValue("RulerStyle", activeSettings->getRulerStyle());
-    s.setValue("Font", settings->getFont().family());
-    s.setValue("FontSize", settings->getFont().pointSize());
-    s.setValue("FontStyle", settings->getFontScaling());
-    s.setValue("FontScaling", settings->getFontScaling());
-    s.setValue("ScreenStretch", settings->getStretch());
-    s.setValue("Codepage",settings->getCodePage());
+    s.setValue("Font", activeSettings->getFont().family());
+    s.setValue("FontSize", activeSettings->getFont().pointSize());
+//    s.setValue("FontStyle", settings->getFontScaling());
+    s.setValue("FontScaling", activeSettings->getFontScaling());
+    s.setValue("ScreenStretch", activeSettings->getStretchScreen());
+    s.setValue("Codepage",activeSettings->getCodePage());
 
     // End group for session
     s.endGroup();
@@ -240,41 +241,8 @@ void SessionManagement::openSession(TerminalTab *t, QString sessionName)
     s.beginGroup(sessionName);
 
     if (!s.childKeys().isEmpty())
-    { 
-        // Set themes
-        t->setColourTheme(s.value("ColourTheme").toString());
-        t->setKeyboardTheme(s.value("KeyboardTheme").toString());
-
-        // Set terminal characteristics
-        settings->setTerminalModel(s.value("TerminalModel").toString());
-        settings->setTerminalSize(s.value("TerminalX").toInt(), s.value("TerminalY").toInt());
-        settings->setCodePage(s.value("Codepage").toString());
-
-        // Cursor settings
-        activeSettings->setCursorBlink(s.value("CursorBlink").toBool());
-        activeSettings->setCursorBlinkSpeed(s.value("CursorBlinkSpeed").toInt());
-        activeSettings->setCursorInherit(s.value("CursorInheritColour").toBool());
-
-        // Ruler
-        activeSettings->setRulerOn(s.value("Ruler").toBool());
-        activeSettings->setRulerStyle(s.value("RulerStyle").toInt());
-
-        // Font settings
-        QFont f;
-        f.setFamily(s.value("Font").toString());
-        f.setPointSize(s.value("FontSize").toInt());
-        f.setStyleName(s.value("FontStyle").toString());
-
-        settings->setFont(f);
-
-        settings->setFontScaling(s.value("FontScaling").toBool());
-        emit settings->setStretch(s.value("ScreenStretch").toBool());
-
-        t->openConnection(s.value("Address").toString());
-        t->setSessionName(sessionName);
-
-        // Update Settings form with address
-        settings->setAddress(s.value("Address").toString());
+    {
+        t->openConnection(s);
 
         // Store name and description for later
         this->sessionName = sessionName;
@@ -289,7 +257,7 @@ void SessionManagement::openSession(TerminalTab *t, QString sessionName)
     s.endGroup();
 }
 
-void SessionManagement::openRowClicked(int x, int y)
+void SessionManagement::openRowClicked([[maybe_unused]] int x, [[maybe_unused]] int y)
 {
     load->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(true);
 }
@@ -353,7 +321,7 @@ void SessionManagement::deleteSession()
 
 }
 
-void SessionManagement::manageRowClicked(int x, int y)
+void SessionManagement::manageRowClicked([[maybe_unused]] int x, [[maybe_unused]] int y)
 {
     // Enable the Delete Session button when a row is clicked
     manage->deleteSession->setEnabled(true);
@@ -442,7 +410,7 @@ void SessionManagement::manageAutoStartList()
     delete autostart;
 }
 
-void SessionManagement::autoStartRowAdded(int row)
+void SessionManagement::autoStartRowAdded([[maybe_unused]] int row)
 {
     // Insert a new row to Autostart table
     qDebug() << autostart->sessionList->rowCount();
@@ -458,7 +426,7 @@ void SessionManagement::autoStartRowAdded(int row)
     autostart->sessionList->setItem(autostart->sessionList->rowCount() - 1, 1, as2);
 }
 
-void SessionManagement::autoStartCellClicked(int row, int col)
+void SessionManagement::autoStartCellClicked([[maybe_unused]] int row, [[maybe_unused]] int col)
 {
     // Enable Delete button when a cell is selected
     autostart->deleteButton->setEnabled(true);
@@ -491,7 +459,7 @@ void SessionManagement::addAutoStart()
     delete add;
 }
 
-void SessionManagement::autoStartAddCellClicked(int x, int y)
+void SessionManagement::autoStartAddCellClicked([[maybe_unused]] int x, [[maybe_unused]] int y)
 {
     // Enable OK button
     add->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(true);

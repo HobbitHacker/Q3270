@@ -1,12 +1,12 @@
 #include "SocketConnection.h"
 
-SocketConnection::SocketConnection(QString termName)
+SocketConnection::SocketConnection(int modelType)
 {
 //    dataSocket = new QSslSocket(this);
     dataSocket = new QTcpSocket(this);
 	telnetState = TELNET_STATE_DATA;
 
-    this->termName = termName;
+    this->termName = tn3270e_terminal_types[modelType];
 	
     // Forward the connected and disconnected signals
     connect(dataSocket, &QSslSocket::connected, this, &SocketConnection::opened);
@@ -448,6 +448,7 @@ void SocketConnection::processSubNegotiation()
                     break;
                 }
 */
+                break;
             }
             if (subNegotiationBuffer.at(1) == TN3270E_FUNCTIONS && subNegotiationBuffer.at(2) == TN3270E_IS)
             {
@@ -507,12 +508,15 @@ void SocketConnection::processSubNegotiation()
  */
 void SocketConnection::dump(QByteArray &a, QString title)
 {
+    
+    CodePage ibm037 = CodePage();
+    
     int w = 0;
     QString bytes;
     QString byteChars;
 
     qDebug() << "";
-    qDebug().noquote() << title << " Start -------------------------------------------";
+    qDebug().noquote() << title << " Start ------------------------------------------- (" << a.length() << " bytes )";
 
     for (int i = 0; i < a.size(); i++)
     {
@@ -524,11 +528,13 @@ void SocketConnection::dump(QByteArray &a, QString title)
             bytes = "";
             w = 0;
         }
-
+        
         bytes.append(QString("%1 ").arg((uchar)a.at(i), 2, 16, QLatin1Char('0')));
-
-        if (isalnum(a.at(i)))
-            byteChars.append(a.at(i));
+        
+        uchar c = ibm037.getUnicodeChar(a.at(i)).toLatin1().at(0);
+        ;
+        if (isalnum(c))
+            byteChars.append(ibm037.getUnicodeChar(a.at(i)));
         else
             byteChars.append(".");
 

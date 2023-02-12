@@ -1,43 +1,30 @@
-#include "Q3270.h"
-
 #include "TerminalTab.h"
 
-TerminalTab::TerminalTab(QVBoxLayout *layout, PreferencesDialog *settings, ActiveSettings *activeSettings, ColourTheme *colours, KeyboardTheme *keyboards, CodePage *cp, QString sessionName)
+TerminalTab::TerminalTab(QVBoxLayout *layout, ActiveSettings *activeSettings, CodePage *cp, Keyboard *kb, ColourTheme *cs, QString sessionName) :
+    kbd(kb), colourtheme(cs), cp(cp), activeSettings(activeSettings), sessionName(sessionName)
 {
     // Create terminal display and keyboard objects
     view = new TerminalView();
-    kbd = new Keyboard(view);
-
-    // Save Themes and Settings objects
-    this->activeSettings = activeSettings;
-    this->colours = colours;
-    this->keyboards = keyboards;
-    this->settings = settings;
-    this->cp = cp;
-
-    // Save 'Session' name
-    this->sessionName = sessionName;
-
-    // Map settings signals to their target slots
-    connect(settings, &PreferencesDialog::coloursChanged, this, &TerminalTab::setColours);
-    connect(settings, &PreferencesDialog::fontChanged, this, &TerminalTab::setFont);
-    connect(settings, &PreferencesDialog::tempFontChange, this, &TerminalTab::setCurrentFont);
-    connect(settings, &PreferencesDialog::codePageChanged, view, &TerminalView::changeCodePage);
-    connect(settings, &PreferencesDialog::setKeyboardTheme, kbd, &Keyboard::setTheme);
 
     connect(activeSettings, &ActiveSettings::rulerStyleChanged, this, &TerminalTab::rulerStyle);
     connect(activeSettings, &ActiveSettings::rulerChanged, this, &TerminalTab::rulerChanged);
     connect(activeSettings, &ActiveSettings::cursorBlinkChanged, view, &TerminalView::setBlink);
     connect(activeSettings, &ActiveSettings::cursorBlinkSpeedChanged, view, &TerminalView::setBlinkSpeed);
+    connect(activeSettings, &ActiveSettings::fontChanged, this, &TerminalTab::setFont);
+    connect(activeSettings, &ActiveSettings::codePageChanged, view, &TerminalView::changeCodePage);
+    connect(activeSettings, &ActiveSettings::keyboardThemeChanged, kbd, &Keyboard::setTheme);
+
+    //TODO: Move setColourTheme to ColourTheme - as Keyboard::setTheme? Would need to pass DisplayScreen
+    connect(activeSettings, &ActiveSettings::colourThemeChanged, this, &TerminalTab::setColourTheme);
 
     // Build "Not Connected" display
-    gs = new QGraphicsScene();
+    notConnectedScene = new QGraphicsScene();
 
     QGraphicsRectItem *mRect = new QGraphicsRectItem(0, 0, 640, 480);
     mRect->setBrush(QColor(Qt::black));
     mRect->setPen(QColor(Qt::black));
 
-    gs->addItem(mRect);
+    notConnectedScene->addItem(mRect);
 
     QGraphicsSimpleTextItem *ncMessage = new QGraphicsSimpleTextItem("Not Connected", mRect);
 
@@ -53,8 +40,8 @@ TerminalTab::TerminalTab(QVBoxLayout *layout, PreferencesDialog *settings, Activ
     ncMessage->setPos(xPos, yPos);
 
     // Set "Not Connected" as the initially displayed scene
-    view->setScene(gs);
-    view->setStretch(settings->getStretch());
+    view->setScene(notConnectedScene);
+    // view->setStretch(settings->getStretch());
 
     // Add it to the display and finally show it
     layout->addWidget(view);
@@ -65,22 +52,23 @@ TerminalTab::TerminalTab(QVBoxLayout *layout, PreferencesDialog *settings, Activ
 TerminalTab::~TerminalTab()
 {
     delete kbd;
-    delete settings;
-    delete gs;
+//    delete settings;
+    delete notConnectedScene;
     delete view;
 }
 
 void TerminalTab::showForm()
 {
-    settings->showForm(view->connected);
+    // settings->showForm(view->connected);
 }
 
+// FIXME: Make this a signal/slot mechanism
 void TerminalTab::setFont()
 {
     if (view->connected)
     {
-        screen[0]->setFont(settings->getFont());
-        screen[1]->setFont(settings->getFont());
+        screen[0]->setFont(activeSettings->getFont());
+        screen[1]->setFont(activeSettings->getFont());
     }
 }
 
@@ -101,8 +89,11 @@ void TerminalTab::setScaleFont(bool scale)
     }
 }
 
-void TerminalTab::setColours(ColourTheme::Colours colours)
+void TerminalTab::setColourTheme(QString themeName)
 {
+    ColourTheme::Colours colours = colourtheme->getTheme(themeName);
+
+    // Set colour theme by name; pass obtained theme to setColours()
     if (view->connected)
     {
         for (int i = 0; i < 2; i++)
@@ -113,20 +104,9 @@ void TerminalTab::setColours(ColourTheme::Colours colours)
     }
 }
 
-void TerminalTab::setColourTheme(QString themeName)
-{
-    colourTheme = themeName;
-
-    // Set colour theme by name; pass obtained theme to setColours()
-    if (view->connected)
-    {
-        setColours(colours->getTheme(themeName));
-    }
-}
-
 void TerminalTab::setKeyboardTheme(QString themeName)
 {
-    keyboardTheme = themeName;
+    //keyboardTheme = themeName;
 
     // Set keyboard theme by name; pass obtained theme to setKeyboard()
 
@@ -165,27 +145,67 @@ void TerminalTab::openConnection(QString address)
                        address.section(":", 1, 1).toInt(),
                        address.section("@", 0, 0));
 
+
     }
     else
     {
         connectSession(address.section(":", 0, 0),
                        address.section(":", 1, 1).toInt(),
                        "");
+
     }
+}
+
+void TerminalTab::openConnection(QSettings& s)
+{
+    // Set themes
+    setColourTheme(s.value("ColourTheme").toString());
+    setKeyboardTheme(s.value("KeyboardTheme").toString());
+
+    // Set terminal characteristics
+    activeSettings->setTerminal(s.value("TerminalX").toInt(), s.value("TerminalY").toInt(), s.value("TerminalModel").toString());
+    activeSettings->setCodePage(s.value("Codepage").toString());
+
+    // Cursor settings
+    activeSettings->setCursorBlink(s.value("CursorBlink").toBool());
+    activeSettings->setCursorBlinkSpeed(s.value("CursorBlinkSpeed").toInt());
+    activeSettings->setCursorColourInherit(s.value("CursorInheritColour").toBool());
+
+    // Ruler
+    activeSettings->setRulerOn(s.value("Ruler").toBool());
+    activeSettings->setRulerStyle(s.value("RulerStyle").toInt());
+
+    // Font settings
+    QFont f;
+    f.setFamily(s.value("Font").toString());
+    f.setPointSize(s.value("FontSize").toInt());
+    f.setStyleName(s.value("FontStyle").toString());
+
+    activeSettings->setFont(f);
+
+    // settings->setFontScaling(s.value("FontScaling").toBool());
+    view->setStretch(s.value("ScreenStretch").toBool());
+
+    openConnection(s.value("Address").toString());
+    setSessionName(s.group());
+
+    // Update settings with address
+    activeSettings->setHostAddress(s.value("Address").toString());
+
 }
 
 void TerminalTab::connectSession(QString host, int port, QString luName)
 {
     setWindowTitle(windowTitle().append(" [").append(host).append("]"));
 
-    screen[0] = new DisplayScreen(80, 24, settings->getColours(), settings->codePage());
-    screen[1] = new DisplayScreen(settings->getTermX(), settings->getTermY(), settings->getColours(), settings->codePage());
+    screen[0] = new DisplayScreen(80, 24, cp);
+    screen[1] = new DisplayScreen(activeSettings->getTerminalX(), activeSettings->getTerminalY(), cp);
 
     view->setScenes(screen[0], screen[1]);
     view->setAlternateScreen(false);
 
     datastream = new ProcessDataStream(view);
-    socket = new SocketConnection(settings->getTermName());
+    socket = new SocketConnection(activeSettings->getTerminalModel());
 
     connect(socket, &SocketConnection::dataStreamComplete, datastream, &ProcessDataStream::processStream);
     connect(socket, &SocketConnection::connectionStarted, this, &TerminalTab::connected);
@@ -193,23 +213,24 @@ void TerminalTab::connectSession(QString host, int port, QString luName)
 
     kbd->setDataStream(datastream);
 
-    connect(settings, &PreferencesDialog::setStretch, view, &TerminalView::setStretch);
+    //connect(settings, &PreferencesDialog::setStretch, view, &TerminalView::setStretch);
 
-    setColourTheme(colourTheme);
+    //setColourTheme(colourTheme);
 
     for (int i = 0; i < 2; i++)
     {
-        screen[i]->setFontScaling(settings->getFontScaling());
-        screen[i]->setFont(settings->getFont());
+        // screen[i]->setFontScaling(settings->getFontScaling());
+        screen[i]->setFont(activeSettings->getFont());
         screen[i]->rulerMode(activeSettings->getRulerOn());
         screen[i]->setRulerStyle(activeSettings->getRulerStyle());
+        screen[i]->setColourPalette(colourtheme->getTheme(activeSettings->getColourThemeName()));
 
         connect(datastream, &ProcessDataStream::cursorMoved, screen[i], &DisplayScreen::showStatusCursorPosition);
 
         connect(kbd, &Keyboard::setLock, screen[i], &DisplayScreen::setStatusXSystem);
         connect(kbd, &Keyboard::setInsert, screen[i], &DisplayScreen::setStatusInsert);
 
-        connect(settings, &PreferencesDialog::fontScalingChanged, screen[i], &DisplayScreen::setFontScaling);
+//        connect(settings, &PreferencesDialog::fontScalingChanged, screen[i], &DisplayScreen::setFontScaling);
         connect(activeSettings, &ActiveSettings::cursorInheritChanged, screen[i], &DisplayScreen::setCursorColour);
 
     }
@@ -237,19 +258,23 @@ void TerminalTab::closeConnection()
 
     delete datastream;
 
-    view->setScene(gs);
-    view->fitInView(gs->itemsBoundingRect(), Qt::IgnoreAspectRatio);
+    view->setScene(notConnectedScene);
+    view->fitInView(notConnectedScene->itemsBoundingRect(), Qt::IgnoreAspectRatio);
     view->setDisconnected();
 
     delete screen[0];
     delete screen[1];
 
+    // Menu "Connect" entry disable
     emit disconnected();
+    kbd->setConnected(false);
 }
 
 void TerminalTab::connected()
 {
+    // Menu "Connect" entry enable
     emit connectionEstablished();
+    kbd->setConnected(true);
 }
 
 void TerminalTab::closeEvent(QCloseEvent *closeEvent)

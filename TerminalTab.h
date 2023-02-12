@@ -21,12 +21,13 @@ class TerminalTab : public QWidget
     Q_OBJECT
 
     public:
-        TerminalTab(QVBoxLayout *v, PreferencesDialog *settings, ActiveSettings *activeSettings, ColourTheme *colours, KeyboardTheme *keyboards, CodePage *cp, QString sessionName);
+
+        TerminalTab(QVBoxLayout *v, ActiveSettings *activeSettings, CodePage *cp, Keyboard *kb, ColourTheme *cs, QString sessionName);
         ~TerminalTab();
 
         void openConnection(QString host, int port, QString luName);
         void openConnection(QString address);
-        void connectSession(QString host, int port, QString luName);
+        void openConnection(QSettings& s);
 
         int terminalWidth();
         int terminalHeight();
@@ -40,16 +41,9 @@ class TerminalTab : public QWidget
 
         void setFont();
         void setScaleFont(bool scale);
-        void setColours(ColourTheme::Colours colours);
 
-        // Set themes by name
-        void setColourTheme(QString themeName);
         void setKeyboardTheme(QString themeName);
         
-        // Return current theme names
-        inline QString getColourTheme()    { return colourTheme; };
-        inline QString getKeyboardTheme()  { return keyboardTheme; };
-
         // Return current session name
         inline QString getSessionName()    { return sessionName; };
         inline void    setSessionName(QString sessionName) { this->sessionName = sessionName; };
@@ -69,30 +63,29 @@ class TerminalTab : public QWidget
 
         void connected();
         void closeConnection();
-
-    private slots:
-
         void closeEvent(QCloseEvent *closeEvent);
         void setCurrentFont(QFont f);
         void rulerStyle(int r);
         void rulerChanged(bool on);
 
+        // Set themes by name
+        void setColourTheme(QString themeName);
+
     private:
 
+        void connectSession(QString host, int port, QString luName);
+
         Keyboard *kbd;
+        ColourTheme *colourtheme;
+
         CodePage *cp;
 
-        QGraphicsScene *gs;
+        QGraphicsScene *notConnectedScene;
 
         ProcessDataStream *datastream;
         SocketConnection *socket;
 
         DisplayScreen *screen[2];
-
-        ColourTheme *colours;
-        KeyboardTheme *keyboards;
-
-        PreferencesDialog *settings;
 
         ActiveSettings *activeSettings;
 
@@ -101,10 +94,6 @@ class TerminalTab : public QWidget
         QLabel *cursorAddress;
         QLabel *syslock;
         QLabel *insMode;
-        
-        // Current themes
-        QString colourTheme;
-        QString keyboardTheme;
 
         // Session name
         QString sessionName;

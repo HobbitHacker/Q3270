@@ -19,12 +19,7 @@
 #include <QWidgetAction>
 #include <QLabel>
 
-#include "SocketConnection.h"
-#include "ProcessDataStream.h"
-#include "Keyboard.h"
-#include "TerminalView.h"
 #include "PreferencesDialog.h"
-#include "Q3270.h"
 #include "TerminalTab.h"
 #include "ColourTheme.h"
 #include "KeyboardTheme.h"
@@ -98,6 +93,7 @@ class MainWindow : public QMainWindow
       SessionManagement *sm;
       PreferencesDialog *settings;
       CodePage *codePage;
+      Keyboard *keyboard;
       ActiveSettings *activeSettings;
 
       int maxMruCount;

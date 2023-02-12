@@ -30,7 +30,8 @@ class SocketConnection : public QObject
     Q_DISABLE_COPY(SocketConnection)
 
     public:
-        explicit SocketConnection(QString termName);
+
+        explicit SocketConnection(int modelType);
         ~SocketConnection();
 
         void sendResponse(QByteArray &b);
@@ -92,7 +93,9 @@ class SocketConnection : public QObject
 
         void processSubNegotiation();
 
-        const char *tn3270e_functions_strings[5] = {"BIND_IMAGE", "DATA_STREAM_CTL", "RESPONSES", "SCS_CTL_CODES", "SYSREQ"};
+        const char *tn3270e_functions_strings[5] = { "BIND_IMAGE", "DATA_STREAM_CTL", "RESPONSES", "SCS_CTL_CODES", "SYSREQ" };
+
+        QString tn3270e_terminal_types[5] = { "IBM-3279-2-E", "IBM-3279-3-E", "IBM-3279-4-E", "IBM-3279-5-E", "IBM-DYNAMIC" };
 
         char tn32703_functions_flags[5];
 

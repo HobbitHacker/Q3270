@@ -11,7 +11,6 @@
 
 #include "ColourTheme.h"
 #include "KeyboardTheme.h"
-#include "CodePage.h"
 #include "ActiveSettings.h"
 
 namespace Ui {
@@ -26,60 +25,34 @@ class PreferencesDialog : public QDialog
 
     public:
 
-        explicit PreferencesDialog(ColourTheme *colours, KeyboardTheme *keyboards, ActiveSettings *activeSettings, CodePage *codepage, QWidget *parent = nullptr);
+        explicit PreferencesDialog(ColourTheme *colours, KeyboardTheme *keyboards, ActiveSettings *activeSettings, QWidget *parent = nullptr);
         ~PreferencesDialog();
 
-        void showForm(bool connected);
+        void showForm();
 
-        int getTermX();
-        int getTermY();
-        QString getTermName();
-
-        QFont getFont();
-        void setFont(QFont font);
-
-        QString getCodePage();
-        void setCodePage(QString codepage);
-        CodePage *codePage();
-
-        ColourTheme::Colours getColours();
-
-        bool getFontScaling()                      { return fontScaling; }
-        void setFontScaling(bool scale);
-
-        bool getStretch()                          { return stretchScreen; }
-
-        QString getAddress();
-        void setAddress(QString address);
-
-        QString getColourTheme()                   { return colourThemeName; }
-        QString getKeyboardTheme()                 { return keyboardThemeName; }
-        QString getModel()                         { return terms[termType].name; }
-
-        void setTerminalModel(QString model);
-        void setTerminalSize(int x, int y);
+        // FIXME: Remove this somehow
+        void populateCodePages(QMap<QString, QString> codepagelist);
 
     signals:
 
-        void terminalChanged(int type, int x, int y);
-        void coloursChanged(ColourTheme::Colours);
-        void fontChanged();
-        void setKeyboardTheme(KeyboardTheme::KeyboardMap newTheme);
-        void fontScalingChanged(bool fontScaling);
         void tempFontChange(QFont f);
-        void setStretch(bool stretch);
-        void codePageChanged();
 
         // Emitted when hostname field is not blank
+        // TODO: Is this the right place for this?
         void connectValid(bool state);
+
+    public slots:
+
+        void connected();
+        void disconnected();
 
     private slots:
 
         void changeFont(QFont f);
-        void setTerminalModel(int m);
+        void terminalModelDropDownChanged(int m);
 
-        void colourThemeChanged(int index);
-        void keyboardThemeChanged(int index);
+        void colourThemeDropDownChanged(int index);
+        void keyboardThemeDropDownChanged(int index);
 
         void populateColourThemeNames();
         void populateKeyboardThemeNames();
@@ -95,7 +68,6 @@ class PreferencesDialog : public QDialog
 
         ColourTheme *colours;
         KeyboardTheme *keyboards;
-        CodePage *codepage;
 
         QString colourThemeName;
         ColourTheme::Colours colourTheme;
@@ -105,47 +77,12 @@ class PreferencesDialog : public QDialog
 
         ActiveSettings *activeSettings;
 
-        QFont termFont;
         QFont qfdFont;
 
         QHash<ColourTheme::Colour, QPushButton *> colourButtons;
 
-        // Host address parts
-        QString hostName;
-        int hostPort;
-        QString hostLU;
-
         // Used to populate the combobox with nice names
         QMap<QString, int> comboRulerStyle;
-
-        int termType;
-        int termX;
-        int termY;
-
-        // Terminal behaviours
-        bool fontScaling;                   // Scale font to Window
-
-        bool stretchScreen;                 // Whether to stretch the 3270 screen to fit the window
-        bool backSpaceStop;                 // Whether backspace stops at the field start position
-
-        bool colourThemeChangeFlag;
-        bool keyboardThemeChangeFlag;
-        int formCodePage;
-
-        struct termTypes
-        {
-            QString name;
-            QString term;
-            int x, y;
-        };
-
-        termTypes terms[5] = {
-            { "Model2", "IBM-3279-2-E", 80, 24 },
-            { "Model3", "IBM-3279-3-E", 80, 32 },
-            { "Model4", "IBM-3279-4-E", 80, 43 },
-            { "Model5", "IBM-3279-5-E", 132, 27 },
-            { "Dynamic", "IBM-DYNAMIC", 0, 0}
-        };
 
         void accept();
         void reject();
