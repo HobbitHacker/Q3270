@@ -228,6 +228,10 @@ void TerminalView::setBlink(bool blink)
             current->showCursor();
         }
     }
+    else
+    {
+        cursorBlinker->start();
+    }
 }
 
 bool TerminalView::getBlink()
