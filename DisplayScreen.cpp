@@ -694,7 +694,7 @@ int DisplayScreen::resetFieldAttrs(int start)
 
         glyph.at(offset)->resetCharAttrs();
 
-        if (glyph.at(offset)->isDisplay() & !glyph.at(offset)->isFieldStart())
+        if (glyph.at(offset)->isDisplay() && !glyph.at(offset)->isFieldStart())
         {
             if (glyph.at(offset)->isReverse())
             {
@@ -751,7 +751,7 @@ void DisplayScreen::cascadeAttrs(int start)
 
         glyph.at(offset)->resetCharAttrs();
 
-        if (glyph.at(offset)->isDisplay() & !glyph.at(offset)->isFieldStart())
+        if (glyph.at(offset)->isDisplay() && !glyph.at(offset)->isFieldStart())
         {
             if (glyph.at(offset)->isReverse())
             {
@@ -789,7 +789,7 @@ void DisplayScreen::resetMDTs()
 {
     for (int i = 0; i < screenPos_max; i++)
     {
-        if (glyph.at(i)->isFieldStart() & glyph.at(i)->isMdtOn())
+        if (glyph.at(i)->isFieldStart() && glyph.at(i)->isMdtOn())
         {
             glyph.at(i)->setMDT(false);
         }
@@ -1021,13 +1021,13 @@ void DisplayScreen::setCursorColour(bool inherit)
     cursorColour = inherit;
     if (inherit)
     {
-        Glyph *g = (Glyph *)cursor.parentItem()->childItems()[0];
-        cursor.setBrush(palette[g->getColour()]);
+        cursor.setBrush(palette[glyph.at(cursor.data(0).toInt())->getColour()]);
     }
     else
     {
         cursor.setBrush(QBrush(QColor(0xBB, 0xBB, 0xBB)));
     }
+    cursor.show();
 }
 
 void DisplayScreen::setCursor(int pos)
@@ -1038,6 +1038,7 @@ void DisplayScreen::setCursor(int pos)
         cursor.setBrush(palette[glyph.at(pos)->getColour()]);
     }
     cursor.setPos(cell.at(pos)->boundingRect().left(), cell.at(pos)->boundingRect().top());
+    cursor.setData(0,pos);
 }
 
 void DisplayScreen::showCursor()
@@ -1430,11 +1431,11 @@ void DisplayScreen::getScreen(QByteArray &buffer)
         {
             buffer.append(IBM3270_SF);
             uchar attr;
-            if (glyph.at(i)->isDisplay() & !glyph.at(i)->isPenSelect())
+            if (glyph.at(i)->isDisplay() && !glyph.at(i)->isPenSelect())
             {
                 attr = 0x00;
             }
-            else if (glyph.at(i)->isDisplay() & glyph.at(i)->isPenSelect())
+            else if (glyph.at(i)->isDisplay() && glyph.at(i)->isPenSelect())
             {
                 attr = 0x01;
             }

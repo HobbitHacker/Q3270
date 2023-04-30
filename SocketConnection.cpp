@@ -513,30 +513,42 @@ void SocketConnection::dump(QByteArray &a, QString title)
     
     int w = 0;
     QString bytes;
-    QString byteChars;
+    QString bytesASCII;
+    QString bytesEBCDIC;
 
     qDebug() << "";
-    qDebug().noquote() << title << " Start ------------------------------------------- (" << a.length() << " bytes )";
+    qDebug().noquote() << "                         |---------------------------------------------------------------------------------------------|";
+    qDebug().noquote() << QString(QString("                         | %1 Start ( %2 bytes)").arg(title).arg(a.length())).left(96);
+    qDebug().noquote() << "                         |------------------------------------------------- Hex ---------------------------------------|  | ASCII                            | EBCDIC                           |";
 
     for (int i = 0; i < a.size(); i++)
     {
         if (w > 31)
         {
-            qDebug().noquote() << QString("SocketConnection: %1 - %2 | %3 |").arg(i - 31, 4, 16).arg(bytes.toUpper().leftJustified(96)).arg(byteChars.leftJustified(32));
+            qDebug().noquote() << QString("SocketConnection: %1 - %2 | %3 |").arg(i - 31, 4, 16).arg(bytes.toUpper().leftJustified(96)).arg(bytesASCII.leftJustified(32));
 
-            byteChars = "";
+            bytesASCII = "";
             bytes = "";
             w = 0;
         }
         
         bytes.append(QString("%1 ").arg((uchar)a.at(i), 2, 16, QLatin1Char('0')));
         
-        uchar c = ibm037.getUnicodeChar(a.at(i)).toLatin1().at(0);
-        ;
-        if (isalnum(c))
-            byteChars.append(ibm037.getUnicodeChar(a.at(i)));
+        uchar ebcdicchar = a.at(i);
+
+        QString unicode = ibm037.getUnicodeChar(ebcdicchar);
+
+        uchar latin1 = unicode.toLatin1().data()[0];
+
+        if (isalnum(latin1))
+            bytesEBCDIC.append(latin1);
         else
-            byteChars.append(".");
+            bytesEBCDIC.append(".");
+
+        if (isalnum(ebcdicchar))
+            bytesASCII.append(ebcdicchar);
+        else
+            bytesASCII.append(".");
 
         w++;
 
@@ -544,10 +556,12 @@ void SocketConnection::dump(QByteArray &a, QString title)
 
     if (w != 0)
     {
-        qDebug().noquote() << QString("SocketConnection: %1 - %2 | %3 |").arg(a.size() > 31 ? a.size() - 31 : 0, 4, 16).arg(bytes.toUpper().leftJustified(96)).arg(byteChars.leftJustified(32));
+        qDebug().noquote() << QString("SocketConnection: %1 - %2 | %3 | %4 |").arg(a.size() > 31 ? a.size() - 31 : 0, 4, 16).arg(bytes.toUpper().leftJustified(96)).arg(bytesASCII.leftJustified(32)).arg(bytesEBCDIC.leftJustified(32));
     }
 
-    qDebug().noquote() << title << " End   -------------------------------------------";
+    qDebug().noquote() << "                         |---------------------------------------------------------------------------------------------|";
+    qDebug().noquote() << QString(QString("                         | %1 End ( %2 bytes)").arg(title).arg(a.length())).left(98);
+    qDebug().noquote() << "                         |------------------------------------------------- Hex ---------------------------------------|  | ASCII                            | EBCDIC                           |";
     qDebug() << "";
 
 }
