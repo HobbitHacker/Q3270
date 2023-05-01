@@ -10,4 +10,4 @@ via the TN3270 protocol.
 It's not (yet) as feature rich as other emulators, but it is (in my limited cases) usuable for
 things like MVS 3.8j under Hercules. 
 
-I've used it for at least MVS 3.8j and VM/370.
+I've used it for at least MVS 3.8j and VM/370, and to connect to IBM's zXplore https://ibmzxplore.influitive.com
