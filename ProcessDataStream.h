@@ -27,7 +27,6 @@
 
 #include "DisplayScreen.h"
 #include "Q3270.h"
-#include "TerminalView.h"
 #include <arpa/telnet.h>
 
 #include <map>
@@ -47,7 +46,7 @@ class ProcessDataStream : public QObject
 
         bool processing;
 
-        ProcessDataStream(TerminalView *t);
+        ProcessDataStream(TerminalTab *t);
 
         void insertChar(unsigned char keycode, bool insMode);
 
@@ -87,7 +86,7 @@ class ProcessDataStream : public QObject
 
         DisplayScreen *screen;
 
-        TerminalView *terminal;
+        TerminalTab *terminal;
 
         QByteArray::Iterator buffer;
 

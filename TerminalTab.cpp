@@ -4,14 +4,16 @@ TerminalTab::TerminalTab(QVBoxLayout *layout, ActiveSettings *activeSettings, Co
     kbd(kb), colourtheme(cs), cp(cp), activeSettings(activeSettings), sessionName(sessionName)
 {
     // Create terminal display and keyboard objects
-    view = new TerminalView();
+    view = new QGraphicsView();
+
+    view->setBackgroundBrush(QBrush(Qt::black));
 
     connect(activeSettings, &ActiveSettings::rulerStyleChanged, this, &TerminalTab::rulerStyle);
     connect(activeSettings, &ActiveSettings::rulerChanged, this, &TerminalTab::rulerChanged);
-    connect(activeSettings, &ActiveSettings::cursorBlinkChanged, view, &TerminalView::setBlink);
-    connect(activeSettings, &ActiveSettings::cursorBlinkSpeedChanged, view, &TerminalView::setBlinkSpeed);
+    connect(activeSettings, &ActiveSettings::cursorBlinkChanged, this, &TerminalTab::setBlink);
+    connect(activeSettings, &ActiveSettings::cursorBlinkSpeedChanged, this, &TerminalTab::setBlinkSpeed);
     connect(activeSettings, &ActiveSettings::fontChanged, this, &TerminalTab::setFont);
-    connect(activeSettings, &ActiveSettings::codePageChanged, view, &TerminalView::changeCodePage);
+    connect(activeSettings, &ActiveSettings::codePageChanged, this, &TerminalTab::changeCodePage);
     connect(activeSettings, &ActiveSettings::keyboardThemeChanged, kbd, &Keyboard::setTheme);
 
     //TODO: Move setColourTheme to ColourTheme - as Keyboard::setTheme? Would need to pass DisplayScreen
@@ -47,6 +49,14 @@ TerminalTab::TerminalTab(QVBoxLayout *layout, ActiveSettings *activeSettings, Co
     layout->addWidget(view);
 
     view->show();
+
+    // Set up primary and alternate scenes
+    primary = new QGraphicsScene();
+    alternate = new QGraphicsScene();
+
+    // Blink timers
+    blinker = new QTimer(this);
+    cursorBlinker = new QTimer(this);
 }
 
 TerminalTab::~TerminalTab()
@@ -65,27 +75,27 @@ void TerminalTab::showForm()
 // FIXME: Make this a signal/slot mechanism
 void TerminalTab::setFont()
 {
-    if (view->connected)
+    if (sessionConnected)
     {
-        screen[0]->setFont(activeSettings->getFont());
-        screen[1]->setFont(activeSettings->getFont());
+        primaryScreen->setFont(activeSettings->getFont());
+        alternateScreen->setFont(activeSettings->getFont());
     }
 }
 
 void TerminalTab::setCurrentFont(QFont f)
 {
-    if (view->connected)
+    if (sessionConnected)
     {
-        view->current->setFont(f);
+        current->setFont(f);
     }
 }
 
 void TerminalTab::setScaleFont(bool scale)
 {
-    if (view->connected)
+    if (sessionConnected)
     {
-        screen[0]->setFontScaling(scale);
-        screen[1]->setFontScaling(scale);
+        primaryScreen->setFontScaling(scale);
+        alternateScreen->setFontScaling(scale);
     }
 }
 
@@ -94,13 +104,14 @@ void TerminalTab::setColourTheme(QString themeName)
     ColourTheme::Colours colours = colourtheme->getTheme(themeName);
 
     // Set colour theme by name; pass obtained theme to setColours()
-    if (view->connected)
+    if (sessionConnected)
     {
-        for (int i = 0; i < 2; i++)
-        {
-            screen[i]->setColourPalette(colours);
-            screen[i]->resetColours();
-        }
+        primaryScreen->setColourPalette(colours);
+        primaryScreen->resetColours();
+
+        alternateScreen->setColourPalette(colours);
+        alternateScreen->resetColours();
+
     }
 }
 
@@ -115,20 +126,20 @@ void TerminalTab::setKeyboardTheme(QString themeName)
 void TerminalTab::rulerChanged(bool on)
 {
     // Switch ruler on or off apporpriately
-    if (view->connected)
+    if (sessionConnected)
     {
-        screen[0]->rulerMode(on);
-        screen[1]->rulerMode(on);
+        primaryScreen->rulerMode(on);
+        alternateScreen->rulerMode(on);
     }
 }
 
 void TerminalTab::rulerStyle(int rulerStyle)
 {
     // Change ruler style to match settings
-    if (view->connected)
+    if (sessionConnected)
     {
-        screen[0]->setRulerStyle(rulerStyle);
-        screen[1]->setRulerStyle(rulerStyle);
+        primaryScreen->setRulerStyle(rulerStyle);
+        alternateScreen->setRulerStyle(rulerStyle);
     }
 }
 
@@ -184,7 +195,7 @@ void TerminalTab::openConnection(QSettings& s)
     activeSettings->setFont(f);
 
     // settings->setFontScaling(s.value("FontScaling").toBool());
-    view->setStretch(s.value("ScreenStretch").toBool());
+//    view->setStretch(s.value("ScreenStretch").toBool());
 
     openConnection(s.value("Address").toString());
     setSessionName(s.group());
@@ -198,13 +209,15 @@ void TerminalTab::connectSession(QString host, int port, QString luName)
 {
     setWindowTitle(windowTitle().append(" [").append(host).append("]"));
 
-    screen[0] = new DisplayScreen(80, 24, cp);
-    screen[1] = new DisplayScreen(activeSettings->getTerminalX(), activeSettings->getTerminalY(), cp);
+    primaryScreen = new DisplayScreen(80, 24, cp);
+    alternateScreen = new DisplayScreen(activeSettings->getTerminalX(), activeSettings->getTerminalY(), cp);
 
-    view->setScenes(screen[0], screen[1]);
-    view->setAlternateScreen(false);
+    primary->addItem(primaryScreen);
+    alternate->addItem(alternateScreen);
 
-    datastream = new ProcessDataStream(view);
+    altScreen = false;
+
+    datastream = new ProcessDataStream(this);
     socket = new SocketConnection(activeSettings->getTerminalModel());
 
     connect(socket, &SocketConnection::dataStreamComplete, datastream, &ProcessDataStream::processStream);
@@ -217,26 +230,28 @@ void TerminalTab::connectSession(QString host, int port, QString luName)
 
     //setColourTheme(colourTheme);
 
-    for (int i = 0; i < 2; i++)
-    {
-        // screen[i]->setFontScaling(settings->getFontScaling());
-        screen[i]->setFont(activeSettings->getFont());
-        screen[i]->rulerMode(activeSettings->getRulerOn());
-        screen[i]->setRulerStyle(activeSettings->getRulerStyle());
-        screen[i]->setColourPalette(colourtheme->getTheme(activeSettings->getColourThemeName()));
+    primaryScreen->setFont(activeSettings->getFont());
+    primaryScreen->rulerMode(activeSettings->getRulerOn());
+    primaryScreen->setRulerStyle(activeSettings->getRulerStyle());
+    primaryScreen->setColourPalette(colourtheme->getTheme(activeSettings->getColourThemeName()));
 
-        connect(datastream, &ProcessDataStream::cursorMoved, screen[i], &DisplayScreen::showStatusCursorPosition);
+    connect(datastream, &ProcessDataStream::cursorMoved, primaryScreen, &DisplayScreen::showStatusCursorPosition);
+    connect(kbd, &Keyboard::setLock, primaryScreen, &DisplayScreen::setStatusXSystem);
+    connect(kbd, &Keyboard::setInsert, primaryScreen, &DisplayScreen::setStatusInsert);
+    connect(activeSettings, &ActiveSettings::cursorInheritChanged, primaryScreen, &DisplayScreen::setCursorColour);
 
-        connect(kbd, &Keyboard::setLock, screen[i], &DisplayScreen::setStatusXSystem);
-        connect(kbd, &Keyboard::setInsert, screen[i], &DisplayScreen::setStatusInsert);
+    alternateScreen->setFont(activeSettings->getFont());
+    alternateScreen->rulerMode(activeSettings->getRulerOn());
+    alternateScreen->setRulerStyle(activeSettings->getRulerStyle());
+    alternateScreen->setColourPalette(colourtheme->getTheme(activeSettings->getColourThemeName()));
 
-//        connect(settings, &PreferencesDialog::fontScalingChanged, screen[i], &DisplayScreen::setFontScaling);
-        connect(activeSettings, &ActiveSettings::cursorInheritChanged, screen[i], &DisplayScreen::setCursorColour);
+    connect(datastream, &ProcessDataStream::cursorMoved, alternateScreen, &DisplayScreen::showStatusCursorPosition);
+    connect(kbd, &Keyboard::setLock, alternateScreen, &DisplayScreen::setStatusXSystem);
+    connect(kbd, &Keyboard::setInsert, alternateScreen, &DisplayScreen::setStatusInsert);
+    connect(activeSettings, &ActiveSettings::cursorInheritChanged, alternateScreen, &DisplayScreen::setCursorColour);
 
-    }
-
-    view->setBlink(activeSettings->getCursorBlink());
-    view->setBlinkSpeed(activeSettings->getCursorBlinkSpeed());
+    setBlink(activeSettings->getCursorBlink());
+    setBlinkSpeed(activeSettings->getCursorBlinkSpeed());
 
     socket->connectMainframe(host, port, luName, datastream);
 
@@ -244,7 +259,7 @@ void TerminalTab::connectSession(QString host, int port, QString luName)
 
     view->installEventFilter(kbd);
 
-    view->setConnected();
+    connected();
 }
 
 void TerminalTab::closeConnection()
@@ -254,20 +269,22 @@ void TerminalTab::closeConnection()
 
     socket->disconnectMainframe();
 
-    view->stopTimers();
+    stopTimers();
 
     delete datastream;
 
     view->setScene(notConnectedScene);
-    view->fitInView(notConnectedScene->itemsBoundingRect(), Qt::IgnoreAspectRatio);
-    view->setDisconnected();
 
-    delete screen[0];
-    delete screen[1];
+    delete primaryScreen;
+    delete alternateScreen;
 
     // Menu "Connect" entry disable
     emit disconnected();
+
     kbd->setConnected(false);
+
+    sessionConnected = false;
+    view->setInteractive(false);
 }
 
 void TerminalTab::connected()
@@ -275,13 +292,155 @@ void TerminalTab::connected()
     // Menu "Connect" entry enable
     emit connectionEstablished();
     kbd->setConnected(true);
+
+    sessionConnected = true;
+    view->setInteractive(true);
+    fit();
 }
 
 void TerminalTab::closeEvent(QCloseEvent *closeEvent)
 {
-    if (view->connected)
+    if (sessionConnected)
     {
         closeConnection();
     }
     closeEvent->accept();
+}
+
+void TerminalTab::setBlink(bool blink)
+{
+    this->blink = blink;
+    if (!blink)
+    {
+        cursorBlinker->stop();
+        if (sessionConnected)
+        {
+            current->showCursor();
+        }
+    }
+    else
+    {
+        cursorBlinker->start();
+    }
+}
+
+void TerminalTab::setBlinkSpeed(int speed)
+{
+    blinkSpeed = speed;
+    cursorBlinker->stop();
+    if (blinkSpeed > 0 && blink)
+    {
+        cursorBlinker->start((5 - blinkSpeed) * 250);
+    }
+}
+
+void TerminalTab::changeCodePage()
+{
+    if (sessionConnected)
+        current->setCodePage();
+}
+
+void TerminalTab::stopTimers()
+{
+    blinker->stop();
+    cursorBlinker->stop();
+    disconnect(blinker, &QTimer::timeout, current, &DisplayScreen::blink);
+    disconnect(cursorBlinker, &QTimer::timeout, current, &DisplayScreen::cursorBlink);
+}
+
+void TerminalTab::blinkText()
+{
+    if (sessionConnected)
+    {
+        current->blink();
+    }
+}
+
+void TerminalTab::blinkCursor()
+{
+    if (sessionConnected)
+    {
+        current->cursorBlink();
+    }
+}
+
+DisplayScreen *TerminalTab::setAlternateScreen(bool alt)
+{
+    stopTimers();
+
+
+    if (!alt)
+    {
+        view->setScene(primary);
+        current = primaryScreen;
+    }
+    else
+    {
+        view->setScene(alternate);
+        current = alternateScreen;
+    }
+
+    connect(blinker, &QTimer::timeout, current, &DisplayScreen::blink);
+    blinker->start(1000);
+
+    connect(cursorBlinker, &QTimer::timeout, current, &DisplayScreen::cursorBlink);
+    setBlinkSpeed(blinkSpeed);
+
+    fit();
+
+    return current;
+}
+
+int TerminalTab::terminalWidth(bool alternate)
+{
+    if (!alternate)
+    {
+        return primaryScreen->width();
+    }
+
+    return alternateScreen->width();
+}
+
+int TerminalTab::terminalHeight(bool alternate)
+{
+    if (!alternate)
+    {
+        return primaryScreen->height();
+    }
+
+    return alternateScreen->height();
+}
+
+int TerminalTab::gridWidth(bool alternate)
+{
+    if (!alternate)
+    {
+        return primaryScreen->gridWidth();
+    }
+
+    return alternateScreen->gridWidth();
+}
+
+int TerminalTab::gridHeight(bool alternate)
+{
+    if (!alternate)
+    {
+        return primaryScreen->gridHeight();
+    }
+
+    return alternateScreen->gridHeight();
+}
+
+void TerminalTab::fit()
+{
+    // TODO: Is 640x480 always valid (ie, can we ditch the current-> in favour of 640x480)
+    if (sessionConnected)
+    {
+//        view->fitInView(current->boundingRect(), Qt::IgnoreAspectRatio);
+        view->fitInView(0, 0, 640, 500, Qt::IgnoreAspectRatio);
+    }
+    else
+    {
+        view->fitInView(QRectF(0, 0, 640, 480), Qt::IgnoreAspectRatio);
+    }
 }

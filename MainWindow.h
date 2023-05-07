@@ -53,6 +53,8 @@ class MainWindow : public QMainWindow
 
       void closeEvent(QCloseEvent *c);
       void updateMRUlist(QString address);
+      void showEvent(QShowEvent *s);
+      void resizeEvent(QResizeEvent *s);
 
   private slots:
 

@@ -10,7 +10,6 @@
 #include <QMap>
 
 #include "ProcessDataStream.h"
-#include "TerminalView.h"
 #include "KeyboardTheme.h"
 
 // Left Ctrl and Right Ctrl hard wiring; this may break with non-X11 Windowing systems

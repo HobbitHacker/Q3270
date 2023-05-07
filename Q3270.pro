@@ -31,7 +31,6 @@ SOURCES += \
     ProcessDataStream.cpp \
     SessionManagement.cpp \
     TerminalTab.cpp \
-    TerminalView.cpp \
     main.cpp \
     SocketConnection.cpp
 
@@ -49,7 +48,6 @@ HEADERS += \
     Q3270.h \
     SessionManagement.h \
     TerminalTab.h \
-    TerminalView.h \
     SocketConnection.h
 
 FORMS += \

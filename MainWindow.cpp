@@ -390,6 +390,18 @@ void MainWindow::closeEvent(QCloseEvent *event)
 
     event->accept();
 }
+
+
+void MainWindow::showEvent(QShowEvent *event)
+{
+    terminal->fit();
+}
+
+void MainWindow::resizeEvent(QResizeEvent *event)
+{
+    terminal->fit();
+}
+
 /*
 void MainWindow::subWindowClosed(QObject *closedWindow)
 {

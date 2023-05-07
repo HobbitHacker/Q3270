@@ -7,8 +7,11 @@ DisplayScreen::DisplayScreen(int screen_x, int screen_y, CodePage *cp)
     this->screen_x = screen_x;
     this->screen_y = screen_y;
 
-    gridSize_X = 640*5 / screen_x;
-    gridSize_Y = 480*5 / screen_y;
+    this->setRect(0, 0, 640, 500);
+    this->setPos(0, 0);
+
+    gridSize_X = (qreal) 640 / (qreal) screen_x;
+    gridSize_Y = (qreal) 480 / (qreal) screen_y;
 
     screenPos_max = screen_x * screen_y;
 
@@ -20,8 +23,14 @@ DisplayScreen::DisplayScreen(int screen_x, int screen_y, CodePage *cp)
     cursorShow = true;
     cursorColour = true;
 
-    setBackgroundBrush(QBrush(Qt::black));
+    // Rubberband; QRubberBand can't be used directly on QGraphicsItems
+    QPen myRbPen = QPen();
+    myRbPen.setWidth(1);
+    myRbPen.setBrush(QColor(Qt::yellow));
 
+    myRb = new QGraphicsRectItem(this);
+    myRb->setPen(myRbPen);
+    myRb->setZValue(10);
 
     // Build 3270 display matrix
     glyph.resize(screenPos_max);
@@ -38,31 +47,29 @@ DisplayScreen::DisplayScreen(int screen_x, int screen_y, CodePage *cp)
 
             qreal x_pos = x * gridSize_X;
 
-            cell.replace(pos, new QGraphicsRectItem(0, 0, gridSize_X, gridSize_Y));
-            cell.at(pos)->setBrush(QBrush(Qt::red));
+            cell.replace(pos, new QGraphicsRectItem(0, 0, gridSize_X, gridSize_Y, this));
+
             cell.at(pos)->setPen(Qt::NoPen);
+            cell.at(pos)->setBrush(QBrush(Qt::red));
             cell.at(pos)->setZValue(0);
 
-            glyph.replace(pos, new Glyph(x, y, cp, NULL));
+            glyph.replace(pos, new Glyph(x, y, cp, cell.at(pos)));
             glyph.at(pos)->setFlag(QGraphicsItem::ItemIsSelectable);
             glyph.at(pos)->setZValue(2);
 
-            uscore.replace(pos, new QGraphicsLineItem(0, 0, gridSize_X, 0));
+            uscore.replace(pos, new QGraphicsLineItem(0, 0, gridSize_X, 0, this));
             uscore.at(pos)->setZValue(1);
 
-            addItem(glyph.at(pos));
-            addItem(uscore.at(pos));
-            addItem(cell.at(pos));
-
             cell.at(pos)->setPos(x_pos, y_pos);
-            glyph.at(pos)->setPos(x_pos, y_pos);
-            uscore.at(pos)->setPos(x_pos, y_pos + gridSize_Y);
+//            glyph.at(pos)->setPos(x_pos, y_pos);
+//            uscore.at(pos)->setPos(x_pos, y_pos + gridSize_Y);
+            uscore.at(pos)->setPos(0, gridSize_Y);
         }
     }
 
     // Set default attributes for initial power-on
     clear();
-    setFont(QFont("ibm3270", 11));
+    setFont(QFont("ibm3270", 10));
 
     // Set up cursor
     cursor.setRect(cell.at(0)->rect());
@@ -82,51 +89,66 @@ DisplayScreen::DisplayScreen(int screen_x, int screen_y, CodePage *cp)
     crosshair_X.setZValue(2);
     crosshair_Y.setZValue(2);
 
-    addItem(&crosshair_X);
-    addItem(&crosshair_Y);
+    crosshair_X.setParentItem(this);
+    crosshair_Y.setParentItem(this);
+
+//    addItem(&crosshair_X);
+//    addItem(&crosshair_Y);
 
     crosshair_X.hide();
     crosshair_Y.hide();
 
     // Build status bar
-    int statusPos = (screen_y * gridSize_Y + 2);
+//    int statusPos = (screen_y * gridSize_Y + 2);
+
 
     statusBar.setLine(0, 0, screen_x * gridSize_X, 0);
-    statusBar.setPos(0, statusPos++);
+//    statusBar.setPos(0, statusPos++);
+    statusBar.setPos(0, 482);
     statusBar.setPen(QPen(QColor(0x80, 0x80, 0xFF), 0));
-    addItem(&statusBar);
+    statusBar.setParentItem(this);
+//    addItem(&statusBar);
 
     QFont statusBarText = QFont("ibm3270");
     statusBarText.setPixelSize(gridSize_Y * .75);
 
     // Connect status at 0% across
     statusConnect.setText("4-A");
-    statusConnect.setPos(0, statusPos);
+//    statusConnect.setPos(0, statusPos);
+    statusConnect.setPos(0, 483);
     statusConnect.setFont(statusBarText);
     statusConnect.setBrush(QBrush(QColor(0x80, 0x80, 0xFF)));
 
     // XSystem 20% across status bar
     statusXSystem.setText("");
-    statusXSystem.setPos(gridSize_X * (screen_x * .20), statusPos);
+//    statusXSystem.setPos(gridSize_X * (screen_x * .20), statusPos);
+    statusXSystem.setPos(gridSize_X * (screen_x * .20), 483);
     statusXSystem.setFont(statusBarText);
     statusXSystem.setBrush(QBrush(QColor(0x80, 0x80, 0xFF)));
 
     // Insert 50% across status bar
     statusInsert.setText("");
-    statusInsert.setPos(gridSize_X * (screen_x * .50), statusPos);
+//    statusInsert.setPos(gridSize_X * (screen_x * .50), statusPos);
+    statusInsert.setPos(gridSize_X * (screen_x * .50), 483);
     statusInsert.setFont(statusBarText);
     statusInsert.setBrush(QBrush(QColor(0x80, 0x80, 0xFF)));
 
     // Cursor 75% across status bar
     statusCursor.setText("");
-    statusCursor.setPos(gridSize_X * (screen_x * .75), statusPos);
+//    statusCursor.setPos(gridSize_X * (screen_x * .75), statusPos);
+    statusCursor.setPos(gridSize_X * (screen_x * .75), 483);
     statusCursor.setFont(statusBarText);
     statusCursor.setBrush(QBrush(QColor(0x80, 0x80, 0xFF)));
 
-    addItem(&statusConnect);
-    addItem(&statusXSystem);
-    addItem(&statusCursor);
-    addItem(&statusInsert);
+    statusConnect.setParentItem(this);
+    statusXSystem.setParentItem(this);
+    statusCursor.setParentItem(this);
+    statusInsert.setParentItem(this);
+
+//    addItem(&statusConnect);
+//    addItem(&statusXSystem);
+//    addItem(&statusCursor);
+//    addItem(&statusInsert);
 }
 
 DisplayScreen::~DisplayScreen()

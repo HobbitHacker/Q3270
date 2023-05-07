@@ -15,8 +15,9 @@
  */
 
 #include "ProcessDataStream.h"
+#include "TerminalTab.h"
 
-ProcessDataStream::ProcessDataStream(TerminalView *t)
+ProcessDataStream::ProcessDataStream(TerminalTab *t)
 {
     terminal = t;
 
@@ -994,8 +995,8 @@ void ProcessDataStream::replySummary(QByteArray &queryReply)
                                   /* .......x   RES    - Reserved */
     };
 
-    qpart[14] = terminal->alternate->width();
-    qpart[16] = terminal->alternate->height();
+    qpart[14] = terminal->terminalWidth(true);
+    qpart[16] = terminal->terminalHeight(true);
 
     qusablearea[6] = 0x00;
     qusablearea[7] = qpart[14];
@@ -1024,11 +1025,11 @@ void ProcessDataStream::replySummary(QByteArray &queryReply)
     qusablearea[17] = (y & 0xFF00) >> 8;
     qusablearea[18] = (y & 0xFF);
 
-    qusablearea[19] = ((int)terminal->primary->gridWidth() & 0xFF00) >> 8;
-    qusablearea[20] = ((int)terminal->primary->gridWidth() & 0xFF);
+    qusablearea[19] = ((int)terminal->gridWidth(false) & 0xFF00) >> 8;
+    qusablearea[20] = ((int)terminal->gridWidth(false) & 0xFF);
 
-    qusablearea[21] = ((int)terminal->primary->gridHeight() & 0xFF00) >> 8;
-    qusablearea[22] = ((int)terminal->primary->gridHeight() & 0xFF);
+    qusablearea[21] = ((int)terminal->gridHeight(false) & 0xFF00) >> 8;
+    qusablearea[22] = ((int)terminal->gridHeight(false) & 0xFF);
 
     qusablearea[23] = ((qusablearea[5] * qusablearea[7]) & 0xFF00) >> 8;
     qusablearea[24] = ((qusablearea[5] * qusablearea[7]) & 0xFF);

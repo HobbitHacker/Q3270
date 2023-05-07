@@ -2,10 +2,8 @@
 #define TERMINALTAB_H
 
 #include "ProcessDataStream.h"
-#include "TerminalView.h"
 #include "SocketConnection.h"
 #include "Keyboard.h"
-#include "PreferencesDialog.h"
 #include "ColourTheme.h"
 #include "CodePage.h"
 #include "ActiveSettings.h"
@@ -29,8 +27,11 @@ class TerminalTab : public QWidget
         void openConnection(QString address);
         void openConnection(QSettings& s);
 
-        int terminalWidth();
-        int terminalHeight();
+        int terminalWidth(bool alternate);
+        int terminalHeight(bool alternate);
+        int gridWidth(bool alternate);
+        int gridHeight(bool alternate);
+
         char *name();
 
         void setWidth(int w);
@@ -38,6 +39,9 @@ class TerminalTab : public QWidget
 
         void setType(QString type);
         void setType(int type);
+
+        void setBlink(bool blink);
+        void setBlinkSpeed(int speed);
 
         void setFont();
         void setScaleFont(bool scale);
@@ -52,9 +56,14 @@ class TerminalTab : public QWidget
 
         void showForm();
 
-        TerminalView *view;
+        QGraphicsView *view;
+
+        DisplayScreen *setAlternateScreen(bool alt);
+
+        void fit();
 
     signals:
+
         void connectionEstablished();
         void disconnected();
         void windowClosed(TerminalTab *t);
@@ -67,13 +76,19 @@ class TerminalTab : public QWidget
         void setCurrentFont(QFont f);
         void rulerStyle(int r);
         void rulerChanged(bool on);
+        void changeCodePage();
 
         // Set themes by name
         void setColourTheme(QString themeName);
 
+        void blinkText();
+        void blinkCursor();
+
     private:
 
         void connectSession(QString host, int port, QString luName);
+
+        void stopTimers();
 
         Keyboard *kbd;
         ColourTheme *colourtheme;
@@ -81,15 +96,20 @@ class TerminalTab : public QWidget
         CodePage *cp;
 
         QGraphicsScene *notConnectedScene;
+        QGraphicsScene *primary;
+        QGraphicsScene *alternate;
+
+        DisplayScreen *primaryScreen;
+        DisplayScreen *alternateScreen;
+        DisplayScreen *current;
 
         ProcessDataStream *datastream;
         SocketConnection *socket;
 
-        DisplayScreen *screen[2];
-
         ActiveSettings *activeSettings;
 
         bool altScreen;
+        bool sessionConnected;
 
         QLabel *cursorAddress;
         QLabel *syslock;
@@ -99,6 +119,12 @@ class TerminalTab : public QWidget
         QString sessionName;
 
         bool resizeFont;
+
+        int blinkSpeed;
+        bool blink;
+
+        QTimer *blinker;
+        QTimer *cursorBlinker;
 
 };
 

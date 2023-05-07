@@ -8,12 +8,13 @@
 #include <QString>
 #include <QDebug>
 #include <QTimer>
+#include <QObject>
 
 #include "Glyph.h"
 #include "ColourTheme.h"
 #include "CodePage.h"
 
-class DisplayScreen : public QGraphicsScene
+class DisplayScreen : public QObject, public QGraphicsRectItem
 {
     Q_OBJECT
 
@@ -92,7 +93,7 @@ class DisplayScreen : public QGraphicsScene
         void blink();
         void cursorBlink();
         void setStatusXSystem(QString text);
-        void showStatusCursorPosition(int x,int y);
+        void showStatusCursorPosition(int x, int y);
         void setStatusInsert(bool ins);
         void setCursorColour(bool inherit);
         void setCodePage();
@@ -169,6 +170,8 @@ class DisplayScreen : public QGraphicsScene
 
         qreal gridSize_X;
         qreal gridSize_Y;
+
+        QGraphicsRectItem *myRb;
 
         int findField(int pos);
         int findNextField(int pos);
