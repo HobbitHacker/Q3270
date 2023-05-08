@@ -3,7 +3,7 @@
 TerminalTab::TerminalTab(QVBoxLayout *layout, ActiveSettings *activeSettings, CodePage *cp, Keyboard *kb, ColourTheme *cs, QString sessionName) :
     kbd(kb), colourtheme(cs), cp(cp), activeSettings(activeSettings), sessionName(sessionName)
 {
-    // Create terminal display and keyboard objects
+    // Create terminal display
     view = new QGraphicsView();
 
     view->setBackgroundBrush(QBrush(Qt::black));
@@ -11,6 +11,7 @@ TerminalTab::TerminalTab(QVBoxLayout *layout, ActiveSettings *activeSettings, Co
     view->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     view->setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContents);
 
+    // Connect signals for changes to settings so they can be reflected here
     connect(activeSettings, &ActiveSettings::rulerStyleChanged, this, &TerminalTab::rulerStyle);
     connect(activeSettings, &ActiveSettings::rulerChanged, this, &TerminalTab::rulerChanged);
     connect(activeSettings, &ActiveSettings::cursorBlinkChanged, this, &TerminalTab::setBlink);
@@ -68,11 +69,6 @@ TerminalTab::~TerminalTab()
 //    delete settings;
     delete notConnectedScene;
     delete view;
-}
-
-void TerminalTab::showForm()
-{
-    // settings->showForm(view->connected);
 }
 
 // FIXME: Make this a signal/slot mechanism

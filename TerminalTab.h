@@ -32,14 +32,6 @@ class TerminalTab : public QWidget
         int gridWidth(bool alternate);
         int gridHeight(bool alternate);
 
-        char *name();
-
-        void setWidth(int w);
-        void setHeight(int h);
-
-        void setType(QString type);
-        void setType(int type);
-
         void setBlink(bool blink);
         void setBlinkSpeed(int speed);
 
@@ -51,12 +43,6 @@ class TerminalTab : public QWidget
         // Return current session name
         inline QString getSessionName()    { return sessionName; };
         inline void    setSessionName(QString sessionName) { this->sessionName = sessionName; };
-
-        int getType();
-
-        void showForm();
-
-        QGraphicsView *view;
 
         DisplayScreen *setAlternateScreen(bool alt);
 
@@ -87,13 +73,14 @@ class TerminalTab : public QWidget
     private:
 
         void connectSession(QString host, int port, QString luName);
-
         void stopTimers();
 
         Keyboard *kbd;
         ColourTheme *colourtheme;
 
         CodePage *cp;
+
+        QGraphicsView *view;
 
         QGraphicsScene *notConnectedScene;
         QGraphicsScene *primary;
@@ -117,8 +104,6 @@ class TerminalTab : public QWidget
 
         // Session name
         QString sessionName;
-
-        bool resizeFont;
 
         int blinkSpeed;
         bool blink;
