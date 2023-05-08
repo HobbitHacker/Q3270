@@ -7,6 +7,9 @@ TerminalTab::TerminalTab(QVBoxLayout *layout, ActiveSettings *activeSettings, Co
     view = new QGraphicsView();
 
     view->setBackgroundBrush(QBrush(Qt::black));
+    view->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    view->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    view->setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContents);
 
     connect(activeSettings, &ActiveSettings::rulerStyleChanged, this, &TerminalTab::rulerStyle);
     connect(activeSettings, &ActiveSettings::rulerChanged, this, &TerminalTab::rulerChanged);
@@ -437,7 +440,7 @@ void TerminalTab::fit()
     if (sessionConnected)
     {
 //        view->fitInView(current->boundingRect(), Qt::IgnoreAspectRatio);
-        view->fitInView(0, 0, 640, 500, Qt::IgnoreAspectRatio);
+        view->fitInView(0, 0, 640, 490, Qt::IgnoreAspectRatio);
     }
     else
     {

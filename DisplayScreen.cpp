@@ -7,7 +7,7 @@ DisplayScreen::DisplayScreen(int screen_x, int screen_y, CodePage *cp)
     this->screen_x = screen_x;
     this->screen_y = screen_y;
 
-    this->setRect(0, 0, 640, 500);
+    this->setRect(0, 0, 640, 490);
     this->setPos(0, 0);
 
     gridSize_X = (qreal) 640 / (qreal) screen_x;
@@ -69,7 +69,7 @@ DisplayScreen::DisplayScreen(int screen_x, int screen_y, CodePage *cp)
 
     // Set default attributes for initial power-on
     clear();
-    setFont(QFont("ibm3270", 10));
+    setFont(QFont("ibm3270"));
 
     // Set up cursor
     cursor.setRect(cell.at(0)->rect());
@@ -103,52 +103,41 @@ DisplayScreen::DisplayScreen(int screen_x, int screen_y, CodePage *cp)
 
 
     statusBar.setLine(0, 0, screen_x * gridSize_X, 0);
-//    statusBar.setPos(0, statusPos++);
-    statusBar.setPos(0, 482);
+    statusBar.setPos(0, 480);
     statusBar.setPen(QPen(QColor(0x80, 0x80, 0xFF), 0));
-    statusBar.setParentItem(this);
-//    addItem(&statusBar);
 
     QFont statusBarText = QFont("ibm3270");
-    statusBarText.setPixelSize(gridSize_Y * .75);
+    statusBarText.setPixelSize(8);
 
     // Connect status at 0% across
     statusConnect.setText("4-A");
-//    statusConnect.setPos(0, statusPos);
-    statusConnect.setPos(0, 483);
+    statusConnect.setPos(0, 481);
     statusConnect.setFont(statusBarText);
     statusConnect.setBrush(QBrush(QColor(0x80, 0x80, 0xFF)));
 
     // XSystem 20% across status bar
     statusXSystem.setText("");
-//    statusXSystem.setPos(gridSize_X * (screen_x * .20), statusPos);
-    statusXSystem.setPos(gridSize_X * (screen_x * .20), 483);
+    statusXSystem.setPos(gridSize_X * (screen_x * .20), 481);
     statusXSystem.setFont(statusBarText);
     statusXSystem.setBrush(QBrush(QColor(0x80, 0x80, 0xFF)));
 
     // Insert 50% across status bar
     statusInsert.setText("");
-//    statusInsert.setPos(gridSize_X * (screen_x * .50), statusPos);
-    statusInsert.setPos(gridSize_X * (screen_x * .50), 483);
+    statusInsert.setPos(gridSize_X * (screen_x * .50), 481);
     statusInsert.setFont(statusBarText);
     statusInsert.setBrush(QBrush(QColor(0x80, 0x80, 0xFF)));
 
     // Cursor 75% across status bar
     statusCursor.setText("");
-//    statusCursor.setPos(gridSize_X * (screen_x * .75), statusPos);
-    statusCursor.setPos(gridSize_X * (screen_x * .75), 483);
+    statusCursor.setPos(gridSize_X * (screen_x * .75), 481);
     statusCursor.setFont(statusBarText);
     statusCursor.setBrush(QBrush(QColor(0x80, 0x80, 0xFF)));
 
+    statusBar.setParentItem(this);
     statusConnect.setParentItem(this);
     statusXSystem.setParentItem(this);
     statusCursor.setParentItem(this);
     statusInsert.setParentItem(this);
-
-//    addItem(&statusConnect);
-//    addItem(&statusXSystem);
-//    addItem(&statusCursor);
-//    addItem(&statusInsert);
 }
 
 DisplayScreen::~DisplayScreen()
