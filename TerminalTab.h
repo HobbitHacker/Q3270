@@ -35,7 +35,6 @@ class TerminalTab : public QWidget
         void setBlink(bool blink);
         void setBlinkSpeed(int speed);
 
-        void setFont();
         void setScreenStretch(bool scale);
 
         void setKeyboardTheme(QString themeName);
@@ -63,6 +62,7 @@ class TerminalTab : public QWidget
         void rulerStyle(int r);
         void rulerChanged(bool on);
         void changeCodePage();
+        void setFont(QFont font);
 
         // Set themes by name
         void setColourTheme(QString themeName);

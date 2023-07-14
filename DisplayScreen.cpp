@@ -164,11 +164,6 @@ void DisplayScreen::setFont(QFont font)
     termFont = font;
     QTransform tr;
 
-    font.setStyleStrategy(QFont::NoAntialias);
-    font.setHintingPreference(QFont::PreferNoHinting);
-    font.setKerning(false);
-    font.setLetterSpacing(QFont::AbsoluteSpacing, 0);
-
     if (fontScaling)
     {
         QFontMetricsF fm = QFontMetrics(font);

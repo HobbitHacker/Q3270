@@ -67,13 +67,12 @@ TerminalTab::~TerminalTab()
     delete view;
 }
 
-// FIXME: Make this a signal/slot mechanism
-void TerminalTab::setFont()
+void TerminalTab::setFont(QFont font)
 {
     if (sessionConnected)
     {
-        primaryScreen->setFont(activeSettings->getFont());
-        alternateScreen->setFont(activeSettings->getFont());
+        primaryScreen->setFont(font);
+        alternateScreen->setFont(font);
     }
 }
 
@@ -161,13 +160,11 @@ void TerminalTab::openConnection(QString address)
 
 void TerminalTab::openConnection(QSettings& s)
 {
-    // Set themes
-    setColourTheme(s.value("ColourTheme").toString());
-    setKeyboardTheme(s.value("KeyboardTheme").toString());
-
     // Set terminal characteristics
     activeSettings->setTerminal(s.value("TerminalX").toInt(), s.value("TerminalY").toInt(), s.value("TerminalModel").toString());
     activeSettings->setCodePage(s.value("Codepage").toString());
+
+    openConnection(s.value("Address").toString());
 
     // Cursor settings
     activeSettings->setCursorBlink(s.value("CursorBlink").toBool());
@@ -188,7 +185,10 @@ void TerminalTab::openConnection(QSettings& s)
 
     activeSettings->setStretchScreen(s.value("ScreenStretch").toBool());
 
-    openConnection(s.value("Address").toString());
+    // Set themes
+    setColourTheme(s.value("ColourTheme").toString());
+    setKeyboardTheme(s.value("KeyboardTheme").toString());
+
     setSessionName(s.group());
 
     // Update settings with address
