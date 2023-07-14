@@ -5,7 +5,7 @@
 #include <QDebug>
 #include "PreferencesDialog.h"
 
-PreferencesDialog::PreferencesDialog(ColourTheme *colours, KeyboardTheme *keyboards, ActiveSettings *activeSettings, QWidget *parent) :
+PreferencesDialog::PreferencesDialog(ColourTheme &colours, KeyboardTheme &keyboards, ActiveSettings *activeSettings, QWidget *parent) :
     QDialog(parent),
     ui(new Ui::PreferencesDialog),
     colours(colours),
@@ -112,7 +112,7 @@ void PreferencesDialog::showForm()
     ui->cursorBlinkSpeed->setEnabled(ui->cursorBlink->QAbstractButton::isChecked());
 
     ui->cursorColour->setChecked(activeSettings->getCursorColourInherit());
-    ui->FontScaling->setChecked(activeSettings->getFontScaling());
+    ui->stretch->setChecked(activeSettings->getStretchScreen());
 
     ui->backspaceStop->setChecked(activeSettings->getBackspaceStop());
 
@@ -122,7 +122,7 @@ void PreferencesDialog::showForm()
     populateKeyboardThemeNames();
 
     // Colour the buttons, based on Settings
-    colours->setButtonColours(colourButtons, activeSettings->getColourThemeName());
+    colours.setButtonColours(colourButtons, activeSettings->getColourThemeName());
 
     ui->CodePages->setCurrentIndex(ui->CodePages->findText(activeSettings->getCodePage()));
 
@@ -184,10 +184,10 @@ void PreferencesDialog::accept()
     activeSettings->setCursorColourInherit(ui->cursorColour->QAbstractButton::isChecked());
     activeSettings->setFont(qfd->currentFont());
     activeSettings->setCodePage(ui->CodePages->currentText());
-    activeSettings->setKeyboardTheme(ui->keyboardTheme->currentText());
+    activeSettings->setKeyboardTheme(keyboards, ui->keyboardTheme->currentText());
     activeSettings->setColourTheme(ui->colourTheme->currentText());
     activeSettings->setHostAddress(ui->hostName->text(), ui->hostPort->text().toInt(), ui->hostLU->text());
-    activeSettings->setFontScaling(ui->FontScaling->QAbstractButton::isChecked());
+    activeSettings->setStretchScreen(ui->stretch->QAbstractButton::isChecked());
 
     //emit setStretch(ui->stretch);
 
@@ -209,20 +209,20 @@ void PreferencesDialog::populateCodePages(QMap<QString, QString> codepagelist)
 
 void PreferencesDialog::colourThemeDropDownChanged([[maybe_unused]] int index)
 {
-    colours->setButtonColours(colourButtons, ui->colourTheme->currentText());
+    colours.setButtonColours(colourButtons, ui->colourTheme->currentText());
 }
 
 void PreferencesDialog::populateColourThemeNames()
 {
     // Refresh the Colour theme names
     ui->colourTheme->clear();
-    ui->colourTheme->addItems(colours->getThemes());
+    ui->colourTheme->addItems(colours.getThemes());
 }
 
 void PreferencesDialog::manageColourThemes()
 {
     // Run the Colour Themes dialog
-    colours->exec();
+    colours.exec();
 
     // Refresh the colour theme names, in case they changed
     populateColourThemeNames();
@@ -232,13 +232,13 @@ void PreferencesDialog::populateKeyboardThemeNames()
 {
     // Refresh the Keyboard theme names
     ui->keyboardTheme->clear();
-    ui->keyboardTheme->addItems(keyboards->getThemes());
+    ui->keyboardTheme->addItems(keyboards.getThemes());
 }
 
 void PreferencesDialog::keyboardThemeDropDownChanged([[maybe_unused]] int index)
 {
     // Populate keyboard map table
-    keyboards->populateTable(ui->KeyboardMap, ui->keyboardTheme->currentText());
+    keyboards.populateTable(ui->KeyboardMap, ui->keyboardTheme->currentText());
 }
 
 

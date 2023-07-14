@@ -20,7 +20,7 @@ class TerminalTab : public QWidget
 
     public:
 
-        TerminalTab(QVBoxLayout *v, ActiveSettings *activeSettings, CodePage *cp, Keyboard *kb, ColourTheme *cs, QString sessionName);
+        TerminalTab(QVBoxLayout *v, ActiveSettings *activeSettings, CodePage &cp, Keyboard &kb, ColourTheme &cs, QString sessionName);
         ~TerminalTab();
 
         void openConnection(QString host, int port, QString luName);
@@ -36,7 +36,7 @@ class TerminalTab : public QWidget
         void setBlinkSpeed(int speed);
 
         void setFont();
-        void setScaleFont(bool scale);
+        void setScreenStretch(bool scale);
 
         void setKeyboardTheme(QString themeName);
         
@@ -75,10 +75,9 @@ class TerminalTab : public QWidget
         void connectSession(QString host, int port, QString luName);
         void stopTimers();
 
-        Keyboard *kbd;
-        ColourTheme *colourtheme;
-
-        CodePage *cp;
+        Keyboard &kbd;
+        ColourTheme &colourtheme;
+        CodePage &cp;
 
         QGraphicsView *view;
 
@@ -95,8 +94,9 @@ class TerminalTab : public QWidget
 
         ActiveSettings *activeSettings;
 
-        bool altScreen;
         bool sessionConnected;
+
+        Qt::AspectRatioMode stretchScreen;
 
         QLabel *cursorAddress;
         QLabel *syslock;

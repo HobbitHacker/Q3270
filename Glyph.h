@@ -18,7 +18,7 @@ class Glyph : public QObject, public QGraphicsSimpleTextItem
 
     public:
 
-    Glyph(int x, int y, CodePage *cp, QGraphicsItem* parent);
+    Glyph(int x, int y, qreal xscale, qreal yscale, CodePage &cp);
         QRectF boundingRect() const;
 
 //        void paint(QPainter *p, const QStyleOptionGraphicsItem *o, QWidget *w = 0);
@@ -87,8 +87,12 @@ class Glyph : public QObject, public QGraphicsSimpleTextItem
         int pos_x;
         int pos_y;
 
+        // Size
+        qreal xscale;
+        qreal yscale;
+
         // Codepage
-        CodePage *cp;
+        CodePage &cp;
 
         // EBCDIC code for this character
         uchar ebcdic;

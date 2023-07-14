@@ -9,12 +9,12 @@
 #include <QVector>
 #include <QMap>
 
-#include "ProcessDataStream.h"
 #include "KeyboardTheme.h"
 
 // Left Ctrl and Right Ctrl hard wiring; this may break with non-X11 Windowing systems
 #define Q3270_LEFT_CTRL 65507
 #define Q3270_RIGHT_CTRL 65508
+
 
 class Keyboard : public QObject
 {    
@@ -23,23 +23,38 @@ class Keyboard : public QObject
 
     public:
 
-        Keyboard(KeyboardTheme *keyboardTheme);
+        Keyboard();
 
         void setMap();
         bool processKey();
-        void setDataStream(ProcessDataStream *d);
 
     signals:
         void setLock(QString xsystem);
         void setInsert(bool ins);
         void copyText();
 
+        void key_moveCursor(int x, int y, bool absolute);
+        void key_Backspace();
+        void key_AID(int aid, bool short_read);
+        void key_Attn();
+        void key_Tab();
+        void key_Backtab();
+        void key_Home();
+        void key_EraseEOF();
+        void key_Delete();
+        void key_Newline();
+        void key_End();
+        void key_toggleRuler();
+        void key_Character(unsigned char keycode, bool insMode);
+
+        void key_showInfo();
+
     public slots:
         void unlockKeyboard();
         void lockKeyboard();
         void setConnected(bool state);
 
-        void setTheme(QString theme);
+        void setTheme(KeyboardTheme &keyboardTheme, QString theme);
 
     protected:
         bool eventFilter( QObject *dist, QEvent *event );
@@ -66,9 +81,6 @@ class Keyboard : public QObject
             bool mustMap;
             kbFunction mapped;
         };
-
-        ProcessDataStream *datastream;
-        KeyboardTheme *keyboardTheme;
 
         QClipboard *clip;       // Clipboard
 

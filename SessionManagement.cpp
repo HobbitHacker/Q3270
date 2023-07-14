@@ -165,8 +165,6 @@ void SessionManagement::saveSettings()
     s.setValue("RulerStyle", activeSettings->getRulerStyle());
     s.setValue("Font", activeSettings->getFont().family());
     s.setValue("FontSize", activeSettings->getFont().pointSize());
-//    s.setValue("FontStyle", settings->getFontScaling());
-    s.setValue("FontScaling", activeSettings->getFontScaling());
     s.setValue("ScreenStretch", activeSettings->getStretchScreen());
     s.setValue("Codepage",activeSettings->getCodePage());
 

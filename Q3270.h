@@ -170,4 +170,10 @@ enum Indicators {
 #define Q3270_TERMINAL_MODEL5   3
 #define Q3270_TERMINAL_DYNAMIC  4
 
+#define Q3270_MOVE_CURSOR_RELATIVE false
+#define Q3270_MOVE_CURSOR_ABSOLUTE true
+
+#define Q3270_NOT_SHORT_READ false
+#define Q3270_SHORT_READ true
+
 #endif // N3270_H

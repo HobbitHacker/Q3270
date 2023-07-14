@@ -5,6 +5,8 @@
 
 #include <QObject>
 
+#include "KeyboardTheme.h"
+
 class ActiveSettings : public QObject
 {
     Q_OBJECT
@@ -38,9 +40,6 @@ class ActiveSettings : public QObject
         bool getStretchScreen()                          { return stretchScreen; }
         void setStretchScreen(bool stretch);
 
-        bool getFontScaling()                           { return fontScaling; }
-        void setFontScaling(bool scaling);
-
         bool getBackspaceStop()                          { return backspaceStop; }
         void setBackspaceStop(bool backspaceStop);
 
@@ -59,7 +58,7 @@ class ActiveSettings : public QObject
         void setCodePage(QString codePage);
 
         QString getKeyboardThemeName()                   { return keyboardThemeName; }
-        void setKeyboardTheme(QString keyboardThemeName);
+        void setKeyboardTheme(KeyboardTheme &keyboards, QString keyboardThemeName);
 
         QString getColourThemeName()                     { return colourThemeName; }
         void setColourTheme(QString colourThemeName);
@@ -80,7 +79,7 @@ class ActiveSettings : public QObject
 
         void codePageChanged(QString codepage);
 
-        void keyboardThemeChanged(QString keyboardThemeName);
+        void keyboardThemeChanged(KeyboardTheme &keyboards, QString keyboardThemeName);
         void colourThemeChanged(QString colourThemeName);
 
         void hostChanged(QString hostName, int hostPport, QString hostLu);
@@ -114,7 +113,6 @@ class ActiveSettings : public QObject
         QString colourThemeName;
 
         // Terminal behaviours
-        bool fontScaling;                   // Scale font to Window
         bool stretchScreen;                 // Whether to stretch the 3270 screen to fit the window
         bool backspaceStop;                 // Whether backspace stops at the field start position
         bool cursorColourInherit;           // Whether the cursor colour matches the colour of the character underneath

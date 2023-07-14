@@ -25,7 +25,7 @@ class PreferencesDialog : public QDialog
 
     public:
 
-        explicit PreferencesDialog(ColourTheme *colours, KeyboardTheme *keyboards, ActiveSettings *activeSettings, QWidget *parent = nullptr);
+        explicit PreferencesDialog(ColourTheme &colours, KeyboardTheme &keyboards, ActiveSettings *activeSettings, QWidget *parent = nullptr);
         ~PreferencesDialog();
 
         void showForm();
@@ -66,8 +66,8 @@ class PreferencesDialog : public QDialog
 
         QFontDialog *qfd;
 
-        ColourTheme *colours;
-        KeyboardTheme *keyboards;
+        ColourTheme &colours;
+        KeyboardTheme &keyboards;
 
         QString colourThemeName;
         ColourTheme::Colours colourTheme;

@@ -1,12 +1,10 @@
 #include "Glyph.h"
 #include <QDebug>
 
-Glyph::Glyph(int x, int y, CodePage *cp, QGraphicsItem* parent) : QGraphicsSimpleTextItem(parent)
+Glyph::Glyph(int x, int y, qreal xscale, qreal yscale, CodePage &cp) : xscale(xscale), yscale(yscale), cp(cp)
 {
     pos_x = x;
     pos_y = y;
-
-    this->cp = cp;
 }
 
 QRectF Glyph::boundingRect() const
@@ -24,11 +22,11 @@ void Glyph::setText(uchar ebcdic)
     {
         if (!graphic)
         {
-            QGraphicsSimpleTextItem::setText(cp->getUnicodeChar(ebcdic));
+            QGraphicsSimpleTextItem::setText(cp.getUnicodeChar(ebcdic));
         }
         else
         {
-            QGraphicsSimpleTextItem::setText(cp->getUnicodeGraphicChar(ebcdic));
+            QGraphicsSimpleTextItem::setText(cp.getUnicodeGraphicChar(ebcdic));
         }
     }
 
@@ -42,7 +40,7 @@ void Glyph::refreshCodePage()
 
 void Glyph::setTextFromKB(uchar ascii)
 {
-    setText(cp->getEBCDIC(ascii));
+    setText(cp.getEBCDIC(ascii));
 }
 
 void Glyph::setCharAttrs(bool c, Glyph::CharAttr ca)

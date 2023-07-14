@@ -89,13 +89,20 @@ class MainWindow : public QMainWindow
 
   private:
 
+      CodePage codePage;
+
+      ColourTheme colourTheme;
+      KeyboardTheme keyboardTheme;
+
+      Keyboard keyboard;
+
       TerminalTab *terminal;
-      ColourTheme *colourTheme;
-      KeyboardTheme *keyboardTheme;
+
+
       SessionManagement *sm;
       PreferencesDialog *settings;
-      CodePage *codePage;
-      Keyboard *keyboard;
+
+
       ActiveSettings *activeSettings;
 
       int maxMruCount;

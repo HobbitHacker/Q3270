@@ -2,12 +2,9 @@
 
 #include "DisplayScreen.h"
 
-DisplayScreen::DisplayScreen(int screen_x, int screen_y, CodePage *cp)
+DisplayScreen::DisplayScreen(int screen_x, int screen_y, CodePage &cp, QGraphicsScene *scene) : cp(cp), screen_x(screen_x), screen_y(screen_y)
 {
-    this->screen_x = screen_x;
-    this->screen_y = screen_y;
-
-    this->setRect(0, 0, 640, 490);
+    this->setRect(0, 0, 640, 480);
     this->setPos(0, 0);
 
     gridSize_X = (qreal) 640 / (qreal) screen_x;
@@ -39,37 +36,38 @@ DisplayScreen::DisplayScreen(int screen_x, int screen_y, CodePage *cp)
 
     for(int y = 0; y < screen_y; y++)
     {
-        qreal y_pos = y * gridSize_Y;
+        qreal y_pos = (qreal) y * gridSize_Y;
 
         for(int x = 0; x < screen_x; x++)
         {
             int pos = x + (y * screen_x);
 
-            qreal x_pos = x * gridSize_X;
+            qreal x_pos = (qreal) x * gridSize_X;
 
             cell.replace(pos, new QGraphicsRectItem(0, 0, gridSize_X, gridSize_Y, this));
 
             cell.at(pos)->setPen(Qt::NoPen);
+//            cell.at(pos)->setPen(QColor(Qt::yellow));
             cell.at(pos)->setBrush(QBrush(Qt::red));
             cell.at(pos)->setZValue(0);
+            cell.at(pos)->setPos(x_pos, y_pos);
 
-            glyph.replace(pos, new Glyph(x, y, cp, cell.at(pos)));
-            glyph.at(pos)->setFlag(QGraphicsItem::ItemIsSelectable);
+            glyph.replace(pos, new Glyph(x, y, gridSize_X, gridSize_Y, cp));
+//            glyph.at(pos)->setFlag(QGraphicsItem::ItemIsSelectable);
+            glyph.at(pos)->setPos(x_pos, y_pos);
             glyph.at(pos)->setZValue(2);
 
-            uscore.replace(pos, new QGraphicsLineItem(0, 0, gridSize_X, 0, this));
-            uscore.at(pos)->setZValue(1);
+            scene->addItem(glyph.at(pos));
 
-            cell.at(pos)->setPos(x_pos, y_pos);
-//            glyph.at(pos)->setPos(x_pos, y_pos);
-//            uscore.at(pos)->setPos(x_pos, y_pos + gridSize_Y);
+            uscore.replace(pos, new QGraphicsLineItem(0, 0, gridSize_X, 0, cell.at(pos)));
+            uscore.at(pos)->setZValue(1);
             uscore.at(pos)->setPos(0, gridSize_Y);
         }
     }
 
     // Set default attributes for initial power-on
     clear();
-    setFont(QFont("ibm3270"));
+    setFont(QFont("ibm3270", 14));
 
     // Set up cursor
     cursor.setRect(cell.at(0)->rect());
@@ -92,18 +90,13 @@ DisplayScreen::DisplayScreen(int screen_x, int screen_y, CodePage *cp)
     crosshair_X.setParentItem(this);
     crosshair_Y.setParentItem(this);
 
-//    addItem(&crosshair_X);
-//    addItem(&crosshair_Y);
-
     crosshair_X.hide();
     crosshair_Y.hide();
 
     // Build status bar
-//    int statusPos = (screen_y * gridSize_Y + 2);
-
 
     statusBar.setLine(0, 0, screen_x * gridSize_X, 0);
-    statusBar.setPos(0, 480);
+    statusBar.setPos(0, 481);
     statusBar.setPen(QPen(QColor(0x80, 0x80, 0xFF), 0));
 
     QFont statusBarText = QFont("ibm3270");
@@ -133,11 +126,13 @@ DisplayScreen::DisplayScreen(int screen_x, int screen_y, CodePage *cp)
     statusCursor.setFont(statusBarText);
     statusCursor.setBrush(QBrush(QColor(0x80, 0x80, 0xFF)));
 
-    statusBar.setParentItem(this);
-    statusConnect.setParentItem(this);
-    statusXSystem.setParentItem(this);
-    statusCursor.setParentItem(this);
-    statusInsert.setParentItem(this);
+    scene->addItem(&statusBar);
+    scene->addItem(&statusConnect);
+    scene->addItem(&statusXSystem);
+    scene->addItem(&statusCursor);
+    scene->addItem(&statusInsert);
+
+    scene->addItem(this);
 }
 
 DisplayScreen::~DisplayScreen()
@@ -169,14 +164,20 @@ void DisplayScreen::setFont(QFont font)
     termFont = font;
     QTransform tr;
 
+    font.setStyleStrategy(QFont::NoAntialias);
+    font.setHintingPreference(QFont::PreferNoHinting);
     font.setKerning(false);
     font.setLetterSpacing(QFont::AbsoluteSpacing, 0);
 
     if (fontScaling)
     {
         QFontMetricsF fm = QFontMetrics(font);
-        QRectF boxRect = QRectF(0, 0, fm.horizontalAdvance("┼", 1), fm.height());
-        tr.scale(gridSize_X / boxRect.width(), gridSize_Y / boxRect.height());
+        qreal xs = fm.horizontalAdvance("┼", 1);
+        qreal ys = fm.height();
+
+        tr.scale(gridSize_X / xs, gridSize_Y / ys);
+
+        qDebug() << "Scaling: " << gridSize_X / xs << "x" << gridSize_Y / ys;
     }
     else
     {
@@ -200,6 +201,7 @@ void DisplayScreen::setCodePage()
 
 void DisplayScreen::setColourPalette(ColourTheme::Colours c)
 {
+    qDebug() << c;
     palette = c;
 }
 
@@ -227,6 +229,7 @@ void DisplayScreen::resetColours()
 
 void DisplayScreen::setFontScaling(bool fontScaling)
 {
+    return;
     if (this->fontScaling != fontScaling)
     {
         this->fontScaling = fontScaling;

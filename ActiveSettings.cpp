@@ -11,7 +11,6 @@ ActiveSettings::ActiveSettings()
     cursorBlinkSpeed = 4;
     cursorColourInherit = true;
 
-    fontScaling = true;
     stretchScreen = true;
     backspaceStop = true;
 
@@ -176,11 +175,11 @@ void ActiveSettings::setCodePage(QString codepage)
     this->codePage = codepage;
 }
 
-void ActiveSettings::setKeyboardTheme(QString keyboardThemeName)
+void ActiveSettings::setKeyboardTheme(KeyboardTheme &keyboards, QString keyboardThemeName)
 {
     if (this->keyboardThemeName != keyboardThemeName)
     {
-        emit keyboardThemeChanged(keyboardThemeName);
+        emit keyboardThemeChanged(keyboards, keyboardThemeName);
     }
 
     this->keyboardThemeName = keyboardThemeName;
@@ -273,14 +272,4 @@ void ActiveSettings::setStretchScreen(bool stretch)
     }
 
     this->stretchScreen = stretch;
-}
-
-void ActiveSettings::setFontScaling(bool scaling)
-{
-    if (this->fontScaling != scaling)
-    {
-        emit fontScalingChanged(scaling);
-    }
-
-    this->fontScaling = scaling;
 }

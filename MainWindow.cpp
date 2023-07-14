@@ -2,7 +2,12 @@
 #include "MainWindow.h"
 #include "ui_About.h"
 
-MainWindow::MainWindow(MainWindow::Session s) : QMainWindow(nullptr), ui(new(Ui::MainWindow))
+MainWindow::MainWindow(MainWindow::Session s) : QMainWindow(nullptr),
+                                                activeSettings(new(ActiveSettings)),
+                                                ui(new(Ui::MainWindow))
+
+
+
 {
 
     QCoreApplication::setOrganizationDomain("styles.homeip.net");
@@ -13,8 +18,6 @@ MainWindow::MainWindow(MainWindow::Session s) : QMainWindow(nullptr), ui(new(Ui:
 
     // Read global settings
     QSettings savedSettings;
-
-    activeSettings = new ActiveSettings();
 
     // Most-recently used; default to 10
     maxMruCount = savedSettings.value("MRUMax", 10).toInt();
@@ -49,22 +52,15 @@ MainWindow::MainWindow(MainWindow::Session s) : QMainWindow(nullptr), ui(new(Ui:
 
     sessionGroup = new QActionGroup(this);
 
-    // Colour theme dialog
-    colourTheme = new ColourTheme();
-
-    // Keyboard theme dialog
-    keyboardTheme = new KeyboardTheme();
-
     // Codepages
-    codePage = new CodePage();
-    keyboard = new Keyboard(keyboardTheme);
+//    codePage = new CodePage();
 
     // Preferences dialog
     settings = new PreferencesDialog(colourTheme, keyboardTheme, activeSettings);
 
     // FIXME: is this bad?
     // Populate code page list
-    settings->populateCodePages(codePage->getCodePageList());
+    settings->populateCodePages(codePage.getCodePageList());
 
     // Session Management dialog
     sm = new SessionManagement(activeSettings);
@@ -237,6 +233,7 @@ MainWindow::~MainWindow()
 {
     //FIXME: delete of other objects obtained with 'new'
     delete ui;
+    delete activeSettings;
 }
 
 void MainWindow::menuConnect()
@@ -270,12 +267,12 @@ void MainWindow::menuSessionPreferences()
 
 void MainWindow::menuColourTheme()
 {
-    colourTheme->exec();
+    colourTheme.exec();
 }
 
 void MainWindow::menuKeyboardTheme()
 {
-    keyboardTheme->exec();
+    keyboardTheme.exec();
 }
 
 void MainWindow::menuAbout()

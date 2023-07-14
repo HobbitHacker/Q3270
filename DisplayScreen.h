@@ -20,7 +20,7 @@ class DisplayScreen : public QObject, public QGraphicsRectItem
 
     public:
 
-        DisplayScreen(int screen_x, int screen_y, CodePage *cp);
+        DisplayScreen(int screen_x, int screen_y, CodePage &cp, QGraphicsScene *scene);
         ~DisplayScreen();
 
         int width();
@@ -113,7 +113,7 @@ class DisplayScreen : public QObject, public QGraphicsRectItem
 
         ColourTheme::Colours palette;
 
-        CodePage *cp;
+        CodePage &cp;
 
         const char *colName[12] = { "black", "blue", "red", "magenta", "green", "cyan", "yellow", "neutral",
                                     "protected", "unprotected,intensfied", "unprotected", "protected, intensified"};
