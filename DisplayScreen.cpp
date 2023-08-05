@@ -1,3 +1,6 @@
+#include <QGuiApplication>
+#include <QClipboard>
+
 #include "Q3270.h"
 
 #include "DisplayScreen.h"
@@ -24,10 +27,12 @@ DisplayScreen::DisplayScreen(int screen_x, int screen_y, CodePage &cp, QGraphics
     QPen myRbPen = QPen();
     myRbPen.setWidth(1);
     myRbPen.setBrush(QColor(Qt::yellow));
+    myRbPen.setStyle(Qt::DotLine);
 
     myRb = new QGraphicsRectItem(this);
     myRb->setPen(myRbPen);
     myRb->setZValue(10);
+    myRb->hide();
 
     // Build 3270 display matrix
     glyph.resize(screenPos_max);
@@ -55,12 +60,12 @@ DisplayScreen::DisplayScreen(int screen_x, int screen_y, CodePage &cp, QGraphics
             glyph.replace(pos, new Glyph(x, y, gridSize_X, gridSize_Y, cp));
 //            glyph.at(pos)->setFlag(QGraphicsItem::ItemIsSelectable);
             glyph.at(pos)->setPos(x_pos, y_pos);
-            glyph.at(pos)->setZValue(2);
+            glyph.at(pos)->setZValue(1);
 
             scene->addItem(glyph.at(pos));
 
             uscore.replace(pos, new QGraphicsLineItem(0, 0, gridSize_X, 0, cell.at(pos)));
-            uscore.at(pos)->setZValue(1);
+            uscore.at(pos)->setZValue(2);
             uscore.at(pos)->setPos(0, gridSize_Y);
         }
     }
@@ -84,8 +89,8 @@ DisplayScreen::DisplayScreen(int screen_x, int screen_y, CodePage &cp, QGraphics
     crosshair_X.setPen(QPen(Qt::white, 0));
     crosshair_Y.setPen(QPen(Qt::white, 0));
 
-    crosshair_X.setZValue(2);
-    crosshair_Y.setZValue(2);
+    crosshair_X.setZValue(5);
+    crosshair_Y.setZValue(5);
 
     crosshair_X.setParentItem(this);
     crosshair_Y.setParentItem(this);
@@ -558,13 +563,18 @@ void DisplayScreen::setField(int pos, unsigned char c, bool sfe)
         {
             glyph.at(pos)->setColour(ColourTheme::UNPROTECTED_INTENSIFIED); /* Unrprotected, Intensified (Red) */
         }
-
-        // If the display receives an SF order, it sets the associated extended
-        // field attribute to its default value.
-        glyph.at(pos)->setUScore(false);
-        glyph.at(pos)->setReverse(false);
-        glyph.at(pos)->setBlink(false);
     }
+
+    // If the display receives an SF order, it sets the associated extended
+    // field attribute to its default value.
+    glyph.at(pos)->setUScore(false);
+    uscore.at(pos)->setVisible(false);
+
+    glyph.at(pos)->setReverse(false);
+    cell.at(pos)->setBrush(palette[ColourTheme::BLACK]);
+    glyph.at(pos)->setBrush(palette[glyph.at(pos)->getColour()]);
+
+    glyph.at(pos)->setBlink(false);
 
     QString attrs;
 
@@ -1472,4 +1482,134 @@ void DisplayScreen::getScreen(QByteArray &buffer)
             buffer.append(glyph.at(i)->getEBCDIC());
         }
     }
+}
+
+void DisplayScreen::mousePressEvent(QGraphicsSceneMouseEvent *mEvent)
+{
+    int x = mEvent->pos().x() / gridSize_X;
+    int y = mEvent->pos().y() / gridSize_Y;
+
+    qDebug() << "Mouse click at" << mEvent->pos() << "- char pos" << x << "," << y << "scaled pos" << x * gridSize_X << "," << y * gridSize_Y;
+
+    mouseStart = mapFromItem(this, QPoint(x * gridSize_X, y * gridSize_Y));
+
+    myRb->setData(0, x);
+    myRb->setData(1, y);
+    myRb->setData(2, x);
+    myRb->setData(3, y);
+
+    myRb->setRect(x * gridSize_X, y * gridSize_Y, gridSize_X, gridSize_Y);
+    myRb->show();
+
+}
+
+void DisplayScreen::mouseMoveEvent(QGraphicsSceneMouseEvent *mEvent)
+{
+    //FIXME: Some of this could probably be simplified so we're not working out
+    //       the min/max values in mouseReleaseEvent
+
+    // Calculate character position of mouse
+    int thisX = mEvent->pos().x() / gridSize_X;
+    int thisY = mEvent->pos().y() / gridSize_Y;
+
+    // Normalise the position to within the bounds of the character display
+    thisX = std::min(thisX, screen_x);
+    thisY = std::min(thisY, screen_y);
+
+    thisX = std::max(thisX, 0);
+    thisY = std::max(thisY, 0);
+
+    // Retrieve the start point of the selection
+    int mpX = myRb->data(0).toInt();
+    int mpY = myRb->data(1).toInt();
+
+    /* Normalise the new mouse position
+       If the user moves the mouse up and/or left, this is the new start point,
+       and the old start point becomes the bottom right
+    */
+
+    int topLeftX = std::min(mpX, thisX);
+    int topLeftY = std::min(mpY, thisY);
+
+    int botRightX = std::max(thisX, mpX);
+    int botRightY = std::max(thisY, mpY);
+
+    // Ensure at least one character is selected
+    if (botRightX == topLeftX) {
+        botRightX++;
+    }
+
+    if (botRightY == topLeftY) {
+        botRightY++;
+    }
+
+    myRb->setData(2, thisX);
+    myRb->setData(3, thisY);
+
+    int w = botRightX - topLeftX;
+    int h = botRightY - topLeftY;
+
+    qDebug() << "Move" << mEvent->pos() << "mpX,mpY" << mpX << "," << mpY << "    topLeftX,topLeftY" << topLeftX << "," << topLeftY << "    botRightX,botRightY" << botRightX << "," << botRightY << "w,h" << w << "x" << h;
+
+    myRb->setRect(topLeftX * gridSize_X, topLeftY * gridSize_Y, w * gridSize_X, h * gridSize_Y);
+
+}
+
+void DisplayScreen::mouseReleaseEvent(QGraphicsSceneMouseEvent *mEvent)
+{
+    qDebug() << "Mouse release at " << mEvent->pos();
+
+    int top = std::min(myRb->data(1).toInt(), myRb->data(3).toInt());
+    int bottom = std::max(myRb->data(1).toInt(), myRb->data(3).toInt());
+
+    int left = std::min(myRb->data(0).toInt(), myRb->data(2).toInt());
+    int right = std::max(myRb->data(0).toInt(), myRb->data(2).toInt());
+
+    // FIXME: Is this needed?
+    if (top == bottom || left == right) {
+        myRb->hide();
+    }
+
+    qDebug() << "Selected" << left << "," << top << "x" << right << "," << bottom;
+}
+
+void DisplayScreen::copyText()
+{
+    // If the rubberband isn't show, do nothing
+    if (!myRb->isVisible()) {
+        return;
+    }
+
+    // Build up a string with the selected characters
+    QString cbText = "";
+
+    int top = std::min(myRb->data(1).toInt(), myRb->data(3).toInt());
+    int bottom = std::max(myRb->data(1).toInt(), myRb->data(3).toInt());
+
+    int left = std::min(myRb->data(0).toInt(), myRb->data(2).toInt());
+    int right = std::max(myRb->data(0).toInt(), myRb->data(2).toInt());
+
+    qDebug() << "Selection " << top << "," << left << " x " << bottom << "," << right;
+
+    for(int y = top; y <= bottom - 1; y++)
+    {
+        // Append a newline if there's more than one row selected
+        if (y > top) {
+            cbText = cbText + "\n";
+        }
+
+        for(int x = left; x <= right - 1; x++)
+        {
+            int thisPos = screen_x * y + x;
+            cbText = cbText + glyph.at(thisPos)->text();
+        }
+    }
+
+    qDebug() << "Clipboard text: " << cbText;
+
+    QClipboard *clipboard = QGuiApplication::clipboard();
+
+    clipboard->setText(cbText);
+
+    myRb->hide();
 }

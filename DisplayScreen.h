@@ -23,6 +23,10 @@ class DisplayScreen : public QObject, public QGraphicsRectItem
         DisplayScreen(int screen_x, int screen_y, CodePage &cp, QGraphicsScene *scene);
         ~DisplayScreen();
 
+        void mousePressEvent(QGraphicsSceneMouseEvent *mEvent);
+        void mouseMoveEvent(QGraphicsSceneMouseEvent *mEvent);
+        void mouseReleaseEvent(QGraphicsSceneMouseEvent *mEvent);
+
         int width();
         int height();
         qreal gridWidth();
@@ -97,6 +101,7 @@ class DisplayScreen : public QObject, public QGraphicsRectItem
         void setStatusInsert(bool ins);
         void setCursorColour(bool inherit);
         void setCodePage();
+        void copyText();
 
     private:
 
@@ -172,6 +177,7 @@ class DisplayScreen : public QObject, public QGraphicsRectItem
         qreal gridSize_Y;
 
         QGraphicsRectItem *myRb;
+        QPointF mouseStart;
 
         int findField(int pos);
         int findNextField(int pos);
