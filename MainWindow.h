@@ -89,12 +89,14 @@ class MainWindow : public QMainWindow
 
   private:
 
-      CodePage codePage;
+      ActiveSettings activeSettings;
 
       ColourTheme colourTheme;
       KeyboardTheme keyboardTheme;
 
       Keyboard keyboard;
+
+      CodePage codePage;
 
       TerminalTab *terminal;
 
@@ -102,16 +104,14 @@ class MainWindow : public QMainWindow
       SessionManagement *sm;
       PreferencesDialog *settings;
 
-
-      ActiveSettings *activeSettings;
-
       int maxMruCount;
 
       QActionGroup *sessionGroup;
 
+      QStringList mruList;
+
       Ui::MainWindow *ui;
 
-      QStringList mruList;
 };
  
 #endif

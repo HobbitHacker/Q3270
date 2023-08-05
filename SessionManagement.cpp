@@ -17,7 +17,7 @@
  * Sessions contain all custom settings
  */
 
-SessionManagement::SessionManagement(ActiveSettings *activeSettings) :
+SessionManagement::SessionManagement(ActiveSettings &activeSettings) :
     QDialog() ,
     activeSettings(activeSettings)
 {
@@ -152,21 +152,21 @@ void SessionManagement::saveSettings()
     // Each session is stored under the Sessions/<session name> key
     s.beginGroup(sessionName);
     s.setValue("Description", sessionDesc);
-    s.setValue("ColourTheme", activeSettings->getColourThemeName());
-    s.setValue("KeyboardTheme", activeSettings->getKeyboardThemeName());
-    s.setValue("Address", activeSettings->getHostAddress());
-    s.setValue("TerminalModel", activeSettings->getTerminalModelName());
-    s.setValue("TerminalX", activeSettings->getTerminalX());
-    s.setValue("TerminalY", activeSettings->getTerminalY());
-    s.setValue("CursorBlink", activeSettings->getCursorBlink());
-    s.setValue("CursorBlinkSpeed", activeSettings->getCursorBlinkSpeed());
-    s.setValue("CursorInheritColour", activeSettings->getCursorColourInherit());
-    s.setValue("Ruler", activeSettings->getRulerOn());
-    s.setValue("RulerStyle", activeSettings->getRulerStyle());
-    s.setValue("Font", activeSettings->getFont().family());
-    s.setValue("FontSize", activeSettings->getFont().pointSize());
-    s.setValue("ScreenStretch", activeSettings->getStretchScreen());
-    s.setValue("Codepage",activeSettings->getCodePage());
+    s.setValue("ColourTheme", activeSettings.getColourThemeName());
+    s.setValue("KeyboardTheme", activeSettings.getKeyboardThemeName());
+    s.setValue("Address", activeSettings.getHostAddress());
+    s.setValue("TerminalModel", activeSettings.getTerminalModelName());
+    s.setValue("TerminalX", activeSettings.getTerminalX());
+    s.setValue("TerminalY", activeSettings.getTerminalY());
+    s.setValue("CursorBlink", activeSettings.getCursorBlink());
+    s.setValue("CursorBlinkSpeed", activeSettings.getCursorBlinkSpeed());
+    s.setValue("CursorInheritColour", activeSettings.getCursorColourInherit());
+    s.setValue("Ruler", activeSettings.getRulerOn());
+    s.setValue("RulerStyle", activeSettings.getRulerStyle());
+    s.setValue("Font", activeSettings.getFont().family());
+    s.setValue("FontSize", activeSettings.getFont().pointSize());
+    s.setValue("ScreenStretch", activeSettings.getStretchScreen());
+    s.setValue("Codepage",activeSettings.getCodePage());
 
     // End group for session
     s.endGroup();

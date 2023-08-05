@@ -3,7 +3,6 @@
 #include "ui_About.h"
 
 MainWindow::MainWindow(MainWindow::Session s) : QMainWindow(nullptr),
-                                                activeSettings(new(ActiveSettings)),
                                                 ui(new(Ui::MainWindow))
 
 
@@ -204,7 +203,7 @@ void MainWindow::mruConnect()
         updateMRUlist("Host " + parts[2]);
 
         // Update the address on the Host form
-        activeSettings->setHostAddress(parts[2]);
+        activeSettings.setHostAddress(parts[2]);
     }
     else
     {
@@ -233,19 +232,18 @@ MainWindow::~MainWindow()
 {
     //FIXME: delete of other objects obtained with 'new'
     delete ui;
-    delete activeSettings;
 }
 
 void MainWindow::menuConnect()
 {
-    if (activeSettings->getHostAddress().isEmpty())
+    if (activeSettings.getHostAddress().isEmpty())
     {
         settings->showForm();
     }
 
-    if (!activeSettings->getHostAddress().isEmpty())
+    if (!activeSettings.getHostAddress().isEmpty())
     {
-        terminal->openConnection(activeSettings->getHostAddress());
+        terminal->openConnection(activeSettings.getHostAddress());
 
         ui->actionDisconnect->setEnabled(true);
         ui->actionConnect->setDisabled(true);

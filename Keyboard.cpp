@@ -386,7 +386,8 @@ void Keyboard::enter()
 
 void Keyboard::tab()
 {
-    emit key_Tab();
+    // Tab, starting at next character position
+    emit key_Tab(1);
 }
 
 void Keyboard::backtab()
@@ -612,7 +613,7 @@ void Keyboard::clear()
 
 void Keyboard::copy()
 {
-    emit copyText();
+    emit key_Copy();
 }
 
 void Keyboard::ruler()
@@ -742,7 +743,7 @@ void Keyboard::setFactoryMaps()
     setMapping("Home", "Home");
     setMapping("End", "EraseEOF");
     setMapping("Return", "NewLine");
-    setMapping("Ctrl+End", "EndLine");
+    setMapping("Shift+End", "EndLine");
 
     setMapping("F1", "F1");
     setMapping("F2", "F2");

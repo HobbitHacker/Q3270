@@ -20,17 +20,17 @@ class TerminalTab : public QWidget
 
     public:
 
-        TerminalTab(QVBoxLayout *v, ActiveSettings *activeSettings, CodePage &cp, Keyboard &kb, ColourTheme &cs, QString sessionName);
+        TerminalTab(QVBoxLayout *v, ActiveSettings &activeSettings, CodePage &cp, Keyboard &kb, ColourTheme &cs, QString sessionName);
         ~TerminalTab();
 
         void openConnection(QString host, int port, QString luName);
         void openConnection(QString address);
         void openConnection(QSettings& s);
 
-        int terminalWidth(bool alternate);
-        int terminalHeight(bool alternate);
-        int gridWidth(bool alternate);
-        int gridHeight(bool alternate);
+        int terminalWidth(bool alternate)       { return(!alternate ? primaryScreen->width() : alternateScreen->width()); }
+        int terminalHeight(bool alternate)      { return(!alternate ? primaryScreen->height() : alternateScreen->height()); };
+        int gridWidth(bool alternate)           { return(!alternate ? primaryScreen->gridWidth() : alternateScreen->gridWidth()); };
+        int gridHeight(bool alternate)          { return(!alternate ? primaryScreen->gridHeight() : alternateScreen->gridHeight()); };
 
         void setBlink(bool blink);
         void setBlinkSpeed(int speed);
@@ -67,6 +67,8 @@ class TerminalTab : public QWidget
         // Set themes by name
         void setColourTheme(QString themeName);
 
+        void copyText()                         { current->copyText(); };
+
         void blinkText();
         void blinkCursor();
 
@@ -78,6 +80,8 @@ class TerminalTab : public QWidget
         Keyboard &kbd;
         ColourTheme &colourtheme;
         CodePage &cp;
+
+        ActiveSettings &activeSettings;
 
         QGraphicsView *view;
 
@@ -92,7 +96,7 @@ class TerminalTab : public QWidget
         ProcessDataStream *datastream;
         SocketConnection *socket;
 
-        ActiveSettings *activeSettings;
+
 
         bool sessionConnected;
 

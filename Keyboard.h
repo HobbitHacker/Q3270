@@ -31,13 +31,13 @@ class Keyboard : public QObject
     signals:
         void setLock(QString xsystem);
         void setInsert(bool ins);
-        void copyText();
 
+        void key_Copy();
         void key_moveCursor(int x, int y, bool absolute);
         void key_Backspace();
         void key_AID(int aid, bool short_read);
         void key_Attn();
-        void key_Tab();
+        void key_Tab(int offset);
         void key_Backtab();
         void key_Home();
         void key_EraseEOF();

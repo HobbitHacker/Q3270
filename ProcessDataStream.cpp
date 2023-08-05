@@ -376,78 +376,133 @@ void ProcessDataStream::processSF()
 
 void ProcessDataStream::processSFE()
 {
+    screen->resetExtended(primary_pos);
+    screen->setFieldAttrs(primary_pos);
+
+    bool blink;
+    bool reverse;
+    bool uscore;
+    bool reset;
+    bool fattr;
+    bool fgset;
+    bool bgset;
+
+    int foreground;
+    int background;
+
+    int field;
+
     uchar pairs = *++buffer;
 
     uchar type;
     uchar value;
 
-    screen->resetExtended(primary_pos);
+    field = 0;
+
+    blink = false;
+    reverse = false;
+    uscore = false;
+    reset = false;
+    fattr = false;
+    fgset = false;
+    bgset = false;
+
+    foreground = 0;
+    background = 0;
 
     for(int i = 1; i <= pairs; i++)
     {
-        type = *++buffer;
-        value = *++buffer;
+            type = *++buffer;
+            value = *++buffer;
 
-        processFieldAttribute(type, value);
+            switch(type)
+            {
+            case IBM3270_EXT_3270:
+                field = value;
+                fattr = true;
+                break;
+            case IBM3270_EXT_FG_COLOUR:
+                printf("[Extended FG %02X]", value);
+                fgset = true;
+                foreground = value;
+                break;
+            case IBM3270_EXT_BG_COLOUR:
+                printf("Extended BG %02dX]", value);
+                bgset = true;
+                background = value;
+                break;
+            case IBM3270_EXT_HILITE:
+                switch(value)
+                {
+                    case IBM3270_EXT_DEFAULT:
+                        printf("[Default]");
+                        reset = true;
+                        break;
+                    case IBM3270_EXT_HI_NORMAL:
+                        printf("[Reset Extended]");
+                        reset = true;
+                        break;
+                    case IBM3270_EXT_HI_BLINK:
+                        printf("[Blink]");
+                        blink = true;
+                        break;
+                    case IBM3270_EXT_HI_REVERSE:
+                        printf("[Reverse]");
+                        reverse = true;
+                        break;
+                    case IBM3270_EXT_HI_USCORE:
+                        printf("[Blink]");
+                        uscore = true;
+                        break;
+                    default:
+                        printf("\n\n[** Unimplemented SFE HILITE value - %2.2X-%2.2X - Ignored **]\n\n", type, value);
+                        break;
+                }
+                break;
+            default:
+                printf("\n\n[** Unimplemented SFE attribute - %2.2X-%2.2X - Ignored **]\n\n", type, value);
+                break;
+            }
 
-        fflush(stdout);
     }
 
-    screen->setFieldAttrs(primary_pos);
-    incPos();
+
+    if (fattr) {
+        screen->setField(primary_pos, field, true);
+    } else {
+        screen->setField(primary_pos, 0x00, true);
+    }
+
+    if (blink) {
+        screen->setExtendedBlink(primary_pos);
+    }
+
+    if (reverse) {
+        screen->setExtendedReverse(primary_pos);
+    }
+
+    if (uscore) {
+        screen->setExtendedUscore(primary_pos);
+    }
+
+    if (reset) {
+        screen->resetExtendedHilite(primary_pos);
+    }
+
+    if (fgset) {
+        screen->setExtendedColour(primary_pos, true, foreground);
+    }
+
+    if (bgset) {
+        screen->setExtendedColour(primary_pos, false, background);
+    }
 
     lastWasCmd = true;
-}
 
-// Process an attribute pair; used by SFE and MF
-void ProcessDataStream::processFieldAttribute(uchar type, uchar value)
-{
-    switch(type)
-    {
-        case IBM3270_EXT_3270:
-            printf("[Field ");
-            screen->setField(primary_pos, value, true);
-            printf("]");
-            break;
-        case IBM3270_EXT_FG_COLOUR:
-            printf("Extended FG");
-            screen->setExtendedColour(primary_pos, true, value);
-            break;
-        case IBM3270_EXT_BG_COLOUR:
-            printf("Extended BG");
-            screen->setExtendedColour(primary_pos, false, value);
-            break;
-        case IBM3270_EXT_HILITE:
-            switch(value)
-            {
-                case IBM3270_EXT_DEFAULT:
-                    printf("[Default]");
-                    screen->resetExtendedHilite(primary_pos);
-                    break;
-                case IBM3270_EXT_HI_NORMAL:
-                    printf("[Reset Extended]");
-                    screen->resetExtendedHilite(primary_pos);
-                    break;
-                case IBM3270_EXT_HI_BLINK:
-                    screen->setExtendedBlink(primary_pos);
-                    break;
-                case IBM3270_EXT_HI_REVERSE:
-                    screen->setExtendedReverse(primary_pos);
-                    break;
-                case IBM3270_EXT_HI_USCORE:
-                    screen->setExtendedUscore(primary_pos);
-                    break;
-                default:
-                    printf("\n\n[** Unimplemented SFE HILITE value - %2.2X-%2.2X - Ignored **]\n\n", type, value);
-                    break;
-            }
-            break;
-        default:
-            printf("\n\n[** Unimplemented SFE attribute - %2.2X-%2.2X - Ignored **]\n\n", type, value);
-            break;
-    }
+    incPos();
 
 }
+
 void ProcessDataStream::processSBA()
 {
     printf("[SetBufferAddress ");
@@ -478,19 +533,70 @@ void ProcessDataStream::processSA()
     lastWasCmd = true;
 }
 
+// Some of this processing is almost duplicated from SFE
 void ProcessDataStream::processMF()
 {
     unsigned char count = *++buffer;
     printf("[[ModifyField Pairs=%02X]", count);
     for (int i = 0; i < count; i++)
     {
-        unsigned char at = *++buffer;
-        unsigned char av = *++buffer;
-        printf("[Pair %02X][Attribute %02X Value %02X]", count, at, av);
-        processFieldAttribute(at, av);
+        unsigned char type = *++buffer;
+        unsigned char value = *++buffer;
+        if (screen->isFieldStart(primary_pos)) {
+            printf("[Pair %02X][Attribute %02X Value %02X]", count, type, value);
+
+            switch(type)
+            {
+                case IBM3270_EXT_3270:
+                    screen->setField(primary_pos, value, true);
+                    break;
+                case IBM3270_EXT_FG_COLOUR:
+                    printf("[Extended FG %02X]", value);
+                    screen->setExtendedColour(primary_pos, true, value);
+                    break;
+                case IBM3270_EXT_BG_COLOUR:
+                    printf("Extended BG %02dX]", value);
+                    screen->setExtendedColour(primary_pos, false, value);
+                    break;
+                case IBM3270_EXT_HILITE:
+                    switch(value)
+                    {
+                        case IBM3270_EXT_DEFAULT:
+                            printf("[Default]");
+                            screen->resetExtendedHilite(primary_pos);
+                            break;
+                        case IBM3270_EXT_HI_NORMAL:
+                            printf("[Reset Extended]");
+                            screen->resetExtendedHilite(primary_pos);
+                            break;
+                        case IBM3270_EXT_HI_BLINK:
+                            printf("[Blink]");
+                            screen->setExtendedBlink(primary_pos);
+                            break;
+                        case IBM3270_EXT_HI_REVERSE:
+                            printf("[Reverse]");
+                            screen->setExtendedReverse(primary_pos);
+                            break;
+                        case IBM3270_EXT_HI_USCORE:
+                            printf("[Blink]");
+                            screen->setExtendedUscore(primary_pos);
+                            break;
+                        default:
+                            printf("\n\n[** Unimplemented MF HILITE value - %2.2X-%2.2X - Ignored **]\n\n", type, value);
+                            break;
+                    }
+                    break;
+                default:
+                    printf("\n\n[** Unimplemented MF attribute - %2.2X-%2.2X - Ignored **]\n\n", type, value);
+                    break;
+            }
+
+        }
     }
 
-    screen->cascadeAttrs(primary_pos);
+    if (screen->isFieldStart(primary_pos)) {
+        screen->cascadeAttrs(primary_pos);
+    }
 
     lastWasCmd = true;
 }

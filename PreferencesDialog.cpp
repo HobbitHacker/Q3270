@@ -5,7 +5,7 @@
 #include <QDebug>
 #include "PreferencesDialog.h"
 
-PreferencesDialog::PreferencesDialog(ColourTheme &colours, KeyboardTheme &keyboards, ActiveSettings *activeSettings, QWidget *parent) :
+PreferencesDialog::PreferencesDialog(ColourTheme &colours, KeyboardTheme &keyboards, ActiveSettings &activeSettings, QWidget *parent) :
     QDialog(parent),
     ui(new Ui::PreferencesDialog),
     colours(colours),
@@ -76,7 +76,7 @@ void PreferencesDialog::disconnected()
     ui->terminalType->setEnabled(true);
 
     // Rows and columns only editable if it's dynamic size
-    if (activeSettings->getTerminalModel() == Q3270_TERMINAL_DYNAMIC)
+    if (activeSettings.getTerminalModel() == Q3270_TERMINAL_DYNAMIC)
     {
         ui->terminalCols->setEnabled(true);
         ui->terminalRows->setEnabled(true);
@@ -94,37 +94,37 @@ void PreferencesDialog::disconnected()
 
 void PreferencesDialog::showForm()
 {
-    ui->hostLU->setText(activeSettings->getHostLU());
-    ui->hostName->setText(activeSettings->getHostName());
-    ui->hostPort->setText(QString::number(activeSettings->getHostPort()));
+    ui->hostLU->setText(activeSettings.getHostLU());
+    ui->hostName->setText(activeSettings.getHostName());
+    ui->hostPort->setText(QString::number(activeSettings.getHostPort()));
 
     // Terminal model/rows/cols
-    ui->terminalType->setCurrentIndex(activeSettings->getTerminalModel());
-    ui->terminalCols->setValue(activeSettings->getTerminalX());
-    ui->terminalRows->setValue(activeSettings->getTerminalY());
+    ui->terminalType->setCurrentIndex(activeSettings.getTerminalModel());
+    ui->terminalCols->setValue(activeSettings.getTerminalX());
+    ui->terminalRows->setValue(activeSettings.getTerminalY());
 
 
     // Cursor blink enabled & speed
-    ui->cursorBlink->setChecked(activeSettings->getCursorBlink());
-    ui->cursorBlinkSpeed->setSliderPosition(activeSettings->getCursorBlinkSpeed());
+    ui->cursorBlink->setChecked(activeSettings.getCursorBlink());
+    ui->cursorBlinkSpeed->setSliderPosition(activeSettings.getCursorBlinkSpeed());
 
     // Enable blink speed adjustment only if blink is enabled
     ui->cursorBlinkSpeed->setEnabled(ui->cursorBlink->QAbstractButton::isChecked());
 
-    ui->cursorColour->setChecked(activeSettings->getCursorColourInherit());
-    ui->stretch->setChecked(activeSettings->getStretchScreen());
+    ui->cursorColour->setChecked(activeSettings.getCursorColourInherit());
+    ui->stretch->setChecked(activeSettings.getStretchScreen());
 
-    ui->backspaceStop->setChecked(activeSettings->getBackspaceStop());
+    ui->backspaceStop->setChecked(activeSettings.getBackspaceStop());
 
-    qfd->setCurrentFont(activeSettings->getFont());
+    qfd->setCurrentFont(activeSettings.getFont());
 
     populateColourThemeNames();
     populateKeyboardThemeNames();
 
     // Colour the buttons, based on Settings
-    colours.setButtonColours(colourButtons, activeSettings->getColourThemeName());
+    colours.setButtonColours(colourButtons, activeSettings.getColourThemeName());
 
-    ui->CodePages->setCurrentIndex(ui->CodePages->findText(activeSettings->getCodePage()));
+    ui->CodePages->setCurrentIndex(ui->CodePages->findText(activeSettings.getCodePage()));
 
     this->exec();
 }
@@ -176,18 +176,18 @@ void PreferencesDialog::changeFont(QFont newFont)
 
 void PreferencesDialog::accept()
 {
-    activeSettings->setTerminal(ui->terminalCols->value(), ui->terminalRows->value(), ui->terminalType->currentIndex());
-    activeSettings->setCursorBlink(ui->cursorBlink->QAbstractButton::isChecked());
-    activeSettings->setCursorBlinkSpeed(ui->cursorBlinkSpeed->value());
-    activeSettings->setRulerOn(ui->rulerOn->QAbstractButton::isChecked());
-    activeSettings->setRulerStyle(comboRulerStyle.value(ui->crosshair->currentText()));
-    activeSettings->setCursorColourInherit(ui->cursorColour->QAbstractButton::isChecked());
-    activeSettings->setFont(qfd->currentFont());
-    activeSettings->setCodePage(ui->CodePages->currentText());
-    activeSettings->setKeyboardTheme(keyboards, ui->keyboardTheme->currentText());
-    activeSettings->setColourTheme(ui->colourTheme->currentText());
-    activeSettings->setHostAddress(ui->hostName->text(), ui->hostPort->text().toInt(), ui->hostLU->text());
-    activeSettings->setStretchScreen(ui->stretch->QAbstractButton::isChecked());
+    activeSettings.setTerminal(ui->terminalCols->value(), ui->terminalRows->value(), ui->terminalType->currentIndex());
+    activeSettings.setCursorBlink(ui->cursorBlink->QAbstractButton::isChecked());
+    activeSettings.setCursorBlinkSpeed(ui->cursorBlinkSpeed->value());
+    activeSettings.setRulerOn(ui->rulerOn->QAbstractButton::isChecked());
+    activeSettings.setRulerStyle(comboRulerStyle.value(ui->crosshair->currentText()));
+    activeSettings.setCursorColourInherit(ui->cursorColour->QAbstractButton::isChecked());
+    activeSettings.setFont(qfd->currentFont());
+    activeSettings.setCodePage(ui->CodePages->currentText());
+    activeSettings.setKeyboardTheme(keyboards, ui->keyboardTheme->currentText());
+    activeSettings.setColourTheme(ui->colourTheme->currentText());
+    activeSettings.setHostAddress(ui->hostName->text(), ui->hostPort->text().toInt(), ui->hostLU->text());
+    activeSettings.setStretchScreen(ui->stretch->QAbstractButton::isChecked());
 
     //emit setStretch(ui->stretch);
 
@@ -197,7 +197,7 @@ void PreferencesDialog::accept()
 
 void PreferencesDialog::reject()
 {
-    emit tempFontChange(activeSettings->getFont());
+    emit tempFontChange(activeSettings.getFont());
 
     QDialog::reject();
 }

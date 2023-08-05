@@ -28,7 +28,7 @@ class SessionManagement : public QDialog
 
     public:
 
-        explicit SessionManagement(ActiveSettings *activeSettings);
+        explicit SessionManagement(ActiveSettings &activeSettings);
         ~SessionManagement();
 
         // Dialogs to open and save sessions; return true if session opened/saved
@@ -61,7 +61,7 @@ class SessionManagement : public QDialog
         QString sessionName;
         QString sessionDesc;
 
-        ActiveSettings *activeSettings;
+        ActiveSettings &activeSettings;
 
         // Populate QTableWidget with session details
         void populateTable(QTableWidget *table);
