@@ -30,7 +30,7 @@
      <x>0</x>
      <y>0</y>
      <width>1644</width>
-     <height>22</height>
+     <height>17</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuConnect">
@@ -91,7 +91,7 @@
   </widget>
   <action name="actionConnect">
    <property name="enabled">
-    <bool>false</bool>
+    <bool>true</bool>
    </property>
    <property name="text">
     <string>Connect</string>

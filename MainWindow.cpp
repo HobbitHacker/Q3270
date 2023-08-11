@@ -72,7 +72,7 @@ MainWindow::MainWindow(MainWindow::Session s) : QMainWindow(nullptr),
 
     // Set defaults for Connect options
     ui->actionDisconnect->setDisabled(true);
-    ui->actionConnect->setDisabled(true);
+//    ui->actionConnect->setDisabled(true);
 
     terminal = new TerminalTab(ui->terminalLayout, activeSettings, codePage, keyboard, colourTheme, s.session);
 
