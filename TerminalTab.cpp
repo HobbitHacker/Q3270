@@ -3,6 +3,8 @@
 TerminalTab::TerminalTab(QVBoxLayout *layout, ActiveSettings &activeSettings, CodePage &cp, Keyboard &kb, ColourTheme &cs, QString sessionName) :
     kbd(kb), colourtheme(cs), cp(cp), activeSettings(activeSettings), sessionName(sessionName)
 {
+    sessionConnected = false;
+
     // Create terminal display
     view = new QGraphicsView();
 
