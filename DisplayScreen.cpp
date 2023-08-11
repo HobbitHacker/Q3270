@@ -414,6 +414,7 @@ void DisplayScreen::setChar(int pos, short unsigned int c, bool move, bool fromK
     {
         uscore[pos]->setVisible(false);
     }
+
     printf("%s", glyph.at(pos)->text().toLatin1().data());
 }
 
