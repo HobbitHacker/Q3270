@@ -248,7 +248,7 @@ QString ActiveSettings::getHostAddress()
 
     if (hostPort != 0)
     {
-        address.append(hostPort);
+        address.append(":" + QString::number(hostPort));
     }
 
     return address;
