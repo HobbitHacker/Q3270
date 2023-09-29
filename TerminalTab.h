@@ -23,7 +23,6 @@ class TerminalTab : public QWidget
         TerminalTab(QVBoxLayout *v, ActiveSettings &activeSettings, CodePage &cp, Keyboard &kb, ColourTheme &cs, QString sessionName);
         ~TerminalTab();
 
-        void openConnection(QString host, int port, QString luName);
         void openConnection(QString address);
         void openConnection(QSettings& s);
 
@@ -80,6 +79,8 @@ class TerminalTab : public QWidget
         Keyboard &kbd;
         ColourTheme &colourtheme;
         CodePage &cp;
+
+        ColourTheme::Colours palette;
 
         ActiveSettings &activeSettings;
 

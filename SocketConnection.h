@@ -87,10 +87,6 @@ class SocketConnection : public QObject
         QByteArray incomingData;
         QByteArray subNegotiationBuffer;
 
-        void sendData();
-
-        void datastreamReceived(const QJsonObject &doc);
-
         void processSubNegotiation();
 
         const char *tn3270e_functions_strings[5] = { "BIND_IMAGE", "DATA_STREAM_CTL", "RESPONSES", "SCS_CTL_CODES", "SYSREQ" };

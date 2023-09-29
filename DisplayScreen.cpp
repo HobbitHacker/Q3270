@@ -2,11 +2,11 @@
 #include <QClipboard>
 
 #include "Q3270.h"
-
 #include "DisplayScreen.h"
 
-DisplayScreen::DisplayScreen(int screen_x, int screen_y, CodePage &cp, QGraphicsScene *scene) : cp(cp), screen_x(screen_x), screen_y(screen_y)
+DisplayScreen::DisplayScreen(int screen_x, int screen_y, CodePage &cp, ColourTheme::Colours &palette, QGraphicsScene *scene) : cp(cp), palette(palette), screen_x(screen_x), screen_y(screen_y)
 {
+
     this->setRect(0, 0, 640, 480);
     this->setPos(0, 0);
 
@@ -16,7 +16,6 @@ DisplayScreen::DisplayScreen(int screen_x, int screen_y, CodePage &cp, QGraphics
     screenPos_max = screen_x * screen_y;
 
     // Default settings
-    fontScaling = true;
     ruler = Q3270_RULER_CROSSHAIR;
     rulerOn = false;
     blinkShow = false;
@@ -35,8 +34,7 @@ DisplayScreen::DisplayScreen(int screen_x, int screen_y, CodePage &cp, QGraphics
     myRb->hide();
 
     // Build 3270 display matrix
-    glyph.resize(screenPos_max);
-    uscore.resize(screenPos_max);
+
     cell.resize(screenPos_max);
 
     for(int y = 0; y < screen_y; y++)
@@ -49,38 +47,25 @@ DisplayScreen::DisplayScreen(int screen_x, int screen_y, CodePage &cp, QGraphics
 
             qreal x_pos = (qreal) x * gridSize_X;
 
-            cell.replace(pos, new QGraphicsRectItem(0, 0, gridSize_X, gridSize_Y, this));
-
-            cell.at(pos)->setPen(Qt::NoPen);
-//            cell.at(pos)->setPen(QColor(Qt::yellow));
-            cell.at(pos)->setBrush(QBrush(Qt::red));
-            cell.at(pos)->setZValue(0);
-            cell.at(pos)->setPos(x_pos, y_pos);
-
-            glyph.replace(pos, new Glyph(x, y, gridSize_X, gridSize_Y, cp));
-//            glyph.at(pos)->setFlag(QGraphicsItem::ItemIsSelectable);
-            glyph.at(pos)->setPos(x_pos, y_pos);
-            glyph.at(pos)->setZValue(1);
-
-            scene->addItem(glyph.at(pos));
-
-            uscore.replace(pos, new QGraphicsLineItem(0, 0, gridSize_X, 0, cell.at(pos)));
-            uscore.at(pos)->setZValue(2);
-            uscore.at(pos)->setPos(0, gridSize_Y);
+            cell.replace(pos, new Cell(x_pos, y_pos, gridSize_X, gridSize_Y, cp, palette, this, scene));
         }
     }
 
     // Set default attributes for initial power-on
     clear();
+
     setFont(QFont("ibm3270", 14));
 
     // Set up cursor
     cursor.setRect(cell.at(0)->rect());
-    cursor.setPos(cell.at(0)->boundingRect().left(), cell.at(0)->boundingRect().top());
+    cursor.setPos(0, 0);
     cursor.setBrush(Qt::lightGray);
     cursor.setOpacity(0.5);
     cursor.setPen(Qt::NoPen);
-    cursor.setParentItem(cell.at(0));
+    cursor.setParentItem(this);
+    cursor.setZValue(4);
+
+    scene->addItem(&cursor);
 
     // Set up crosshairs
     crosshair_X.setLine(0, 0, 0, screen_y * gridSize_Y);
@@ -99,7 +84,6 @@ DisplayScreen::DisplayScreen(int screen_x, int screen_y, CodePage &cp, QGraphics
     crosshair_Y.hide();
 
     // Build status bar
-
     statusBar.setLine(0, 0, screen_x * gridSize_X, 0);
     statusBar.setPos(0, 481);
     statusBar.setPen(QPen(QColor(0x80, 0x80, 0xFF), 0));
@@ -166,28 +150,9 @@ qreal DisplayScreen::gridHeight()
 
 void DisplayScreen::setFont(QFont font)
 {
-    termFont = font;
-    QTransform tr;
-
-    if (fontScaling)
-    {
-        QFontMetricsF fm = QFontMetrics(font);
-        qreal xs = fm.horizontalAdvance("┼", 1);
-        qreal ys = fm.height();
-
-        tr.scale(gridSize_X / xs, gridSize_Y / ys);
-
-        qDebug() << "Scaling: " << gridSize_X / xs << "x" << gridSize_Y / ys;
-    }
-    else
-    {
-        tr.scale(1,1);
-    }
-
     for (int i = 0; i < screenPos_max; i++)
     {
-        glyph.at(i)->setFont(QFont(font));
-        glyph.at(i)->setTransform(tr);
+        cell.at(i)->setFont(QFont(font));
     }
 }
 
@@ -195,45 +160,15 @@ void DisplayScreen::setCodePage()
 {
     for (int i = 0; i < screenPos_max; i++)
     {
-        glyph.at(i)->refreshCodePage();
+        cell.at(i)->refreshCodePage();
     }
-}
-
-void DisplayScreen::setColourPalette(ColourTheme::Colours c)
-{
-    qDebug() << c;
-    palette = c;
 }
 
 void DisplayScreen::resetColours()
 {
-    for (int i = 0; i < screenPos_max; i++)
+   for (int i = 0; i < screenPos_max; i++)
     {
-        if (glyph.at(i)->isReverse())
-        {
-            cell.at(i)->setBrush(palette[glyph.at(i)->getColour()]);
-            glyph.at(i)->setBrush(palette[ColourTheme::BLACK]);
-//            printf("<reverse>");
-        }
-        else
-        {
-            glyph.at(i)->setBrush(palette[glyph.at(i)->getColour()]);
-            cell.at(i)->setBrush(palette[ColourTheme::BLACK]);
-        }
-        if (!glyph.at(i)->isDisplay())
-        {
-            glyph.at(i)->setBrush(cell.at(i)->brush());
-        }
-    }
-}
-
-void DisplayScreen::setFontScaling(bool fontScaling)
-{
-    return;
-    if (this->fontScaling != fontScaling)
-    {
-        this->fontScaling = fontScaling;
-        setFont(termFont);
+        cell.at(i)->setColour(cell.at(i)->getColour());
     }
 }
 
@@ -241,188 +176,152 @@ void DisplayScreen::clear()
 {
     for(int i = 0; i < screenPos_max; i++)
     {
-        uscore.at(i)->setVisible(false);
+        cell.at(i)->setFieldStart(false);
 
-        glyph.at(i)->setFieldStart(false);
+        cell.at(i)->setNumeric(false);
+        cell.at(i)->setMDT(false);
+        cell.at(i)->setProtected(false);
+        cell.at(i)->setDisplay(true);
+        cell.at(i)->setPenSelect(false);
+        cell.at(i)->setIntensify(false);
 
-        glyph.at(i)->setNumeric(false);
-        glyph.at(i)->setMDT(false);
-        glyph.at(i)->setProtected(false);
-        glyph.at(i)->setDisplay(true);
-        glyph.at(i)->setPenSelect(false);
-        glyph.at(i)->setIntensify(false);
+        cell.at(i)->setExtended(false);
+        cell.at(i)->setUScore(false);
+        cell.at(i)->setReverse(false);
+        cell.at(i)->setBlink(false);
 
-        glyph.at(i)->setExtended(false);
-        glyph.at(i)->setUScore(false);
-        glyph.at(i)->setReverse(false);
-        glyph.at(i)->setBlink(false);
+        cell.at(i)->resetCharAttrs();
 
-        glyph.at(i)->resetCharAttrs();
+        cell.at(i)->setColour(ColourTheme::GREEN);
 
-        cell.at(i)->setBrush(palette[ColourTheme::BLACK]);
-
-        glyph.at(i)->setColour(ColourTheme::BLUE);
-        glyph.at(i)->setBrush(palette[ColourTheme::BLUE]);
-        glyph.at(i)->setText(0x00);
+        cell.at(i)->setChar(0x00);
 
     }
     resetCharAttr();
 
     geActive = false;
+    unformatted = true;
 }
 
 void DisplayScreen::setChar(int pos, short unsigned int c, bool move, bool fromKB)
 {
 
-    glyph.at(pos)->setFieldStart(false);
+    cell.at(pos)->setFieldStart(false);
 
-    int lastField = findField(pos);
+    int fieldAttr = findField(pos);
 
-    glyph.at(pos)->resetCharAttrs();
+    // Reset character attributes for this cell
+    cell.at(pos)->resetCharAttrs();
 
     // Set character attribute flags if applicable
     if (!fromKB && useCharAttr)
     {
         if (!charAttr.colour_default)
         {
-            glyph.at(pos)->setCharAttrs(true, Glyph::CharAttr::COLOUR);
+            cell.at(pos)->setCharAttrs(true, Cell::COLOUR);
         }
         if (!charAttr.blink_default)
         {
-            glyph.at(pos)->setCharAttrs(true, Glyph::CharAttr::EXTENDED);
+            cell.at(pos)->setCharAttrs(true, Cell::EXTENDED);
         }
         if (!charAttr.reverse_default)
         {
-            glyph.at(pos)->setCharAttrs(true, Glyph::CharAttr::EXTENDED);
+            cell.at(pos)->setCharAttrs(true, Cell::EXTENDED);
         }
         if (!charAttr.uscore_default)
         {
-            glyph.at(pos)->setCharAttrs(true, Glyph::CharAttr::EXTENDED);
+            cell.at(pos)->setCharAttrs(true, Cell::EXTENDED);
         }
     }
 
     // Non-display comes from field attribute
-    glyph.at(pos)->setDisplay(glyph.at(lastField)->isDisplay());
+    cell.at(pos)->setDisplay(cell.at(fieldAttr)->isDisplay());
 
     // Protected comes from the field attribute
-    glyph.at(pos)->setProtected(glyph.at(lastField)->isProtected());
+    cell.at(pos)->setProtected(cell.at(fieldAttr)->isProtected());
 
     // Choose a graphic character if needed
-    glyph.at(pos)->setGraphic(geActive);
+    cell.at(pos)->setGraphic(geActive);
 
     if (!fromKB)
     {
-        glyph.at(pos)->setText(c);
+        cell.at(pos)->setChar(c);
     }
     else
     {
-        glyph.at(pos)->setTextFromKB(c);
+        cell.at(pos)->setCharFromKB(c);
     }
 
     geActive = false;
 
-    // If the character is not moving (delete/insert action) set character attributes if applicable
+    // If the character is not moving (as part of a delete/insert action) set character attributes if applicable
+    // Character attributes move with the character otherwise.
     if (!move)
     {
         // If character colour attributes are present, use them
-        if (glyph.at(pos)->hasCharAttrs(Glyph::CharAttr::COLOUR))
+        if (cell.at(pos)->hasCharAttrs(Cell::CharAttr::COLOUR))
         {
             // Colour
             if (!charAttr.colour_default)
             {
-                glyph.at(pos)->setColour(charAttr.colNum);
+                cell.at(pos)->setColour(charAttr.colNum);
             }
             else
             {
-                glyph.at(pos)->setColour(glyph.at(lastField)->getColour());
+                cell.at(pos)->setColour(cell.at(fieldAttr)->getColour());
             }
         }
         else
         {
-            glyph.at(pos)->setColour(glyph.at(lastField)->getColour());
+            cell.at(pos)->setColour(cell.at(fieldAttr)->getColour());
         }
 
-        if (glyph.at(pos)->hasCharAttrs(Glyph::CharAttr::EXTENDED))
+        if (cell.at(pos)->hasCharAttrs(Cell::CharAttr::EXTENDED))
         {
             // Reverse video
             if (!charAttr.reverse_default)
             {
-                glyph.at(pos)->setReverse(charAttr.reverse);
+                cell.at(pos)->setReverse(charAttr.reverse);
             }
             else
             {
-                glyph.at(pos)->setReverse(glyph.at(lastField)->isReverse());
+                cell.at(pos)->setReverse(cell.at(fieldAttr)->isReverse());
             }
 
             // Underscore
             if (!charAttr.uscore_default)
             {
-                glyph.at(pos)->setUScore(charAttr.uscore);
+                cell.at(pos)->setUScore(charAttr.uscore);
             }
             else
             {
-                glyph.at(pos)->setUScore(glyph.at(lastField)->isUScore());
+                cell.at(pos)->setUScore(cell.at(fieldAttr)->isUScore());
             }
 
             // Blink
             if (!charAttr.blink_default)
             {
-                glyph.at(pos)->setBlink(charAttr.blink);
+                cell.at(pos)->setBlink(charAttr.blink);
             }
             else
             {
-                glyph.at(pos)->setBlink(glyph.at(lastField)->isBlink());
+                cell.at(pos)->setBlink(cell.at(fieldAttr)->isBlink());
             }
         }
         else
         {
-            glyph.at(pos)->setUScore(glyph.at(lastField)->isUScore());
-            glyph.at(pos)->setReverse(glyph.at(lastField)->isReverse());
-            glyph.at(pos)->setBlink(glyph.at(lastField)->isBlink());
+            cell.at(pos)->setUScore(cell.at(fieldAttr)->isUScore());
+            cell.at(pos)->setReverse(cell.at(fieldAttr)->isReverse());
+            cell.at(pos)->setBlink(cell.at(fieldAttr)->isBlink());
         }
     }
 
-    // Colour - non-display / reverse / normal
-    if (!glyph.at(pos)->isDisplay())
-    {
-        glyph.at(pos)->setBrush(cell.at(pos)->brush());
-    }
-    else
-    {
-        if (glyph.at(pos)->isReverse())
-        {
-            cell.at(pos)->setBrush(palette[glyph.at(pos)->getColour()]);
-            glyph.at(pos)->setBrush(palette[ColourTheme::BLACK]);
-        }
-        else
-        {
-            glyph.at(pos)->setBrush(palette[glyph.at(pos)->getColour()]);
-            cell.at(pos)->setBrush(palette[ColourTheme::BLACK]);
-        }
-    }
-
-    //
-    // Underscore processing
-    //
-
-    if (glyph.at(pos)->isUScore())
-    {
-        uscore.at(pos)->setVisible(true);
-        uscore.at(pos)->setPen(QPen(palette[glyph.at(pos)->getColour()],0));
-    }
-    else
-    {
-        uscore[pos]->setVisible(false);
-    }
-
-    printf("%s", glyph.at(pos)->text().toLatin1().data());
 }
 
 unsigned char DisplayScreen::getChar(int pos)
 {
-    return (glyph.at(pos)->text().toUtf8()[0]);
+    return (cell.at(pos)->getChar().toLatin1());
 }
-
 
 void DisplayScreen::setCharAttr(unsigned char extendedType, unsigned char extendedValue)
 {
@@ -532,54 +431,52 @@ void DisplayScreen::setGraphicEscape()
 
 void DisplayScreen::setField(int pos, unsigned char c, bool sfe)
 {
+    // At least one field is defined
+    unformatted = false;
+
     // Set field attribute flags
-    glyph.at(pos)->setProtected((c>>5) & 1);
-    glyph.at(pos)->setNumeric((c>>4) & 1);
-    glyph.at(pos)->setDisplay((((c>>2)&3) != 3));
-    glyph.at(pos)->setPenSelect((( c >> 2) & 3) == 2 || (( c >> 2) & 3) == 1);
-    glyph.at(pos)->setIntensify(((c >> 2) & 3) == 2);
-    glyph.at(pos)->setMDT(c & 1);
-    glyph.at(pos)->setExtended(sfe);
-    glyph.at(pos)->setFieldStart(true);
+    cell.at(pos)->setProtected((c>>5) & 1);
+    cell.at(pos)->setNumeric((c>>4) & 1);
+    cell.at(pos)->setDisplay((((c>>2)&3) != 3));
+    cell.at(pos)->setPenSelect((( c >> 2) & 3) == 2 || (( c >> 2) & 3) == 1);
+    cell.at(pos)->setIntensify(((c >> 2) & 3) == 2);
+    cell.at(pos)->setMDT(c & 1);
+    cell.at(pos)->setExtended(sfe);
+    cell.at(pos)->setFieldStart(true);
 
     // Field attributes do not have character attributes
-    glyph.at(pos)->resetCharAttrs();
+    cell.at(pos)->resetCharAttrs();
+
+    // Fields are set to 0x00
+    cell.at(pos)->setChar(IBM3270_CHAR_NULL);
 
     // If it's not an Extended Field, set colours accordingly
-    if (!sfe)
-    {
-        if (glyph.at(pos)->isProtected() && !glyph.at(pos)->isIntensify())
+//    if (!sfe)
+//    {
+        if (cell.at(pos)->isProtected() && !cell.at(pos)->isIntensify())
         {
-            glyph.at(pos)->setColour(ColourTheme::PROTECTED_NORMAL);        /* Protected (Blue) */
+            cell.at(pos)->setColour(ColourTheme::PROTECTED_NORMAL);        /* Protected (Blue) */
         }
-        else if (glyph.at(pos)->isProtected() && glyph.at(pos)->isIntensify())
+        else if (cell.at(pos)->isProtected() && cell.at(pos)->isIntensify())
         {
-            glyph.at(pos)->setColour(ColourTheme::PROTECTED_INTENSIFIED);   /* Protected, Intensified (White) */
+            cell.at(pos)->setColour(ColourTheme::PROTECTED_INTENSIFIED);   /* Protected, Intensified (White) */
         }
-        else if (!glyph.at(pos)->isProtected() && !glyph.at(pos)->isIntensify())
+        else if (!cell.at(pos)->isProtected() && !cell.at(pos)->isIntensify())
         {
-            glyph.at(pos)->setColour(ColourTheme::UNPROTECTED_NORMAL);      /* Unprotected (Green) */
+            cell.at(pos)->setColour(ColourTheme::UNPROTECTED_NORMAL);      /* Unprotected (Green) */
         }
         else
         {
-            glyph.at(pos)->setColour(ColourTheme::UNPROTECTED_INTENSIFIED); /* Unrprotected, Intensified (Red) */
+            cell.at(pos)->setColour(ColourTheme::UNPROTECTED_INTENSIFIED); /* Unrprotected, Intensified (Red) */
         }
-    }
+//    }
 
-    // If the display receives an SF order, it sets the associated extended
-    // field attribute to its default value.
-    glyph.at(pos)->setUScore(false);
-    uscore.at(pos)->setVisible(false);
-
-    glyph.at(pos)->setReverse(false);
-    cell.at(pos)->setBrush(palette[ColourTheme::BLACK]);
-    glyph.at(pos)->setBrush(palette[glyph.at(pos)->getColour()]);
-
-    glyph.at(pos)->setBlink(false);
-
+    // Cascade all the attributes until the next field
+    cascadeAttrs(pos);
+/*
     QString attrs;
 
-    if(!glyph.at(pos)->isProtected())
+    if(!cell.at(pos)->isProtected())
     {
         attrs = "unprot,";
     }
@@ -587,38 +484,33 @@ void DisplayScreen::setField(int pos, unsigned char c, bool sfe)
     {
         attrs = "prot,";
     }
-    if(glyph.at(pos)->isIntensify())
+    if(cell.at(pos)->isIntensify())
     {
         attrs.append("intens,");
     }
-    if (glyph.at(pos)->isAutoSkip())
+    if (cell.at(pos)->isAutoSkip())
     {
         attrs.append("askip,");
     }
-    if (!glyph.at(pos)->isDisplay())
+    if (!cell.at(pos)->isDisplay())
     {
         attrs.append("nondisp,");
     }
-    if (glyph.at(pos)->isPenSelect())
+    if (cell.at(pos)->isPenSelect())
     {
         attrs.append("pen,");
     }
-    if (glyph.at(pos)->isNumeric())
+    if (cell.at(pos)->isNumeric())
     {
         attrs.append("num,");
     }
-    if (glyph.at(pos)->isMdtOn())
+    if (cell.at(pos)->isMdtOn())
     {
         attrs.append("mdt,");
     }
 
     printf("%s", attrs.toLatin1().data());
     fflush(stdout);
-
-/*    if (!sfe)
-    {
-        setFieldAttrs(pos);
-    }
 */
 }
 
@@ -626,177 +518,89 @@ void DisplayScreen::resetExtended(int pos)
 {
     resetExtendedHilite(pos);
 
-    glyph.at(pos)->setColour(ColourTheme::BLUE);
+    cell.at(pos)->setColour(ColourTheme::BLUE);
 
-    glyph.at(pos)->setDisplay(true);
-    glyph.at(pos)->setNumeric(false);
-    glyph.at(pos)->setMDT(false);
-    glyph.at(pos)->setPenSelect(false);
-    glyph.at(pos)->setProtected(false);
+    cell.at(pos)->setDisplay(true);
+    cell.at(pos)->setNumeric(false);
+    cell.at(pos)->setMDT(false);
+    cell.at(pos)->setPenSelect(false);
+    cell.at(pos)->setProtected(false);
 }
 
 
 void DisplayScreen::resetExtendedHilite(int pos)
 {
-    glyph.at(pos)->setUScore(false);
-    glyph.at(pos)->setBlink(false);
-    glyph.at(pos)->setReverse(false);
+    cell.at(pos)->setUScore(false);
+    cell.at(pos)->setBlink(false);
+    cell.at(pos)->setReverse(false);
 }
 
 void DisplayScreen::setExtendedColour(int pos, bool foreground, unsigned char c)
 {
-    //TODO: Default colour?
-    glyph.at(pos)->setColour((ColourTheme::Colour)(c&7));
-//    glyph.at(pos)->setReverse(!foreground);
+    //TODO: Invalid colours?
+    if (c == IBM3270_EXT_DEFAULT)
+    {
+        return;
+        c = IBM3270_EXT_DEFAULT_COLOR;
+    }
+    cell.at(pos)->setColour((ColourTheme::Colour)(c&7));
     if(foreground)
     {
-        printf(" %s]", colName[glyph.at(pos)->getColour()]);
+        printf(" %s]", colName[cell.at(pos)->getColour()]);
     }
 }
 
 void DisplayScreen::setExtendedBlink(int pos)
 {
-    glyph.at(pos)->setReverse(false);
-    glyph.at(pos)->setBlink(true);
+    cell.at(pos)->setReverse(false);
+    cell.at(pos)->setBlink(true);
     printf("[Blink]");
 }
 
 void DisplayScreen::setExtendedReverse(int pos)
 {
-    glyph.at(pos)->setBlink(false);
-    glyph.at(pos)->setReverse(true);
+    cell.at(pos)->setBlink(false);
+    cell.at(pos)->setReverse(true);
     printf("[Reverse]");
 }
 
 void DisplayScreen::setExtendedUscore(int pos)
 {
-    glyph.at(pos)->setUScore(true);
+    cell.at(pos)->setUScore(true);
     printf("[UScore]");
-}
-
-void DisplayScreen::setFieldAttrs(int start)
-{
-    glyph.at(start)->setFieldStart(true);
-
-    // resetFieldAttrs(start);
-
-    glyph.at(start)->setText(IBM3270_CHAR_NULL);
-    uscore.at(start)->setVisible(false);
-}
-
-
-int DisplayScreen::resetFieldAttrs(int start)
-{
-
-    int lastField = findField(start);
-
-    int endPos = start + screenPos_max;
-
-    for(int i = start; i < endPos; i++)
-    {
-        int offset = i % screenPos_max;
-
-        if (glyph.at(offset)->isFieldStart() && i > start)
-        {
-            return lastField;
-        }
-
-        glyph.at(offset)->setProtected(glyph.at(lastField)->isProtected());
-        glyph.at(offset)->setMDT(glyph.at(lastField)->isMdtOn());
-        glyph.at(offset)->setNumeric(glyph.at(lastField)->isNumeric());
-        glyph.at(offset)->setPenSelect(glyph.at(lastField)->isPenSelect());
-        glyph.at(offset)->setDisplay(glyph.at(lastField)->isDisplay());
-
-        glyph.at(offset)->setColour(glyph.at(lastField)->getColour());
-        glyph.at(offset)->setUScore(glyph.at(lastField)->isUScore());
-        glyph.at(offset)->setBlink(glyph.at(lastField)->isBlink());
-        glyph.at(offset)->setReverse(glyph.at(lastField)->isReverse());
-
-        glyph.at(offset)->resetCharAttrs();
-
-        if (glyph.at(offset)->isDisplay() && !glyph.at(offset)->isFieldStart())
-        {
-            if (glyph.at(offset)->isReverse())
-            {
-                cell.at(offset)->setBrush(palette[glyph.at(offset)->getColour()]);
-                glyph.at(offset)->setBrush(palette[ColourTheme::BLACK]);
-            }
-            else
-            {
-                cell.at(offset)->setBrush(palette[ColourTheme::BLACK]);
-                glyph.at(offset)->setBrush(palette[glyph.at(offset)->getColour()]);
-            }
-            if (glyph.at(offset)->isUScore())
-            {
-                uscore.at(offset)->setPen(QPen(palette[glyph.at(offset)->getColour()],0));
-            }
-            else
-            {
-                uscore.at(offset)->setVisible(false);
-            }
-        }
-        else
-        {
-            cell.at(offset)->setBrush(palette[ColourTheme::BLACK]);
-            glyph.at(offset)->setBrush(palette[ColourTheme::BLACK]);
-        }
-    }
-
-    return lastField;
 }
 
 void DisplayScreen::cascadeAttrs(int start)
 {
     int endPos = start + screenPos_max;
 
+    bool prot  = cell.at(start)->isProtected();
+    bool mdt   = cell.at(start)->isMdtOn();
+    bool num   = cell.at(start)->isNumeric();
+    bool pen   = cell.at(start)->isPenSelect();
+    bool blink = cell.at(start)->isBlink();
+    bool disp  = cell.at(start)->isDisplay();
+    bool under = cell.at(start)->isUScore();
+    bool rev   = cell.at(start)->isReverse();
+    ColourTheme::Colour col = cell.at(start)->getColour();
+
     for(int i = start; i < endPos; i++)
     {
         int offset = i % screenPos_max;
 
-        if (glyph.at(offset)->isFieldStart() && i > start)
+        if (cell.at(offset)->isFieldStart() && i > start)
         {
             return;
         }
-
-        glyph.at(offset)->setProtected(glyph.at(start)->isProtected());
-        glyph.at(offset)->setMDT(glyph.at(start)->isMdtOn());
-        glyph.at(offset)->setNumeric(glyph.at(start)->isNumeric());
-        glyph.at(offset)->setPenSelect(glyph.at(start)->isPenSelect());
-        glyph.at(offset)->setDisplay(glyph.at(start)->isDisplay());
-
-        glyph.at(offset)->setColour(glyph.at(start)->getColour());
-        glyph.at(offset)->setUScore(glyph.at(start)->isUScore());
-        glyph.at(offset)->setBlink(glyph.at(start)->isBlink());
-        glyph.at(offset)->setReverse(glyph.at(start)->isReverse());
-
-        glyph.at(offset)->resetCharAttrs();
-
-        if (glyph.at(offset)->isDisplay() && !glyph.at(offset)->isFieldStart())
-        {
-            if (glyph.at(offset)->isReverse())
-            {
-                cell.at(offset)->setBrush(palette[glyph.at(offset)->getColour()]);
-                glyph.at(offset)->setBrush(palette[ColourTheme::BLACK]);
-            }
-            else
-            {
-                cell.at(offset)->setBrush(palette[ColourTheme::BLACK]);
-                glyph.at(offset)->setBrush(palette[glyph.at(offset)->getColour()]);
-            }
-            if (glyph.at(offset)->isUScore())
-            {
-                uscore.at(offset)->setPen(QPen(palette[glyph.at(offset)->getColour()],0));
-            }
-            else
-            {
-                uscore.at(offset)->setVisible(false);
-            }
-        }
-        else
-        {
-            cell.at(offset)->setBrush(palette[ColourTheme::BLACK]);
-            glyph.at(offset)->setBrush(palette[ColourTheme::BLACK]);
-        }
+        cell.at(offset)->setProtected(prot);
+        cell.at(offset)->setMDT(mdt);
+        cell.at(offset)->setNumeric(num);
+        cell.at(offset)->setPenSelect(pen);
+        cell.at(offset)->setBlink(blink);
+        cell.at(offset)->setDisplay(disp);
+        cell.at(offset)->setUScore(under);
+        cell.at(offset)->setReverse(rev);
+        cell.at(offset)->setColour(col);
     }
 
 }
@@ -809,9 +613,9 @@ void DisplayScreen::resetMDTs()
 {
     for (int i = 0; i < screenPos_max; i++)
     {
-        if (glyph.at(i)->isFieldStart() && glyph.at(i)->isMdtOn())
+        if (cell.at(i)->isFieldStart() && cell.at(i)->isMdtOn())
         {
-            glyph.at(i)->setMDT(false);
+            cell.at(i)->setMDT(false);
         }
 
     }
@@ -828,7 +632,7 @@ void DisplayScreen::resetMDTs()
  */
 bool DisplayScreen::insertChar(int pos, unsigned char c, bool insertMode)
 {
-    if (glyph.at(pos)->isProtected() || glyph.at(pos)->isFieldStart())
+    if (cell.at(pos)->isProtected() || cell.at(pos)->isFieldStart())
     {
         printf("Protected!\n");
         fflush(stdout);
@@ -861,8 +665,8 @@ bool DisplayScreen::insertChar(int pos, unsigned char c, bool insertMode)
          *  otherwise it's overflow.
          **/
         int nextField = findNextField(pos);
-        printf("This Field at: %d,%d, next field at %d,%d - last byte of this field %02X\n", (int)(thisField/screen_x), (int)(thisField-((int)(thisField/screen_x)*screen_x)), (int)(nextField/screen_x), (int)(nextField-((int)(nextField/screen_x)*screen_x)), glyph.at(nextField - 1)->getEBCDIC() );
-        uchar lastChar = glyph.at(nextField - 1)->getEBCDIC();
+        printf("This Field at: %d,%d, next field at %d,%d - last byte of this field %02X\n", (int)(thisField/screen_x), (int)(thisField-((int)(thisField/screen_x)*screen_x)), (int)(nextField/screen_x), (int)(nextField-((int)(nextField/screen_x)*screen_x)), cell.at(nextField - 1)->getEBCDIC() );
+        uchar lastChar = cell.at(nextField - 1)->getEBCDIC();
         if (lastChar != IBM3270_CHAR_NULL && lastChar != IBM3270_CHAR_SPACE)
         {
             // Insert not okay
@@ -871,11 +675,11 @@ bool DisplayScreen::insertChar(int pos, unsigned char c, bool insertMode)
         for(int i = pos; i < (pos + screenPos_max); i++)
         {
             int offset = i % screenPos_max;
-            if (glyph.at(offset)->isProtected() || glyph.at(offset)->isFieldStart())
+            if (cell.at(offset)->isProtected() || cell.at(offset)->isFieldStart())
             {
                 break;
             }
-            if (glyph.at(offset)->getEBCDIC() == IBM3270_CHAR_NULL)
+            if (cell.at(offset)->getEBCDIC() == IBM3270_CHAR_NULL)
             {
                 endPos = i;
                 break;
@@ -894,35 +698,26 @@ bool DisplayScreen::insertChar(int pos, unsigned char c, bool insertMode)
             int offset = fld % screenPos_max;
             int offsetPrev = (fld - 1) % screenPos_max;
 
-            //TODO: Improve performance
-            glyph.at(offset)->setFieldStart(glyph.at(offsetPrev)->isFieldStart());
-
-            glyph.at(offset)->setProtected(glyph.at(offsetPrev)->isProtected());
-            glyph.at(offset)->setMDT(glyph.at(offsetPrev)->isMdtOn());
-            glyph.at(offset)->setNumeric(glyph.at(offsetPrev)->isNumeric());
-            glyph.at(offset)->setPenSelect(glyph.at(offsetPrev)->isPenSelect());
-            glyph.at(offset)->setDisplay(glyph.at(offsetPrev)->isDisplay());
-
-            /* NOTE: These should already have been set for the entire field. Not convinced they
-             * need to move.. */
-            glyph.at(offset)->setColour(glyph.at(offsetPrev)->getColour());
-            glyph.at(offset)->setUScore(glyph.at(offsetPrev)->isUScore());
-            glyph.at(offset)->setBlink(glyph.at(offsetPrev)->isBlink());
-            glyph.at(offset)->setReverse(glyph.at(offsetPrev)->isReverse());
+            /* Reset any characters attributes back to the field ones */
+            cell.at(offset)->setColour(cell.at(offsetPrev)->getColour());
+            cell.at(offset)->setUScore(cell.at(offsetPrev)->isUScore());
+            cell.at(offset)->setBlink(cell.at(offsetPrev)->isBlink());
+            cell.at(offset)->setReverse(cell.at(offsetPrev)->isReverse());
 
             /* Character attributes move with the insert */
-            glyph.at(offset)->setCharAttrs(glyph.at(offsetPrev)->hasCharAttrs(Glyph::CharAttr::EXTENDED), Glyph::CharAttr::EXTENDED);
-            glyph.at(offset)->setCharAttrs(glyph.at(offsetPrev)->hasCharAttrs(Glyph::CharAttr::COLOUR), Glyph::CharAttr::COLOUR);
-            glyph.at(offset)->setCharAttrs(glyph.at(offsetPrev)->hasCharAttrs(Glyph::CharAttr::CHARSET), Glyph::CharAttr::CHARSET);
-            glyph.at(offset)->setCharAttrs(glyph.at(offsetPrev)->hasCharAttrs(Glyph::CharAttr::TRANSPARANCY), Glyph::CharAttr::TRANSPARANCY);
+            cell.at(offset)->setCharAttrs(cell.at(offsetPrev)->hasCharAttrs(Cell::CharAttr::EXTENDED), Cell::CharAttr::EXTENDED);
+            cell.at(offset)->setCharAttrs(cell.at(offsetPrev)->hasCharAttrs(Cell::CharAttr::COLOUR), Cell::CharAttr::COLOUR);
+            cell.at(offset)->setCharAttrs(cell.at(offsetPrev)->hasCharAttrs(Cell::CharAttr::CHARSET), Cell::CharAttr::CHARSET);
+            cell.at(offset)->setCharAttrs(cell.at(offsetPrev)->hasCharAttrs(Cell::CharAttr::TRANSPARENCY), Cell::CharAttr::TRANSPARENCY);
 
-            geActive = glyph.at(offsetPrev)->isGraphic();
-            setChar(offset, glyph.at(offsetPrev)->getEBCDIC(), true, false);
+            geActive = cell.at(offsetPrev)->isGraphic();
+            setChar(offset, cell.at(offsetPrev)->getEBCDIC(), true, false);
+
         }
         geActive = tmpGE;
     }
 
-    glyph.at(thisField)->setMDT(true);
+    cell.at(thisField)->setMDT(true);
 
     setChar(pos, c, false, true);
 
@@ -936,22 +731,22 @@ bool DisplayScreen::insertChar(int pos, unsigned char c, bool insertMode)
  */
 bool DisplayScreen::isAskip(int pos)
 {
-    return glyph.at(pos)->isAutoSkip();
+    return cell.at(pos)->isAutoSkip();
 }
 
 bool DisplayScreen::isProtected(int pos)
 {
-    return glyph.at(pos)->isProtected();
+    return cell.at(pos)->isProtected();
 }
 
 bool DisplayScreen::isFieldStart(int pos)
 {
-    return glyph.at(pos)->isFieldStart();
+    return cell.at(pos)->isFieldStart();
 }
 
 void DisplayScreen::deleteChar(int pos)
 {
-    if (glyph.at(pos)->isProtected())
+    if (cell.at(pos)->isProtected())
     {
         printf("Protected!\n");
         fflush(stdout);
@@ -960,36 +755,37 @@ void DisplayScreen::deleteChar(int pos)
 
     int endPos = findNextField(pos);
 
-    for(int fld = pos; fld < endPos - 1 && glyph.at(fld % screenPos_max)->getEBCDIC() != IBM3270_CHAR_NULL; fld++)
+    for(int fld = pos; fld < endPos - 1 && cell.at(fld % screenPos_max)->getEBCDIC() != IBM3270_CHAR_NULL; fld++)
     {
         int offset = fld % screenPos_max;
         int offsetNext = (fld + 1) % screenPos_max;
 
-        glyph.at(offset)->setFieldStart(glyph.at(offsetNext)->isFieldStart());
+        // Really? moving the fieldstart and field attributes?
+/*        cell.at(offset)->setFieldStart(cell.at(offsetNext)->isFieldStart());
 
-        glyph.at(offset)->setProtected(glyph.at(offsetNext)->isProtected());
-        glyph.at(offset)->setMDT(glyph.at(offsetNext)->isMdtOn());
-        glyph.at(offset)->setNumeric(glyph.at(offsetNext)->isNumeric());
-        glyph.at(offset)->setPenSelect(glyph.at(offsetNext)->isPenSelect());
-        glyph.at(offset)->setDisplay(glyph.at(offsetNext)->isDisplay());
+        cell.at(offset)->setProtected(cell.at(offsetNext)->isProtected());
+        cell.at(offset)->setMDT(cell.at(offsetNext)->isMdtOn());
+        cell.at(offset)->setNumeric(cell.at(offsetNext)->isNumeric());
+        cell.at(offset)->setPenSelect(cell.at(offsetNext)->isPenSelect());
+        cell.at(offset)->setDisplay(cell.at(offsetNext)->isDisplay());
 
-        glyph.at(offset)->setColour(glyph.at(offsetNext)->getColour());
-        glyph.at(offset)->setUScore(glyph.at(offsetNext)->isUScore());
-        glyph.at(offset)->setBlink(glyph.at(offsetNext)->isBlink());
-        glyph.at(offset)->setReverse(glyph.at(offsetNext)->isReverse());
-
-        glyph.at(offset)->setCharAttrs(glyph.at(offsetNext)->hasCharAttrs(Glyph::CharAttr::EXTENDED), Glyph::CharAttr::EXTENDED);
-        glyph.at(offset)->setCharAttrs(glyph.at(offsetNext)->hasCharAttrs(Glyph::CharAttr::COLOUR), Glyph::CharAttr::COLOUR);
-        glyph.at(offset)->setCharAttrs(glyph.at(offsetNext)->hasCharAttrs(Glyph::CharAttr::CHARSET), Glyph::CharAttr::CHARSET);
-        glyph.at(offset)->setCharAttrs(glyph.at(offsetNext)->hasCharAttrs(Glyph::CharAttr::TRANSPARANCY), Glyph::CharAttr::TRANSPARANCY);
+        cell.at(offset)->setColour(cell.at(offsetNext)->getColour());
+        cell.at(offset)->setUScore(cell.at(offsetNext)->isUScore());
+        cell.at(offset)->setBlink(cell.at(offsetNext)->isBlink());
+        cell.at(offset)->setReverse(cell.at(offsetNext)->isReverse());
+*/
+        cell.at(offset)->setCharAttrs(cell.at(offsetNext)->hasCharAttrs(Cell::CharAttr::EXTENDED), Cell::CharAttr::EXTENDED);
+        cell.at(offset)->setCharAttrs(cell.at(offsetNext)->hasCharAttrs(Cell::CharAttr::COLOUR), Cell::CharAttr::COLOUR);
+        cell.at(offset)->setCharAttrs(cell.at(offsetNext)->hasCharAttrs(Cell::CharAttr::CHARSET), Cell::CharAttr::CHARSET);
+        cell.at(offset)->setCharAttrs(cell.at(offsetNext)->hasCharAttrs(Cell::CharAttr::TRANSPARENCY), Cell::CharAttr::TRANSPARENCY);
 
         bool tmpGE = geActive;
-        setChar(offset, glyph.at(offsetNext)->getEBCDIC(), true, false);
+        setChar(offset, cell.at(offsetNext)->getEBCDIC(), true, false);
         geActive = tmpGE;
     }
 
-    glyph.at(endPos - 1)->setText(IBM3270_CHAR_NULL);
-    glyph.at(findField(pos))->setMDT(true);
+    cell.at(endPos - 1)->setChar(IBM3270_CHAR_NULL);
+    cell.at(findField(pos))->setMDT(true);
 }
 
 void DisplayScreen::eraseEOF(int pos)
@@ -1004,10 +800,10 @@ void DisplayScreen::eraseEOF(int pos)
     /* Blank field */
     for(int i = pos; i < nextField; i++)
     {
-        glyph.at(i % screenPos_max)->setText(0x00);
+        cell.at(i % screenPos_max)->setChar(0x00);
     }
 
-    glyph.at(findField(pos))->setMDT(true);
+    cell.at(findField(pos))->setMDT(true);
 }
 
 void DisplayScreen::eraseUnprotected(int start, int end)
@@ -1018,20 +814,20 @@ void DisplayScreen::eraseUnprotected(int start, int end)
     }
 
     int thisField = findField(start);
-    if (glyph.at(thisField)->isProtected())
+    if (cell.at(thisField)->isProtected())
     {
         start = findNextUnprotectedField(start);
     }
 
     for(int i = start; i < end; i++)
     {
-        if(glyph.at(i)->isProtected() || glyph.at(i)->isFieldStart())
+        if(cell.at(i)->isProtected() || cell.at(i)->isFieldStart())
         {
             i = findNextUnprotectedField(i);
         }
         else
         {
-                glyph.at(i)->setText(IBM3270_CHAR_SPACE);
+                cell.at(i)->setChar(IBM3270_CHAR_SPACE);
         }
     }
 }
@@ -1041,7 +837,7 @@ void DisplayScreen::setCursorColour(bool inherit)
     cursorColour = inherit;
     if (inherit)
     {
-        cursor.setBrush(palette[glyph.at(cursor.data(0).toInt())->getColour()]);
+        cursor.setBrush(palette[cell.at(cursor.data(0).toInt())->getColour()]);
     }
     else
     {
@@ -1050,17 +846,36 @@ void DisplayScreen::setCursorColour(bool inherit)
     cursor.show();
 }
 
-void DisplayScreen::setCursor(int pos)
+void DisplayScreen::setCursor(int x, int y)
 {
-    cursor.setParentItem(cell.at(pos));
+    cursor.setVisible(false);
+
+    int pos = y * screen_x + x;
+
     if (cursorColour)
     {
-        cursor.setBrush(palette[glyph.at(pos)->getColour()]);
+        if (cell.at(pos)->isReverse())
+        {
+                cursor.setBrush(palette[ColourTheme::BLACK]);
+        }
+        else
+        {
+                cursor.setBrush(palette[cell.at(pos)->getColour()]);
+        }
+
     }
-    cursor.setPos(cell.at(pos)->boundingRect().left(), cell.at(pos)->boundingRect().top());
+
+    cursor.setPos(gridSize_X * (qreal) x, gridSize_Y * (qreal) y);
     cursor.setData(0,pos);
+
+    cursor.setVisible(true);
 }
 
+/*!
+ * \brief DisplayScreen::showCursor
+ * \details Called when the cursor blink is switched off to ensure that the cursor doesn
+ *  remain hidden if the blink happened to be at the point the cursor was hidden.
+ */
 void DisplayScreen::showCursor()
 {
     cursor.show();
@@ -1156,16 +971,9 @@ void DisplayScreen::blink()
 
     for (int i = 0; i < screenPos_max; i++)
     {
-        if (glyph.at(i)->isBlink())
+        if (cell.at(i)->isBlink())
         {
-            if (blinkShow)
-            {
-                glyph.at(i)->setBrush(palette[glyph.at(i)->getColour()]);
-            }
-            else
-            {
-                glyph.at(i)->setBrush(palette[ColourTheme::BLACK]);
-            }
+            cell.at(i)->blinkChar(blinkShow);
         }
     }
 }
@@ -1196,7 +1004,7 @@ int DisplayScreen::findField(int pos)
             offset = screenPos_max + i;
         }
 
-        if (glyph.at(offset)->isFieldStart())
+        if (cell.at(offset)->isFieldStart())
         {
             return offset;
         }
@@ -1206,7 +1014,7 @@ int DisplayScreen::findField(int pos)
 
 int DisplayScreen::findNextField(int pos)
 {
-    if(glyph.at(pos)->isFieldStart())
+    if(cell.at(pos)->isFieldStart())
     {
         pos++;
     }
@@ -1214,7 +1022,7 @@ int DisplayScreen::findNextField(int pos)
     for(int i = pos; i < (pos + screenPos_max); i++)
     {
         tmpPos = i % screenPos_max;
-        if (glyph.at(tmpPos)->isFieldStart())
+        if (cell.at(tmpPos)->isFieldStart())
         {
             return tmpPos;
         }
@@ -1232,11 +1040,11 @@ int DisplayScreen::findNextUnprotectedField(int pos)
     int tmpNxt;
     for(int i = pos; i < (pos + screenPos_max); i++)
     {
-        // Check this position for unprotected and fieldStart and check the position for
+        // Check this position for unprotected and fieldStart and check the next position for
         // fieldStart - an unprotected field cannot start where two fieldStarts are adajacent
         tmpPos = i % screenPos_max;
         tmpNxt = (i + 1) % screenPos_max;
-        if (glyph.at(tmpPos)->isFieldStart() && !glyph.at(tmpPos)->isProtected() && !glyph.at(tmpNxt)->isFieldStart())
+        if (cell.at(tmpPos)->isFieldStart() && !cell.at(tmpPos)->isProtected() && !cell.at(tmpNxt)->isFieldStart())
         {
             return tmpPos;
         }
@@ -1266,8 +1074,9 @@ int DisplayScreen::findPrevUnprotectedField(int pos)
         }
         // Check this position for unprotected and fieldStart and check the next position for
         // fieldStart - an unprotected field cannot start where two fieldStarts are adajacent
+        // As we're searching backwards, providing the next position isn't a fieldStart, we're good.
         tmpNxt = (tmpPos + 1) % screenPos_max;
-        if (glyph.at(tmpPos)->isFieldStart() && !glyph.at(tmpPos)->isProtected() && !glyph.at(tmpNxt)->isFieldStart())
+        if (cell.at(tmpPos)->isFieldStart() && !cell.at(tmpPos)->isProtected() && !cell.at(tmpNxt)->isFieldStart())
         {
             return tmpPos;
         }
@@ -1287,42 +1096,47 @@ void DisplayScreen::getModifiedFields(QByteArray &buffer)
 {
     for(int i = 0; i < screenPos_max; i++)
     {
-        if (glyph.at(i)->isFieldStart() && !glyph.at(i)->isProtected())
+        if (!unformatted)
         {
-            int firstField = i;
-            int thisField = i;
-            do
+            if (cell.at(i)->isFieldStart() && !cell.at(i)->isProtected())
             {
-                if (glyph.at(thisField)->isMdtOn() && !glyph.at(thisField)->isProtected())
+                //FIXME: This assumes that where two fields are adajcent to each other, the first cannot have MDT set
+                if (cell.at(i)->isMdtOn() && !cell.at(i)->isProtected())
                 {
                     buffer.append(IBM3270_SBA);
 
-                    int nextPos = (thisField + 1) % screenPos_max;
+                    int nextPos = (i + 1) % screenPos_max;
 
                     addPosToBuffer(buffer, nextPos);
 
                     do
                     {
-                        uchar b = glyph.at(thisField++)->getEBCDIC();
+                        uchar b = cell.at(nextPos++)->getEBCDIC();
                         if (b != IBM3270_CHAR_NULL)
                         {
                             buffer.append(b);
                         }
-                        thisField = thisField % screenPos_max;
+                        nextPos = nextPos % screenPos_max;
                         //FIXME: Not sure this is right. This was a quick hack to cater for there being only one unprotected
                         //       field on the screen.
-                        if (thisField == i)
+                        if (nextPos == 0)
                         {
                             printf("Wrapped!");
                             return;
                         }
                     }
-                    while(!glyph.at(thisField)->isFieldStart());
+                    while(!cell.at(nextPos)->isFieldStart());
                 }
-                thisField = findNextField(thisField);
             }
-            while(thisField > firstField);
-            return;
+        }
+        else
+        {
+            uchar b = cell.at(i)->getEBCDIC();
+            if (b != IBM3270_CHAR_NULL)
+            {
+                buffer.append(b);
+            }
+
         }
     }
 }
@@ -1369,18 +1183,19 @@ void DisplayScreen::addPosToBuffer(QByteArray &buffer, int pos)
     }
 }
 
+//INFO: Not used, but for debugging
 void DisplayScreen::dumpFields()
 {
     printf("Screen_X = %d, screen_Y =%d\n", screen_x, screen_y);
     fflush(stdout);
     for(int i = 0; i < screenPos_max; i++)
     {
-        if (glyph.at(i)->isFieldStart())
+        if (cell.at(i)->isFieldStart())
         {
             int tmpy = i / screen_x;
             int tmpx = i - (tmpy * screen_x);
 
-            printf("Field at %4d (%2d,%2d) : Prot: %d\n", i, tmpx, tmpy, glyph.at(i)->isProtected());
+            printf("Field at %4d (%2d,%2d) : Prot: %d\n", i, tmpx, tmpy, cell.at(i)->isProtected());
         }
     }
     fflush(stdout);
@@ -1401,8 +1216,8 @@ void DisplayScreen::dumpDisplay()
             printf("| %s |\n", ascii.toLatin1().data());
             ascii = "";
         }
-        ascii.append(glyph.at(i)->text());
-        printf("%2.2X ", glyph.at(i)->getEBCDIC());
+        ascii.append(cell.at(i)->getChar());
+        printf("%2.2X ", cell.at(i)->getEBCDIC());
     }
 
     printf("| %s |\n", ascii.toLatin1().data());
@@ -1416,26 +1231,35 @@ void DisplayScreen::dumpInfo(int pos)
     int y = pos / screen_x;
     int x = pos - y * screen_x;
     printf("\nCell at %d (%d, %d)\n", pos, x, y);
-    printf("    Character: %s (hex %2.2X EBCDIC %2.2X)", glyph.at(pos)->text().toLatin1().data(),glyph.at(pos)->text().toLatin1().at(0),glyph.at(pos)->getEBCDIC());
-    printf("    Field : %d\n    MDT: %d\n    Protected: %d\n    Numeric: %d\n    Autoskip: %d\n    Display: %d\n",
-                glyph.at(pos)->isFieldStart(),
-                glyph.at(pos)->isMdtOn(),
-                glyph.at(pos)->isProtected(),
-                glyph.at(pos)->isNumeric(),
-                glyph.at(pos)->isAutoSkip(),
-                glyph.at(pos)->isDisplay());
-    printf("    Extended: %d\n    Intensify: %d\n    UScore: %d\n    Reverse: %d\n    Blink: %d\n",
-                glyph.at(pos)->isExtended(),
-                glyph.at(pos)->isIntensify(),
-                glyph.at(pos)->isUScore(),
-                glyph.at(pos)->isReverse(),
-                glyph.at(pos)->isBlink());
-    printf("    Character Attributes: Extended %d CharSet %d Colour %d\n    Colour: %d\n    Graphic: %d\n",
-                glyph.at(pos)->hasCharAttrs(Glyph::EXTENDED),
-                glyph.at(pos)->hasCharAttrs(Glyph::CHARSET),
-                glyph.at(pos)->hasCharAttrs(Glyph::COLOUR),
-                glyph.at(pos)->getColour(),
-                glyph.at(pos)->isGraphic());
+    printf("    Character: \"%c\" (hex %2.2X EBCDIC %2.2X)\n", cell.at(pos)->getChar().toLatin1(),cell.at(pos)->getChar().toLatin1(),cell.at(pos)->getEBCDIC());
+
+    printf("    Field Attribute: %d\n", cell.at(pos)->isFieldStart());
+    if (cell.at(pos)->isFieldStart())
+    {
+        printf("        MDT:       %d\n        Protected: %d\n        Numeric:   %d\n        Autoskip:  %d\n        Display:   %d\n",
+                cell.at(pos)->isMdtOn(),
+                cell.at(pos)->isProtected(),
+                cell.at(pos)->isNumeric(),
+                cell.at(pos)->isAutoSkip(),
+                cell.at(pos)->isDisplay());
+    }
+
+    printf("    Extended: %d\n", cell.at(pos)->isExtended());
+    if (cell.at(pos)->isExtended())
+    {
+        printf("        Intensify: %d\n        UScore:    %d\n        Reverse:   %d\n        Blink:     %d\n",
+               cell.at(pos)->isIntensify(),
+               cell.at(pos)->isUScore(),
+               cell.at(pos)->isReverse(),
+               cell.at(pos)->isBlink());
+    }
+
+    printf("    Character Attributes:\n        Extended: %d\n        CharSet:  %d\n        Colour:   %d\n    Colour: %d\n    Graphic: %d\n",
+                cell.at(pos)->hasCharAttrs(Cell::EXTENDED),
+                cell.at(pos)->hasCharAttrs(Cell::CHARSET),
+                cell.at(pos)->hasCharAttrs(Cell::COLOUR),
+                cell.at(pos)->getColour(),
+                cell.at(pos)->isGraphic());
 
     fflush(stdout);
 
@@ -1447,19 +1271,19 @@ void DisplayScreen::getScreen(QByteArray &buffer)
 
     for (int i = 0; i < screenPos_max; i++)
     {
-        if (glyph.at(i)->isFieldStart())
+        if (cell.at(i)->isFieldStart())
         {
             buffer.append(IBM3270_SF);
             uchar attr;
-            if (glyph.at(i)->isDisplay() && !glyph.at(i)->isPenSelect())
+            if (cell.at(i)->isDisplay() && !cell.at(i)->isPenSelect())
             {
                 attr = 0x00;
             }
-            else if (glyph.at(i)->isDisplay() && glyph.at(i)->isPenSelect())
+            else if (cell.at(i)->isDisplay() && cell.at(i)->isPenSelect())
             {
                 attr = 0x01;
             }
-            else if(glyph.at(i)->isIntensify())
+            else if(cell.at(i)->isIntensify())
             {
                 attr = 0x10;
             }
@@ -1468,7 +1292,7 @@ void DisplayScreen::getScreen(QByteArray &buffer)
                 attr = 0x11;
             }
 
-            int byte = twelveBitBufferAddress[glyph.at(i)->isMdtOn() | attr << 3 | glyph.at(i)->isNumeric() << 4 | glyph.at(i)->isProtected() << 5];
+            int byte = twelveBitBufferAddress[cell.at(i)->isMdtOn() | attr << 3 | cell.at(i)->isNumeric() << 4 | cell.at(i)->isProtected() << 5];
 
             buffer.append(byte);
 
@@ -1480,17 +1304,23 @@ void DisplayScreen::getScreen(QByteArray &buffer)
         }
         else
         {
-            buffer.append(glyph.at(i)->getEBCDIC());
+            buffer.append(cell.at(i)->getEBCDIC());
         }
     }
 }
 
 void DisplayScreen::mousePressEvent(QGraphicsSceneMouseEvent *mEvent)
 {
+    if (mEvent->button() != Qt::LeftButton)
+    {
+        mEvent->ignore();
+        return;
+    }
+
     int x = mEvent->pos().x() / gridSize_X;
     int y = mEvent->pos().y() / gridSize_Y;
 
-    qDebug() << "Mouse click at" << mEvent->pos() << "- char pos" << x << "," << y << "scaled pos" << x * gridSize_X << "," << y * gridSize_Y;
+    qDebug() << "Mouse press at" << mEvent->pos() << "- char pos" << x << "," << y << "scaled pos" << x * gridSize_X << "," << y * gridSize_Y;
 
     mouseStart = mapFromItem(this, QPoint(x * gridSize_X, y * gridSize_Y));
 
@@ -1499,13 +1329,11 @@ void DisplayScreen::mousePressEvent(QGraphicsSceneMouseEvent *mEvent)
     myRb->setData(2, x);
     myRb->setData(3, y);
 
-    myRb->setRect(x * gridSize_X, y * gridSize_Y, gridSize_X, gridSize_Y);
-    myRb->show();
-
+    myRb->hide();
 }
 
 void DisplayScreen::mouseMoveEvent(QGraphicsSceneMouseEvent *mEvent)
-{
+{   
     //FIXME: Some of this could probably be simplified so we're not working out
     //       the min/max values in mouseReleaseEvent
 
@@ -1514,8 +1342,8 @@ void DisplayScreen::mouseMoveEvent(QGraphicsSceneMouseEvent *mEvent)
     int thisY = mEvent->pos().y() / gridSize_Y;
 
     // Normalise the position to within the bounds of the character display
-    thisX = std::min(thisX, screen_x);
-    thisY = std::min(thisY, screen_y);
+    thisX = std::min(thisX, screen_x - 1);
+    thisY = std::min(thisY, screen_y - 1);
 
     thisX = std::max(thisX, 0);
     thisY = std::max(thisY, 0);
@@ -1528,37 +1356,37 @@ void DisplayScreen::mouseMoveEvent(QGraphicsSceneMouseEvent *mEvent)
        If the user moves the mouse up and/or left, this is the new start point,
        and the old start point becomes the bottom right
     */
-
     int topLeftX = std::min(mpX, thisX);
     int topLeftY = std::min(mpY, thisY);
 
     int botRightX = std::max(thisX, mpX);
     int botRightY = std::max(thisY, mpY);
 
-    // Ensure at least one character is selected
-    if (botRightX == topLeftX) {
-        botRightX++;
-    }
-
-    if (botRightY == topLeftY) {
-        botRightY++;
-    }
-
     myRb->setData(2, thisX);
     myRb->setData(3, thisY);
 
-    int w = botRightX - topLeftX;
-    int h = botRightY - topLeftY;
+    // Add one to sizing to ensure rectangle moves when mouse moves to next character
+    int w = botRightX - topLeftX + 1;
+    int h = botRightY - topLeftY + 1;
 
-    qDebug() << "Move" << mEvent->pos() << "mpX,mpY" << mpX << "," << mpY << "    topLeftX,topLeftY" << topLeftX << "," << topLeftY << "    botRightX,botRightY" << botRightX << "," << botRightY << "w,h" << w << "x" << h;
+    qDebug() << "Move" << mEvent->pos() << "this " << thisX << "," << thisY << " mpX,mpY" << mpX << "," << mpY << "    topLeftX,topLeftY" << topLeftX << "," << topLeftY << "    botRightX,botRightY" << botRightX << "," << botRightY << "w,h" << w << "x" << h;
 
     myRb->setRect(topLeftX * gridSize_X, topLeftY * gridSize_Y, w * gridSize_X, h * gridSize_Y);
 
+    myRb->show();
 }
 
 void DisplayScreen::mouseReleaseEvent(QGraphicsSceneMouseEvent *mEvent)
 {
     qDebug() << "Mouse release at " << mEvent->pos();
+
+    // Single click, move cursor
+    if (!myRb->isVisible())
+    {
+        qDebug() << "Single click";
+        emit moveCursor(myRb->data(0).toInt(), myRb->data(1).toInt(), true);
+        return;
+    }
 
     int top = std::min(myRb->data(1).toInt(), myRb->data(3).toInt());
     int bottom = std::max(myRb->data(1).toInt(), myRb->data(3).toInt());
@@ -1566,17 +1394,12 @@ void DisplayScreen::mouseReleaseEvent(QGraphicsSceneMouseEvent *mEvent)
     int left = std::min(myRb->data(0).toInt(), myRb->data(2).toInt());
     int right = std::max(myRb->data(0).toInt(), myRb->data(2).toInt());
 
-    // FIXME: Is this needed?
-    if (top == bottom || left == right) {
-        myRb->hide();
-    }
-
     qDebug() << "Selected" << left << "," << top << "x" << right << "," << bottom;
 }
 
 void DisplayScreen::copyText()
 {
-    // If the rubberband isn't show, do nothing
+    // If the rubberband isn't showing, do nothing
     if (!myRb->isVisible()) {
         return;
     }
@@ -1602,7 +1425,7 @@ void DisplayScreen::copyText()
         for(int x = left; x <= right - 1; x++)
         {
             int thisPos = screen_x * y + x;
-            cbText = cbText + glyph.at(thisPos)->text();
+            cbText = cbText + cell.at(thisPos)->getChar();
         }
     }
 

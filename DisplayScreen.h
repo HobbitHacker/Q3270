@@ -10,7 +10,7 @@
 #include <QTimer>
 #include <QObject>
 
-#include "Glyph.h"
+#include "Cell.h"
 #include "ColourTheme.h"
 #include "CodePage.h"
 
@@ -20,7 +20,7 @@ class DisplayScreen : public QObject, public QGraphicsRectItem
 
     public:
 
-        DisplayScreen(int screen_x, int screen_y, CodePage &cp, QGraphicsScene *scene);
+    DisplayScreen(int screen_x, int screen_y, CodePage &cp, ColourTheme::Colours &palette, QGraphicsScene *scene);
         ~DisplayScreen();
 
         void mousePressEvent(QGraphicsSceneMouseEvent *mEvent);
@@ -39,15 +39,14 @@ class DisplayScreen : public QObject, public QGraphicsRectItem
         void resetExtended(int pos);
         void resetCharAttr();
         void resetColours();
-        int resetFieldAttrs(int start);
         void resetMDTs();
 
         void setExtendedColour(int pos, bool foreground, unsigned char c);
-        void setExtendedHilite(int pos);
+
         void setExtendedBlink(int pos);
         void setExtendedReverse(int pos);
         void setExtendedUscore(int pos);
-        void setColour(int pos, bool foreground, unsigned char c);
+
         void setField(int pos, unsigned char c, bool sfe);
         void setGraphicEscape();
 
@@ -62,9 +61,8 @@ class DisplayScreen : public QObject, public QGraphicsRectItem
 
         void eraseUnprotected(int start, int end);
 
-        void setCursor(int pos);
+        void setCursor(int x, int y);
         void showCursor();
-        void setFieldAttrs(int startPos);
         void cascadeAttrs(int startpos);
 
         unsigned char getChar(int pos);
@@ -75,7 +73,6 @@ class DisplayScreen : public QObject, public QGraphicsRectItem
 
         void clear();
         void setFont(QFont font);
-        void setColourPalette(ColourTheme::Colours c);
         void setFontScaling(bool fontScaling);
 
         void toggleRuler();
@@ -91,6 +88,11 @@ class DisplayScreen : public QObject, public QGraphicsRectItem
         void dumpFields();
         void dumpDisplay();
         void dumpInfo(int pos);
+
+    signals:
+
+        // Mouse click moves cursor
+        void moveCursor(int x, int y, bool absolute);
 
     public slots:
 
@@ -116,9 +118,8 @@ class DisplayScreen : public QObject, public QGraphicsRectItem
             0xF8, 0xF9, 0x7A, 0x7B, 0x7C, 0x7D, 0x7E, 0x7F,  /* 11 0100 to 11 1111 */
         };
 
-        ColourTheme::Colours palette;
-
         CodePage &cp;
+        ColourTheme::Colours &palette;
 
         const char *colName[12] = { "black", "blue", "red", "magenta", "green", "cyan", "yellow", "neutral",
                                     "protected", "unprotected,intensfied", "unprotected", "protected, intensified"};
@@ -127,9 +128,9 @@ class DisplayScreen : public QObject, public QGraphicsRectItem
         int screen_y;                /* Max Rows */
         int screenPos_max;           /* Max position on screen */
 
-        QVector<Glyph *> glyph;               /* Character on screen */
-        QVector<QGraphicsRectItem *> cell;    /* Screen slot */
-        QVector<QGraphicsLineItem *> uscore;  /* Underscores */
+//        QVector<Glyph *> glyph;               /* Character on screen */
+        QVector<Cell *> cell;    /* Screen slot */
+//        QVector<QGraphicsLineItem *> uscore;  /* Underscores */
 
         bool blinkShow;             /* Whether the character is shown/hidden for a given blink event */
         bool cursorShow;            /* Whether the cursor is shown/hidden for a given blink event */
@@ -139,6 +140,8 @@ class DisplayScreen : public QObject, public QGraphicsRectItem
 
         bool rulerOn;               // Whether ruler is displayed
         int ruler;                  // Style of ruler
+
+        bool unformatted;           // True if no fields are defined
 
 
         /* Character Attributes in effect */
@@ -159,19 +162,17 @@ class DisplayScreen : public QObject, public QGraphicsRectItem
                 bool colour_default;
         } charAttr;
 
+        // Cursor
         QGraphicsRectItem cursor;
-
         QGraphicsLineItem crosshair_X;
         QGraphicsLineItem crosshair_Y;
-        QGraphicsLineItem statusBar;
 
+        // Status bar
+        QGraphicsLineItem statusBar;
         QGraphicsSimpleTextItem statusConnect;
         QGraphicsSimpleTextItem statusXSystem;
         QGraphicsSimpleTextItem statusCursor;
         QGraphicsSimpleTextItem statusInsert;
-
-        QFont termFont;
-        bool fontScaling;            // Font scales with cell size
 
         qreal gridSize_X;
         qreal gridSize_Y;
@@ -181,7 +182,7 @@ class DisplayScreen : public QObject, public QGraphicsRectItem
 
         int findField(int pos);
         int findNextField(int pos);
-        int findPrevField(int pos);
+
 };
 
 #endif // DISPLAYDATA_H

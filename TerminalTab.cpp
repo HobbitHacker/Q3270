@@ -60,11 +60,12 @@ TerminalTab::TerminalTab(QVBoxLayout *layout, ActiveSettings &activeSettings, Co
     // Blink timers
     blinker = new QTimer(this);
     cursorBlinker = new QTimer(this);
+
+    palette = colourtheme.getTheme(activeSettings.getColourThemeName());
 }
 
 TerminalTab::~TerminalTab()
 {
-//    delete settings;
     delete notConnectedScene;
     delete view;
 }
@@ -94,20 +95,19 @@ void TerminalTab::setScreenStretch(bool stretch)
 
 void TerminalTab::setColourTheme(QString themeName)
 {
-    ColourTheme::Colours colours = colourtheme.getTheme(themeName);
+    palette = colourtheme.getTheme(themeName);
 
+    //FIXME: Might not be needed because of passing palette by reference to DisplayScreen
     // Set colour theme by name; pass obtained theme to setColours()
     if (sessionConnected)
     {
-        primaryScreen->setColourPalette(colours);
         primaryScreen->resetColours();
-
-        alternateScreen->setColourPalette(colours);
         alternateScreen->resetColours();
 
     }
 }
 
+//FIXME: What is this meant to be for?
 void TerminalTab::setKeyboardTheme(QString themeName)
 {
     //keyboardTheme = themeName;
@@ -134,11 +134,6 @@ void TerminalTab::rulerStyle(int rulerStyle)
         primaryScreen->setRulerStyle(rulerStyle);
         alternateScreen->setRulerStyle(rulerStyle);
     }
-}
-
-void TerminalTab::openConnection(QString host, int port, QString luName)
-{
-    connectSession(host, port, luName);
 }
 
 void TerminalTab::openConnection(QString address)
@@ -195,7 +190,6 @@ void TerminalTab::openConnection(QSettings& s)
 
     // Update settings with address
     activeSettings.setHostAddress(s.value("Address").toString());
-
 }
 
 void TerminalTab::connectSession(QString host, int port, QString luName)
@@ -206,10 +200,11 @@ void TerminalTab::connectSession(QString host, int port, QString luName)
     primary = new QGraphicsScene();
     alternate = new QGraphicsScene();
 
-    primaryScreen = new DisplayScreen(80, 24, cp, primary);
-    alternateScreen = new DisplayScreen(activeSettings.getTerminalX(), activeSettings.getTerminalY(), cp, alternate);
+    primaryScreen = new DisplayScreen(80, 24, cp, palette, primary);
+    alternateScreen = new DisplayScreen(activeSettings.getTerminalX(), activeSettings.getTerminalY(), cp, palette, alternate);
 
     current = primaryScreen;
+    view->setScene(primary);
 
     datastream = new ProcessDataStream(this);
     socket = new SocketConnection(activeSettings.getTerminalModel());
@@ -217,10 +212,6 @@ void TerminalTab::connectSession(QString host, int port, QString luName)
     connect(socket, &SocketConnection::dataStreamComplete, datastream, &ProcessDataStream::processStream);
     connect(socket, &SocketConnection::connectionStarted, this, &TerminalTab::connected);
     connect(socket, &SocketConnection::connectionEnded, this, &TerminalTab::closeConnection);
-
-    //connect(settings, &PreferencesDialog::setStretch, view, &TerminalView::setStretch);
-
-    //setColourTheme(colourTheme);
 
     // Primary screen settings
     connect(&activeSettings, &ActiveSettings::cursorInheritChanged, primaryScreen, &DisplayScreen::setCursorColour);
@@ -232,7 +223,6 @@ void TerminalTab::connectSession(QString host, int port, QString luName)
     primaryScreen->setFont(activeSettings.getFont());
     primaryScreen->rulerMode(activeSettings.getRulerOn());
     primaryScreen->setRulerStyle(activeSettings.getRulerStyle());
-    primaryScreen->setColourPalette(colourtheme.getTheme(activeSettings.getColourThemeName()));
 
     // Alternate screen settings
     connect(&activeSettings, &ActiveSettings::cursorInheritChanged, alternateScreen, &DisplayScreen::setCursorColour);
@@ -244,11 +234,13 @@ void TerminalTab::connectSession(QString host, int port, QString luName)
     alternateScreen->setFont(activeSettings.getFont());
     alternateScreen->rulerMode(activeSettings.getRulerOn());
     alternateScreen->setRulerStyle(activeSettings.getRulerStyle());
-    alternateScreen->setColourPalette(colourtheme.getTheme(activeSettings.getColourThemeName()));
-
 
     // Status bar updates
     connect(datastream, &ProcessDataStream::keyboardUnlocked, &kbd, &Keyboard::unlockKeyboard);
+
+    // Mouse click moves cursor
+    connect(primaryScreen, &DisplayScreen::moveCursor, datastream, &ProcessDataStream::moveCursor);
+    connect(alternateScreen, &DisplayScreen::moveCursor, datastream, &ProcessDataStream::moveCursor);
 
     // Keyboard inputs
     connect(&kbd, &Keyboard::key_moveCursor, datastream, &ProcessDataStream::moveCursor);

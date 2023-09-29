@@ -25,17 +25,13 @@
 #include <QObject>
 #include <QDebug>
 
-#include "DisplayScreen.h"
-#include "Q3270.h"
 #include <arpa/telnet.h>
-
 #include <map>
+
+#include "DisplayScreen.h"
 
 class TerminalTab;
 
-/**
- * TODO write docs
- */
 class ProcessDataStream : public QObject
 {
 	Q_OBJECT

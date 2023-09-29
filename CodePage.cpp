@@ -34,11 +34,6 @@ void CodePage::setCodePage(QString codepage)
     }
 }
 
-QString CodePage::getCodePage()
-{
-    return cpList[currentCodePage].displayName;
-}
-
 QMap<QString, QString> CodePage::getCodePageList()
 {
     QMap<QString, QString> cl;

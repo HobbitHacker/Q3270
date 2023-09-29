@@ -20,10 +20,10 @@ DEFINES += QT_DEPRECATED_WARNINGS \
 
 SOURCES += \
     ActiveSettings.cpp \
+    Cell.cpp \
     CodePage.cpp \
     ColourTheme.cpp \
     DisplayScreen.cpp \
-    Glyph.cpp \
     Keyboard.cpp \
     KeyboardTheme.cpp \
     MainWindow.cpp \
@@ -36,10 +36,10 @@ SOURCES += \
 
 HEADERS += \
     ActiveSettings.h \
+    Cell.h \
     CodePage.h \
     ColourTheme.h \
     DisplayScreen.h \
-    Glyph.h \
     Keyboard.h \
     KeyboardTheme.h \
     MainWindow.h \

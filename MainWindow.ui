@@ -30,7 +30,7 @@
      <x>0</x>
      <y>0</y>
      <width>1644</width>
-     <height>17</height>
+     <height>18</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuConnect">
@@ -69,14 +69,6 @@
     <addaction name="separator"/>
     <addaction name="actionQuit"/>
    </widget>
-   <widget class="QMenu" name="menuWindow">
-    <property name="title">
-     <string>Window</string>
-    </property>
-    <addaction name="actionTabs"/>
-    <addaction name="actionTile"/>
-    <addaction name="actionGrid"/>
-   </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
      <string>Help</string>
@@ -86,7 +78,6 @@
    <addaction name="menuFile"/>
    <addaction name="menuConnect"/>
    <addaction name="menuFont_Settings"/>
-   <addaction name="menuWindow"/>
    <addaction name="menuHelp"/>
   </widget>
   <action name="actionConnect">

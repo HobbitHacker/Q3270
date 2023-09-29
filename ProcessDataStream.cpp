@@ -163,7 +163,6 @@ void ProcessDataStream::processOrders()
 {
     switch((uchar) *buffer)
     {
-        /* TODO: 3270 Order MF */
         case IBM3270_SF:
             processSF();
             break;
@@ -364,7 +363,7 @@ void ProcessDataStream::processSF()
     printf("[Start Field: %02X ", fa);
 
     screen->setField(primary_pos, fa, false);
-    screen->setFieldAttrs(primary_pos);
+//    screen->setFieldAttrs(primary_pos);
 
     printf("]");
     fflush(stdout);
@@ -377,7 +376,7 @@ void ProcessDataStream::processSF()
 void ProcessDataStream::processSFE()
 {
     screen->resetExtended(primary_pos);
-    screen->setFieldAttrs(primary_pos);
+//    screen->setFieldAttrs(primary_pos);
 
     bool blink;
     bool reverse;
@@ -409,6 +408,7 @@ void ProcessDataStream::processSFE()
 
     foreground = 0;
     background = 0;
+    printf("[StartFieldExtended ");
 
     for(int i = 1; i <= pairs; i++)
     {
@@ -435,7 +435,7 @@ void ProcessDataStream::processSFE()
                 switch(value)
                 {
                     case IBM3270_EXT_DEFAULT:
-                        printf("[Default]");
+                        printf("[Highlight Default]");
                         reset = true;
                         break;
                     case IBM3270_EXT_HI_NORMAL:
@@ -451,7 +451,7 @@ void ProcessDataStream::processSFE()
                         reverse = true;
                         break;
                     case IBM3270_EXT_HI_USCORE:
-                        printf("[Blink]");
+                        printf("[Underscore]");
                         uscore = true;
                         break;
                     default:
@@ -463,7 +463,6 @@ void ProcessDataStream::processSFE()
                 printf("\n\n[** Unimplemented SFE attribute - %2.2X-%2.2X - Ignored **]\n\n", type, value);
                 break;
             }
-
     }
 
 
@@ -497,6 +496,9 @@ void ProcessDataStream::processSFE()
         screen->setExtendedColour(primary_pos, false, background);
     }
 
+    printf("]");
+    fflush(stdout);
+
     lastWasCmd = true;
 
     incPos();
@@ -509,9 +511,9 @@ void ProcessDataStream::processSBA()
     buffer++;
     int tmp_pos = extractBufferAddress();
 
-    if (tmp_pos >= screenSize)
+    if (tmp_pos >= screenSize || tmp_pos < 0)
     {
-        printf("[** SBA > screen size - discarded **]");
+        printf("[** SBA invalid address %d - discarded **]", tmp_pos);
         return;
     }
 
@@ -703,11 +705,6 @@ void ProcessDataStream::processRA()
     buffer++;
     int endPos = extractBufferAddress();
 
-    if (endPos > screenSize - 1)
-    {
-        endPos = screenSize - 1;
-    }
-
     uchar newChar = *++buffer;
 
     bool geRA = false;
@@ -717,6 +714,13 @@ void ProcessDataStream::processRA()
     {
         geRA = true;
         newChar = *++buffer;
+    }
+
+    if (endPos > screenSize || endPos < 0)
+    {
+        printf("[*** RA buffer end position invalid %d - discarded ***]", endPos);
+        fflush(stdout);
+        return;
     }
 
     printf("[RepeatToAddress %d to %d (0x%2.2X)]", primary_pos, endPos, newChar);
@@ -747,11 +751,18 @@ void ProcessDataStream::processRA()
 
 void ProcessDataStream::processEUA()
 {
-    printf("[EraseUnprotected to Address ");
 
     buffer++;
     int stopAddress = extractBufferAddress();
-    printf("]");
+
+    if (stopAddress >= screenSize || stopAddress < 0)
+    {
+        printf("[*** EUA buffer end position invalid %d - discarded ***]", stopAddress);
+        fflush(stdout);
+        return;
+    }
+
+    printf("[EraseUnprotected to Address %d ]", stopAddress);
 
     screen->eraseUnprotected(primary_pos, stopAddress);
     restoreKeyboard = true;
@@ -1188,12 +1199,6 @@ int ProcessDataStream::extractBufferAddress()
     }
 }
 
-void ProcessDataStream::placeChar()
-{
-    uchar ebcdic = *buffer;
-    placeChar(ebcdic);
-}
-
 void ProcessDataStream::placeChar(uchar ebcdic)
 {
     switch(ebcdic)
@@ -1206,6 +1211,11 @@ void ProcessDataStream::placeChar(uchar ebcdic)
     }
 
     incPos();
+    if (primary_x == 0)
+    {
+        printf("\n");
+        fflush(stdout);
+    }
 
     lastWasCmd = false;
 }
@@ -1282,7 +1292,7 @@ void ProcessDataStream::moveCursor(int x, int y, bool absolute)
 
     cursor_pos = cursor_x + (cursor_y * screen_x);
 
-    screen->setCursor(cursor_pos);
+    screen->setCursor(cursor_x, cursor_y);
     screen->drawRuler(cursor_x, cursor_y);
 
     emit cursorMoved(cursor_x, cursor_y);
@@ -1433,7 +1443,7 @@ void ProcessDataStream::processAID(int aid, bool shortRead)
         cursor_pos = 0;
         cursor_x = 0;
         cursor_y = 0;
-        screen->setCursor(cursor_pos);
+        screen->setCursor(0, 0);
         screen->clear();
     }
 

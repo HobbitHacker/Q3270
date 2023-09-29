@@ -69,6 +69,9 @@
 #define IBM3270_EXT_BG_COLOUR     0x45
 #define IBM3270_TRANSPARENT       0x46
 
+// This is used when the data stream says 'default colour'
+#define IBM3270_EXT_DEFAULT_COLOR 0x04
+
 #define IBM3270_EXT_HI_DEFAULT    0x00
 #define IBM3270_EXT_HI_NORMAL     0xF0
 #define IBM3270_EXT_HI_BLINK      0xF1

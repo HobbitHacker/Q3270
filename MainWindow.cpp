@@ -51,9 +51,6 @@ MainWindow::MainWindow(MainWindow::Session s) : QMainWindow(nullptr),
 
     sessionGroup = new QActionGroup(this);
 
-    // Codepages
-//    codePage = new CodePage();
-
     // Preferences dialog
     settings = new PreferencesDialog(colourTheme, keyboardTheme, activeSettings);
 
@@ -72,12 +69,10 @@ MainWindow::MainWindow(MainWindow::Session s) : QMainWindow(nullptr),
 
     // Set defaults for Connect options
     ui->actionDisconnect->setDisabled(true);
-//    ui->actionConnect->setDisabled(true);
 
     terminal = new TerminalTab(ui->terminalLayout, activeSettings, codePage, keyboard, colourTheme, s.session);
 
-    //TODO: These came from TerminalTab but not all the objects, particularly the keyboard, are defined here yet.
-    // Map settings signals to their target slots
+    // Used for dynamically showing font changes when using the font selection dialog
     connect(settings, &PreferencesDialog::tempFontChange, terminal, &TerminalTab::setCurrentFont);
 
     // Enable/Disable menu entries if connected/disconnected
