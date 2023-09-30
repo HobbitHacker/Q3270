@@ -275,6 +275,51 @@ void TerminalTab::connectSession(QString host, int port, QString luName)
 
 void TerminalTab::closeConnection()
 {
+
+    disconnect(socket, &SocketConnection::dataStreamComplete, datastream, &ProcessDataStream::processStream);
+    disconnect(socket, &SocketConnection::connectionStarted, this, &TerminalTab::connected);
+    disconnect(socket, &SocketConnection::connectionEnded, this, &TerminalTab::closeConnection);
+
+    // Primary screen settings
+    disconnect(&activeSettings, &ActiveSettings::cursorInheritChanged, primaryScreen, &DisplayScreen::setCursorColour);
+    disconnect(datastream, &ProcessDataStream::cursorMoved, primaryScreen, &DisplayScreen::showStatusCursorPosition);
+
+    disconnect(&kbd, &Keyboard::setLock, primaryScreen, &DisplayScreen::setStatusXSystem);
+    disconnect(&kbd, &Keyboard::setInsert, primaryScreen, &DisplayScreen::setStatusInsert);
+
+    // Alternate screen settings
+    disconnect(&activeSettings, &ActiveSettings::cursorInheritChanged, alternateScreen, &DisplayScreen::setCursorColour);
+    disconnect(datastream, &ProcessDataStream::cursorMoved, alternateScreen, &DisplayScreen::showStatusCursorPosition);
+
+    disconnect(&kbd, &Keyboard::setLock, alternateScreen, &DisplayScreen::setStatusXSystem);
+    disconnect(&kbd, &Keyboard::setInsert, alternateScreen, &DisplayScreen::setStatusInsert);
+
+    // Status bar updates
+    disconnect(datastream, &ProcessDataStream::keyboardUnlocked, &kbd, &Keyboard::unlockKeyboard);
+
+    // Mouse click moves cursor
+    disconnect(primaryScreen, &DisplayScreen::moveCursor, datastream, &ProcessDataStream::moveCursor);
+    disconnect(alternateScreen, &DisplayScreen::moveCursor, datastream, &ProcessDataStream::moveCursor);
+
+    // Keyboard inputs
+    disconnect(&kbd, &Keyboard::key_moveCursor, datastream, &ProcessDataStream::moveCursor);
+    disconnect(&kbd, &Keyboard::key_Backspace, datastream, &ProcessDataStream::backspace);
+    disconnect(&kbd, &Keyboard::key_Tab, datastream, &ProcessDataStream::tab);
+    disconnect(&kbd, &Keyboard::key_Backtab, datastream, &ProcessDataStream::backtab);
+    disconnect(&kbd, &Keyboard::key_Attn, datastream, &ProcessDataStream::interruptProcess);
+    disconnect(&kbd, &Keyboard::key_AID, datastream, &ProcessDataStream::processAID);
+    disconnect(&kbd, &Keyboard::key_Home, datastream, &ProcessDataStream::home);
+    disconnect(&kbd, &Keyboard::key_EraseEOF, datastream, &ProcessDataStream::eraseField);
+    disconnect(&kbd, &Keyboard::key_Delete, datastream, &ProcessDataStream::deleteChar);
+    disconnect(&kbd, &Keyboard::key_Newline, datastream, &ProcessDataStream::newline);
+    disconnect(&kbd, &Keyboard::key_End, datastream, &ProcessDataStream::endline);
+    disconnect(&kbd, &Keyboard::key_toggleRuler, datastream, &ProcessDataStream::toggleRuler);
+    disconnect(&kbd, &Keyboard::key_Character, datastream, &ProcessDataStream::insertChar);
+
+    disconnect(&kbd, &Keyboard::key_Copy, this, &TerminalTab::copyText);
+
+    disconnect(&kbd, &Keyboard::key_showInfo, datastream, &ProcessDataStream::showInfo);
+
     disconnect(socket, &SocketConnection::dataStreamComplete, datastream, &ProcessDataStream::processStream);
     disconnect(socket, &SocketConnection::connectionEnded, this, &TerminalTab::closeConnection);
 
