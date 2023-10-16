@@ -1,12 +1,53 @@
+/*
+
+Copyright Ⓒ 2023 Andy Styles
+All Rights Reserved
+
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+
+ * Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+ * Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in
+   the documentation and/or other materials provided with the
+   distribution.
+ * Neither the name of The Qt Company Ltd nor the names of its
+   contributors may be used to endorse or promote products derived
+   from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+*/
+
 #include <QGuiApplication>
 #include <QClipboard>
 
 #include "Q3270.h"
 #include "DisplayScreen.h"
 
+/*
+ * DisplayScreen represents a screen of the 3270 display. The class handles the display matrix.
+ *
+ * This is created by TerminalTab.
+ */
+
 DisplayScreen::DisplayScreen(int screen_x, int screen_y, CodePage &cp, ColourTheme::Colours &palette, QGraphicsScene *scene) : cp(cp), palette(palette), screen_x(screen_x), screen_y(screen_y)
 {
 
+    // 3270 screens are (were) 4:3 ratio, so use a reasonable size that Qt can scale.
     this->setRect(0, 0, 640, 480);
     this->setPos(0, 0);
 
@@ -435,12 +476,19 @@ void DisplayScreen::setField(int pos, unsigned char c, bool sfe)
     unformatted = false;
 
     // Set field attribute flags
-    cell.at(pos)->setProtected((c>>5) & 1);
-    cell.at(pos)->setNumeric((c>>4) & 1);
-    cell.at(pos)->setDisplay((((c>>2)&3) != 3));
-    cell.at(pos)->setPenSelect((( c >> 2) & 3) == 2 || (( c >> 2) & 3) == 1);
-    cell.at(pos)->setIntensify(((c >> 2) & 3) == 2);
-    cell.at(pos)->setMDT(c & 1);
+    bool prot = (c>>5) & 1;
+    bool num = (c>>4) & 1;
+    bool disp = ((c>>2) & 3) != 3;
+    bool pensel = (( c >> 2) & 3) == 2 || (( c >> 2) & 3) == 1;
+    bool intens = ((c >> 2) & 3) == 2;
+    bool mdt = c & 1;
+
+    cell.at(pos)->setProtected(prot);
+    cell.at(pos)->setNumeric(num);
+    cell.at(pos)->setDisplay(disp);
+    cell.at(pos)->setPenSelect(pensel);
+    cell.at(pos)->setIntensify(intens);
+    cell.at(pos)->setMDT(mdt);
     cell.at(pos)->setExtended(sfe);
     cell.at(pos)->setFieldStart(true);
 
@@ -471,9 +519,9 @@ void DisplayScreen::setField(int pos, unsigned char c, bool sfe)
         }
 //    }
 
-    // Cascade all the attributes until the next field
     cascadeAttrs(pos);
-/*
+    // Cascade all the attributes until the next field
+        /*
     QString attrs;
 
     if(!cell.at(pos)->isProtected())
@@ -514,6 +562,30 @@ void DisplayScreen::setField(int pos, unsigned char c, bool sfe)
 */
 }
 
+void DisplayScreen::cascadeAttrs(int pos)
+{
+
+        int endPos = pos + screenPos_max;
+
+        bool prot = cell.at(pos)->isProtected();
+        bool mdt = cell.at(pos)->isMdtOn();
+        bool num = cell.at(pos)->isNumeric();
+        bool pensel = cell.at(pos)->isPenSelect();
+        bool blink = cell.at(pos)->isBlink();
+        bool disp = cell.at(pos)->isDisplay();
+        bool under = cell.at(pos)->isUScore();
+        bool rev   = cell.at(pos)->isReverse();
+
+        ColourTheme::Colour col = cell.at(pos)->getColour();
+        int i = pos + 1;
+        while(i < endPos && !(cell.at(i % screenPos_max)->isFieldStart()))
+        {
+            int offset = i++ % screenPos_max;
+            cell.at(offset)->setAttrs(prot, mdt, num, pensel, blink, disp, under, rev, col);
+        }
+
+}
+
 void DisplayScreen::resetExtended(int pos)
 {
     resetExtendedHilite(pos);
@@ -546,7 +618,7 @@ void DisplayScreen::setExtendedColour(int pos, bool foreground, unsigned char c)
     cell.at(pos)->setColour((ColourTheme::Colour)(c&7));
     if(foreground)
     {
-        printf(" %s]", colName[cell.at(pos)->getColour()]);
+        qDebug() << colName[cell.at(pos)->getColour()];
     }
 }
 
@@ -568,41 +640,6 @@ void DisplayScreen::setExtendedUscore(int pos)
 {
     cell.at(pos)->setUScore(true);
     printf("[UScore]");
-}
-
-void DisplayScreen::cascadeAttrs(int start)
-{
-    int endPos = start + screenPos_max;
-
-    bool prot  = cell.at(start)->isProtected();
-    bool mdt   = cell.at(start)->isMdtOn();
-    bool num   = cell.at(start)->isNumeric();
-    bool pen   = cell.at(start)->isPenSelect();
-    bool blink = cell.at(start)->isBlink();
-    bool disp  = cell.at(start)->isDisplay();
-    bool under = cell.at(start)->isUScore();
-    bool rev   = cell.at(start)->isReverse();
-    ColourTheme::Colour col = cell.at(start)->getColour();
-
-    for(int i = start; i < endPos; i++)
-    {
-        int offset = i % screenPos_max;
-
-        if (cell.at(offset)->isFieldStart() && i > start)
-        {
-            return;
-        }
-        cell.at(offset)->setProtected(prot);
-        cell.at(offset)->setMDT(mdt);
-        cell.at(offset)->setNumeric(num);
-        cell.at(offset)->setPenSelect(pen);
-        cell.at(offset)->setBlink(blink);
-        cell.at(offset)->setDisplay(disp);
-        cell.at(offset)->setUScore(under);
-        cell.at(offset)->setReverse(rev);
-        cell.at(offset)->setColour(col);
-    }
-
 }
 
 /* Reset all MDTs in the display; it's probably faster to just loop through the entire buffer
@@ -1100,7 +1137,7 @@ void DisplayScreen::getModifiedFields(QByteArray &buffer)
         {
             if (cell.at(i)->isFieldStart() && !cell.at(i)->isProtected())
             {
-                //FIXME: This assumes that where two fields are adajcent to each other, the first cannot have MDT set
+                // This assumes that where two fields are adajcent to each other, the first cannot have MDT set
                 if (cell.at(i)->isMdtOn() && !cell.at(i)->isProtected())
                 {
                     buffer.append(IBM3270_SBA);
@@ -1142,10 +1179,10 @@ void DisplayScreen::getModifiedFields(QByteArray &buffer)
 }
 
 /**
- * @brief DisplayScreen::addPosToBuffer
+ * \brief DisplayScreen::addPosToBuffer
  *        Utility method to insert 'pos' into 'buffer' as two bytes, doubling 0xFF if needed.
- * @param buffer
- * @param pos
+ * \param buffer
+ * \param pos
  */
 void DisplayScreen::addPosToBuffer(QByteArray &buffer, int pos)
 {
