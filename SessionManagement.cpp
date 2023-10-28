@@ -1,3 +1,37 @@
+/*
+
+Copyright Ⓒ 2023 Andy Styles
+All Rights Reserved
+
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+
+ * Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+ * Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in
+   the documentation and/or other materials provided with the
+   distribution.
+ * Neither the name of The Qt Company Ltd nor the names of its
+   contributors may be used to endorse or promote products derived
+   from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+*/
+
 #include "SessionManagement.h"
 #include "ui_SaveSession.h"
 #include "ui_OpenSession.h"
@@ -17,7 +51,7 @@
  * Sessions contain all custom settings
  */
 
-SessionManagement::SessionManagement(ActiveSettings *activeSettings) :
+SessionManagement::SessionManagement(ActiveSettings &activeSettings) :
     QDialog() ,
     activeSettings(activeSettings)
 {
@@ -152,23 +186,21 @@ void SessionManagement::saveSettings()
     // Each session is stored under the Sessions/<session name> key
     s.beginGroup(sessionName);
     s.setValue("Description", sessionDesc);
-    s.setValue("ColourTheme", activeSettings->getColourThemeName());
-    s.setValue("KeyboardTheme", activeSettings->getKeyboardThemeName());
-    s.setValue("Address", activeSettings->getHostAddress());
-    s.setValue("TerminalModel", activeSettings->getTerminalModelName());
-    s.setValue("TerminalX", activeSettings->getTerminalX());
-    s.setValue("TerminalY", activeSettings->getTerminalY());
-    s.setValue("CursorBlink", activeSettings->getCursorBlink());
-    s.setValue("CursorBlinkSpeed", activeSettings->getCursorBlinkSpeed());
-    s.setValue("CursorInheritColour", activeSettings->getCursorColourInherit());
-    s.setValue("Ruler", activeSettings->getRulerOn());
-    s.setValue("RulerStyle", activeSettings->getRulerStyle());
-    s.setValue("Font", activeSettings->getFont().family());
-    s.setValue("FontSize", activeSettings->getFont().pointSize());
-//    s.setValue("FontStyle", settings->getFontScaling());
-    s.setValue("FontScaling", activeSettings->getFontScaling());
-    s.setValue("ScreenStretch", activeSettings->getStretchScreen());
-    s.setValue("Codepage",activeSettings->getCodePage());
+    s.setValue("ColourTheme", activeSettings.getColourThemeName());
+    s.setValue("KeyboardTheme", activeSettings.getKeyboardThemeName());
+    s.setValue("Address", activeSettings.getHostAddress());
+    s.setValue("TerminalModel", activeSettings.getTerminalModelName());
+    s.setValue("TerminalX", activeSettings.getTerminalX());
+    s.setValue("TerminalY", activeSettings.getTerminalY());
+    s.setValue("CursorBlink", activeSettings.getCursorBlink());
+    s.setValue("CursorBlinkSpeed", activeSettings.getCursorBlinkSpeed());
+    s.setValue("CursorInheritColour", activeSettings.getCursorColourInherit());
+    s.setValue("Ruler", activeSettings.getRulerOn());
+    s.setValue("RulerStyle", activeSettings.getRulerStyle());
+    s.setValue("Font", activeSettings.getFont().family());
+    s.setValue("FontSize", activeSettings.getFont().pointSize());
+    s.setValue("ScreenStretch", activeSettings.getStretchScreen());
+    s.setValue("Codepage",activeSettings.getCodePage());
 
     // End group for session
     s.endGroup();

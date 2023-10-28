@@ -1,8 +1,46 @@
+/*
+
+Copyright Ⓒ 2023 Andy Styles
+All Rights Reserved
+
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+
+ * Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+ * Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in
+   the documentation and/or other materials provided with the
+   distribution.
+ * Neither the name of The Qt Company Ltd nor the names of its
+   contributors may be used to endorse or promote products derived
+   from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+*/
+
 #include "ui_MainWindow.h"
 #include "MainWindow.h"
 #include "ui_About.h"
 
-MainWindow::MainWindow(MainWindow::Session s) : QMainWindow(nullptr), ui(new(Ui::MainWindow))
+MainWindow::MainWindow(MainWindow::Session s) : QMainWindow(nullptr),
+                                                ui(new(Ui::MainWindow))
+
+
+
 {
 
     QCoreApplication::setOrganizationDomain("styles.homeip.net");
@@ -13,8 +51,6 @@ MainWindow::MainWindow(MainWindow::Session s) : QMainWindow(nullptr), ui(new(Ui:
 
     // Read global settings
     QSettings savedSettings;
-
-    activeSettings = new ActiveSettings();
 
     // Most-recently used; default to 10
     maxMruCount = savedSettings.value("MRUMax", 10).toInt();
@@ -49,22 +85,12 @@ MainWindow::MainWindow(MainWindow::Session s) : QMainWindow(nullptr), ui(new(Ui:
 
     sessionGroup = new QActionGroup(this);
 
-    // Colour theme dialog
-    colourTheme = new ColourTheme();
-
-    // Keyboard theme dialog
-    keyboardTheme = new KeyboardTheme();
-
-    // Codepages
-    codePage = new CodePage();
-    keyboard = new Keyboard(keyboardTheme);
-
     // Preferences dialog
     settings = new PreferencesDialog(colourTheme, keyboardTheme, activeSettings);
 
     // FIXME: is this bad?
     // Populate code page list
-    settings->populateCodePages(codePage->getCodePageList());
+    settings->populateCodePages(codePage.getCodePageList());
 
     // Session Management dialog
     sm = new SessionManagement(activeSettings);
@@ -77,12 +103,10 @@ MainWindow::MainWindow(MainWindow::Session s) : QMainWindow(nullptr), ui(new(Ui:
 
     // Set defaults for Connect options
     ui->actionDisconnect->setDisabled(true);
-    ui->actionConnect->setDisabled(true);
 
     terminal = new TerminalTab(ui->terminalLayout, activeSettings, codePage, keyboard, colourTheme, s.session);
 
-    //TODO: These came from TerminalTab but not all the objects, particularly the keyboard, are defined here yet.
-    // Map settings signals to their target slots
+    // Used for dynamically showing font changes when using the font selection dialog
     connect(settings, &PreferencesDialog::tempFontChange, terminal, &TerminalTab::setCurrentFont);
 
     // Enable/Disable menu entries if connected/disconnected
@@ -208,7 +232,7 @@ void MainWindow::mruConnect()
         updateMRUlist("Host " + parts[2]);
 
         // Update the address on the Host form
-        activeSettings->setHostAddress(parts[2]);
+        activeSettings.setHostAddress(parts[2]);
     }
     else
     {
@@ -241,14 +265,14 @@ MainWindow::~MainWindow()
 
 void MainWindow::menuConnect()
 {
-    if (activeSettings->getHostAddress().isEmpty())
+    if (activeSettings.getHostAddress().isEmpty())
     {
         settings->showForm();
     }
 
-    if (!activeSettings->getHostAddress().isEmpty())
+    if (!activeSettings.getHostAddress().isEmpty())
     {
-        terminal->openConnection(activeSettings->getHostAddress());
+        terminal->openConnection(activeSettings.getHostAddress());
 
         ui->actionDisconnect->setEnabled(true);
         ui->actionConnect->setDisabled(true);
@@ -270,12 +294,12 @@ void MainWindow::menuSessionPreferences()
 
 void MainWindow::menuColourTheme()
 {
-    colourTheme->exec();
+    colourTheme.exec();
 }
 
 void MainWindow::menuKeyboardTheme()
 {
-    keyboardTheme->exec();
+    keyboardTheme.exec();
 }
 
 void MainWindow::menuAbout()
@@ -390,6 +414,18 @@ void MainWindow::closeEvent(QCloseEvent *event)
 
     event->accept();
 }
+
+
+void MainWindow::showEvent(QShowEvent *event)
+{
+    terminal->fit();
+}
+
+void MainWindow::resizeEvent(QResizeEvent *event)
+{
+    terminal->fit();
+}
+
 /*
 void MainWindow::subWindowClosed(QObject *closedWindow)
 {

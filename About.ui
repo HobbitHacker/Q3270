@@ -55,7 +55,7 @@
     <widget class="QLabel" name="label_2">
      <property name="text">
       <string>A 3270-datastream terminal emulator
-© Andy Styles, 2020 - 2021</string>
+Copyright © 2020 - 2023, Andy Styles</string>
      </property>
     </widget>
    </item>

@@ -1,3 +1,37 @@
+/*
+
+Copyright Ⓒ 2023 Andy Styles
+All Rights Reserved
+
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+
+ * Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+ * Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in
+   the documentation and/or other materials provided with the
+   distribution.
+ * Neither the name of The Qt Company Ltd nor the names of its
+   contributors may be used to endorse or promote products derived
+   from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+*/
+
 #include "Q3270.h"
 
 #include "ui_PreferencesDialog.h"
@@ -5,7 +39,7 @@
 #include <QDebug>
 #include "PreferencesDialog.h"
 
-PreferencesDialog::PreferencesDialog(ColourTheme *colours, KeyboardTheme *keyboards, ActiveSettings *activeSettings, QWidget *parent) :
+PreferencesDialog::PreferencesDialog(ColourTheme &colours, KeyboardTheme &keyboards, ActiveSettings &activeSettings, QWidget *parent) :
     QDialog(parent),
     ui(new Ui::PreferencesDialog),
     colours(colours),
@@ -76,7 +110,7 @@ void PreferencesDialog::disconnected()
     ui->terminalType->setEnabled(true);
 
     // Rows and columns only editable if it's dynamic size
-    if (activeSettings->getTerminalModel() == Q3270_TERMINAL_DYNAMIC)
+    if (activeSettings.getTerminalModel() == Q3270_TERMINAL_DYNAMIC)
     {
         ui->terminalCols->setEnabled(true);
         ui->terminalRows->setEnabled(true);
@@ -94,37 +128,37 @@ void PreferencesDialog::disconnected()
 
 void PreferencesDialog::showForm()
 {
-    ui->hostLU->setText(activeSettings->getHostLU());
-    ui->hostName->setText(activeSettings->getHostName());
-    ui->hostPort->setText(QString::number(activeSettings->getHostPort()));
+    ui->hostLU->setText(activeSettings.getHostLU());
+    ui->hostName->setText(activeSettings.getHostName());
+    ui->hostPort->setText(QString::number(activeSettings.getHostPort()));
 
     // Terminal model/rows/cols
-    ui->terminalType->setCurrentIndex(activeSettings->getTerminalModel());
-    ui->terminalCols->setValue(activeSettings->getTerminalX());
-    ui->terminalRows->setValue(activeSettings->getTerminalY());
+    ui->terminalType->setCurrentIndex(activeSettings.getTerminalModel());
+    ui->terminalCols->setValue(activeSettings.getTerminalX());
+    ui->terminalRows->setValue(activeSettings.getTerminalY());
 
 
     // Cursor blink enabled & speed
-    ui->cursorBlink->setChecked(activeSettings->getCursorBlink());
-    ui->cursorBlinkSpeed->setSliderPosition(activeSettings->getCursorBlinkSpeed());
+    ui->cursorBlink->setChecked(activeSettings.getCursorBlink());
+    ui->cursorBlinkSpeed->setSliderPosition(activeSettings.getCursorBlinkSpeed());
 
     // Enable blink speed adjustment only if blink is enabled
     ui->cursorBlinkSpeed->setEnabled(ui->cursorBlink->QAbstractButton::isChecked());
 
-    ui->cursorColour->setChecked(activeSettings->getCursorColourInherit());
-    ui->FontScaling->setChecked(activeSettings->getFontScaling());
+    ui->cursorColour->setChecked(activeSettings.getCursorColourInherit());
+    ui->stretch->setChecked(activeSettings.getStretchScreen());
 
-    ui->backspaceStop->setChecked(activeSettings->getBackspaceStop());
+    ui->backspaceStop->setChecked(activeSettings.getBackspaceStop());
 
-    qfd->setCurrentFont(activeSettings->getFont());
+    qfd->setCurrentFont(activeSettings.getFont());
 
     populateColourThemeNames();
     populateKeyboardThemeNames();
 
     // Colour the buttons, based on Settings
-    colours->setButtonColours(colourButtons, activeSettings->getColourThemeName());
+    colours.setButtonColours(colourButtons, activeSettings.getColourThemeName());
 
-    ui->CodePages->setCurrentIndex(ui->CodePages->findText(activeSettings->getCodePage()));
+    ui->CodePages->setCurrentIndex(ui->CodePages->findText(activeSettings.getCodePage()));
 
     this->exec();
 }
@@ -176,18 +210,18 @@ void PreferencesDialog::changeFont(QFont newFont)
 
 void PreferencesDialog::accept()
 {
-    activeSettings->setTerminal(ui->terminalCols->value(), ui->terminalRows->value(), ui->terminalType->currentIndex());
-    activeSettings->setCursorBlink(ui->cursorBlink->QAbstractButton::isChecked());
-    activeSettings->setCursorBlinkSpeed(ui->cursorBlinkSpeed->value());
-    activeSettings->setRulerOn(ui->rulerOn->QAbstractButton::isChecked());
-    activeSettings->setRulerStyle(comboRulerStyle.value(ui->crosshair->currentText()));
-    activeSettings->setCursorColourInherit(ui->cursorColour->QAbstractButton::isChecked());
-    activeSettings->setFont(qfd->currentFont());
-    activeSettings->setCodePage(ui->CodePages->currentText());
-    activeSettings->setKeyboardTheme(ui->keyboardTheme->currentText());
-    activeSettings->setColourTheme(ui->colourTheme->currentText());
-    activeSettings->setHostAddress(ui->hostName->text(), ui->hostPort->text().toInt(), ui->hostLU->text());
-    activeSettings->setFontScaling(ui->FontScaling->QAbstractButton::isChecked());
+    activeSettings.setTerminal(ui->terminalCols->value(), ui->terminalRows->value(), ui->terminalType->currentIndex());
+    activeSettings.setCursorBlink(ui->cursorBlink->QAbstractButton::isChecked());
+    activeSettings.setCursorBlinkSpeed(ui->cursorBlinkSpeed->value());
+    activeSettings.setRulerOn(ui->rulerOn->QAbstractButton::isChecked());
+    activeSettings.setRulerStyle(comboRulerStyle.value(ui->crosshair->currentText()));
+    activeSettings.setCursorColourInherit(ui->cursorColour->QAbstractButton::isChecked());
+    activeSettings.setFont(qfd->currentFont());
+    activeSettings.setCodePage(ui->CodePages->currentText());
+    activeSettings.setKeyboardTheme(keyboards, ui->keyboardTheme->currentText());
+    activeSettings.setColourTheme(ui->colourTheme->currentText());
+    activeSettings.setHostAddress(ui->hostName->text(), ui->hostPort->text().toInt(), ui->hostLU->text());
+    activeSettings.setStretchScreen(ui->stretch->QAbstractButton::isChecked());
 
     //emit setStretch(ui->stretch);
 
@@ -197,7 +231,7 @@ void PreferencesDialog::accept()
 
 void PreferencesDialog::reject()
 {
-    emit tempFontChange(activeSettings->getFont());
+    emit tempFontChange(activeSettings.getFont());
 
     QDialog::reject();
 }
@@ -209,20 +243,20 @@ void PreferencesDialog::populateCodePages(QMap<QString, QString> codepagelist)
 
 void PreferencesDialog::colourThemeDropDownChanged([[maybe_unused]] int index)
 {
-    colours->setButtonColours(colourButtons, ui->colourTheme->currentText());
+    colours.setButtonColours(colourButtons, ui->colourTheme->currentText());
 }
 
 void PreferencesDialog::populateColourThemeNames()
 {
     // Refresh the Colour theme names
     ui->colourTheme->clear();
-    ui->colourTheme->addItems(colours->getThemes());
+    ui->colourTheme->addItems(colours.getThemes());
 }
 
 void PreferencesDialog::manageColourThemes()
 {
     // Run the Colour Themes dialog
-    colours->exec();
+    colours.exec();
 
     // Refresh the colour theme names, in case they changed
     populateColourThemeNames();
@@ -232,13 +266,13 @@ void PreferencesDialog::populateKeyboardThemeNames()
 {
     // Refresh the Keyboard theme names
     ui->keyboardTheme->clear();
-    ui->keyboardTheme->addItems(keyboards->getThemes());
+    ui->keyboardTheme->addItems(keyboards.getThemes());
 }
 
 void PreferencesDialog::keyboardThemeDropDownChanged([[maybe_unused]] int index)
 {
     // Populate keyboard map table
-    keyboards->populateTable(ui->KeyboardMap, ui->keyboardTheme->currentText());
+    keyboards.populateTable(ui->KeyboardMap, ui->keyboardTheme->currentText());
 }
 
 

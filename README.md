@@ -1,4 +1,4 @@
-A Qt-based 3270 Emulator
+# A Qt-based 3270 Emulator
 
 "Emulator" is an interesting term. Some refer to these kinds of programs as Simulators, some as
 TN3270 Clients, and others use the term Emulator. I use the term Emulator.
@@ -10,4 +10,4 @@ via the TN3270 protocol.
 It's not (yet) as feature rich as other emulators, but it is (in my limited cases) usuable for
 things like MVS 3.8j under Hercules. 
 
-I've used it for at least MVS 3.8j and VM/370, and to connect to IBM's zXplore https://ibmzxplore.influitive.com
+I've used it for MVS 3.8j and VM/370, and for IBM's zXplore at 204.90.115.200:623.

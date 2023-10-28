@@ -43,7 +43,7 @@
       </sizepolicy>
      </property>
      <property name="currentIndex">
-      <number>0</number>
+      <number>1</number>
      </property>
      <widget class="QWidget" name="connection">
       <attribute name="title">
@@ -256,6 +256,9 @@
                 <property name="text">
                  <string>Stretch screen to fit window</string>
                 </property>
+                <property name="checked">
+                 <bool>true</bool>
+                </property>
                </widget>
               </item>
               <item>
@@ -436,7 +439,7 @@
                 <item>
                  <widget class="QCheckBox" name="deleteSameLine">
                   <property name="text">
-                   <string>Delete honours same line only</string>
+                   <string>Delete honours current line only</string>
                   </property>
                  </widget>
                 </item>
@@ -506,13 +509,6 @@
                   <string>Add a slash to zero</string>
                  </property>
                 </item>
-               </widget>
-              </item>
-              <item>
-               <widget class="QCheckBox" name="FontScaling">
-                <property name="text">
-                 <string>Scale Font to Window</string>
-                </property>
                </widget>
               </item>
              </layout>
@@ -906,7 +902,6 @@
   <tabstop>deleteSameLine</tabstop>
   <tabstop>backspaceStop</tabstop>
   <tabstop>comboBox</tabstop>
-  <tabstop>FontScaling</tabstop>
   <tabstop>colourTheme</tabstop>
   <tabstop>manageColourThemes</tabstop>
   <tabstop>baseUnprotected</tabstop>

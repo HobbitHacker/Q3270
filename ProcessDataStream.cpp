@@ -1,22 +1,41 @@
 /*
- * Copyright 2020 Andy Styles <andy@styles.homeip.net>
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+
+Copyright Ⓒ 2023 Andy Styles
+All Rights Reserved
+
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+
+ * Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+ * Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in
+   the documentation and/or other materials provided with the
+   distribution.
+ * Neither the name of The Qt Company Ltd nor the names of its
+   contributors may be used to endorse or promote products derived
+   from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+*/
 
 #include "ProcessDataStream.h"
+#include "TerminalTab.h"
 
-ProcessDataStream::ProcessDataStream(TerminalView *t)
+ProcessDataStream::ProcessDataStream(TerminalTab *t)
 {
     terminal = t;
 
@@ -162,7 +181,6 @@ void ProcessDataStream::processOrders()
 {
     switch((uchar) *buffer)
     {
-        /* TODO: 3270 Order MF */
         case IBM3270_SF:
             processSF();
             break;
@@ -363,7 +381,7 @@ void ProcessDataStream::processSF()
     printf("[Start Field: %02X ", fa);
 
     screen->setField(primary_pos, fa, false);
-    screen->setFieldAttrs(primary_pos);
+//    screen->setFieldAttrs(primary_pos);
 
     printf("]");
     fflush(stdout);
@@ -375,87 +393,145 @@ void ProcessDataStream::processSF()
 
 void ProcessDataStream::processSFE()
 {
+    screen->resetExtended(primary_pos);
+//    screen->setFieldAttrs(primary_pos);
+
+    bool blink;
+    bool reverse;
+    bool uscore;
+    bool reset;
+    bool fattr;
+    bool fgset;
+    bool bgset;
+
+    int foreground;
+    int background;
+
+    int field;
+
     uchar pairs = *++buffer;
 
     uchar type;
     uchar value;
 
-    screen->resetExtended(primary_pos);
+    field = 0;
+
+    blink = false;
+    reverse = false;
+    uscore = false;
+    reset = false;
+    fattr = false;
+    fgset = false;
+    bgset = false;
+
+    foreground = 0;
+    background = 0;
+    printf("[StartFieldExtended ");
 
     for(int i = 1; i <= pairs; i++)
     {
-        type = *++buffer;
-        value = *++buffer;
+            type = *++buffer;
+            value = *++buffer;
 
-        processFieldAttribute(type, value);
-
-        fflush(stdout);
+            switch(type)
+            {
+            case IBM3270_EXT_3270:
+                field = value;
+                fattr = true;
+                break;
+            case IBM3270_EXT_FG_COLOUR:
+                printf("[Extended FG %02X]", value);
+                fgset = true;
+                foreground = value;
+                break;
+            case IBM3270_EXT_BG_COLOUR:
+                printf("Extended BG %02dX]", value);
+                bgset = true;
+                background = value;
+                break;
+            case IBM3270_EXT_HILITE:
+                switch(value)
+                {
+                    case IBM3270_EXT_DEFAULT:
+                        printf("[Highlight Default]");
+                        reset = true;
+                        break;
+                    case IBM3270_EXT_HI_NORMAL:
+                        printf("[Reset Extended]");
+                        reset = true;
+                        break;
+                    case IBM3270_EXT_HI_BLINK:
+                        printf("[Blink]");
+                        blink = true;
+                        break;
+                    case IBM3270_EXT_HI_REVERSE:
+                        printf("[Reverse]");
+                        reverse = true;
+                        break;
+                    case IBM3270_EXT_HI_USCORE:
+                        printf("[Underscore]");
+                        uscore = true;
+                        break;
+                    default:
+                        printf("\n\n[** Unimplemented SFE HILITE value - %2.2X-%2.2X - Ignored **]\n\n", type, value);
+                        break;
+                }
+                break;
+            default:
+                printf("\n\n[** Unimplemented SFE attribute - %2.2X-%2.2X - Ignored **]\n\n", type, value);
+                break;
+            }
     }
 
-    screen->setFieldAttrs(primary_pos);
-    incPos();
+
+    if (fattr) {
+        screen->setField(primary_pos, field, true);
+    } else {
+        screen->setField(primary_pos, 0x00, true);
+    }
+
+    if (blink) {
+        screen->setExtendedBlink(primary_pos);
+    }
+
+    if (reverse) {
+        screen->setExtendedReverse(primary_pos);
+    }
+
+    if (uscore) {
+        screen->setExtendedUscore(primary_pos);
+    }
+
+    if (reset) {
+        screen->resetExtendedHilite(primary_pos);
+    }
+
+    if (fgset) {
+        screen->setExtendedColour(primary_pos, true, foreground);
+    }
+
+    if (bgset) {
+        screen->setExtendedColour(primary_pos, false, background);
+    }
+
+    printf("]");
+    fflush(stdout);
 
     lastWasCmd = true;
-}
 
-// Process an attribute pair; used by SFE and MF
-void ProcessDataStream::processFieldAttribute(uchar type, uchar value)
-{
-    switch(type)
-    {
-        case IBM3270_EXT_3270:
-            printf("[Field ");
-            screen->setField(primary_pos, value, true);
-            printf("]");
-            break;
-        case IBM3270_EXT_FG_COLOUR:
-            printf("Extended FG");
-            screen->setExtendedColour(primary_pos, true, value);
-            break;
-        case IBM3270_EXT_BG_COLOUR:
-            printf("Extended BG");
-            screen->setExtendedColour(primary_pos, false, value);
-            break;
-        case IBM3270_EXT_HILITE:
-            switch(value)
-            {
-                case IBM3270_EXT_DEFAULT:
-                    printf("[Default]");
-                    screen->resetExtendedHilite(primary_pos);
-                    break;
-                case IBM3270_EXT_HI_NORMAL:
-                    printf("[Reset Extended]");
-                    screen->resetExtendedHilite(primary_pos);
-                    break;
-                case IBM3270_EXT_HI_BLINK:
-                    screen->setExtendedBlink(primary_pos);
-                    break;
-                case IBM3270_EXT_HI_REVERSE:
-                    screen->setExtendedReverse(primary_pos);
-                    break;
-                case IBM3270_EXT_HI_USCORE:
-                    screen->setExtendedUscore(primary_pos);
-                    break;
-                default:
-                    printf("\n\n[** Unimplemented SFE HILITE value - %2.2X-%2.2X - Ignored **]\n\n", type, value);
-                    break;
-            }
-            break;
-        default:
-            printf("\n\n[** Unimplemented SFE attribute - %2.2X-%2.2X - Ignored **]\n\n", type, value);
-            break;
-    }
+    incPos();
 
 }
+
 void ProcessDataStream::processSBA()
 {
     printf("[SetBufferAddress ");
     buffer++;
     int tmp_pos = extractBufferAddress();
 
-    if (tmp_pos >= screenSize)
+    if (tmp_pos >= screenSize || tmp_pos < 0)
     {
-        printf("[** SBA > screen size - discarded **]");
+        printf("[** SBA invalid address %d - discarded **]", tmp_pos);
         return;
     }
 
@@ -477,19 +553,70 @@ void ProcessDataStream::processSA()
     lastWasCmd = true;
 }
 
+// Some of this processing is almost duplicated from SFE
 void ProcessDataStream::processMF()
 {
     unsigned char count = *++buffer;
     printf("[[ModifyField Pairs=%02X]", count);
     for (int i = 0; i < count; i++)
     {
-        unsigned char at = *++buffer;
-        unsigned char av = *++buffer;
-        printf("[Pair %02X][Attribute %02X Value %02X]", count, at, av);
-        processFieldAttribute(at, av);
+        unsigned char type = *++buffer;
+        unsigned char value = *++buffer;
+        if (screen->isFieldStart(primary_pos)) {
+            printf("[Pair %02X][Attribute %02X Value %02X]", count, type, value);
+
+            switch(type)
+            {
+                case IBM3270_EXT_3270:
+                    screen->setField(primary_pos, value, true);
+                    break;
+                case IBM3270_EXT_FG_COLOUR:
+                    printf("[Extended FG %02X]", value);
+                    screen->setExtendedColour(primary_pos, true, value);
+                    break;
+                case IBM3270_EXT_BG_COLOUR:
+                    printf("Extended BG %02dX]", value);
+                    screen->setExtendedColour(primary_pos, false, value);
+                    break;
+                case IBM3270_EXT_HILITE:
+                    switch(value)
+                    {
+                        case IBM3270_EXT_DEFAULT:
+                            printf("[Default]");
+                            screen->resetExtendedHilite(primary_pos);
+                            break;
+                        case IBM3270_EXT_HI_NORMAL:
+                            printf("[Reset Extended]");
+                            screen->resetExtendedHilite(primary_pos);
+                            break;
+                        case IBM3270_EXT_HI_BLINK:
+                            printf("[Blink]");
+                            screen->setExtendedBlink(primary_pos);
+                            break;
+                        case IBM3270_EXT_HI_REVERSE:
+                            printf("[Reverse]");
+                            screen->setExtendedReverse(primary_pos);
+                            break;
+                        case IBM3270_EXT_HI_USCORE:
+                            printf("[Blink]");
+                            screen->setExtendedUscore(primary_pos);
+                            break;
+                        default:
+                            printf("\n\n[** Unimplemented MF HILITE value - %2.2X-%2.2X - Ignored **]\n\n", type, value);
+                            break;
+                    }
+                    break;
+                default:
+                    printf("\n\n[** Unimplemented MF attribute - %2.2X-%2.2X - Ignored **]\n\n", type, value);
+                    break;
+            }
+
+        }
     }
 
-    screen->cascadeAttrs(primary_pos);
+    if (screen->isFieldStart(primary_pos)) {
+        screen->cascadeAttrs(primary_pos);
+    }
 
     lastWasCmd = true;
 }
@@ -596,11 +723,6 @@ void ProcessDataStream::processRA()
     buffer++;
     int endPos = extractBufferAddress();
 
-    if (endPos > screenSize - 1)
-    {
-        endPos = screenSize - 1;
-    }
-
     uchar newChar = *++buffer;
 
     bool geRA = false;
@@ -610,6 +732,13 @@ void ProcessDataStream::processRA()
     {
         geRA = true;
         newChar = *++buffer;
+    }
+
+    if (endPos > screenSize || endPos < 0)
+    {
+        printf("[*** RA buffer end position invalid %d - discarded ***]", endPos);
+        fflush(stdout);
+        return;
     }
 
     printf("[RepeatToAddress %d to %d (0x%2.2X)]", primary_pos, endPos, newChar);
@@ -640,11 +769,18 @@ void ProcessDataStream::processRA()
 
 void ProcessDataStream::processEUA()
 {
-    printf("[EraseUnprotected to Address ");
 
     buffer++;
     int stopAddress = extractBufferAddress();
-    printf("]");
+
+    if (stopAddress >= screenSize || stopAddress < 0)
+    {
+        printf("[*** EUA buffer end position invalid %d - discarded ***]", stopAddress);
+        fflush(stdout);
+        return;
+    }
+
+    printf("[EraseUnprotected to Address %d ]", stopAddress);
 
     screen->eraseUnprotected(primary_pos, stopAddress);
     restoreKeyboard = true;
@@ -994,8 +1130,8 @@ void ProcessDataStream::replySummary(QByteArray &queryReply)
                                   /* .......x   RES    - Reserved */
     };
 
-    qpart[14] = terminal->alternate->width();
-    qpart[16] = terminal->alternate->height();
+    qpart[14] = terminal->terminalWidth(true);
+    qpart[16] = terminal->terminalHeight(true);
 
     qusablearea[6] = 0x00;
     qusablearea[7] = qpart[14];
@@ -1024,11 +1160,11 @@ void ProcessDataStream::replySummary(QByteArray &queryReply)
     qusablearea[17] = (y & 0xFF00) >> 8;
     qusablearea[18] = (y & 0xFF);
 
-    qusablearea[19] = ((int)terminal->primary->gridWidth() & 0xFF00) >> 8;
-    qusablearea[20] = ((int)terminal->primary->gridWidth() & 0xFF);
+    qusablearea[19] = ((int)terminal->gridWidth(false) & 0xFF00) >> 8;
+    qusablearea[20] = ((int)terminal->gridWidth(false) & 0xFF);
 
-    qusablearea[21] = ((int)terminal->primary->gridHeight() & 0xFF00) >> 8;
-    qusablearea[22] = ((int)terminal->primary->gridHeight() & 0xFF);
+    qusablearea[21] = ((int)terminal->gridHeight(false) & 0xFF00) >> 8;
+    qusablearea[22] = ((int)terminal->gridHeight(false) & 0xFF);
 
     qusablearea[23] = ((qusablearea[5] * qusablearea[7]) & 0xFF00) >> 8;
     qusablearea[24] = ((qusablearea[5] * qusablearea[7]) & 0xFF);
@@ -1081,12 +1217,6 @@ int ProcessDataStream::extractBufferAddress()
     }
 }
 
-void ProcessDataStream::placeChar()
-{
-    uchar ebcdic = *buffer;
-    placeChar(ebcdic);
-}
-
 void ProcessDataStream::placeChar(uchar ebcdic)
 {
     switch(ebcdic)
@@ -1099,6 +1229,11 @@ void ProcessDataStream::placeChar(uchar ebcdic)
     }
 
     incPos();
+    if (primary_x == 0)
+    {
+        printf("\n");
+        fflush(stdout);
+    }
 
     lastWasCmd = false;
 }
@@ -1175,7 +1310,7 @@ void ProcessDataStream::moveCursor(int x, int y, bool absolute)
 
     cursor_pos = cursor_x + (cursor_y * screen_x);
 
-    screen->setCursor(cursor_pos);
+    screen->setCursor(cursor_x, cursor_y);
     screen->drawRuler(cursor_x, cursor_y);
 
     emit cursorMoved(cursor_x, cursor_y);
@@ -1326,7 +1461,7 @@ void ProcessDataStream::processAID(int aid, bool shortRead)
         cursor_pos = 0;
         cursor_x = 0;
         cursor_y = 0;
-        screen->setCursor(cursor_pos);
+        screen->setCursor(0, 0);
         screen->clear();
     }
 

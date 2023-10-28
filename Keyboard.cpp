@@ -1,6 +1,41 @@
-#include "Keyboard.h"
+/*
 
-Keyboard::Keyboard(KeyboardTheme *keyboardTheme) : keyboardTheme(keyboardTheme)
+Copyright Ⓒ 2023 Andy Styles
+All Rights Reserved
+
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+
+ * Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+ * Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in
+   the documentation and/or other materials provided with the
+   distribution.
+ * Neither the name of The Qt Company Ltd nor the names of its
+   contributors may be used to endorse or promote products derived
+   from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+*/
+
+#include "Keyboard.h"
+#include "Q3270.h"
+
+Keyboard::Keyboard()
 {    
     lock = false;
     insMode = false;
@@ -12,12 +47,6 @@ Keyboard::Keyboard(KeyboardTheme *keyboardTheme) : keyboardTheme(keyboardTheme)
 
     clearBufferEntry();
     setMap();
-}
-
-void Keyboard::setDataStream(ProcessDataStream *d)
-{
-    datastream = d;
-    connect(datastream, &ProcessDataStream::keyboardUnlocked, this, &Keyboard::unlockKeyboard);
 }
 
 void Keyboard::setMap()
@@ -334,7 +363,7 @@ void Keyboard::nextKey()
         else
         {
             // TODO: Might break
-            datastream->insertChar(kbBuffer[bufferPos].keyChar.toLatin1(), insMode);
+            emit key_Character(kbBuffer[bufferPos].keyChar.toLatin1(), insMode);
         }
         clearBufferEntry();
         if (bufferEnd != bufferPos)
@@ -356,34 +385,34 @@ void Keyboard::nextKey()
 
 void Keyboard::cursorUp()
 {
-    datastream->moveCursor(0, -1);
+    emit key_moveCursor(0, -1, Q3270_MOVE_CURSOR_RELATIVE);
 }
 
 void Keyboard::cursorDown()
 {
-    datastream->moveCursor(0, 1);
+    emit key_moveCursor(0, 1, Q3270_MOVE_CURSOR_RELATIVE);
 }
 
 void Keyboard::cursorRight()
 {
-    datastream->moveCursor(1, 0);
+    emit key_moveCursor(1, 0, Q3270_MOVE_CURSOR_RELATIVE);
 }
 
 void Keyboard::cursorLeft()
 {
-    datastream->moveCursor(-1, 0);
+    emit key_moveCursor(-1, 0, Q3270_MOVE_CURSOR_RELATIVE);
 }
 
 void Keyboard::backspace()
 {
-    datastream->backspace();
+    emit key_Backspace();
 }
 
 void Keyboard::enter()
 {
     lockKeyboard();
 
-    datastream->processAID(IBM3270_AID_ENTER, false);
+    emit key_AID(IBM3270_AID_ENTER, Q3270_NOT_SHORT_READ);
 
     insMode = false;
     emit setInsert(false);
@@ -391,22 +420,23 @@ void Keyboard::enter()
 
 void Keyboard::tab()
 {
-    datastream->tab();
+    // Tab, starting at next character position
+    emit key_Tab(1);
 }
 
 void Keyboard::backtab()
 {
-    datastream->backtab();
+    emit key_Backtab();
 }
 
 void Keyboard::home()
 {
-    datastream->home();
+    emit key_Home();
 }
 
 void Keyboard::eraseEOF()
 {
-    datastream->eraseField();
+    emit key_EraseEOF();
 }
 
 void Keyboard::insert()
@@ -423,14 +453,14 @@ void Keyboard::insert()
 
 void Keyboard::deleteKey()
 {
-    datastream->deleteChar();
+    emit key_Delete();
 }
 
 void Keyboard::functionKey(int key)
 {
     lockKeyboard();
 
-    datastream->processAID(key, false);
+    emit key_AID(key, Q3270_NOT_SHORT_READ);
 
     insMode = false;
     emit setInsert(false);
@@ -558,8 +588,7 @@ void Keyboard::fKey24()
 
 void Keyboard::attn()
 {
-
-    datastream->interruptProcess();
+    emit key_Attn();
 
     insMode = false;
     emit setInsert(false);
@@ -569,7 +598,7 @@ void Keyboard::attn()
 
 void Keyboard::programaccessKey(int aidKey)
 {
-    datastream->processAID(aidKey, true);
+    emit key_AID(aidKey, Q3270_SHORT_READ);
 
     insMode = false;
     emit setInsert(false);
@@ -592,7 +621,7 @@ void Keyboard::paKey3()
 
 void Keyboard::newline()
 {
-    datastream->newline();
+    emit key_Newline();
 }
 
 void Keyboard::reset()
@@ -608,22 +637,22 @@ void Keyboard::reset()
 
 void Keyboard::endline()
 {
-    datastream->endline();
+    emit key_End();
 }
 
 void Keyboard::clear()
 {
-    datastream->processAID(IBM3270_AID_CLEAR, true);
+    emit key_AID(IBM3270_AID_CLEAR, Q3270_SHORT_READ);
 }
 
 void Keyboard::copy()
 {
-    emit copyText();
+    emit key_Copy();
 }
 
 void Keyboard::ruler()
 {
-    datastream->toggleRuler();
+    emit key_toggleRuler();
 }
 
 void Keyboard::paste()
@@ -637,12 +666,12 @@ void Keyboard::paste()
     {
         if (clipText.at(i) == '\n')
         {
-            datastream->moveCursor(0 - clipWidth, 1);
+            emit key_moveCursor(0 - clipWidth, 1, Q3270_MOVE_CURSOR_RELATIVE);
             clipWidth = 0;
         }
         else
         {
-            datastream->insertChar(clipText.at(i).toLatin1(), insMode);
+            emit key_Character(clipText.at(i).toLatin1(), insMode);
             clipWidth++;
         }
     }
@@ -650,7 +679,7 @@ void Keyboard::paste()
 
 void Keyboard::info()
 {
-    datastream->showInfo();
+    emit key_showInfo();
 }
 
 void Keyboard::setMapping(QString key, QString function)
@@ -748,7 +777,7 @@ void Keyboard::setFactoryMaps()
     setMapping("Home", "Home");
     setMapping("End", "EraseEOF");
     setMapping("Return", "NewLine");
-    setMapping("Ctrl+End", "EndLine");
+    setMapping("Shift+End", "EndLine");
 
     setMapping("F1", "F1");
     setMapping("F2", "F2");
@@ -794,7 +823,7 @@ void Keyboard::setFactoryMaps()
     setMapping("Ctrl+I", "Info");
 }
 
-void Keyboard::setTheme(QString theme)
+void Keyboard::setTheme(KeyboardTheme &keyboardTheme, QString theme)
 {
     // Switch to a new keyboard map based on the theme
 
@@ -807,7 +836,7 @@ void Keyboard::setTheme(QString theme)
 
     // Keyboard themes are defined as { Q3270 function, { key, key, key } }
 
-    KeyboardTheme::KeyboardMap kbm = keyboardTheme->getTheme(theme);
+    KeyboardTheme::KeyboardMap kbm = keyboardTheme.getTheme(theme);
 
     KeyboardTheme::KeyboardMap::ConstIterator i = kbm.constBegin();
 
