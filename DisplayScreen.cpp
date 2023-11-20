@@ -1452,14 +1452,14 @@ void DisplayScreen::copyText()
 
     qDebug() << "Selection " << top << "," << left << " x " << bottom << "," << right;
 
-    for(int y = top; y <= bottom - 1; y++)
+    for(int y = top; y <= bottom; y++)
     {
         // Append a newline if there's more than one row selected
         if (y > top) {
             cbText = cbText + "\n";
         }
 
-        for(int x = left; x <= right - 1; x++)
+        for(int x = left; x <= right; x++)
         {
             int thisPos = screen_x * y + x;
             cbText = cbText + cell.at(thisPos)->getChar();
