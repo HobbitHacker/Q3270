@@ -366,7 +366,7 @@ unsigned char DisplayScreen::getChar(int pos)
 
 void DisplayScreen::setCharAttr(unsigned char extendedType, unsigned char extendedValue)
 {
-    printf("[SetAttribute ");
+//    printf("[SetAttribute ");
 
     switch(extendedType)
     {
@@ -375,7 +375,7 @@ void DisplayScreen::setCharAttr(unsigned char extendedType, unsigned char extend
             charAttr.reverse_default = true;
             charAttr.uscore_default = true;
             charAttr.colour_default = true;
-            printf("default");
+//            printf("default");
             break;
         case IBM3270_EXT_HILITE:
             switch(extendedValue)
@@ -384,34 +384,34 @@ void DisplayScreen::setCharAttr(unsigned char extendedType, unsigned char extend
                     charAttr.uscore  = false;
                     charAttr.reverse = false;
                     charAttr.blink   = false;
-                    printf("default");
+//                    printf("default");
                     break;
                 case IBM3270_EXT_HI_NORMAL:
                     charAttr.uscore  = false;
                     charAttr.reverse = false;
                     charAttr.blink   = false;
-                    printf("normal");
+//                    printf("normal");
                     break;
                 case IBM3270_EXT_HI_BLINK:
                     charAttr.blink   = true;
                     charAttr.uscore  = false;
                     charAttr.reverse = false;
                     charAttr.blink_default = false;
-                    printf("blink");
+//                    printf("blink");
                     break;
                 case IBM3270_EXT_HI_REVERSE:
                     charAttr.blink   = false;
                     charAttr.uscore  = false;
                     charAttr.reverse = true;
                     charAttr.reverse_default = false;
-                    printf("reverse");
+//                    printf("reverse");
                     break;
                 case IBM3270_EXT_HI_USCORE:
                     charAttr.blink   = false;
                     charAttr.reverse = false;
                     charAttr.uscore  = true;
                     charAttr.uscore_default = false;
-                    printf("uscore");
+//                    printf("uscore");
                     break;
                 default:
                     printf("** Extended Value %02X Not Implemented **", extendedValue);
@@ -421,35 +421,35 @@ void DisplayScreen::setCharAttr(unsigned char extendedType, unsigned char extend
             if (extendedValue == IBM3270_EXT_DEFAULT)
             {
                 charAttr.colour_default = true;
-                printf("fg colour default");
+//                printf("fg colour default");
             }
             else
             {
                 charAttr.colour = palette[(ColourTheme::Colour)(extendedValue&7)];
                 charAttr.colNum = (ColourTheme::Colour)(extendedValue&7);
                 charAttr.colour_default = false;
-                printf("fg colour %s (extendedValue %02X)", colName[charAttr.colNum], extendedValue);
+//                printf("fg colour %s (extendedValue %02X)", colName[charAttr.colNum], extendedValue);
             }
             break;
         case IBM3270_EXT_BG_COLOUR:
             if (extendedValue == IBM3270_EXT_DEFAULT)
             {
                 charAttr.colour_default = true;
-                printf("bg colour default");
+//                printf("bg colour default");
             }
             else
             {
                 charAttr.colour = palette[(ColourTheme::Colour)(extendedValue&7)];
                 charAttr.colNum = (ColourTheme::Colour)(extendedValue&7);
                 charAttr.colour_default = false;
-                printf("bg colour %s", colName[charAttr.colNum]);
+//                printf("bg colour %s", colName[charAttr.colNum]);
             }
             break;
         default:
             printf(" ** Extended Type %02X Not implemented **", extendedType);
     }
-    printf("]");
-    fflush(stdout);
+//    printf("]");
+//    fflush(stdout);
 
     useCharAttr = true;
 
@@ -564,7 +564,6 @@ void DisplayScreen::setField(int pos, unsigned char c, bool sfe)
 
 void DisplayScreen::cascadeAttrs(int pos)
 {
-
         int endPos = pos + screenPos_max;
 
         bool prot = cell.at(pos)->isProtected();
@@ -581,9 +580,16 @@ void DisplayScreen::cascadeAttrs(int pos)
         while(i < endPos && !(cell.at(i % screenPos_max)->isFieldStart()))
         {
             int offset = i++ % screenPos_max;
-            cell.at(offset)->setAttrs(prot, mdt, num, pensel, blink, disp, under, rev, col);
+            cell[offset]->setAttrs(prot, mdt, num, pensel, blink, disp, under, rev, col);
         }
+}
 
+void DisplayScreen::refresh()
+{
+        for (int i = 0; i < screenPos_max; i++)
+        {
+            cell.at(i)->updateCell();
+        }
 }
 
 void DisplayScreen::resetExtended(int pos)
@@ -616,30 +622,30 @@ void DisplayScreen::setExtendedColour(int pos, bool foreground, unsigned char c)
         c = IBM3270_EXT_DEFAULT_COLOR;
     }
     cell.at(pos)->setColour((ColourTheme::Colour)(c&7));
-    if(foreground)
+/*    if(foreground)
     {
         qDebug() << colName[cell.at(pos)->getColour()];
-    }
+    }*/
 }
 
 void DisplayScreen::setExtendedBlink(int pos)
 {
     cell.at(pos)->setReverse(false);
     cell.at(pos)->setBlink(true);
-    printf("[Blink]");
+//    printf("[Blink]");
 }
 
 void DisplayScreen::setExtendedReverse(int pos)
 {
     cell.at(pos)->setBlink(false);
     cell.at(pos)->setReverse(true);
-    printf("[Reverse]");
+//    printf("[Reverse]");
 }
 
 void DisplayScreen::setExtendedUscore(int pos)
 {
     cell.at(pos)->setUScore(true);
-    printf("[UScore]");
+//    printf("[UScore]");
 }
 
 /* Reset all MDTs in the display; it's probably faster to just loop through the entire buffer

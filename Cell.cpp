@@ -66,6 +66,8 @@ Cell::Cell(qreal x_pos, qreal y_pos, qreal x, qreal y, CodePage &cp, ColourTheme
 
     scene->addItem(&glyph);
     scene->addItem(&underscore);
+
+    changed = false;
 }
 
 QRectF Cell::boundingRect() const
@@ -76,17 +78,7 @@ QRectF Cell::boundingRect() const
 void Cell::setUScore(bool onoff)
 {
     uscore = onoff;
-    underscore.setPen(QPen(QColor(palette[colNum]), 0));
-
-    if (!fieldStart)
-    {
-        underscore.setVisible(onoff);
-    }
-    else
-    {
-        underscore.setVisible(false);
-    }
-
+    changed = true;
 }
 
 void Cell::setChar(uchar ebcdic)
@@ -134,23 +126,7 @@ void Cell::setCharFromKB(uchar ascii)
 void Cell::setColour(ColourTheme::Colour c)
 {
     colNum = c;
-
-    if (fieldStart)
-    {
-        return;
-    }
-
-    if (reverse)
-    {
-        glyph.setBrush(palette[ColourTheme::Colour::BLACK]);
-        this->setBrush(palette[colNum]);
-    }
-    else
-    {
-        glyph.setBrush(palette[colNum]);
-        underscore.setPen(QPen(palette[colNum], 0));
-        this->setBrush(palette[ColourTheme::Colour::BLACK]);
-    }
+    changed = true;
 }
 
 void Cell::setFieldStart(bool fs)
@@ -188,19 +164,7 @@ void Cell::setProtected(bool p)
 void Cell::setDisplay(bool d)
 {
     display = d;
-
-    if (display)
-    {
-        glyph.setVisible(true);
-        underscore.setVisible(uscore);
-    }
-    else
-    {
-        glyph.setVisible(false);
-        underscore.setVisible(false);
-    }
-
-    glyph.setVisible(true);
+    changed = true;
 }
 
 void Cell::setPenSelect(bool p)
@@ -221,22 +185,7 @@ void Cell::setExtended(bool e)
 void Cell::setReverse(bool r)
 {
     reverse = r;
-
-    if (fieldStart)
-    {
-        return;
-    }
-
-    if (reverse)
-    {
-        this->setBrush(palette[colNum]);
-        glyph.setBrush(palette[ColourTheme::Colour::BLACK]);
-    }
-    else
-    {
-        glyph.setBrush(palette[colNum]);
-        this->setBrush(palette[ColourTheme::Colour::BLACK]);
-    }
+    changed = true;
 }
 
 void Cell::setBlink(bool b)
@@ -357,4 +306,52 @@ void Cell::setFont(QFont f)
     glyph.setTransform(fontScale);
 
     glyph.setFont(f);
+}
+
+void Cell::updateCell()
+{
+    if (!changed)
+    {
+        return;
+    }
+
+    changed = false;
+
+
+    if (!fieldStart)
+    {
+        underscore.setVisible(uscore);
+        if (uscore)
+        {
+            underscore.setPen(QPen(QColor(palette[colNum]), 0));
+        }
+        if (reverse)
+        {
+            glyph.setBrush(palette[ColourTheme::Colour::BLACK]);
+            this->setBrush(palette[colNum]);
+
+        }
+        else
+        {
+            glyph.setBrush(palette[colNum]);
+            this->setBrush(palette[ColourTheme::Colour::BLACK]);
+
+        }
+        if (!display)
+        {
+            glyph.setVisible(false);
+            underscore.setVisible(false);
+        }
+        else
+        {
+            glyph.setVisible(true);
+            underscore.setVisible(uscore);
+        }
+    }
+    else
+    {
+        underscore.setVisible(false);
+        glyph.setBrush(palette[colNum]);
+        this->setBrush(palette[ColourTheme::Colour::BLACK]);
+    }
 }
