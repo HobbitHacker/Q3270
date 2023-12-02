@@ -175,6 +175,8 @@ void ProcessDataStream::processStream(QByteArray &b, bool tn3270e)
 //    screen->dumpDisplay();
     fflush(stdout);
 
+    screen->refresh();
+
 }
 
 void ProcessDataStream::processOrders()
@@ -426,7 +428,7 @@ void ProcessDataStream::processSFE()
 
     foreground = 0;
     background = 0;
-    printf("[StartFieldExtended ");
+//    printf("[StartFieldExtended ");
 
     for(int i = 1; i <= pairs; i++)
     {
@@ -440,12 +442,12 @@ void ProcessDataStream::processSFE()
                 fattr = true;
                 break;
             case IBM3270_EXT_FG_COLOUR:
-                printf("[Extended FG %02X]", value);
+//                printf("[Extended FG %02X]", value);
                 fgset = true;
                 foreground = value;
                 break;
             case IBM3270_EXT_BG_COLOUR:
-                printf("Extended BG %02dX]", value);
+//                printf("Extended BG %02dX]", value);
                 bgset = true;
                 background = value;
                 break;
@@ -453,23 +455,23 @@ void ProcessDataStream::processSFE()
                 switch(value)
                 {
                     case IBM3270_EXT_DEFAULT:
-                        printf("[Highlight Default]");
+//                        printf("[Highlight Default]");
                         reset = true;
                         break;
                     case IBM3270_EXT_HI_NORMAL:
-                        printf("[Reset Extended]");
+//                        printf("[Reset Extended]");
                         reset = true;
                         break;
                     case IBM3270_EXT_HI_BLINK:
-                        printf("[Blink]");
+//                        printf("[Blink]");
                         blink = true;
                         break;
                     case IBM3270_EXT_HI_REVERSE:
-                        printf("[Reverse]");
+//                        printf("[Reverse]");
                         reverse = true;
                         break;
                     case IBM3270_EXT_HI_USCORE:
-                        printf("[Underscore]");
+//                        printf("[Underscore]");
                         uscore = true;
                         break;
                     default:
@@ -514,8 +516,8 @@ void ProcessDataStream::processSFE()
         screen->setExtendedColour(primary_pos, false, background);
     }
 
-    printf("]");
-    fflush(stdout);
+//    printf("]");
+//    fflush(stdout);
 
     lastWasCmd = true;
 
@@ -525,7 +527,7 @@ void ProcessDataStream::processSFE()
 
 void ProcessDataStream::processSBA()
 {
-    printf("[SetBufferAddress ");
+//    printf("[SetBufferAddress ");
     buffer++;
     int tmp_pos = extractBufferAddress();
 
@@ -539,7 +541,7 @@ void ProcessDataStream::processSBA()
 
     primary_y = (primary_pos / screen_x);
     primary_x = primary_pos - (primary_y * screen_x);
-    printf("%d,%d]", primary_x, primary_y);
+//    printf("%d,%d]", primary_x, primary_y);
 
     lastWasCmd = true;
 }
@@ -741,7 +743,7 @@ void ProcessDataStream::processRA()
         return;
     }
 
-    printf("[RepeatToAddress %d to %d (0x%2.2X)]", primary_pos, endPos, newChar);
+//    printf("[RepeatToAddress %d to %d (0x%2.2X)]", primary_pos, endPos, newChar);
     fflush(stdout);
 
     if (endPos <= primary_pos)
@@ -790,11 +792,11 @@ void ProcessDataStream::processEUA()
 
 void ProcessDataStream::processGE()
 {
-    printf("[GraphicEscape ");
+//    printf("[GraphicEscape ");
     screen->setGraphicEscape();
     placeChar((uchar) *++buffer);
-    printf("]");
-    fflush(stdout);
+//    printf("]");
+//    fflush(stdout);
 
     lastWasCmd = false;
 }

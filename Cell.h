@@ -114,6 +114,8 @@ public:
 
     void blinkChar(bool blink);
 
+    void updateCell();
+
 private:
 
     QGraphicsLineItem underscore;
@@ -162,6 +164,9 @@ private:
 
     // Colour of glyph
     ColourTheme::Colour colNum;
+
+    // Cell changed with this data transmission
+    bool changed;
 };
 
 #endif // CELL_H
