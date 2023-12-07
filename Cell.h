@@ -104,10 +104,11 @@ public:
 
     void setFont(QFont f);
 
-    void setCharAttrs(bool c, Cell::CharAttr ca);
+    void setCharAttrs(Cell::CharAttr ca, bool c);
     void resetCharAttrs();
 
-    void copyAttrs(Cell *c);
+    void copy(Cell &c);
+
     void setAttrs(bool prot, bool mdt, bool num, bool pensel, bool blink, bool disp, bool under, bool rev, ColourTheme::Colour col);
 
     void refreshCodePage();
