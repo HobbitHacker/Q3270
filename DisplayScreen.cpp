@@ -65,7 +65,7 @@ DisplayScreen::DisplayScreen(int screen_x, int screen_y, CodePage &cp, ColourThe
 
     // Rubberband; QRubberBand can't be used directly on QGraphicsItems
     QPen myRbPen = QPen();
-    myRbPen.setWidth(1);
+    myRbPen.setWidth(0);
     myRbPen.setBrush(QColor(Qt::yellow));
     myRbPen.setStyle(Qt::DotLine);
 
@@ -259,19 +259,19 @@ void DisplayScreen::setChar(int pos, short unsigned int c, bool move, bool fromK
     {
         if (!charAttr.colour_default)
         {
-            cell.at(pos)->setCharAttrs(true, Cell::COLOUR);
+            cell.at(pos)->setCharAttrs(Cell::COLOUR, true);
         }
         if (!charAttr.blink_default)
         {
-            cell.at(pos)->setCharAttrs(true, Cell::EXTENDED);
+            cell.at(pos)->setCharAttrs(Cell::EXTENDED, true);
         }
         if (!charAttr.reverse_default)
         {
-            cell.at(pos)->setCharAttrs(true, Cell::EXTENDED);
+            cell.at(pos)->setCharAttrs(Cell::EXTENDED, true);
         }
         if (!charAttr.uscore_default)
         {
-            cell.at(pos)->setCharAttrs(true, Cell::EXTENDED);
+            cell.at(pos)->setCharAttrs(Cell::EXTENDED, true);
         }
     }
 
@@ -576,11 +576,14 @@ void DisplayScreen::cascadeAttrs(int pos)
         bool rev   = cell.at(pos)->isReverse();
 
         ColourTheme::Colour col = cell.at(pos)->getColour();
+        ColourTheme::Colour tmpCol;
+
         int i = pos + 1;
         while(i < endPos && !(cell.at(i % screenPos_max)->isFieldStart()))
         {
             int offset = i++ % screenPos_max;
-            cell[offset]->setAttrs(prot, mdt, num, pensel, blink, disp, under, rev, col);
+            tmpCol = cell[offset]->hasCharAttrs(Cell::COLOUR) ? cell[offset]->getColour() : col;
+            cell[offset]->setAttrs(prot, mdt, num, pensel, blink, disp, under, rev, tmpCol);
         }
 }
 
@@ -735,29 +738,13 @@ bool DisplayScreen::insertChar(int pos, unsigned char c, bool insertMode)
             return false;
         }
 
-        bool tmpGE = geActive;
         for(int fld = endPos; fld > pos; fld--)
         {
             int offset = fld % screenPos_max;
             int offsetPrev = (fld - 1) % screenPos_max;
 
-            /* Reset any characters attributes back to the field ones */
-            cell.at(offset)->setColour(cell.at(offsetPrev)->getColour());
-            cell.at(offset)->setUScore(cell.at(offsetPrev)->isUScore());
-            cell.at(offset)->setBlink(cell.at(offsetPrev)->isBlink());
-            cell.at(offset)->setReverse(cell.at(offsetPrev)->isReverse());
-
-            /* Character attributes move with the insert */
-            cell.at(offset)->setCharAttrs(cell.at(offsetPrev)->hasCharAttrs(Cell::CharAttr::EXTENDED), Cell::CharAttr::EXTENDED);
-            cell.at(offset)->setCharAttrs(cell.at(offsetPrev)->hasCharAttrs(Cell::CharAttr::COLOUR), Cell::CharAttr::COLOUR);
-            cell.at(offset)->setCharAttrs(cell.at(offsetPrev)->hasCharAttrs(Cell::CharAttr::CHARSET), Cell::CharAttr::CHARSET);
-            cell.at(offset)->setCharAttrs(cell.at(offsetPrev)->hasCharAttrs(Cell::CharAttr::TRANSPARENCY), Cell::CharAttr::TRANSPARENCY);
-
-            geActive = cell.at(offsetPrev)->isGraphic();
-            setChar(offset, cell.at(offsetPrev)->getEBCDIC(), true, false);
-
+            cell.at(offset)->copy(*(cell.at(offsetPrev)));
         }
-        geActive = tmpGE;
     }
 
     cell.at(thisField)->setMDT(true);
@@ -799,32 +786,11 @@ void DisplayScreen::deleteChar(int pos)
     int endPos = findNextField(pos);
 
     for(int fld = pos; fld < endPos - 1 && cell.at(fld % screenPos_max)->getEBCDIC() != IBM3270_CHAR_NULL; fld++)
-    {
+    {        
         int offset = fld % screenPos_max;
         int offsetNext = (fld + 1) % screenPos_max;
 
-        // Really? moving the fieldstart and field attributes?
-/*        cell.at(offset)->setFieldStart(cell.at(offsetNext)->isFieldStart());
-
-        cell.at(offset)->setProtected(cell.at(offsetNext)->isProtected());
-        cell.at(offset)->setMDT(cell.at(offsetNext)->isMdtOn());
-        cell.at(offset)->setNumeric(cell.at(offsetNext)->isNumeric());
-        cell.at(offset)->setPenSelect(cell.at(offsetNext)->isPenSelect());
-        cell.at(offset)->setDisplay(cell.at(offsetNext)->isDisplay());
-
-        cell.at(offset)->setColour(cell.at(offsetNext)->getColour());
-        cell.at(offset)->setUScore(cell.at(offsetNext)->isUScore());
-        cell.at(offset)->setBlink(cell.at(offsetNext)->isBlink());
-        cell.at(offset)->setReverse(cell.at(offsetNext)->isReverse());
-*/
-        cell.at(offset)->setCharAttrs(cell.at(offsetNext)->hasCharAttrs(Cell::CharAttr::EXTENDED), Cell::CharAttr::EXTENDED);
-        cell.at(offset)->setCharAttrs(cell.at(offsetNext)->hasCharAttrs(Cell::CharAttr::COLOUR), Cell::CharAttr::COLOUR);
-        cell.at(offset)->setCharAttrs(cell.at(offsetNext)->hasCharAttrs(Cell::CharAttr::CHARSET), Cell::CharAttr::CHARSET);
-        cell.at(offset)->setCharAttrs(cell.at(offsetNext)->hasCharAttrs(Cell::CharAttr::TRANSPARENCY), Cell::CharAttr::TRANSPARENCY);
-
-        bool tmpGE = geActive;
-        setChar(offset, cell.at(offsetNext)->getEBCDIC(), true, false);
-        geActive = tmpGE;
+        cell.at(offset)->copy(*(cell.at(offsetNext)));
     }
 
     cell.at(endPos - 1)->setChar(IBM3270_CHAR_NULL);

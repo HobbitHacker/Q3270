@@ -193,7 +193,7 @@ void Cell::setBlink(bool b)
     blink = b;
 }
 
-void Cell::setCharAttrs(bool c, Cell::CharAttr ca)
+void Cell::setCharAttrs(Cell::CharAttr ca, bool c)
 {
     switch(ca)
     {
@@ -237,20 +237,30 @@ void Cell::resetCharAttrs()
     charAttrTransparency = false;
 }
 
-void Cell::copyAttrs(Cell *fromCell)
+void Cell::copy(Cell &fromCell)
 {
-    prot = fromCell->isProtected();
-    mdt = fromCell->isMdtOn();
-    num = fromCell->isNumeric();
-    pen = fromCell->isPenSelect();
-    blink = fromCell->isBlink();
+    prot = fromCell.isProtected();
+    mdt = fromCell.isMdtOn();
+    num = fromCell.isNumeric();
+    pen = fromCell.isPenSelect();
+    setDisplay(fromCell.isDisplay());
 
-    setDisplay(fromCell->isDisplay());
-    setColour(fromCell->getColour());
-    setUScore(fromCell->isUScore());
-    setReverse(fromCell->isReverse());
+    blink = fromCell.isBlink();
 
-    resetCharAttrs();
+    setColour(fromCell.getColour());
+    setUScore(fromCell.isUScore());
+    setReverse(fromCell.isReverse());
+
+    graphic = fromCell.isGraphic();
+
+    setCharAttrs(EXTENDED, fromCell.hasCharAttrs(EXTENDED));
+    setCharAttrs(COLOUR, fromCell.hasCharAttrs(COLOUR));
+    setCharAttrs(TRANSPARENCY, fromCell.hasCharAttrs(TRANSPARENCY));
+    setCharAttrs(CHARSET, fromCell.hasCharAttrs(CHARSET));
+
+    setChar(fromCell.getEBCDIC());
+
+    updateCell();
 }
 
 void Cell::setAttrs(bool prot, bool mdt, bool num, bool pensel, bool blink, bool disp, bool under, bool rev, ColourTheme::Colour col)
