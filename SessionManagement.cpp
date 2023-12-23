@@ -40,17 +40,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ui_AutoStartAdd.h"
 
 /**
- * @brief SessionManagement::SessionManagement
+ * @brief   SessionManagement::SessionManagement - All aspects of Session management
  *
- * This class handles all aspects of Session management:
+ * @details This handles all aspected of Session Management. Saved Sessions contain all settings that
+ *          define a given session. This class allows:
  *
- *    - Save & Load sessions
- *    - Delete session
- *    - Add/Delete to the Autostart list
- *
- * Sessions contain all custom settings
+ *          - Save & Load sessions
+ *          - Delete session
+ *          - Add/Delete to the Autostart list
  */
-
 SessionManagement::SessionManagement(ActiveSettings &activeSettings) :
     QDialog() ,
     activeSettings(activeSettings)
@@ -58,6 +56,11 @@ SessionManagement::SessionManagement(ActiveSettings &activeSettings) :
 
 }
 
+/**
+ * @brief   SessionManagement::~SessionManagement - destructor
+ *
+ * @details Delete any objects obtained via 'new'
+ */
 SessionManagement::~SessionManagement()
 {
 
@@ -69,6 +72,10 @@ SessionManagement::~SessionManagement()
  * --------------------------------------------------------------------------------------
  */
 
+/**
+ * @brief   SessionManagement::saveSessionAs - save a session with a new name
+ * @return  true for OK, false for Cancel
+ */
 bool SessionManagement::saveSessionAs()
 {
     // Build UI
@@ -151,6 +158,13 @@ bool SessionManagement::saveSessionAs()
     }
 }
 
+/**
+ * @brief   SessionManagement::saveSessionNameEdited - enable/disable OK button
+ * @param   name - the session name
+ *
+ * @details Trigerred when the user edits to the session name to disable the OK button when the
+ *          session name is blank.
+ */
 void SessionManagement::saveSessionNameEdited(QString name)
 {
     // If the Session Name is empty, disable the OK button
@@ -164,6 +178,13 @@ void SessionManagement::saveSessionNameEdited(QString name)
     }
 }
 
+/**
+ * @brief   SessionManagement::saveRowClicked - display details about the session
+ * @param   row    - the row clicked
+ * @param   column - the column (not used)
+ *
+ * @details When the user clicks a row in the list of saved sessions, populate text fields
+ */
 void SessionManagement::saveRowClicked(int row, [[maybe_unused]] int column)
 {
     // Populate text fields from table cells
@@ -171,9 +192,10 @@ void SessionManagement::saveRowClicked(int row, [[maybe_unused]] int column)
     save->lineEdit->setText(save->tableWidget->item(row, 1)->text());
 }
 
-/*!
- * \brief SessionManagement::saveSettings
- * \param terminal
+/**
+ * @brief   SessionManagement::saveSettings - save a session
+ *
+ * @details Save the current session, fetching the settings from the current active settings.
  */
 void SessionManagement::saveSettings()
 {
@@ -195,7 +217,7 @@ void SessionManagement::saveSettings()
     s.setValue("CursorBlink", activeSettings.getCursorBlink());
     s.setValue("CursorBlinkSpeed", activeSettings.getCursorBlinkSpeed());
     s.setValue("CursorInheritColour", activeSettings.getCursorColourInherit());
-    s.setValue("Ruler", activeSettings.getRulerOn());
+    s.setValue("Ruler", activeSettings.getRulerState());
     s.setValue("RulerStyle", activeSettings.getRulerStyle());
     s.setValue("Font", activeSettings.getFont().family());
     s.setValue("FontSize", activeSettings.getFont().pointSize());
@@ -215,6 +237,14 @@ void SessionManagement::saveSettings()
  * --------------------------------------------------------------------------------------
  */
 
+/**
+ * @brief   SessionManagement::openSession - open an existing session
+ * @param   t - the terminal
+ * @return  true for OK, false for Cancel
+ *
+ * @details Display a list of sessions for the user to select one to open a saved session. If they
+ *          select one, open and connect to it.
+ */
 bool SessionManagement::openSession(TerminalTab *t)
 {
     // Build UI
@@ -262,6 +292,14 @@ bool SessionManagement::openSession(TerminalTab *t)
     return false;
 }
 
+/**
+ * @brief   SessionManagement::openSession - open a named session
+ * @param   t           - the terminal
+ * @param   sessionName - the session name
+ *
+ * @details Open named sessions, either from the list of saved sessions, or from the most recently used
+ *          list.
+ */
 void SessionManagement::openSession(TerminalTab *t, QString sessionName)
 {
     QSettings s;
@@ -289,6 +327,13 @@ void SessionManagement::openSession(TerminalTab *t, QString sessionName)
     s.endGroup();
 }
 
+/**
+ * @brief   SessionManagement::openRowClicked - enable the OK button
+ * @param   x - not used
+ * @param   y - not used
+ *
+ * @details Enable the OK button when the user clicks on Ok
+ */
 void SessionManagement::openRowClicked([[maybe_unused]] int x, [[maybe_unused]] int y)
 {
     load->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(true);
@@ -301,6 +346,12 @@ void SessionManagement::openRowClicked([[maybe_unused]] int x, [[maybe_unused]] 
  * --------------------------------------------------------------------------------------
  */
 
+/**
+ * @brief   SessionManagement::manageSessions - show the Manage Sessions dialog
+ *
+ * @details Display the dialog allowing the user to delete sessions and to manage the autostart
+ *          list.
+ */
 void SessionManagement::manageSessions()
 {
     // Dialog for sessions management
@@ -331,6 +382,11 @@ void SessionManagement::manageSessions()
     delete manage;
 }
 
+/**
+ * @brief   SessionManagement::deleteSession - delete a session
+ *
+ * @details Delete a session from the config file
+ */
 void SessionManagement::deleteSession()
 {
 
@@ -353,6 +409,13 @@ void SessionManagement::deleteSession()
 
 }
 
+/**
+ * @brief   SessionManagement::manageRowClicked - enable the 'Delete' button
+ * @param   y - the row clicked
+ *
+ * @details When the user clicks on a row in the Manage Sessions dialog, the Delete button
+ *          becomes enabled.
+ */
 void SessionManagement::manageRowClicked([[maybe_unused]] int x, [[maybe_unused]] int y)
 {
     // Enable the Delete Session button when a row is clicked
@@ -365,6 +428,12 @@ void SessionManagement::manageRowClicked([[maybe_unused]] int x, [[maybe_unused]
  * --------------------------------------------------------------------------------------
  */
 
+/**
+ * @brief   SessionManagement::manageAutoStartList - Display the autostart list of sessions
+ *
+ * @details The autostart list of sessions are ones that are started when Q3270 starts up. This
+ *          dialog allows the user to specify which sessions are started.
+ */
 void SessionManagement::manageAutoStartList()
 {
     QSettings settings;
@@ -442,6 +511,13 @@ void SessionManagement::manageAutoStartList()
     delete autostart;
 }
 
+/**
+ * @brief   SessionManagement::autoStartRowAdded - add a new row to the autostart list
+ * @param   row - the row that was added
+ *
+ * @details The autostart list has a new row added, so populate this table with a copy from the
+ *          list of sessions.
+ */
 void SessionManagement::autoStartRowAdded([[maybe_unused]] int row)
 {
     // Insert a new row to Autostart table
@@ -458,12 +534,25 @@ void SessionManagement::autoStartRowAdded([[maybe_unused]] int row)
     autostart->sessionList->setItem(autostart->sessionList->rowCount() - 1, 1, as2);
 }
 
+/**
+ * @brief   SessionManagement::autoStartCellClicked - enable the Delete button
+ * @param   row - unused
+ * @param   col - unused
+ *
+ * @details When a row is clicked in the autostart list, enable the 'Delete' button
+ */
 void SessionManagement::autoStartCellClicked([[maybe_unused]] int row, [[maybe_unused]] int col)
 {
     // Enable Delete button when a cell is selected
     autostart->deleteButton->setEnabled(true);
 }
 
+/**
+ * @brief   SessionManagement::addAutoStart - display the Add to Autostart dialog
+ *
+ * @details The Add to Autostart list shows a list of sessions that the user can select from to be
+ *          started at Q3270 startup.
+ */
 void SessionManagement::addAutoStart()
 {
 
@@ -491,12 +580,24 @@ void SessionManagement::addAutoStart()
     delete add;
 }
 
+/**
+ * @brief   SessionManagement::autoStartAddCellClicked - enable the Add button
+ * @param   x - unused
+ * @param   y - unused
+ *
+ * @details When the user clicks on a row in the table, enable the Add button.
+ */
 void SessionManagement::autoStartAddCellClicked([[maybe_unused]] int x, [[maybe_unused]] int y)
 {
     // Enable OK button
     add->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(true);
 }
 
+/**
+ * @brief   SessionManagement::deleteAutoStart - delete a row from the autostart list
+ *
+ * @details Remove the selected row from the autostart list and disable the Delete button.
+ */
 void SessionManagement::deleteAutoStart()
 {
     // Remove currently selected row
@@ -511,6 +612,13 @@ void SessionManagement::deleteAutoStart()
  * Utility Methods
  */
 
+/**
+ * @brief   SessionManagement::populateTable - populate a table with a list of sessions
+ * @param   table - the widget to be populated
+ *
+ * @details Several dialogs display a list of sessions. This routine populates a given table with the
+ *          list of available sessions.
+ */
 void SessionManagement::populateTable(QTableWidget *table)
 {
     // Extract current Session names and descriptions, and add to table

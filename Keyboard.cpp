@@ -34,7 +34,23 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "Keyboard.h"
 #include "Q3270.h"
-
+/**
+ * @class   Keyboard Keyboard.h
+ * @brief   Keyboard::Keyboard - Keyboard input processing
+ *
+ * @details The Keyboard class is how the keyboard is mapped to various 3270 and Q3270 functions. Each
+ *          function has a name, and can be mapped to a key. There are 4 maps defined, one for normal, one
+ *          for Shift, one for Ctrl and one for Alt (or Meta, depending). Keyboards can be mapped through
+ *          the KeyboardTheme class to store user-defined maps. An internal Factory map which is set in here
+ *          is the default and cannot be updated by the user.
+ *
+ *          Keyboard also handles type-ahead for when the host is still busy, but the user wants to continue
+ *          typing to fill in the next field or enter the next command etc.
+ *
+ *          The Keyboard function map is held as a QMap with the name of the Qt key ("Enter", etc) and
+ *          the target routine (Keyboard::enter, for example). If a key is pressed that doesn't generate
+ *          a normal character, the function map is searched for a matching entry, and if found, called.
+ */
 Keyboard::Keyboard()
 {    
     lock = false;
@@ -49,6 +65,14 @@ Keyboard::Keyboard()
     setMap();
 }
 
+/**
+ * @brief   Keyboard::setMap
+ *
+ * @details Each function in Q3270 is mapped to a routine in Keyboard. These can be modified by the user using
+ *          the KeyboardTheme dialog, and there is a standard internal Factory map.
+ *
+ *          This routine registers all the Q3270 keyboard functions.
+ */
 void Keyboard::setMap()
 {
     functionMap.insert("Enter",&Keyboard::enter);
@@ -114,10 +138,13 @@ void Keyboard::setMap()
     functionMap.insert("Info", &Keyboard::info);
 
     functionMap.insert("Blah", &Keyboard::unlockKeyboard);
-
-    setFactoryMaps();
 }
 
+/**
+ * @brief   Keyboard::clearBufferEntry - clear an entry in the keyboard buffer
+ *
+ * @details This routine clears the logical last entry in the buffer.
+ */
 void Keyboard::clearBufferEntry()
 {
     kbBuffer[bufferEnd].modifiers = Qt::NoModifier;
@@ -127,6 +154,11 @@ void Keyboard::clearBufferEntry()
     kbBuffer[bufferEnd].key = 0;
 }
 
+/**
+ * @brief   Keyboard::lockKeyboard - set the keyboard lock
+ *
+ * @details Set XSystem on the keyboard, and lock it, preventing further keystrokes being processed.
+ */
 void Keyboard::lockKeyboard()
 {
     lock = true;
@@ -135,6 +167,12 @@ void Keyboard::lockKeyboard()
     emit setLock("X System");
 }
 
+/**
+ * @brief   Keyboard::unlockKeyboard - unlock the keyboard
+ *
+ * @details Remove XSystem and renable the keyboard, allowing keys to be processed. As this routine has unlocked
+ *          the keyboard, immediately process any keys in the buffer.
+ */
 void Keyboard::unlockKeyboard()
 {
     lock = false;
@@ -144,6 +182,19 @@ void Keyboard::unlockKeyboard()
     nextKey();
 }
 
+/**
+ * @brief   Keyboard::eventFilter - process keyboard events
+ * @param   dist
+ * @param   event
+ * @return  true if the event was processed, otherwise call the parent eventFilter.
+ *
+ * @details The eventFilter is used to handle keyboard events.  Depending on the key being
+ *          pressed, the event can be processed immediately (as in the case of a normal character)
+ *          or it may be deferred until the key is released (as in the case of, say, CTRL).
+ *
+ *          CTRL needs to be deferred because it may be used as the mapping for Enter, as well
+ *          as being used for Copy (CTRL-C).
+ */
 bool Keyboard::eventFilter( QObject *dist, QEvent *event )
 {
 
@@ -159,8 +210,11 @@ bool Keyboard::eventFilter( QObject *dist, QEvent *event )
 
     // If we need to wait for a key to be released (from a previous key press)
     // check to see if the event was a key press. If so, and it generated a character,
-    // don't wait. This is to stop shifted letters waiting for their release, but allowing
-    // an F-key to wait for its press.
+    // don't wait. This is to stop shifted letters waiting for their release, but enabling CTRL to be
+    // mapped as a key (eg, RESET, ENTER) as well as allowing it to be used for a modified (eg CTRL-C).
+    //
+    // The 3270 display's ENTER key was 'typamatic' (ie, it repeated when held down) but Q3270 does
+    // not support that behaviour for CTRL, SHIFT and the other modifier keys.
 
     bool keyUsed = false;
     if (keyEvent->type() == QEvent::KeyPress)
@@ -196,6 +250,29 @@ bool Keyboard::eventFilter( QObject *dist, QEvent *event )
 
 }
 
+/**
+ * @brief   Keyboard::processKey
+ * @return  true if the key was processed, false if it is ignored
+ *
+ * @details processKey determines whether the current keyboard buffer position contains a key that
+ *          doesn't need to be mapped (as in the case of a standard character key) or whether it is
+ *          mapped to a Q3270 function, and whether they key must be mapped for it to make sense.
+ *
+ *          If the keyboard map contains a mapping for the key, the target function of the key
+ *          is stored in the keyboard buffer, to be processed later by nextKey().
+ *
+ *          Eg, if the Home key is pressed, that must be mapped to a Q3270 function for it to be
+ *          processed, but if it isn't mapped, the key is ignored.
+ *
+ *          The key is stored in the keyboard buffer, and if the key can be processed immediately,
+ *          nextKey is called, but if the keyboard is locked, the current buffer position is incremented
+ *          so that the next key can be stored.
+ *
+ *          The buffer is a wrap-around buffer.
+ *
+ *          If the key is processed or stored in the buffer, processKey returns true, otherwise
+ *          it returns false.
+ */
 bool Keyboard::processKey()
 {
     int key = kbBuffer[bufferEnd].key;
@@ -285,8 +362,22 @@ bool Keyboard::processKey()
     return true;
 }
 
-
-
+/**
+ * @brief   Keyboard::needtoWait - determine if Keyboard needs to wait for another keypress
+ * @param   event - the keyboard event
+ * @return  true if Keyboard needs to wait, false otherwise.
+ *
+ * @details needtoWait determines whether they keypress is one that might have another keypress needed
+ *          to identify the keyboard mapping.
+ *
+ *          The modifier keys (CTRL, SHIFT etc) need another keypress (say SHIFT-A), so the SHIFT keypress
+ *          is not something that can be processed. Note that a press and release of SHIFT could be
+ *          mapped to a Q3270 function (though that would render much of the keyboard broken); a better
+ *          example is the left and right CTRL keys being mapped to RESET and ENTER respectively.
+ *
+ *          needtoWait sets the keyboard buffer map to the appropriate one (eg, the Control map when
+ *          a CTRL key is pressed).
+ */
 bool Keyboard::needtoWait(QKeyEvent *event)
 {
     bool wait;
@@ -301,6 +392,7 @@ bool Keyboard::needtoWait(QKeyEvent *event)
 //            printf("Keyboard        : Storing modifiers %8.8x\n", event->modifiers());
             kbBuffer[bufferEnd].modifiers = event->modifiers();
             kbBuffer[bufferEnd].nativeKey = event->nativeVirtualKey();
+            printf("Keyboard        : Need to wait\n");
             wait = true;
             break;
         default:
@@ -349,6 +441,19 @@ bool Keyboard::needtoWait(QKeyEvent *event)
     return wait;
 }
 
+/**
+ * @brief   Keyboard::nextKey - process the next key in the buffer
+ *
+ * @details nextKey processes the next key in the buffer. The buffer position of the last key
+ *          processed is stored in bufferPos, whereas the logical end of the buffer (ie, the end of the
+ *          keys that are still to be processed) is stored in bufferEnd.
+ *
+ *          If the buffer position contains a mapped key, the routine to process that key is called,
+ *          otherwise the key itself is processed.
+ *
+ *          If the keyboard buffer contains more keys to be processed, and the keyboard isn't locked
+ *          recursively call nextKey().
+ */
 void Keyboard::nextKey()
 {
     if (keyCount > 0)
@@ -383,31 +488,62 @@ void Keyboard::nextKey()
     }
 }
 
+/**
+ * @brief   Keyboard::cursorUp - move the cursor up
+ *
+ * @details Move the cursor up one line
+ */
 void Keyboard::cursorUp()
 {
     emit key_moveCursor(0, -1, Q3270_MOVE_CURSOR_RELATIVE);
 }
 
+/**
+ * @brief   Keyboard::cursorDown - move the cursor down
+ *
+ * @details Move the cursor down one line
+ */
 void Keyboard::cursorDown()
 {
     emit key_moveCursor(0, 1, Q3270_MOVE_CURSOR_RELATIVE);
 }
 
+/**
+ * @brief   Keyboard::cursorUp - move the cursor right
+ *
+ * @details Move the cursor right one character
+ */
 void Keyboard::cursorRight()
 {
     emit key_moveCursor(1, 0, Q3270_MOVE_CURSOR_RELATIVE);
 }
 
+/**
+ * @brief   Keyboard::cursorLeft - move the cursor left
+ *
+ * @details Move the cursor left one character
+ */
 void Keyboard::cursorLeft()
 {
     emit key_moveCursor(-1, 0, Q3270_MOVE_CURSOR_RELATIVE);
 }
 
+/**
+ * @brief   Keyboard::backspace - process a backspace
+ *
+ * @details Perform a backspace function
+ */
 void Keyboard::backspace()
 {
     emit key_Backspace();
 }
 
+/**
+ * @brief   Keyboard::enter - perform the ENTER function
+ *
+ * @details Perform the 3270 ENTER function. Lock the keyboard, and call the AID routine. Switch
+ *          Insert mode off.
+ */
 void Keyboard::enter()
 {
     lockKeyboard();
@@ -418,27 +554,54 @@ void Keyboard::enter()
     emit setInsert(false);
 }
 
+/**
+ * @brief   Keyboard::tab - move the cursor to the next input field
+ *
+ * @details Move the cursor to the next input field after the current position.
+ */
 void Keyboard::tab()
 {
     // Tab, starting at next character position
     emit key_Tab(1);
 }
 
+/**
+ * @brief   Keyboard::backtab - move the cursor to the start of the previous input field
+ *
+ * @details Move the cursor to the start of the previous input field. This may be either the current
+ *          field, if the cursor is not at the start of the field, or the previous field if the cursor
+ *          is at the start of the field.
+ */
 void Keyboard::backtab()
 {
     emit key_Backtab();
 }
 
+/**
+ * @brief   Keyboard::home - move the cursor to the first input field
+ *
+ * @details Move the cursor to the first input field on the screen.
+ */
 void Keyboard::home()
 {
     emit key_Home();
 }
 
+/**
+ * @brief   Keyboard::eraseEOF - clear the rest of the field
+ *
+ * @details Set the rest of the field to nulls
+ */
 void Keyboard::eraseEOF()
 {
     emit key_EraseEOF();
 }
 
+/**
+ * @brief   Keyboard::insert - turn insert mode on
+ *
+ * @details Turn insert mode on and indicate this on the status bar
+ */
 void Keyboard::insert()
 {
     insMode = !(insMode);
@@ -451,11 +614,23 @@ void Keyboard::insert()
 
 }
 
+/**
+ * @brief   Keyboard::deleteKey - delete the next character
+ *
+ * @details Delete the character under the cursor and move the rest of the input field along
+ */
 void Keyboard::deleteKey()
 {
     emit key_Delete();
 }
 
+/**
+ * @brief   Keyboard::functionKey - process an F-key
+ * @param   key - the key that was pressed
+ *
+ * @details functionKey is called when F1-F24 are pressed with the key number. Lock the keyboard,
+ *          and switch insert mode off.
+ */
 void Keyboard::functionKey(int key)
 {
     lockKeyboard();
@@ -466,126 +641,251 @@ void Keyboard::functionKey(int key)
     emit setInsert(false);
 }
 
+/**
+ * @brief   Keyboard::fKey1 - F1
+ *
+ * @details Call functionKey with F1
+ */
 void Keyboard::fKey1()
 {
     functionKey(IBM3270_AID_F1);
 }
 
+/**
+ * @brief   Keyboard::fKey2 - F2
+ *
+ * @details Call functionKey with F2
+ */
 void Keyboard::fKey2()
 {
     functionKey(IBM3270_AID_F2);
 }
 
+/**
+ * @brief   Keyboard::fKey3 - F3
+ *
+ * @details Call functionKey with F3
+ */
 void Keyboard::fKey3()
 {
     functionKey(IBM3270_AID_F3);
 }
 
+/**
+ * @brief   Keyboard::fKey4 - F4
+ *
+ * @details Call functionKey with F4
+ */
 void Keyboard::fKey4()
 {
     functionKey(IBM3270_AID_F4);
 }
 
+/**
+ * @brief   Keyboard::fKey5 - F5
+ *
+ * @details Call functionKey with F5
+ */
 void Keyboard::fKey5()
 {
     functionKey(IBM3270_AID_F5);
 }
 
+/**
+ * @brief   Keyboard::fKey6 - F6
+ *
+ * @details Call functionKey with F6
+ */
 void Keyboard::fKey6()
 {
     functionKey(IBM3270_AID_F6);
 }
 
+/**
+ * @brief   Keyboard::fKey7 - F7
+ *
+ * @details Call functionKey with F7
+ */
 void Keyboard::fKey7()
 {
     functionKey(IBM3270_AID_F7);
 }
 
+/**
+ * @brief   Keyboard::fKey8 - F8
+ *
+ * @details Call functionKey with F8
+ */
 void Keyboard::fKey8()
 {
     functionKey(IBM3270_AID_F8);
 }
 
+/**
+ * @brief   Keyboard::fKey9 - F9
+ *
+ * @details Call functionKey with F9
+ */
 void Keyboard::fKey9()
 {
     functionKey(IBM3270_AID_F9);
 }
 
+/**
+ * @brief   Keyboard::fKey10 - F10
+ *
+ * @details Call functionKey with F10
+ */
 void Keyboard::fKey10()
 {
     functionKey(IBM3270_AID_F10);
 }
 
+/**
+ * @brief   Keyboard::fKey11 - F11
+ *
+ * @details Call functionKey with F11
+ */
 void Keyboard::fKey11()
 {
     functionKey(IBM3270_AID_F11);
 }
 
+/**
+ * @brief   Keyboard::fKey12 - F12
+ *
+ * @details Call functionKey with F12
+ */
 void Keyboard::fKey12()
 {
     functionKey(IBM3270_AID_F12);
 }
 
+/**
+ * @brief   Keyboard::fKey13 - F13
+ *
+ * @details Call functionKey with F13
+ */
 void Keyboard::fKey13()
 {
     functionKey(IBM3270_AID_F13);
 }
 
+/**
+ * @brief   Keyboard::fKey14 - F14
+ *
+ * @details Call functionKey with F14
+ */
 void Keyboard::fKey14()
 {
     functionKey(IBM3270_AID_F14);
 }
 
+/**
+ * @brief   Keyboard::fKey15 - F15
+ *
+ * @details Call functionKey with F15
+ */
 void Keyboard::fKey15()
 {
     functionKey(IBM3270_AID_F15);
 }
 
+/**
+ * @brief   Keyboard::fKey16 - F16
+ *
+ * @details Call functionKey with F16
+ */
 void Keyboard::fKey16()
 {
     functionKey(IBM3270_AID_F16);
 }
 
+/**
+ * @brief   Keyboard::fKey17 - F17
+ *
+ * @details Call functionKey with F17
+ */
 void Keyboard::fKey17()
 {
     functionKey(IBM3270_AID_F17);
 }
 
+/**
+ * @brief   Keyboard::fKey18 - F18
+ *
+ * @details Call functionKey with F18
+ */
 void Keyboard::fKey18()
 {
     functionKey(IBM3270_AID_F18);
 }
 
+/**
+ * @brief   Keyboard::fKey19 - F19
+ *
+ * @details Call functionKey with F19
+ */
 void Keyboard::fKey19()
 {
     functionKey(IBM3270_AID_F19);
 }
 
+/**
+ * @brief   Keyboard::fKey20 - F20
+ *
+ * @details Call functionKey with F20
+ */
 void Keyboard::fKey20()
 {
     functionKey(IBM3270_AID_F20);
 }
 
+/**
+ * @brief   Keyboard::fKey21 - F21
+ *
+ * @details Call functionKey with F21
+ */
 void Keyboard::fKey21()
 {
     functionKey(IBM3270_AID_F21);
 }
 
+/**
+ * @brief   Keyboard::fKey22 - F22
+ *
+ * @details Call functionKey with F22
+ */
 void Keyboard::fKey22()
 {
     functionKey(IBM3270_AID_F22);
 }
 
+/**
+ * @brief   Keyboard::fKey23 - F23
+ *
+ * @details Call functionKey with F23
+ */
 void Keyboard::fKey23()
 {
     functionKey(IBM3270_AID_F23);
 }
 
+/**
+ * @brief   Keyboard::fKey24 - F24
+ *
+ * @details Call functionKey with F24
+ */
 void Keyboard::fKey24()
 {
     functionKey(IBM3270_AID_F24);
 }
 
+/**
+ * @brief   Keyboard::attn - ATTN processing
+ *
+ * @details Attention processing - process ATTN and switch insert mode off
+ */
 void Keyboard::attn()
 {
     emit key_Attn();
@@ -596,6 +896,13 @@ void Keyboard::attn()
     printf("Keyboard        : ATTN pressed\n");
 }
 
+/**
+ * @brief   Keyboard::programaccessKey - process a PAx key
+ * @param   aidKey - the PAx key
+ *
+ * @details programaccessKey is called by PA1-PA3 with the key number. Process the PA key and
+ *          switch insert mode off.
+ */
 void Keyboard::programaccessKey(int aidKey)
 {
     emit key_AID(aidKey, Q3270_SHORT_READ);
@@ -604,26 +911,51 @@ void Keyboard::programaccessKey(int aidKey)
     emit setInsert(false);
 }
 
+/**
+ * @brief   Keyboard::paKey1 - PA1
+ *
+ * @details Call programaccessKey with PA1
+ */
 void Keyboard::paKey1()
 {
     programaccessKey(IBM3270_AID_PA1);
 }
 
+/**
+ * @brief   Keyboard::paKey2 - PA2
+ *
+ * @details Call programaccessKey with PA2
+ */
 void Keyboard::paKey2()
 {
     programaccessKey(IBM3270_AID_PA2);
 }
 
+/**
+ * @brief   Keyboard::paKey3 - PA3
+ *
+ * @details Call programaccessKey with PA3
+ */
 void Keyboard::paKey3()
 {
     programaccessKey(IBM3270_AID_PA3);
 }
 
+/**
+ * @brief   Keyboard::newline - New Line processing
+ *
+ * @details Move the cursor to start of the next line and tab to the next input field
+ */
 void Keyboard::newline()
 {
     emit key_Newline();
 }
 
+/**
+ * @brief   Keyboard::reset - reset the keyboard
+ *
+ * @details Turn off insert mode and XSystem; update status bar accordingly.
+ */
 void Keyboard::reset()
 {
     //TODO: Proper PWAIT/TWAIT handling
@@ -635,26 +967,51 @@ void Keyboard::reset()
     emit setInsert(false);
 }
 
+/**
+ * @brief   Keyboard::endline - move the cursor to the last non-space in the field
+ *
+ * @details Move the cursor to the end of the current input field
+ */
 void Keyboard::endline()
 {
     emit key_End();
 }
 
+/**
+ * @brief   Keyboard::clear - Clear screen process
+ *
+ * @details Clear the screen
+ */
 void Keyboard::clear()
 {
     emit key_AID(IBM3270_AID_CLEAR, Q3270_SHORT_READ);
 }
 
+/**
+ * @brief   Keyboard::copy - copy the selection area to the clipboard
+ *
+ * @details Copy the selection area to the clipboard
+ */
 void Keyboard::copy()
 {
     emit key_Copy();
 }
 
+/**
+ * @brief   Keyboard::ruler - toggle the ruler
+ *
+ * @details Switch the ruler On or Off
+ */
 void Keyboard::ruler()
 {
     emit key_toggleRuler();
 }
 
+/**
+ * @brief   Keyboard::paste - paste from the clipboard
+ *
+ * @details Paste data to the screen from the clipboard
+ */
 void Keyboard::paste()
 {
     clip = QApplication::clipboard();
@@ -677,11 +1034,30 @@ void Keyboard::paste()
     }
 }
 
+/**
+ * @brief   Keyboard::info - show details about the character under the cursor
+ *
+ * @details A debugging routine that will display all the information about the Cell under the cursor
+ */
 void Keyboard::info()
 {
     emit key_showInfo();
 }
 
+/**
+ * @brief   Keyboard::setMapping - set up a keyboard mapping
+ * @param   key      - the key to be mapped
+ * @param   function - the function to be called
+ *
+ * @details setMapping adds a keyboard mapping. It uses Qt-style keyboard notation (Shift+F1) and
+ *          the Q3270 defined names of functions that can be called. The functions are defined in setMap.
+ *
+ *          functionMap contains a list of the available functions and unknown ones are ignored.
+ *
+ *          Recognised modifiers (CTRL, ALT) define which map the function is inserted into.
+ *
+ * @note    At the moment, multiple modifiers (CTRL-ALT-F1) are not supported.
+ */
 void Keyboard::setMapping(QString key, QString function)
 {
     int keyCode;
@@ -752,77 +1128,15 @@ void Keyboard::setMapping(QString key, QString function)
 
 }
 
-void Keyboard::setFactoryMaps()
-{
-    setMapping("Enter", "Enter");
-
-    setMapping("LCtrl", "Reset");
-    setMapping("RCtrl", "Enter");
-
-    setMapping("Insert", "Insert");
-    setMapping("Delete", "Delete");
-
-    setMapping("Up", "Up");
-    setMapping("Down", "Down");
-    setMapping("Left", "Left");
-    setMapping("Right", "Right");
-
-    setMapping("Backspace","Backspace");
-
-    setMapping("Tab", "Tab");
-    setMapping("Backtab", "Backtab");
-    setMapping("Shift+Tab", "Backtab");
-    setMapping("Shift+Backtab", "Backtab");
-
-    setMapping("Home", "Home");
-    setMapping("End", "EraseEOF");
-    setMapping("Return", "NewLine");
-    setMapping("Shift+End", "EndLine");
-
-    setMapping("F1", "F1");
-    setMapping("F2", "F2");
-    setMapping("F3", "F3");
-    setMapping("F4", "F4");
-    setMapping("F5", "F5");
-    setMapping("F6", "F6");
-    setMapping("F7", "F7");
-    setMapping("F8", "F8");
-    setMapping("F9", "F9");
-    setMapping("F10", "F10");
-    setMapping("F11", "F11");
-    setMapping("F12", "F12");
-
-    setMapping("Shift+F1", "F13");
-    setMapping("Shift+F2", "F14");
-    setMapping("Shift+F3", "F15");
-    setMapping("Shift+F4", "F16");
-    setMapping("Shift+F5", "F17");
-    setMapping("Shift+F6", "F18");
-    setMapping("Shift+F7", "F19");
-    setMapping("Shift+F8", "F20");
-    setMapping("Shift+F9", "F21");
-    setMapping("Shift+F10", "F22");
-    setMapping("Shift+F11", "F23");
-    setMapping("Shift+F12", "F24");
-
-    setMapping("Alt+1", "PA1");
-    setMapping("Alt+2", "PA2");
-    setMapping("Alt+3", "PA3");
-
-    setMapping("Escape", "Attn");
-
-    setMapping("PgUp", "F7");
-    setMapping("PgDown", "F8");
-
-    setMapping("Ctrl+Home", "ToggleRuler");
-
-    setMapping("Pause", "Clear");
-
-    setMapping("Ctrl+C", "Copy");
-    setMapping("Ctrl+V", "Paste");
-    setMapping("Ctrl+I", "Info");
-}
-
+/**
+ * @brief   Keyboard::setTheme - set a keyboard theme
+ * @param   keyboardTheme - the keyboard theme
+ * @param   theme         - the theme name
+ *
+ * @details setTheme takes a keyboard map and sets up the mappings of keys to functions.
+ *          Keyboard maps are defined as QMap<QString, QStringList>; each function can have multiple
+ *          keys assigned to it (e.g. F8 and PgDown are both defined to call F8 by default).
+ */
 void Keyboard::setTheme(KeyboardTheme &keyboardTheme, QString theme)
 {
     // Switch to a new keyboard map based on the theme
@@ -853,6 +1167,13 @@ void Keyboard::setTheme(KeyboardTheme &keyboardTheme, QString theme)
     }
 }
 
+/**
+ * @brief   Keyboard::setConnected - invoked when connection status changes
+ * @param   state - true for connected, false for not
+ *
+ * @details setConnected is triggered when the connection is opened or closed so Keyboard knows
+ *          when to process keys.
+ */
 void Keyboard::setConnected(bool state)
 {
     connectedState = state;

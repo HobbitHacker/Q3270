@@ -66,7 +66,7 @@ class DisplayScreen : public QObject, public QGraphicsRectItem
         qreal gridWidth();
         qreal gridHeight();
 
-        void setChar(int pos, short unsigned int c, bool move, bool fromKB);
+        void setChar(int pos, short unsigned int c, bool fromKB);
         void setCharAttr(unsigned char c, unsigned char d);
 
         void resetExtendedHilite(int pos);

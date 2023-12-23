@@ -36,6 +36,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "KeyboardTheme.h"
 #include "ui_KeyboardTheme.h"
 
+/**
+ * @brief   KeyboardTheme::KeyboardTheme - Keyboard Theme handling
+ * @param   parent - parent widget
+ *
+ * @details KeyboardTheme handles the processing of Keyboard themes. The constructor
+ *          creates the internal Factory keyboard map, along with any additional themes from the
+ *          config file, and then populates the dialog box with the list of themes.
+ */
 KeyboardTheme::KeyboardTheme(QWidget *parent) : QDialog(parent), ui(new Ui::KeyboardTheme)
 {   
     ui->setupUi(this);
@@ -197,12 +205,26 @@ KeyboardTheme::KeyboardTheme(QWidget *parent) : QDialog(parent), ui(new Ui::Keyb
     lastSeq = -1;
 }
 
+/**
+ * @brief   KeyboardTheme::getThemes - return a list of themes
+ * @return  A QStringList of theme names
+ *
+ * @details Extract a list of available themes
+ */
 QStringList KeyboardTheme::getThemes()
 {
     // Return a list of themes
     return themes.keys();
 }
 
+/**
+ * @brief   KeyboardTheme::getTheme - return the named KeyboardTheme
+ * @param   keyboardThemeName - the name of theme
+ * @return  The KeyboardTheme requested, or Factory if it doesn't exist
+ *
+ * @details Return the requested Keyboard theme, and if it doesn't exist, return the
+ *          factory one instead.
+ */
 KeyboardTheme::KeyboardMap KeyboardTheme::getTheme(QString keyboardThemeName)
 {
     // Return theme, if it exists in the list, else return the Factory theme
@@ -216,6 +238,13 @@ KeyboardTheme::KeyboardMap KeyboardTheme::getTheme(QString keyboardThemeName)
     }
 }
 
+/**
+ * @brief   KeyboardTheme::setTheme - set the currently displayed theme
+ * @param   newTheme - the theme name
+ *
+ * @details Set the theme displayed by the dialog. If the theme doesn't exist, show the Factory
+ *          one instead.
+ */
 void KeyboardTheme::setTheme(QString newTheme)
 {
     // If we don't know the name of the theme, fall back to Factory. This allows users to delete themes, but
@@ -244,6 +273,14 @@ void KeyboardTheme::setTheme(QString newTheme)
     ui->message->clear();
 }
 
+/**
+ * @brief   KeyboardTheme::populateTable - populate the dialog table with the theme
+ * @param   table   - the dialog table widget
+ * @param   mapName - the keyboard theme
+ *
+ * @details Populate the dialog table with the requested theme. This is used both in the Preferences
+ *          dialog to show the theme, and in the KeyboardTheme editor.
+ */
 void KeyboardTheme::populateTable(QTableWidget *table, QString mapName)
 {
     // Clear keyboard map table in dialog
@@ -269,9 +306,15 @@ void KeyboardTheme::populateTable(QTableWidget *table, QString mapName)
     table->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
 }
 
+/**
+ * @brief   KeyboardTheme::themeChanged - the user selected a different theme
+ * @param   index - the index of the theme selected
+ *
+ * @details This slot is signalled when the user selects a different theme in the drop-down list
+ *          in the dialog.
+ */
 void KeyboardTheme::themeChanged(int index)
 {
-
     // Save new index
     currentThemeIndex = index;
 
@@ -298,9 +341,19 @@ void KeyboardTheme::themeChanged(int index)
     }
 }
 
+/**
+ * @brief   KeyboardTheme::addTheme - add a new theme
+ *
+ * @details Called when the user clicks the New Theme button. A dialog box is presented with a
+ *          new theme name; there is a slot connected to this field to ensure it is unique and
+ *          the OK button is only enabled when it is. The initially selected new theme name is
+ *          "New Theme " concatenated to the first non-existent number (ie, "New Theme 1" or
+ *          "New Theme 2" etc).
+ *
+ *          The new theme is copied from the currently displayed one.
+ */
 void KeyboardTheme::addTheme()
 {
-
     QString newName = "New Theme";
 
     // Create unique name for new theme
@@ -333,7 +386,12 @@ void KeyboardTheme::addTheme()
     }
 }
 
-
+/**
+ * @brief   KeyboardTheme::checkDuplicate - check for a duplicate theme name
+ *
+ * @details This slot is triggered by the user modifying the input field for the new theme name. If the
+ *          name doesn't exist in the list of themes, the OK button is enabled, otherwise it's disabled.
+ */
 void KeyboardTheme::checkDuplicate()
 {
     // Check if new theme name being entered is a unique value
@@ -350,6 +408,11 @@ void KeyboardTheme::checkDuplicate()
 
 }
 
+/**
+ * @brief   KeyboardTheme::deleteTheme - remove the theme from the list
+ *
+ * @details Delete a theme from the list of available themes.
+ */
 void KeyboardTheme::deleteTheme()
 {
     // Remove theme from lists
@@ -357,6 +420,12 @@ void KeyboardTheme::deleteTheme()
     ui->keyboardThemes->removeItem(currentThemeIndex);
 }
 
+/**
+ * @brief   KeyboardTheme::exec - display the dialog
+ * @return  The button pressed to exit the dialog
+ *
+ * @details Save the state of the themes and then display the dialog.
+ */
 int KeyboardTheme::exec()
 {
     // Save the initial state, to be restored should the user press cancel
@@ -367,6 +436,12 @@ int KeyboardTheme::exec()
     return QDialog::exec();
 }
 
+/**
+ * @brief   KeyboardTheme::accept - OK button processing
+ *
+ * @details Called when the user presses the OK button to accept the changes they've made.
+ *          The KeyboardThemes are all written to the config file.
+ */
 void KeyboardTheme::accept()
 {
     // Save settings
@@ -421,6 +496,11 @@ void KeyboardTheme::accept()
 
 }
 
+/**
+ * @brief   KeyboardTheme::reject - Cancel button processing
+ *
+ * @details The user pressed the Cancel button. Restore the previously saved themes.
+ */
 void KeyboardTheme::reject()
 {
     // Restore initial state
@@ -434,6 +514,15 @@ void KeyboardTheme::reject()
     QDialog::reject();
 }
 
+/**
+ * @brief   KeyboardTheme::populateKeySequence - display the key sequence from the table
+ * @param   item - the table
+ *
+ * @details When the keyboard mapping table is displayed, the user can click on a row
+ *          to populate the mapping fields at the bottom of the dialog. If multiple mappings
+ *          are in place (F8, PgDown both mapped to F8), this routine will cycle through them
+ *          each time the row is clicked.
+ */
 void KeyboardTheme::populateKeySequence(QTableWidgetItem *item)
 {
     //NOTE: This doesn't handle the custom left-ctrl/right-ctrl stuff
@@ -485,6 +574,14 @@ void KeyboardTheme::populateKeySequence(QTableWidgetItem *item)
 
 }
 
+/**
+ * @brief   KeyboardTheme::setKey - set the key mapping
+ *
+ * @details When the user clicks the 'Set Mapping' button, this routine populates the keyboard map
+ *          with the desired settings. The map is searched for an existing mapping, and if present, it
+ *          is removed (it's not possible to map the same key to two different functions). Finally, the
+ *          key sequence is stored in the map, and the table is rebuilt.
+ */
 void KeyboardTheme::setKey()
 {
     // Search through the theme to find out if the key is already mapped
@@ -523,10 +620,16 @@ void KeyboardTheme::setKey()
     // Update themes
     themes[currentTheme] = theme;
 
-    // Rebuild the table display (probably inefficient)
+    // Rebuild the table display (probably an inefficient way to do that)
     setTheme(currentTheme);
 }
 
+/**
+ * @brief   KeyboardTheme::truncateShortcut - remove any additional key sequences
+ *
+ * @details Qt allows multiple key sequences, but Q3270 is only interested in the first.
+ *          Truncate the incoming sequence to just the first.
+ */
 void KeyboardTheme::truncateShortcut()
 {
     // Use only the first key sequence the user pressed

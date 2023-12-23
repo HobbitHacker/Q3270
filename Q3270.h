@@ -213,4 +213,6 @@ enum Indicators {
 #define Q3270_NOT_SHORT_READ false
 #define Q3270_SHORT_READ true
 
+#define Q3270_
+
 #endif // N3270_H

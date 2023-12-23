@@ -56,8 +56,8 @@ class ActiveSettings : public QObject
         void setHostAddress(QString hostName, int port, QString hostLU);
         void setHostAddress(QString address);
 
-        bool getRulerOn()                                { return rulerOn; }
-        void setRulerOn(bool rulerOn);
+        bool getRulerState()                             { return rulerState; }
+        void setRulerState(bool rulerOn);
 
         int getRulerStyle()                              { return ruler; }
         void setRulerStyle(int r);
@@ -151,7 +151,7 @@ class ActiveSettings : public QObject
         bool backspaceStop;                 // Whether backspace stops at the field start position
         bool cursorColourInherit;           // Whether the cursor colour matches the colour of the character underneath
 
-        bool rulerOn;                       // Whether crosshairs are shown
+        bool rulerState;                    // Whether crosshairs are shown
         int ruler;                          // Type of crosshairs, when shown
 
         bool cursorBlink;                   // Whether the cursor blinks

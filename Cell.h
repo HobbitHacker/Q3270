@@ -60,8 +60,6 @@ public:
         TRANSPARENCY
     };
 
-    int type() const;
-
     void setChar(uchar ebcdic);
     void setCharFromKB(uchar ascii);
 
@@ -98,7 +96,7 @@ public:
     void setPenSelect(bool p);
     void setIntensify(bool i);
     void setExtended(bool e);
-    void setUScore(bool u);
+    void setUnderscore(bool u);
     void setReverse(bool r);
     void setBlink(bool b);
 

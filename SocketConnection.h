@@ -51,7 +51,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <arpa/telnet.h>
 
-#include "Q3270.h"
 #include "ProcessDataStream.h"
 
 class QHostAddress;

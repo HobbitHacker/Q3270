@@ -38,12 +38,36 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Q3270.h"
 #include "DisplayScreen.h"
 
+
+
 /*
+ * 
  * DisplayScreen represents a screen of the 3270 display. The class handles the display matrix.
  *
  * This is created by TerminalTab.
  */
 
+/**
+ * @brief   DisplayScreen::DisplayScreen - the 3270 display matrix, representing primary or alternate screens.
+ * @param   screen_x - the width of the screen
+ * @param   screen_y - the height of the screen
+ * @param   cp       - the codepage being used
+ * @param   palette  - the colour theme being used
+ * @param   scene    - the parent scene to which this belongs to
+ * 
+ * @details DisplayScreen manages the 3270 display matrix. It is responsible for placing characters on
+ *          the screen and for managing fields, graphic escape, attributes and so on. 
+ *          
+ *          The screen is defined as a 640x480 QGraphicsRectItem, inside of which is each character, screen_x
+ *          by screen_y dimensions. 640x480 was chosen as a reasonable size (3270 screens had a ratio of 4:3)
+ *          and which could be automatically scaled by Qt as required. The size of each cell is calculated
+ *          as a part of the 640x480 size. 
+ *          
+ *          DisplayScreen handles the crosshairs (the ruler, which tracks where the cursor is), the
+ *          status bar, which shows the cursor position and the insert mode, along with X System.
+ *          
+ *          It also manages the rubberband for selecting, copying and pasting sections of the screen. 
+ */
 DisplayScreen::DisplayScreen(int screen_x, int screen_y, CodePage &cp, ColourTheme::Colours &palette, QGraphicsScene *scene) : cp(cp), palette(palette), screen_x(screen_x), screen_y(screen_y)
 {
 
@@ -165,30 +189,78 @@ DisplayScreen::DisplayScreen(int screen_x, int screen_y, CodePage &cp, ColourThe
     scene->addItem(this);
 }
 
+/**
+ * @brief   DisplayScreen::~DisplayScreen
+ * 
+ * @details Not sure we need this!
+ */
 DisplayScreen::~DisplayScreen()
 {
 }
 
+/**
+ * @brief   DisplayScreen::width - return the width of the screen
+ * @return  the width passed to the constructor
+ * 
+ * @details width is called to extract the horizontal size of the screen. It is used by the
+ *          Read Partition (Query) structure field which responds to the host with the capabilities
+ *          of the terminal. 
+ */
 int DisplayScreen::width()
 {
     return screen_x;
 }
 
+/**
+ * @brief   DisplayScreen::height - return the height the screen
+ * @return  the height passed to the constructor
+ * 
+ * @details width is called to extract the vertical size of the screen. It is used by the
+ *          Read Partition (Query) structure field which responds to the host with the capabilities
+ *          of the terminal. 
+ */
 int DisplayScreen::height()
 {
     return screen_y;
 }
 
+/**
+ * @brief   DisplayScreen::gridWidth - return the width of a cell on the screen
+ * @return  the width of the character cell
+ * 
+ * @details width is called to extract the horizontal cell size. It is used by the
+ *          Read Partition (Query) structure field which responds to the host with the capabilities
+ *          of the terminal. 
+ *          
+ *          The cell size is calculated as 640 / screen_x.
+ */
 qreal DisplayScreen::gridWidth()
 {
     return gridSize_X;
 }
 
+/**
+ * @brief   DisplayScreen::gridHeight - return the height of a cell on the screen
+ * @return  the height of the character cell
+ * 
+ * @details width is called to extract the vertical cell size. It is used by the
+ *          Read Partition (Query) structure field which responds to the host with the capabilities
+ *          of the terminal. 
+ *          
+ *          The cell size is calculated as 480 / screen_y.
+ */
 qreal DisplayScreen::gridHeight()
 {
     return gridSize_Y;
 }
 
+/**
+ * @brief   DisplayScreen::setFont - change the font on the screen
+ * @param   font - the new font
+ * 
+ * @details setFont is called when the user has changed the font that is used to display the
+ *          characters on the screen. Each cell is updated with the new font. 
+ */
 void DisplayScreen::setFont(QFont font)
 {
     for (int i = 0; i < screenPos_max; i++)
@@ -197,6 +269,12 @@ void DisplayScreen::setFont(QFont font)
     }
 }
 
+/**
+ * @brief   DisplayScreen::setCodePage - change the codepage used to show the characters on screen
+ * 
+ * @details The codepage is shared across Q3270, so when it is changed, each cell just needs to be
+ *          updated with the new codepage. 
+ */
 void DisplayScreen::setCodePage()
 {
     for (int i = 0; i < screenPos_max; i++)
@@ -205,6 +283,12 @@ void DisplayScreen::setCodePage()
     }
 }
 
+/**
+ * @brief   DisplayScreen::resetColours - set the colours of each cell
+ * 
+ * @details resetColours updates each cell with the modified colour palette. This is called
+ *          when the user has changed the colour palette. 
+ */
 void DisplayScreen::resetColours()
 {
    for (int i = 0; i < screenPos_max; i++)
@@ -213,6 +297,15 @@ void DisplayScreen::resetColours()
     }
 }
 
+
+/**
+ * @brief   DisplayScreen::clear - clear the screen
+ * 
+ * @details clear is called at first 'power on', when the EW or EWA commands are received, and also
+ *          when the user presses the Clear button. 
+ *          
+ *          All fields are wiped, all attributes are reset and the display is filled with nulls. 
+ */
 void DisplayScreen::clear()
 {
     for(int i = 0; i < screenPos_max; i++)
@@ -227,11 +320,9 @@ void DisplayScreen::clear()
         cell.at(i)->setIntensify(false);
 
         cell.at(i)->setExtended(false);
-        cell.at(i)->setUScore(false);
+        cell.at(i)->setUnderscore(false);
         cell.at(i)->setReverse(false);
         cell.at(i)->setBlink(false);
-
-        cell.at(i)->resetCharAttrs();
 
         cell.at(i)->setColour(ColourTheme::GREEN);
 
@@ -244,7 +335,21 @@ void DisplayScreen::clear()
     unformatted = true;
 }
 
-void DisplayScreen::setChar(int pos, short unsigned int c, bool move, bool fromKB)
+/**
+ * @brief   DisplayScreen::setChar - place a character on the screen
+ * @param   pos    - the cell in which to place the character
+ * @param   c      - the character to be set
+ * @param   fromKB - whether the character was generated by the keyboard
+ * 
+ * @details setChar is called whenever a character is to be placed on the screen. This can be either from
+ *          the incoming 3270 data stream, or from the keyboard. Whichever method generated the call, 
+ *          any field start is removed (this can only happen from the datastream, because field starts
+ *          are protected by nature). Any character attributes previously present in the cell are removed.
+ *          
+ *          The field containing the character is used to determine the colour of the character, unless
+ *          character attributes are in effect.
+ */
+void DisplayScreen::setChar(int pos, short unsigned int c, bool fromKB)
 {
 
     cell.at(pos)->setFieldStart(false);
@@ -295,75 +400,90 @@ void DisplayScreen::setChar(int pos, short unsigned int c, bool move, bool fromK
 
     geActive = false;
 
-    // If the character is not moving (as part of a delete/insert action) set character attributes if applicable
-    // Character attributes move with the character otherwise.
-    if (!move)
+    // If character colour attributes are present, use them
+    if (cell.at(pos)->hasCharAttrs(Cell::CharAttr::COLOUR))
     {
-        // If character colour attributes are present, use them
-        if (cell.at(pos)->hasCharAttrs(Cell::CharAttr::COLOUR))
+        // Colour
+        if (!charAttr.colour_default)
         {
-            // Colour
-            if (!charAttr.colour_default)
-            {
-                cell.at(pos)->setColour(charAttr.colNum);
-            }
-            else
-            {
-                cell.at(pos)->setColour(cell.at(fieldAttr)->getColour());
-            }
+            cell.at(pos)->setColour(charAttr.colNum);
         }
         else
         {
             cell.at(pos)->setColour(cell.at(fieldAttr)->getColour());
         }
+    }
+    else
+    {
+        cell.at(pos)->setColour(cell.at(fieldAttr)->getColour());
+    }
 
-        if (cell.at(pos)->hasCharAttrs(Cell::CharAttr::EXTENDED))
+    if (cell.at(pos)->hasCharAttrs(Cell::CharAttr::EXTENDED))
+    {
+        // Reverse video
+        if (!charAttr.reverse_default)
         {
-            // Reverse video
-            if (!charAttr.reverse_default)
-            {
-                cell.at(pos)->setReverse(charAttr.reverse);
-            }
-            else
-            {
-                cell.at(pos)->setReverse(cell.at(fieldAttr)->isReverse());
-            }
-
-            // Underscore
-            if (!charAttr.uscore_default)
-            {
-                cell.at(pos)->setUScore(charAttr.uscore);
-            }
-            else
-            {
-                cell.at(pos)->setUScore(cell.at(fieldAttr)->isUScore());
-            }
-
-            // Blink
-            if (!charAttr.blink_default)
-            {
-                cell.at(pos)->setBlink(charAttr.blink);
-            }
-            else
-            {
-                cell.at(pos)->setBlink(cell.at(fieldAttr)->isBlink());
-            }
+            cell.at(pos)->setReverse(charAttr.reverse);
         }
         else
         {
-            cell.at(pos)->setUScore(cell.at(fieldAttr)->isUScore());
             cell.at(pos)->setReverse(cell.at(fieldAttr)->isReverse());
+        }
+
+        // Underscore
+        if (!charAttr.uscore_default)
+        {
+            cell.at(pos)->setUnderscore(charAttr.uscore);
+        }
+        else
+        {
+            cell.at(pos)->setUnderscore(cell.at(fieldAttr)->isUScore());
+        }
+
+        // Blink
+        if (!charAttr.blink_default)
+        {
+            cell.at(pos)->setBlink(charAttr.blink);
+        }
+        else
+        {
             cell.at(pos)->setBlink(cell.at(fieldAttr)->isBlink());
         }
     }
-
+    else
+    {
+        cell.at(pos)->setUnderscore(cell.at(fieldAttr)->isUScore());
+        cell.at(pos)->setReverse(cell.at(fieldAttr)->isReverse());
+        cell.at(pos)->setBlink(cell.at(fieldAttr)->isBlink());
+    }
 }
 
+/**
+ * @brief   DisplayScreen::getChar - return the ASCII character in the cell
+ * @param   pos - the cell to retreive the character from
+ * @return  the ASCII character
+ *
+ * @details getChar returns the ASCII character in the cell specified. This is used
+ *          by the Endline function to find the first non-blank at the end of the line.
+ */
 unsigned char DisplayScreen::getChar(int pos)
 {
     return (cell.at(pos)->getChar().toLatin1());
 }
 
+/**
+ * @brief   DisplayScreen::setCharAttr - set character attributes
+ * @param   extendedType  - the character attribute to set
+ * @param   extendedValue - the value
+ *
+ * @details setCharAttr is called when the SA order is encountered in the 3270 data stream.
+ *          SA orders set the character attributes for the next characters placed on the screen
+ *          until one of the conditions turns them off.
+ *
+ *          SA orders have two bytes; the attribute type, and the value.
+ *
+ * @note    There are more character attributes than Q3270 currently supports.
+ */
 void DisplayScreen::setCharAttr(unsigned char extendedType, unsigned char extendedValue)
 {
 //    printf("[SetAttribute ");
@@ -455,6 +575,12 @@ void DisplayScreen::setCharAttr(unsigned char extendedType, unsigned char extend
 
 }
 
+/**
+ * @brief   DisplayScreen::resetCharAttr - set character attributes to default
+ *
+ * @details Character attributes are reset when another 3270 write command is sent or the
+ *          Clear key is pressed.
+ */
 void DisplayScreen::resetCharAttr()
 {
     charAttr.blink_default = true;
@@ -465,11 +591,42 @@ void DisplayScreen::resetCharAttr()
     useCharAttr = false;
 }
 
+/**
+ * @brief   DisplayScreen::setGraphicEscape - indicate that the next character is a graphic one
+ *
+ * @details The 3270 Graphic Escape order means that the next character is selected from the internal
+ *          0310 code page.
+ */
 void DisplayScreen::setGraphicEscape()
 {
     geActive = true;
 }
 
+/**
+ * @brief   DisplayScreen::setField - Start Field or Start Field Extended
+ * @param   pos - the position on screen
+ * @param   c   - the field attribute byte that controls protected, numeric and others
+ * @param   sfe - true for a Start Field Extended
+ *
+ * @details setField marks the beginning of a 3270 field. The Field Attribute byte takes the
+ *          following form:
+ *
+ *          Bit | Function
+ *          --- | --------
+ *          0,1 | These two bits combine to make the field attribute a valid EBCDIC character
+ *            2 | Field is protected if set to 1
+ *            3 | Field is numeric if set to 1
+ *          4,5 | 00 - Display, non-light pen detectable
+ *            ^ | 01 - Display, light pen detectable
+ *            ^ | 10 - Intensified, light pen detectable
+ *            ^ | 11 - Non-display, non light pen detectable
+ *            6 | Reserved. Must be 0.
+ *            7 | MDT flag. Set when a field is modified
+ *
+ *          setField characters are always displayed as nulls. When a Start Field (or SFE) is
+ *          encountered, the characters following the field are modified to reflect the field
+ *          attribute via the cascadeAttrs function.
+ */
 void DisplayScreen::setField(int pos, unsigned char c, bool sfe)
 {
     // At least one field is defined
@@ -491,9 +648,6 @@ void DisplayScreen::setField(int pos, unsigned char c, bool sfe)
     cell.at(pos)->setMDT(mdt);
     cell.at(pos)->setExtended(sfe);
     cell.at(pos)->setFieldStart(true);
-
-    // Field attributes do not have character attributes
-    cell.at(pos)->resetCharAttrs();
 
     // Fields are set to 0x00
     cell.at(pos)->setChar(IBM3270_CHAR_NULL);
@@ -562,6 +716,14 @@ void DisplayScreen::setField(int pos, unsigned char c, bool sfe)
 */
 }
 
+/**
+ * @brief   DisplayScreen::cascadeAttrs - cascade a field attribute to the cells in the field
+ * @param   pos - the position of the field
+ *
+ * @details When a field is set on the display, all the character cells following it inherit the field
+ *          attributes. This routine copies the field attributes to the cells in the field until the next
+ *          field start.
+ */
 void DisplayScreen::cascadeAttrs(int pos)
 {
         int endPos = pos + screenPos_max;
@@ -587,6 +749,20 @@ void DisplayScreen::cascadeAttrs(int pos)
         }
 }
 
+/**
+ * @brief   DisplayScreen::refresh - process any changes to cells
+ *
+ * @details When characters are sent to the screen, they may modify colour, underscore, or reverse
+ *          settings. These require Qt calls which, when issued repeatedly for the same cell, are
+ *          expensive in processing time.
+ *
+ *          This occurs because a Srart Field modofies all following characters until the next
+ *          Field Start; the very first field on a screen, therefore, modifies the rest of the screen.
+ *          The next field modifies some of those cells again, and so on.
+ *
+ *          Performing the Qt operations multiple times for the same cell has a negative performance
+ *          impact, so the Qt operations are performed just once when the data stream is complete.
+ */
 void DisplayScreen::refresh()
 {
         for (int i = 0; i < screenPos_max; i++)
@@ -595,6 +771,14 @@ void DisplayScreen::refresh()
         }
 }
 
+/**
+ * @brief   DisplayScreen::resetExtended - reset extended attributes ready for a Start Field Extended
+ * @param   pos - the field position
+ *
+ * @details When a SFE order is encountered, there is no way to know which attributes will be set in the
+ *          extended attribute pairs that follow the SFE, so this routine makea sure that any existing
+ *          attribute settings are cleared before processing the pairs.
+ */
 void DisplayScreen::resetExtended(int pos)
 {
     resetExtendedHilite(pos);
@@ -608,14 +792,29 @@ void DisplayScreen::resetExtended(int pos)
     cell.at(pos)->setProtected(false);
 }
 
-
+/**
+ * @brief   DisplayScreen::resetExtendedHilite - reset the extended highlighting
+ * @param   pos - the position on screen
+ *
+ * @details Extended attribute pairs may set the highlighting to default or reset it. In both
+ *          cases, this routine is used to switch off any existing highlighting.
+ */
 void DisplayScreen::resetExtendedHilite(int pos)
 {
-    cell.at(pos)->setUScore(false);
+    cell.at(pos)->setUnderscore(false);
     cell.at(pos)->setBlink(false);
     cell.at(pos)->setReverse(false);
 }
 
+/**
+ * @brief   DisplayScreen::setExtendedColour - set the extended colour attributes
+ * @param   pos        - screen position
+ * @param   foreground - foreground or background (true for foreground)
+ * @param   c          - the colour to set
+ *
+ * @details When the extended attribute pair is a set foreground colour or set background colour,
+ *          this routine modifies the colour accordingly.
+ */
 void DisplayScreen::setExtendedColour(int pos, bool foreground, unsigned char c)
 {
     //TODO: Invalid colours?
@@ -631,29 +830,52 @@ void DisplayScreen::setExtendedColour(int pos, bool foreground, unsigned char c)
     }*/
 }
 
+/**
+ * @brief   DisplayScreen::setExtendedBlink - switch blink on
+ * @param   pos - screen position
+ *
+ * @details Set the cell at position to blink. Blink, Reverse and Uunderscore are mutually exclusive.
+ */
 void DisplayScreen::setExtendedBlink(int pos)
 {
+    // FIXME: Whast about underscore?
     cell.at(pos)->setReverse(false);
     cell.at(pos)->setBlink(true);
 //    printf("[Blink]");
 }
 
+/**
+ * @brief   DisplayScreen::setExtendedReverse - switch reverse on
+ * @param   pos - screen position
+ *
+ * @details Set the cell at position to reverse. Blink, Reverse and Uunderscore are mutually exclusive.
+ */
 void DisplayScreen::setExtendedReverse(int pos)
 {
+    // FIXME: What about underscore?
     cell.at(pos)->setBlink(false);
     cell.at(pos)->setReverse(true);
 //    printf("[Reverse]");
 }
 
+/**
+ * @brief   DisplayScreen::setExtendedUscore - switch underscore on
+ * @param   pos - screen position
+ *
+ * @details Set the cell at position to underscore. Blink, Reverse and Uunderscore are mutually exclusive.
+ */
 void DisplayScreen::setExtendedUscore(int pos)
 {
-    cell.at(pos)->setUScore(true);
+    // FIXME: What about blink and reverse?
+    cell.at(pos)->setUnderscore(true);
 //    printf("[UScore]");
 }
 
-/* Reset all MDTs in the display; it's probably faster to just loop through the entire buffer
- * rather than calling findNextField()
+/**
+ * @brief   DisplayScreen::resetMDTs - reset all the MDTs on the screen
  *
+ * @details Reset all MDTs in the display; it's probably faster to just loop through the entire buffer
+ *          rather than calling findNextField()
  */
 void DisplayScreen::resetMDTs()
 {
@@ -668,13 +890,18 @@ void DisplayScreen::resetMDTs()
 }
 
 /**
- * @brief DisplayScreen::insertChar
- *        Inserts or overwrites a character at the specified position, resetting field attributes if
- *        required.
- * @param pos - position at which to insert character
- * @param c - character to be inserted
- * @param insertMode - true for insert, false for overtype
- * @return true if insert was successful, false if field protected or not enough space for insert mode
+ * @brief   DisplayScreen::insertChar - Inserts or overwrites the character at the specified position
+ * @param   pos        - position at which to insert character
+ * @param   c          - character to be inserted
+ * @param   insertMode - true for insert, false for overtype
+ *
+ * @return  true if insert was successful, false if field protected or not enough space for insert mode
+ *
+ * @details insertChar is used when a character is entered from the keyboard. if Insert mode is on,
+ *          the existing characters to the right of the Cell at pos are shifted right by one Cell if there
+ *          is a space or a null at the end. The character is then inserted into the space at pos.
+ *
+ *          If there isn't enough space, insertChar returns false, otherwise it returns true.
  */
 bool DisplayScreen::insertChar(int pos, unsigned char c, bool insertMode)
 {
@@ -749,31 +976,56 @@ bool DisplayScreen::insertChar(int pos, unsigned char c, bool insertMode)
 
     cell.at(thisField)->setMDT(true);
 
-    setChar(pos, c, false, true);
+    setChar(pos, c, true);
 
     return true;
 }
 
 /**
- * \class DisplayScreen::isAskip
+ * @brief   DisplayScreen::isAskip - does this Cell have autoskip enabled
+ * @param   pos - screen position
+ * @return  true if autoskip is on, false otherwise
  *
- * \brief isAskip returns a boolean indicating whether the supplied screen position contains askip.
+ * @details isAskip returns a boolean indicating whether the supplied screen position contains
+ *          autoskip.
  */
 bool DisplayScreen::isAskip(int pos)
 {
     return cell.at(pos)->isAutoSkip();
 }
 
+/**
+ * @brief   DisplayScreen::isProtected - is this Cell protected?
+ * @param   pos - screen position
+ * @return  true if protected, false otherwise
+ *
+ * @details isProtected returns true if the Cell is protected.
+ */
 bool DisplayScreen::isProtected(int pos)
 {
     return cell.at(pos)->isProtected();
 }
 
+/**
+ * @brief   DisplayScreen::isFieldStart - is this Cell a Field Start
+ * @param   pos - screen position
+ * @return  true for a Field Start, false otherwise
+ *
+ * @details isFieldStart returns true if the Cell is a Field Start
+ */
 bool DisplayScreen::isFieldStart(int pos)
 {
     return cell.at(pos)->isFieldStart();
 }
 
+/**
+ * @brief   DisplayScreen::deleteChar - delete the character at the specified position
+ * @param   pos - screen position
+ *
+ * @details deleteChar is used when deleting a character from the keyboard. The characters to the right
+ *          of the Cell at pos are shifted left by one character, and a null inserted at the end of the
+ *          field.
+ */
 void DisplayScreen::deleteChar(int pos)
 {
     if (cell.at(pos)->isProtected())
@@ -797,6 +1049,13 @@ void DisplayScreen::deleteChar(int pos)
     cell.at(findField(pos))->setMDT(true);
 }
 
+/**
+ * @brief   DisplayScreen::eraseEOF - clear the Cells starting at pos until the end of the field
+ * @param   pos - screen position
+ *
+ * @details eraseEOF is used when the Erase EOF function is used from the keyboard. The field that Cell
+ *          is in is set to null, starting at position pos until the end of the field.
+ */
 void DisplayScreen::eraseEOF(int pos)
 {
     int nextField = findNextField(pos);
@@ -815,6 +1074,15 @@ void DisplayScreen::eraseEOF(int pos)
     cell.at(findField(pos))->setMDT(true);
 }
 
+/**
+ * @brief   DisplayScreen::eraseUnprotected - erase unprotected fields between addresses
+ * @param   start - screen position
+ * @param   end   - screen position
+ *
+ * @details eraseUnprotected is called when the EUA (Erase Unprotected to Address) order is encountered
+ *          in the 3270 data stream. All unprotected fields between the specified positions are
+ *          set to nulls.
+ */
 void DisplayScreen::eraseUnprotected(int start, int end)
 {
     if (end < start)
@@ -841,6 +1109,14 @@ void DisplayScreen::eraseUnprotected(int start, int end)
     }
 }
 
+/**
+ * @brief   DisplayScreen::setCursorColour - set the cursor colour
+ * @param   inherit - whether the cursor inherits the underlying character colour
+ *
+ * @details setCursorColour is called when the user changes the way the colour of the cursor is
+ *          chosen. The default is for the cursor to be shown with the the colour of the Cell on
+ *          which the cursor is placed, but it can be changed to be a static grey colour.
+ */
 void DisplayScreen::setCursorColour(bool inherit)
 {
     cursorColour = inherit;
@@ -855,6 +1131,14 @@ void DisplayScreen::setCursorColour(bool inherit)
     cursor.show();
 }
 
+/**
+ * @brief   DisplayScreen::setCursor - position cursor
+ * @param   x - screen position
+ * @param   y - screen position
+ *
+ * @details setCursor is used when the cursor is moved either by the user or by the incoming 3270
+ *          data stream.
+ */
 void DisplayScreen::setCursor(int x, int y)
 {
     cursor.setVisible(false);
@@ -875,31 +1159,51 @@ void DisplayScreen::setCursor(int x, int y)
     }
 
     cursor.setPos(gridSize_X * (qreal) x, gridSize_Y * (qreal) y);
-    cursor.setData(0,pos);
+//    cursor.setData(0,pos);
 
     cursor.setVisible(true);
 }
 
-/*!
- * \brief DisplayScreen::showCursor
- * \details Called when the cursor blink is switched off to ensure that the cursor doesn
- *  remain hidden if the blink happened to be at the point the cursor was hidden.
+/**
+ * @brief   DisplayScreen::showCursor - display cursor
+ *
+ * @details Called when the cursor blink is switched off to ensure that the cursor doesn't
+ *          remain hidden if the blink happened to be at the point the cursor was hidden.
  */
 void DisplayScreen::showCursor()
 {
     cursor.show();
 }
 
+/**
+ * @brief   DisplayScreen::setStatusXSystem - set XSystem text
+ * @param   text - text to be shown
+ *
+ * @details Called when XSystem is to be shown or removed.
+ */
 void DisplayScreen::setStatusXSystem(QString text)
 {
     statusXSystem.setText(text);
 }
 
+/**
+ * @brief   DisplayScreen::showStatusCursorPosition - display cursor position
+ * @param   x - screen position
+ * @param   y - screen position
+ *
+ * @details Called to show the cursor position on the status line when the cursor moves.
+ */
 void DisplayScreen::showStatusCursorPosition(int x, int y)
 {
     statusCursor.setText(QString("%1,%2").arg(x + 1, 3).arg(y + 1, -3));
 }
 
+/**
+ * @brief   DisplayScreen::setStatusInsert - the Insert mode text
+ * @param   ins - true for insert mode, false for overwrite
+ *
+ * @details Called to show the Insert status on the status line.
+ */
 void DisplayScreen::setStatusInsert(bool ins)
 {
     if (ins)
@@ -912,10 +1216,11 @@ void DisplayScreen::setStatusInsert(bool ins)
     }
 }
 
-/*!
- * \brief DisplayScreen::rulerMode
- * \details Called when Settings changes ruler to on or off.
- * \param on - whether ruler is shown or not
+/**
+ * @brief   DisplayScreen::rulerMode - display/hide the ruler
+ * @param   on - whether ruler is shown or not
+ *
+ * @details Called when Settings changes ruler to on or off.
  */
 void DisplayScreen::rulerMode(bool on)
 {
@@ -924,12 +1229,28 @@ void DisplayScreen::rulerMode(bool on)
     setRuler();
 }
 
+/**
+ * @brief  DisplayScreen::setRulerStyle - change ruler style
+ * @param  rulerStyle - ruler style
+ *
+ *        rulerStyle | Description
+ *        ---------- | -----------
+ *          0        | Crosshair
+ *          1        | Vertical
+ *          2        | Horizontal
+ *        other      | Off
+ */
 void DisplayScreen::setRulerStyle(int rulerStyle)
 {
     this->ruler = rulerStyle;
     setRuler();
 }
 
+/**
+ * @brief   DisplayScreen::toggleRuler - toggle the ruler on or off
+ *
+ * @details Called when the user switches the ruler on or off.
+ */
 void DisplayScreen::toggleRuler()
 {
     // Invert ruler
@@ -938,9 +1259,13 @@ void DisplayScreen::toggleRuler()
     setRuler();
 }
 
+/**
+ * @brief   DisplayScreen::setRuler - set the ruler style
+ *
+ * @details Called by several other routines when the ruler needs to be changed.
+ */
 void DisplayScreen::setRuler()
 {
-    //
     if (rulerOn)
     {
         switch(ruler)
@@ -965,6 +1290,15 @@ void DisplayScreen::setRuler()
     }
 }
 
+/**
+ * @brief   DisplayScreen::drawRuler - draw the ruler
+ * @param   x - screen position
+ * @param   y - screen position
+ *
+ * @details Called to draw the ruler. The ruler appears at the bottom left hand corner of the cursor
+ *          position, although technically it's position is at the left hand position of the cursor, and the
+ *          top of the next character down.
+ */
 void DisplayScreen::drawRuler(int x, int y)
 {
     if (rulerOn)
@@ -974,6 +1308,11 @@ void DisplayScreen::drawRuler(int x, int y)
     }
 }
 
+/**
+ * @brief   DisplayScreen::blink - blink the display
+ *
+ * @details Called by a timer in TerminalTab to blink any characters that have blink enabled
+ */
 void DisplayScreen::blink()
 {
     blinkShow = !blinkShow;
@@ -987,6 +1326,11 @@ void DisplayScreen::blink()
     }
 }
 
+/**
+ * @brief   DisplayScreen::cursorBlink - blink the cursor
+ *
+ * @details Called by a timer in TerminalTab to blink the cursor
+ */
 void DisplayScreen::cursorBlink()
 {
     cursorShow = !cursorShow;
@@ -1001,6 +1345,15 @@ void DisplayScreen::cursorBlink()
     }
 }
 
+/**
+ * @brief   DisplayScreen::findField - find the field that contains Cell at pos
+ * @param   pos - screen position
+ * @return  Field Start of pos
+ *
+ * @details Returns the position on screen of the Field Start for the Cell at pos. Used to determine
+ *          the field attributes for a given Cell on screen. If it doesn't find a Field Start, return
+ *          the original position.
+ */
 int DisplayScreen::findField(int pos)
 {
     int endPos = pos - screenPos_max;
@@ -1021,6 +1374,15 @@ int DisplayScreen::findField(int pos)
     return pos;
 }
 
+/**
+ * @brief   DisplayScreen::findNextField - find the next field for Cell pos
+ * @param   pos - screen position
+ * @return  Field Start of the next field after pos
+ *
+ * @details Returns the position on screen of the next Field Start after the Cell at pos. Used to determine
+ *          the end of the field (the next Field Start is the end of the previous field). Returns the
+ *          original position if no next field.
+ */
 int DisplayScreen::findNextField(int pos)
 {
     if(cell.at(pos)->isFieldStart())
@@ -1039,12 +1401,17 @@ int DisplayScreen::findNextField(int pos)
     return pos;
 }
 
+/**
+ * @brief   DisplayScreen::findNextUnprotectedField - find the next unprotected field
+ * @param   pos - screen position
+ * @return  Field Start of the next unprotected field
+ *
+ * @details Find the next field that is unprotected. This incorporates two field start attributes next
+ *          to each other - field start attributes are protected, so with two adjacent Field Starts,
+ *          the first cannot be an unprotected field. Used by tab, home, and the PT order.
+ */
 int DisplayScreen::findNextUnprotectedField(int pos)
 {
- /*----------------------------------------------------------------------------------
-  | Find the next field that is unprotected. This incorporates two field start      |
-  | attributes next to each other - field start attributes are protected.           |
-  ----------------------------------------------------------------------------------*/
     int tmpPos;
     int tmpNxt;
     for(int i = pos; i < (pos + screenPos_max); i++)
@@ -1063,12 +1430,17 @@ int DisplayScreen::findNextUnprotectedField(int pos)
     return 0;
 }
 
+/**
+ * @brief   DisplayScreen::findPrevUnprotectedField - find the previous unprotected field
+ * @param   pos - screen position
+ * @return  Field Start of the previous unprotected field.
+ *
+ * @details Find the previous field that is unprotected. This incorporates two field start attributes
+ *          next to each other - field start attributes are protected, so with two adjacent Field Starts,
+ *          the first cannot be an unprotected field.
+ */
 int DisplayScreen::findPrevUnprotectedField(int pos)
 {
- /*----------------------------------------------------------------------------------
-  | Find the previous field that is unprotected. This incorporates two field start  |
-  | attributes next to each other - field start attributes are protected.           |
-  ----------------------------------------------------------------------------------*/
     int tmpPos;
     int tmpNxt;
 
@@ -1097,9 +1469,10 @@ int DisplayScreen::findPrevUnprotectedField(int pos)
 
 
 /**
- *  @brief DisplayScreen::getModifiedFields
- *         Utility method to extract all modified fields from the screen and add them to the provided buffer
- *  @param buffer - address of a QByteArray to which the modified fields are appended
+ *  @brief   DisplayScreen::getModifiedFields - extract all modified fields from the screen
+ *  @param   buffer - address of a QByteArray to which the modified fields are appended
+ *
+ *  @details Locate all modified fields (MDT tags are set) and add them to the provided buffer.
  */
 void DisplayScreen::getModifiedFields(QByteArray &buffer)
 {
@@ -1151,10 +1524,13 @@ void DisplayScreen::getModifiedFields(QByteArray &buffer)
 }
 
 /**
- * \brief DisplayScreen::addPosToBuffer
- *        Utility method to insert 'pos' into 'buffer' as two bytes, doubling 0xFF if needed.
- * \param buffer
- * \param pos
+ * @brief   DisplayScreen::addPosToBuffer - insert 'pos' into 'buffer' as two bytes, doubling 0xFF if needed.
+ * @param   buffer - QByteArray to append pos into
+ * @param   pos    - screen position
+ *
+ * @details Adds the screen position pos into the buffer. The 3270 datastream uses 0xFF as an control byte
+ *          so any actual 0xFF bytes are doubled - a 0xFF 0xFF sequence in the stream indicates a single
+ *          0xFF byte.
  */
 void DisplayScreen::addPosToBuffer(QByteArray &buffer, int pos)
 {
@@ -1192,7 +1568,11 @@ void DisplayScreen::addPosToBuffer(QByteArray &buffer, int pos)
     }
 }
 
-//INFO: Not used, but for debugging
+/**
+ * @brief   DisplayScreen::dumpFields - debug routine to print out all fields
+ *
+ * @details Used to debug where fields are on the screen.
+ */
 void DisplayScreen::dumpFields()
 {
     printf("Screen_X = %d, screen_Y =%d\n", screen_x, screen_y);
@@ -1210,7 +1590,11 @@ void DisplayScreen::dumpFields()
     fflush(stdout);
 }
 
-
+/**
+ * @brief   DisplayScreen::dumpDisplay - print out a debug replication of the screen
+ *
+ * @details Used to debug screen layout
+ */
 void DisplayScreen::dumpDisplay()
 {
     printf("---- SCREEN ----\n");
@@ -1235,6 +1619,12 @@ void DisplayScreen::dumpDisplay()
     fflush(stdout);
 }
 
+/**
+ * @brief   DisplayScreen::dumpInfo - display information about the Cell at pos
+ * @param   pos - screen position
+ *
+ * @details Used to display information about the Cell at pos. Mapped to Ctrl-I.
+ */
 void DisplayScreen::dumpInfo(int pos)
 {
     int y = pos / screen_x;
@@ -1274,6 +1664,13 @@ void DisplayScreen::dumpInfo(int pos)
 
 }
 
+/**
+ * @brief   DisplayScreen::getScreen - place the screen buffer into the 3270 data stream
+ * @param   buffer - buffer to add the screen to
+ *
+ * @details The 3270 command Read Buffer (RB) causes the screen contents to be returned to the
+ *          host. getScreen extracts the screen status and adds it to buffer.
+ */
 void DisplayScreen::getScreen(QByteArray &buffer)
 {
     dumpDisplay();
@@ -1318,6 +1715,14 @@ void DisplayScreen::getScreen(QByteArray &buffer)
     }
 }
 
+/**
+ * @brief   DisplayScreen::mousePressEvent - process a mouse event
+ * @param   mEvent - the event
+ *
+ * @details Called when a mouse event happens in DisplayScreen. This routine handles a left-click, and
+ *          stores the coordinates of the click. The Rubberband is hidden (it will be shown if the mouse
+ *          is moved).
+ */
 void DisplayScreen::mousePressEvent(QGraphicsSceneMouseEvent *mEvent)
 {
     if (mEvent->button() != Qt::LeftButton)
@@ -1341,6 +1746,13 @@ void DisplayScreen::mousePressEvent(QGraphicsSceneMouseEvent *mEvent)
     myRb->hide();
 }
 
+/**
+ * @brief   DisplayScreen::mouseMoveEvent - process a mouse move event
+ * @param   mEvent - the event
+ *
+ * @details Called when the mouse is moved after a click. This routine calculates the Cells around which
+ *          the rubberband is to be drawn and then makes it visible.
+ */
 void DisplayScreen::mouseMoveEvent(QGraphicsSceneMouseEvent *mEvent)
 {   
     //FIXME: Some of this could probably be simplified so we're not working out
@@ -1385,6 +1797,14 @@ void DisplayScreen::mouseMoveEvent(QGraphicsSceneMouseEvent *mEvent)
     myRb->show();
 }
 
+/**
+ * @brief   DisplayScreen::mouseReleaseEvent - process a mouse release event
+ * @param   mEvent - the event
+ *
+ * @details Called when the left mouse button is released. If the mouse button was released without
+ *          moving the mouse, the rubberband will be invisible, and this is interpreted as the user
+ *          wishing to move the cursor by clicking somewhere in the display.
+ */
 void DisplayScreen::mouseReleaseEvent(QGraphicsSceneMouseEvent *mEvent)
 {
     qDebug() << "Mouse release at " << mEvent->pos();
@@ -1406,6 +1826,13 @@ void DisplayScreen::mouseReleaseEvent(QGraphicsSceneMouseEvent *mEvent)
     qDebug() << "Selected" << left << "," << top << "x" << right << "," << bottom;
 }
 
+/**
+ * @brief   DisplayScreen::copyText - copy the text within the rubberband to the clipboard
+ *
+ * @details Called when the user invokes the Copy function (default Ctrl-C) to copy the text
+ *          contained within the rubberband region to the clipboard. Each new line within the
+ *          rubberband generates a newline on the clipboard.
+ */
 void DisplayScreen::copyText()
 {
     // If the rubberband isn't showing, do nothing

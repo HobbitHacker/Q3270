@@ -82,7 +82,7 @@ class ColourTheme : public QDialog
 
         const Colours getTheme(QString theme);
 //        void setButtonColours(Colours theme, QString themeName);
-        void setButtonColours(QHash<Colour, QPushButton *> buttons, QString themeName);
+        void setButtonColours(QString themeName);
         QList<QString> getThemes();
 
         int exec();

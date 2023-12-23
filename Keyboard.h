@@ -197,7 +197,6 @@ class Keyboard : public QObject
 
         void clearBufferEntry();
 
-        void setFactoryMaps();
         void setMapping(QString key, QString function);
 };
 #endif // KEYBOARD_H

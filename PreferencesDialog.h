@@ -121,6 +121,8 @@ class PreferencesDialog : public QDialog
         void accept();
         void reject();
 
+        void setButtonColours(QString themeName);
+
 };
 
 #endif // PREFERENCESDIALOG_H

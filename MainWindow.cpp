@@ -36,11 +36,16 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "MainWindow.h"
 #include "ui_About.h"
 
+/**
+ * @brief   MainWindow::MainWindow - the main application
+ * @param   s - a name
+ *
+ * @details Initialise the application, and open any session name passed to it. The session
+ *          is a struct that contains an existing MainWindow or null if this is the first one,
+ *          and any session name to be opened.
+ */
 MainWindow::MainWindow(MainWindow::Session s) : QMainWindow(nullptr),
                                                 ui(new(Ui::MainWindow))
-
-
-
 {
 
     QCoreApplication::setOrganizationDomain("styles.homeip.net");
@@ -105,6 +110,8 @@ MainWindow::MainWindow(MainWindow::Session s) : QMainWindow(nullptr),
     ui->actionDisconnect->setDisabled(true);
 
     terminal = new TerminalTab(ui->terminalLayout, activeSettings, codePage, keyboard, colourTheme, s.session);
+
+    keyboard.setTheme(keyboardTheme, "Factory");
 
     // Used for dynamically showing font changes when using the font selection dialog
     connect(settings, &PreferencesDialog::tempFontChange, terminal, &TerminalTab::setCurrentFont);
@@ -172,41 +179,78 @@ MainWindow::MainWindow(MainWindow::Session s) : QMainWindow(nullptr),
 
 }
 
+/**
+ * @brief   MainWindow::menuNew - start a new window
+ *
+ * @details Start a new window without a session
+ */
 void MainWindow::menuNew()
 {
     MainWindow *newWindow = new MainWindow( { this, "" });
     newWindow->show();
 }
 
+/**
+ * @brief   MainWindow::menuDuplicate - start a duplicate window
+ *
+ * @details Start a new window with the same session name as the existing one
+ */
 void MainWindow::menuDuplicate()
 {
     MainWindow *newWindow = new MainWindow({ this, terminal->getSessionName() });
     newWindow->show();
 }
 
+/**
+ * @brief   MainWindow::menuSaveSession - save the current session
+ *
+ * @details Save the current session settings to the config file.
+ */
 void MainWindow::menuSaveSession()
 {
     sm->saveSettings();
 }
 
+/**
+ * @brief   MainWindow::menuSaveSessionAs - save current session as a new name
+ *
+ * @details Save the current session settings to the config file with a new session name.
+ */
 void MainWindow::menuSaveSessionAs()
 {
     // Save Session dialog, setting the Save Session menu entry dis/enabled
     ui->actionSave_Session->setEnabled(sm->saveSessionAs());
 }
 
+/**
+ * @brief   MainWindow::menuOpenSession - open a session
+ *
+ * @details Open a session
+ */
 void MainWindow::menuOpenSession()
 {
     // Open Session dialog
     ui->actionSave_Session->setEnabled(sm->openSession(terminal));
 }
 
+/**
+ * @brief   MainWindow::menuManageSessions - Open the manage session dialog
+ *
+ * @details Open the manage sessions dialog to allow the user to add/delete sessions.
+ */
 void MainWindow::menuManageSessions()
 {
     // Manage Sessions Dialog
     sm->manageSessions();
 }
 
+/**
+ * @brief   MainWindow::mruConnect - open a previously used setting
+ *
+ * @details Invoked when the user has selected a previously used setting from the most recently
+ *          used list. This may be a session name, or just a simple host name and port. If it
+ *          is not a session, the Save session option is greyed out.
+ */
 void MainWindow::mruConnect()
 {
     // Find the sending object - the line in the 'Recent' menu
@@ -257,12 +301,23 @@ void MainWindow::mruConnect()
     }
 }
 
+/**
+ * @brief   MainWindow::~MainWindow - destructor
+ *
+ * @details Delete any objects obtained via 'new'.
+ */
 MainWindow::~MainWindow()
 {
     //FIXME: delete of other objects obtained with 'new'
     delete ui;
 }
 
+/**
+ * @brief   MainWindow::menuConnect - connect to a host
+ *
+ * @details Connect to a host. This may be reopening a connection to the existing settings or
+ *          it may be the first time. If it's the first time, prompt the user for an address.
+ */
 void MainWindow::menuConnect()
 {
     if (activeSettings.getHostAddress().isEmpty())
@@ -279,6 +334,11 @@ void MainWindow::menuConnect()
     }
 }
 
+/**
+ * @brief   MainWindow::menuDisconnect - disconnect from a host
+ *
+ * @details Disconnect from the host
+ */
 void MainWindow::menuDisconnect()
 {
     terminal->closeConnection();
@@ -287,21 +347,43 @@ void MainWindow::menuDisconnect()
     ui->actionConnect->setEnabled(true);
 }
 
+/**
+ * @brief   MainWindow::menuSessionPreferences - show the preferences dialog.
+ *
+ * @details Open the preferences dialog.
+ */
 void MainWindow::menuSessionPreferences()
 {
     settings->showForm();
 }
 
+/**
+ * @brief   MainWindow::menuColourTheme - open the Colour Themes dialog
+ *
+ * @details Open the Colour themes dialog, which allows the user to add, change and delete
+ *          Colour Themes.
+ */
 void MainWindow::menuColourTheme()
 {
     colourTheme.exec();
 }
 
+/**
+ * @brief   MainWindow::menuKeyboardTheme - open the Keyboard Themes dialog
+ *
+ * @details Open the Keyboard Themes dialog, which allows the user to add, change and delete
+ *          Keyboard Themes.
+ */
 void MainWindow::menuKeyboardTheme()
 {
     keyboardTheme.exec();
 }
 
+/**
+ * @brief   MainWindow::menuAbout - display the 'About' dialog.
+ *
+ * @details Show some details about Q3270
+ */
 void MainWindow::menuAbout()
 {
     QDialog *about = new QDialog;
@@ -317,27 +399,46 @@ void MainWindow::menuAbout()
     delete about;
 }
 
-// Signalled when the Settings object's address is updated
+/**
+ * @brief   MainWindow::enableConnectMenu - enable/disable the Connect menu
+ * @param   state - true to enable, false to disable
+ *
+ * @details Signalled when the Settings object's address is updated
+ */
 void MainWindow::enableConnectMenu(bool state)
 {
     ui->actionConnect->setEnabled(state);
 }
 
-// Signalled when the Terminal is connected
+/**
+ * @brief   MainWindow::enableDisconnectMenu - enable the disconnect menu
+ *
+ * @details Signalled when the Terminal is connected
+ */
 void MainWindow::enableDisconnectMenu()
 {
     ui->actionDisconnect->setEnabled(true);
     ui->actionConnect->setDisabled(true);
 }
 
-// Signalled when the Terminal is disconnected
+/**
+ * @brief   MainWindow::disableDisconnectMenu - disable the disconnect menu
+ *
+ * @details Signalled when the Terminal is disconnected
+ */
 void MainWindow::disableDisconnectMenu()
 {
     ui->actionDisconnect->setDisabled(true);
     ui->actionConnect->setEnabled(true);
 }
 
-
+/**
+ * @brief   MainWindow::updateMRUlist - add an entry to the most recently used list
+ * @param   address - the address to be added
+ *
+ * @details Add an entry to the Most Recently Used list. This may be an existing entry,
+ *          in which case, delete it from where it was and add it to the top of the list.
+ */
 void MainWindow::updateMRUlist(QString address)
 {
     // Clear existing MRU list
@@ -378,11 +479,22 @@ void MainWindow::updateMRUlist(QString address)
     applicationSettings.endArray();
 }
 
+/**
+ * @brief   MainWindow::menuQuit - exit the application
+ *
+ * @details Exit the application.
+ */
 void MainWindow::menuQuit()
 {
     QApplication::quit();
 }
 
+/**
+ * @brief   MainWindow::closeEvent - close the window
+ * @param   event - the close event
+ *
+ * @details Called when the user clicks the Close Window button.
+ */
 void MainWindow::closeEvent(QCloseEvent *event)
 {
     QSettings applicationSettings;
@@ -415,12 +527,25 @@ void MainWindow::closeEvent(QCloseEvent *event)
     event->accept();
 }
 
-
+/**
+ * @brief   MainWindow::showEvent - resize the content when the window is shown
+ * @param   event - the event
+ *
+ * @details Ensure that the content of the terminal fits inside the window when the window is
+ *          displayed.
+ */
 void MainWindow::showEvent(QShowEvent *event)
 {
     terminal->fit();
 }
 
+/**
+ * @brief   MainWindow::resizeEvent - resize the content when the window is resized
+ * @param   event - the event
+ *
+ * @details Ensure that the content of the terminal fits inside the window when the window is
+ *          resized.
+ */
 void MainWindow::resizeEvent(QResizeEvent *event)
 {
     terminal->fit();
