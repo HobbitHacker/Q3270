@@ -39,6 +39,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <QDebug>
 #include "PreferencesDialog.h"
 
+/**
+ * @brief   PreferencesDialog::PreferencesDialog - The preferences dialog
+ * @param   colours         - the shared ColourTheme object
+ * @param   keyboards       - the shared KeyboardTheme object
+ * @param   activeSettings  - the shared currently active settings object
+ * @param   parent          - the parent window
+ *
+ * @details Initialise the Preferences dialog.
+ */
 PreferencesDialog::PreferencesDialog(ColourTheme &colours, KeyboardTheme &keyboards, ActiveSettings &activeSettings, QWidget *parent) :
     QDialog(parent),
     ui(new Ui::PreferencesDialog),
@@ -89,11 +98,23 @@ PreferencesDialog::PreferencesDialog(ColourTheme &colours, KeyboardTheme &keyboa
     ui->verticalLayout_5->addWidget(qfd);
 }
 
+/**
+ * @brief   PreferencesDialog::~PreferencesDialog - destructor
+ *
+ * @details Delete objects acquired by 'new'.
+ */
 PreferencesDialog::~PreferencesDialog()
 {
     delete ui;
 }
 
+/**
+ * @brief   PreferencesDialog::connected - disable some settings when connected to a host
+ *
+ * @details When connected to a host, there are some settngs that cannot be changed. This is because
+ *          these settings are only of use during connection negotiation and are not used unless the
+ *          connection is closed and reopened.
+ */
 void PreferencesDialog::connected()
 {
     ui->terminalCols->setDisabled(true);
@@ -105,6 +126,13 @@ void PreferencesDialog::connected()
     ui->hostLU->setDisabled(true);
 }
 
+/**
+ * @brief   PreferencesDialog::disconnected - enable some settings when not connected to a host
+ *
+ * @details When connected to a host, there are some settngs that cannot be changed. This is because
+ *          these settings are only of use during connection negotiation and are not used unless the
+ *          connection is closed and reopened.
+ */
 void PreferencesDialog::disconnected()
 {
     ui->terminalType->setEnabled(true);
@@ -126,6 +154,13 @@ void PreferencesDialog::disconnected()
     ui->hostLU->setEnabled(true);
 }
 
+/**
+ * @brief   PreferencesDialog::showForm - display the Preferences dialog
+ *
+ * @details Populate the various dialog fields from the active settings and show the form. This
+ *          saves the coding required to save/restore settings before the form is displayed and to
+ *          restore those settings if the user pressed Cancel.
+ */
 void PreferencesDialog::showForm()
 {
     ui->hostLU->setText(activeSettings.getHostLU());
@@ -156,13 +191,48 @@ void PreferencesDialog::showForm()
     populateKeyboardThemeNames();
 
     // Colour the buttons, based on Settings
-    colours.setButtonColours(colourButtons, activeSettings.getColourThemeName());
+    colours.setButtonColours(activeSettings.getColourThemeName());
 
     ui->CodePages->setCurrentIndex(ui->CodePages->findText(activeSettings.getCodePage()));
 
     this->exec();
 }
 
+/**
+ * @brief   PreferencesDialog::setButtonColours - set the swatches to the colours specified
+ * @param   themeName - the name of theme
+ *
+ * @details setButtonColours is used to change the colours on the swatches of the dialog. This is a
+ *          duplicate of the code in ColourTheme.
+ */
+void PreferencesDialog::setButtonColours(QString themeName)
+{
+    ColourTheme::Colours thisTheme = colours.getTheme(themeName);
+
+    // Change colour swatches
+    colourButtons[ColourTheme::UNPROTECTED_NORMAL]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[ColourTheme::UNPROTECTED_NORMAL].name()));
+    colourButtons[ColourTheme::PROTECTED_NORMAL]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[ColourTheme::PROTECTED_NORMAL].name()));
+    colourButtons[ColourTheme::UNPROTECTED_INTENSIFIED]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[ColourTheme::UNPROTECTED_INTENSIFIED].name()));
+    colourButtons[ColourTheme::PROTECTED_INTENSIFIED]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[ColourTheme::PROTECTED_INTENSIFIED].name()));
+
+    colourButtons[ColourTheme::BLACK]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[ColourTheme::BLACK].name()));
+    colourButtons[ColourTheme::BLUE]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[ColourTheme::BLUE].name()));
+    colourButtons[ColourTheme::RED]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[ColourTheme::RED].name()));
+    colourButtons[ColourTheme::MAGENTA]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[ColourTheme::MAGENTA].name()));
+    colourButtons[ColourTheme::GREEN]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[ColourTheme::GREEN].name()));
+    colourButtons[ColourTheme::CYAN]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[ColourTheme::CYAN].name()));
+    colourButtons[ColourTheme::YELLOW]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[ColourTheme::YELLOW].name()));
+    colourButtons[ColourTheme::NEUTRAL]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[ColourTheme::NEUTRAL].name()));
+}
+
+/**
+ * @brief   PreferencesDialog::terminalModelDropDownChanged - signalled when the terminal model is changed
+ * @param   model - the model number
+ *
+ * @details When the user chooses a different terminal model, the size of the terminal needs to be
+ *          updated. If the selected model is the Dynamic one, enable editing of the rows and columns,
+ *          otherwise, force them to the standard size of the model.
+ */
 void PreferencesDialog::terminalModelDropDownChanged(int model)
 {
     // If the drop-down isn't enabled, this has been triggered by opening a session and
@@ -203,17 +273,31 @@ void PreferencesDialog::terminalModelDropDownChanged(int model)
     }
 }
 
+/**
+ * @brief   PreferencesDialog::changeFont - signalled when the user has picked a new font
+ * @param   newFont - the new font
+ *
+ * @details When the Font tab is displayed, and the user has chosen a new font, it would be possible
+ *          to dynamically display the changes of font in the terminal as they happen.
+ *
+ * @note    This feature is not currently enabled.
+ */
 void PreferencesDialog::changeFont(QFont newFont)
 {
     emit tempFontChange(newFont);
 }
 
+/**
+ * @brief   PreferencesDialog::accept - process the OK button
+ *
+ * @details Update the active settings when the OK button is pressed.
+ */
 void PreferencesDialog::accept()
 {
     activeSettings.setTerminal(ui->terminalCols->value(), ui->terminalRows->value(), ui->terminalType->currentIndex());
     activeSettings.setCursorBlink(ui->cursorBlink->QAbstractButton::isChecked());
     activeSettings.setCursorBlinkSpeed(ui->cursorBlinkSpeed->value());
-    activeSettings.setRulerOn(ui->rulerOn->QAbstractButton::isChecked());
+    activeSettings.setRulerState(ui->rulerOn->QAbstractButton::isChecked());
     activeSettings.setRulerStyle(comboRulerStyle.value(ui->crosshair->currentText()));
     activeSettings.setCursorColourInherit(ui->cursorColour->QAbstractButton::isChecked());
     activeSettings.setFont(qfd->currentFont());
@@ -229,6 +313,14 @@ void PreferencesDialog::accept()
 
 }
 
+/**
+ * @brief   PreferencesDialog::reject - process the Cancel button
+ *
+ * @details Reset the terminal font to the original one in case the user changed it during the
+ *          dialog display.
+ *
+ * @note    Dynamic font change display is not currently enabled.
+ */
 void PreferencesDialog::reject()
 {
     emit tempFontChange(activeSettings.getFont());
@@ -236,16 +328,36 @@ void PreferencesDialog::reject()
     QDialog::reject();
 }
 
+/**
+ * @brief   PreferencesDialog::populateCodePages - populate the code page list
+ * @param   codepagelist - the list of code pages
+ *
+ * @details Called when Q3270 starts up to populate the list of code pages from the CodePage object.
+ */
 void PreferencesDialog::populateCodePages(QMap<QString, QString> codepagelist)
 {
     ui->CodePages->addItems(codepagelist.keys());
 }
 
+/**
+ * @brief   PreferencesDialog::colourThemeDropDownChanged - signalled when the colour theme is changed
+ * @param   index - the new colour theme index
+ *
+ * @details Called when the user changes the ColourTheme drop down so the button colours can be updated.
+ */
 void PreferencesDialog::colourThemeDropDownChanged([[maybe_unused]] int index)
 {
-    colours.setButtonColours(colourButtons, ui->colourTheme->currentText());
+
+   setButtonColours(ui->colourTheme->currentText());
 }
 
+/**
+ * @brief   PreferencesDialog::populateColourThemeNames - build the list of ColourThemes
+ *
+ * @details Called to (re-)populate the list of available ColourThemes. This may change during the
+ *          life of the display of the Preferences dialog as the option to manage the ColourThemes
+ *          can be invoked from the Preferences dialog itself.
+ */
 void PreferencesDialog::populateColourThemeNames()
 {
     // Refresh the Colour theme names
@@ -253,6 +365,12 @@ void PreferencesDialog::populateColourThemeNames()
     ui->colourTheme->addItems(colours.getThemes());
 }
 
+/**
+ * @brief   PreferencesDialog::manageColourThemes - invoke the ColourThemes dialog
+ *
+ * @details Called when the user pressed the Manange Themes button on the Colours tab. The
+ *          list of available colour themes is then rebuilt in case the user modified the list.
+ */
 void PreferencesDialog::manageColourThemes()
 {
     // Run the Colour Themes dialog
@@ -262,6 +380,13 @@ void PreferencesDialog::manageColourThemes()
     populateColourThemeNames();
 }
 
+/**
+ * @brief   PreferencesDialog::populateKeyboardThemeNames - build the list of KeyboardThemes
+ *
+ * @details Called to (re-)populate the list of available KeyboardThemes. This may change during the
+ *          life of the display of the Preferences dialog as the option to manage the KeyboardThemes
+ *          can be invoked from the Preferences dialog itself.
+ */
 void PreferencesDialog::populateKeyboardThemeNames()
 {
     // Refresh the Keyboard theme names
@@ -269,13 +394,27 @@ void PreferencesDialog::populateKeyboardThemeNames()
     ui->keyboardTheme->addItems(keyboards.getThemes());
 }
 
+/**
+ * @brief   PreferencesDialog::keyboardThemeDropDownChanged - signalled when the keyboard theme is changed
+ * @param   index - the new keyboard theme index
+ *
+ * @details Called when the user changes the KeyboardTheme drop down so the table of keyboard mappings
+ *          can be updated.
+ */
 void PreferencesDialog::keyboardThemeDropDownChanged([[maybe_unused]] int index)
 {
     // Populate keyboard map table
     keyboards.populateTable(ui->KeyboardMap, ui->keyboardTheme->currentText());
 }
 
-
+/**
+ * @brief   PreferencesDialog::manageKeyboardThemes - invoke the KeyboardThemes dialog
+ *
+ * @details Called when the user pressed the Manange Themes button on the Keyboard tab. The
+ *          list of available keyboard themes is then rebuilt in case the user modified the list.
+ *
+ * @note    This routine does nothing at present.
+ */
 void PreferencesDialog::manageKeyboardThemes()
 {
     //

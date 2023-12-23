@@ -67,7 +67,6 @@ class KeyboardTheme : public QDialog
 
         int exec();
 
-
     private:
 
         Ui::KeyboardTheme *ui;

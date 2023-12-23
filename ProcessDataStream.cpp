@@ -35,6 +35,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ProcessDataStream.h"
 #include "TerminalTab.h"
 
+/**
+ * @brief   ProcessDataStream::ProcessDataStream - 3270 Data Stream processing
+ * @param   t - the terminal object
+ *
+ * @details Initialise the ProcessDataStream object, setting power on settings.
+ */
 ProcessDataStream::ProcessDataStream(TerminalTab *t)
 {
     terminal = t;
@@ -53,6 +59,13 @@ ProcessDataStream::ProcessDataStream(TerminalTab *t)
     setScreen();
 }
 
+/**
+ * @brief   ProcessDataStream::setScreen - change the terminal to display primary or alternate screen
+ * @param   alternate - true for alternate, false for primary
+ *
+ * @details Called when the 3270 Data Stream includes an EW or EWA command. The size of the screen
+ *          is adjusted accordingly.
+ */
 void ProcessDataStream::setScreen(bool alternate)
 {
 
@@ -66,6 +79,13 @@ void ProcessDataStream::setScreen(bool alternate)
     screenSize = screen_x * screen_y;
 }
 
+/**
+ * @brief   ProcessDataStream::processStream - Process an incoming 3270 Data Stream
+ * @param   b       - the bytes in the 3270 data stream
+ * @param   tn3270e - true for TN3270-E processing, false otherwise
+ *
+ * @details Called when the incoming 3270 Data Stream is complete. Commands and orders are processed.
+ */
 void ProcessDataStream::processStream(QByteArray &b, bool tn3270e)
 {
     //FIXME: buffer size 0 shouldn't happen!
@@ -179,6 +199,11 @@ void ProcessDataStream::processStream(QByteArray &b, bool tn3270e)
 
 }
 
+/**
+ * @brief   ProcessDataStream::processOrders - Process 3270 Orders
+ *
+ * @details After the 3270 Command in the data stream, there may be 3270 Orders that need processing.
+ */
 void ProcessDataStream::processOrders()
 {
     switch((uchar) *buffer)
@@ -218,18 +243,34 @@ void ProcessDataStream::processOrders()
     }
 }
 
-/*!
+/**
+ * @brief   ProcessDataStream::processWCC - process the Write Control Character after a WRITE type command
  *
- * \fn void processWCC()
+ * @details This processes the Write Control Character from the datastream, following WRITE or ERASE WRITE
+ *          commands.
  *
- * This processes the Write Control Character from the datastream, following WRITE or ERASE WRITE commands.
+ *          The WCC character contains the following bits (extracted from the 3270 Data Stream manual):
  *
- * The WCC character contains the following bits:
- *    Reset
- *    Reset MDT
- *    Restore Keyboard
- *    Alarm
- *
+ *          Bit | Function
+ *          --- | --------
+ *            0 | If the Reset function is not supported, the only function of bits 0 and 1 is to make the
+ *            ^ | WCC byte an EBCDIC/ASCII-translatable character.
+ *            ^ |
+ *            ^ | If the Reset function is supported, bit 1 controls reset/no reset and bit 0 has no
+ *            ^ | function. When bit 1 is used for the Reset function the WCC byte is no longer always
+ *            ^ | EBCDIC/ASCII-translatable.
+ *            1 | WCC reset bit. When set to 1, it resets partition characteristics to their system-defined
+ *            ^ | defaults. When set to 0, the current characteristics remain unchanged (no reset operations
+ *            ^ | are performed).
+ *          2,3 | For Printers*
+ *            4 | Start Printer. When set to 1, it initiates a local copy operation of the display surface
+ *            ^ | at the completion of the write operation.
+ *            5 | Sound-alarm bit. When set to 1, it sounds the audible alarm at the end of the operation
+ *            ^ | if that device has an audible alarm.
+ *            6 | Keyboard restore bit. When set to 1, this bit unlocks the keyboard. It also resets the
+ *            ^ | AID byte.
+ *            7 | Bit 7 resets MDT bits in the field attributes. When set to 1, all MDT bits in the device's
+ *            ^ | existing character buffer are reset before any data is written or orders are performed.
  */
 void ProcessDataStream::processWCC()
 {
@@ -284,7 +325,11 @@ void ProcessDataStream::processWCC()
     lastWasCmd = true;
 }
 
-
+/**
+ * @brief   ProcessDataStream::processW - The 3270 WRITE command
+ *
+ * @details Process the WRITE command, which is used to change the currently displayed screen.
+ */
 void ProcessDataStream::processW()
 {
     printf("[Write ");
@@ -296,6 +341,14 @@ void ProcessDataStream::processW()
     fflush(stdout);
 }
 
+/**
+ * @brief   ProcessDataStream::processEW - The 3270 ERASE WRITE and ERASE WRITE ALTERNATE commands
+ * @param   alternate - true for EWA, false for EW
+ *
+ * @details EW and EWA are used to clear the screen and rebuild the display from scratch. Depending on
+ *          the currently displayed screen (primary or alternate) the screen may change size to the
+ *          opposite (from EW to EWA or from EWA to EW). This is the only time the size can change.
+ */
 void ProcessDataStream::processEW(bool alternate)
 {
     printf("[Erase Write ");
@@ -328,7 +381,12 @@ void ProcessDataStream::processEW(bool alternate)
 
 }
 
-
+/**
+ * @brief   ProcessDataStream::processRB - The 3270 READ BUFFER command
+ *
+ * @details The RB command is used to extract the entire content of the display and return it to the
+ *          host.
+ */
 void ProcessDataStream::processRB()
 {
     QByteArray screenContents;
@@ -341,6 +399,12 @@ void ProcessDataStream::processRB()
     emit bufferReady(screenContents);
 }
 
+/**
+ * @brief   ProcessDataStream::processWSF - The 3270 WRITE STRUCTURED FIELD command
+ *
+ * @details The WSF command is used to perform many types of extended operation, such as allowing multiple
+ *          partitions, printing, loading of programmed symbols and more.
+ */
 void ProcessDataStream::processWSF()
 {
     wsfProcessing = true;
@@ -369,14 +433,20 @@ void ProcessDataStream::processWSF()
 }
 
 /**
- * @brief ProcessDataStream::processRM
- *        ReadModified - Extract modified fields from screen and return them.
+ * @brief   ProcessDataStream::processRM - The 3270 READ MODIFIED command
+ *
+ * @details Extract modified fields from screen and return them to the host.
  */
 void ProcessDataStream::processRM()
 {
     processAID(lastAID, false);
 }
 
+/**
+ * @brief   ProcessDataStream::processSF - The 3270 STAR FIELD order
+ *
+ * @details SF starts a field on the 3270 display.
+ */
 void ProcessDataStream::processSF()
 {
     unsigned char fa = *++buffer;
@@ -393,6 +463,12 @@ void ProcessDataStream::processSF()
     lastWasCmd = true;
 }
 
+/**
+ * @brief   ProcessDataStream::processSFE - The 3270 START FIELD EXTENDED order
+ *
+ * @details SFE starts an extended field on the 3270 display, allowing more colours and attributes
+ *          than the basic SF order.
+ */
 void ProcessDataStream::processSFE()
 {
     screen->resetExtended(primary_pos);
@@ -525,6 +601,11 @@ void ProcessDataStream::processSFE()
 
 }
 
+/**
+ * @brief   ProcessDataStream::processSBA - The 3270 SET BUFFER ADDRESS order
+ *
+ * @details The SBA order moves the position of the next character to be written.
+ */
 void ProcessDataStream::processSBA()
 {
 //    printf("[SetBufferAddress ");
@@ -546,6 +627,12 @@ void ProcessDataStream::processSBA()
     lastWasCmd = true;
 }
 
+/**
+ * @brief   ProcessDataStream::processSA - The 3270 SET ATTRIBUTE order
+ *
+ * @details The SBA order set character attributes that will be used until the next SA, write-type command,
+ *          or CLEAR key is pressed.
+ */
 void ProcessDataStream::processSA()
 {
     uchar extendedType = *++buffer;
@@ -555,7 +642,13 @@ void ProcessDataStream::processSA()
     lastWasCmd = true;
 }
 
-// Some of this processing is almost duplicated from SFE
+/**
+ * @brief   ProcessDataStream::processMF - The 3270 MODIFY FIELD order
+ *
+ * @details The MF order changes an existing field's attributes and extended attributes.
+ *
+ * @note    Some of this processing is almost identical to that in SFE.
+ */
 void ProcessDataStream::processMF()
 {
     unsigned char count = *++buffer;
@@ -623,6 +716,12 @@ void ProcessDataStream::processMF()
     lastWasCmd = true;
 }
 
+/**
+ * @brief   ProcessDataStream::processIC - The 3270 INSERT CURSOR order
+ *
+ * @details The IC order is used to position the cursor on the screen (unrelated to the position
+ *          of the next character to be written by the data stream).
+ */
 void ProcessDataStream::processIC()
 {
     printf("[InsertCursor(%d,%d)]", primary_x, primary_y);
@@ -631,37 +730,33 @@ void ProcessDataStream::processIC()
     lastWasCmd = true;
 }
 
-/*!
- * \fn void processPT()
+/**
+ * @brief   ProcessDataStream::processPT() - The 3270 PROGRAM TAB order
  *
- * Performs a Program Tab (PT) function.
+ * @details The PT order performs a few convoluted functions, depending on what the previous command
+ *          or order was.
  *
- * PT behvaves in different ways, depending on what the previous command/order was.
+ *          The PT order advances the current buffer address to the address of the first character position
+ *          of the next unprotected field. If PT is issued when the current buffer address is the location
+ *          of a field attribute of an unprotected field, the buffer advances to the next location of that
+ *          field (one location). In addition, if PT does not immediately follow a command, order, or order
+ *          sequence (such as after the WCC, IC, and RA respectively), nulls are inserted in the buffer from
+ *          the current buffer address to the end of the field, regardless of the value of bit 2 (protected/
+ *          unprotected) of the field attribute for the field. When PT immediately follows a command, order,
+ *          or order sequence, the buffer is not modified.
  *
- * The PT order advances the current buffer address to the address of the first
- * character position of the next unprotected field. If PT is issued when the current
- * buffer address is the location of a field attribute of an unprotected field, the buffer
- * advances to the next location of that field (one location). In addition, if PT does not
- * immediately follow a command, order, or order sequence (such as after the WCC,
- * IC, and RA respectively), nulls are inserted in the buffer from the current buffer
- * address to the end of the field, regardless of the value of bit 2
- * (protected/unprotected) of the field attribute for the field. When PT immediately
- * follows a command, order, or order sequence, the buffer is not modified.
+ *          The PT order resets the character attribute to its default value for each character set to nulls.
  *
- * The PT order resets the character attribute to its default value for each character
- * set to nulls.
+ *          The display stops its search for an unprotected field at the last location in the character
+ *          buffer. If a field attribute for an unprotected field is not found, the buffer address is set to
+ *          0. (If the display finds a field attribute for an unprotected field in the last buffer location,
+ *          the buffer address is also set to 0.)
  *
- * The display stops its search for an unprotected field at the last location in the
- * character buffer. If a field attribute for an unprotected field is not found, the buffer
- * address is set to O. (If the display finds a field attribute for an unprotected field in
- * the last buffer location, the buffer address is also set to 0.)
- *
- * To continue the search for an unprotected field, a second PT order must be issued
- * immediately following the first one; in reply, the display begins its search at buffer
- * location O. If, as a result of a PT order, the display is still inserting nulls in each
- * character location when it terminates at the last buffer location, a new PT order
- * continues to insert nulls from buffer address 0 to the end of the current field.
- *
+ *          To continue the search for an unprotected field, a second PT order must be issued immediately
+ *          following the first one; in reply, the display begins its search at buffer location 0. If, as a
+ *          result of a PT order, the display is still inserting nulls in each character location when it
+ *          terminates at the last buffer location, a new PT order continues to insert nulls from buffer
+ *          address 0 to the end of the current field.
  */
 void ProcessDataStream::processPT()
 {
@@ -698,7 +793,7 @@ void ProcessDataStream::processPT()
         // Fill buffer with nulls until either the start of the next field or the end of the screen
         for(i = nextField; i < screenSize && !screen->isFieldStart(i); i++)
         {
-            screen->setChar(i, IBM3270_CHAR_NULL, false, false);
+            screen->setChar(i, IBM3270_CHAR_NULL, false);
         }
 
         // If we hit the end of the screen, record that
@@ -720,6 +815,11 @@ void ProcessDataStream::processPT()
     lastWasCmd = true;
 }
 
+/**
+ * @brief   ProcessDataStream::processRA - The 3270 REPEAT TO ADDRESS order
+ *
+ * @details The RA order repeats the specified character from the current address to the specified one.
+ */
 void ProcessDataStream::processRA()
 {
     buffer++;
@@ -759,7 +859,7 @@ void ProcessDataStream::processRA()
         {
             screen->setGraphicEscape();
         }
-        screen->setChar(offset, newChar, false, false);
+        screen->setChar(offset, newChar, false);
     }
 
     primary_pos = endPos % screenSize;
@@ -769,6 +869,12 @@ void ProcessDataStream::processRA()
     lastWasCmd = true;
 }
 
+/**
+ * @brief   ProcessDataStream::processEUA - The 3270 ERASE UNPROTECTED TO ADDRESS order
+ *
+ * @details The EUA (not to be confused with EAU!) clears all unprotected fields on the screen until the
+ *          specified address.
+ */
 void ProcessDataStream::processEUA()
 {
 
@@ -790,6 +896,11 @@ void ProcessDataStream::processEUA()
     lastWasCmd = true;
 }
 
+/**
+ * @brief   ProcessDataStream::processGE - The 3270 GRAPHIC ESCAPE order
+ *
+ * @details The GE order writes a graphic escape character (that is, one from codepage 310) to the screen.
+ */
 void ProcessDataStream::processGE()
 {
 //    printf("[GraphicEscape ");
@@ -801,6 +912,22 @@ void ProcessDataStream::processGE()
     lastWasCmd = false;
 }
 
+/**
+ * @brief   ProcessDataStream::WSFoutbound3270DS - The 3270 Structured Field Outbound 3270DS
+ *
+ * @details The Outbound 3270DS is used to direct output to a specific partition. There are
+ *          four possible incoming (outbound from the host) operations:
+ *
+ *          @li Write
+ *          @li Erase/Write
+ *          @li Erase/Write Alternate
+ *          @li Erase All Unprotected
+ *
+ *          These operations can be directed to a specific partition after the Create Partition
+ *          structured field has been used.
+ *
+ * @note    Q3270 supports only WRITE currently.
+ */
 void ProcessDataStream::WSFoutbound3270DS()
 {
     printf("[Outbound 3270DS");
@@ -830,6 +957,11 @@ void ProcessDataStream::WSFoutbound3270DS()
     }
 }
 
+/**
+ * @brief   ProcessDataStream::WSFreset - The 3270 Structured Field Reset
+ *
+ * @details The Reset is used to reset the terminal to its power on state.
+ */
 void ProcessDataStream::WSFreset()
 {
     printf("\n\n[** Reset Partition %02X - Not Implemented **]\n\n", *++buffer);
@@ -837,6 +969,14 @@ void ProcessDataStream::WSFreset()
     return;
 }
 
+/**
+ * @brief   ProcessDataStream::WSFreadPartition - The 3270 Structured Field Read Partition
+ *
+ * @details The Read Partition function allows the host to read a specific partition or to
+ *          query the device to report functions that it supports.
+ *
+ * @note    Q3270 only supports the Query function.
+ */
 void ProcessDataStream::WSFreadPartition()
 {
     uchar partition = *++buffer;
@@ -853,6 +993,18 @@ void ProcessDataStream::WSFreadPartition()
     emit bufferReady(queryReply);
 }
 
+/**
+ * @brief    ProcessDataStream::replySummary - The 3270 Structured Field Query Reply (Summary)
+ * @param    queryReply - the buffer to add the reply to
+ *
+ * @details  The Query Reply (Summary) structured field is used to inform the host of a summary of
+ *           the functions that the device supports.
+ *
+ *           Here, the reply summary also includes, as structured fields following the summary, the
+ *           device capabililties.
+ *
+ *           It is this function that allows the host the utilise the dynamic screen sizes.
+ */
 void ProcessDataStream::replySummary(QByteArray &queryReply)
 {
 
@@ -1181,6 +1333,15 @@ void ProcessDataStream::replySummary(QByteArray &queryReply)
 //    buffer->addBlock(qalphaparts, 8);
 }
 
+/**
+ * @brief   ProcessDataStream::addBytes - add bytes to a buffer
+ * @param   b - the buffer
+ * @param   s - the data
+ * @param   l - the length
+ *
+ * @details addBytes is used to add bytes to a buffer that will be sent to the host. Any 0xFF characters
+ *          are doubled up.
+ */
 void ProcessDataStream::addBytes(QByteArray &b, uchar *s, int l)
 {
     for (int i = 0; i < l; i++)
@@ -1195,6 +1356,26 @@ void ProcessDataStream::addBytes(QByteArray &b, uchar *s, int l)
     }
 }
 
+/**
+ * @brief   ProcessDataStream::extractBufferAddress - extract two bytes from the buffer as a screen address
+ * @return  the screen position
+ *
+ * @details The incoming 3270 data stream contains buffer addresses (screen positions) that are encoded
+ *          in different ways depending on the first two bits of the first byte. (12 or 14 bits).
+ *
+ *          It is possible to use 16 bit, but only once a partition has been created explicitly.
+ *
+ *          Bit 0 and 1 patterns:
+ *
+ *          Setting | Address
+ *          ------- | ----------
+ *            00    | 14 bit. xxyyyyyy yyyyyyyy -> 00yyyyyy yyyyyyyy
+ *            01    | 12 bit. xxyyyyyy xxyyyyyy -> 0000yyyy yyyyyyyy
+ *            10    | Unsupported. Reserved.
+ *            11    | 12 bit. xxyyyyyy xxyyyyyy -> 0000yyyy yyyyyyyy
+ *
+ *          16 bit addressing, if used, would use all 16 bits.
+ */
 int ProcessDataStream::extractBufferAddress()
 {
     //TODO: non-12/14 bit addresses & EBCDIC characters
@@ -1219,15 +1400,21 @@ int ProcessDataStream::extractBufferAddress()
     }
 }
 
+/**
+ * @brief   ProcessDataStream::placeChar - place a character onto the screen
+ * @param   ebcdic - the EBCDIC character to be placed.
+ *
+ * @details This routine is used to put a character from the data stream onto the screen.
+ */
 void ProcessDataStream::placeChar(uchar ebcdic)
 {
     switch(ebcdic)
     {
         case IBM3270_CHAR_NULL:
-            screen->setChar(primary_pos, 0x00, false, false);
+            screen->setChar(primary_pos, 0x00, false);
             break;
         default:
-            screen->setChar(primary_pos, ebcdic, false, false);
+            screen->setChar(primary_pos, ebcdic, false);
     }
 
     incPos();
@@ -1240,6 +1427,13 @@ void ProcessDataStream::placeChar(uchar ebcdic)
     lastWasCmd = false;
 }
 
+/**
+ * @brief   ProcessDataStream::incPos - increment the screen buffer position
+ *
+ * @details The screen buffer position is incremented by various commands and orders. The screen buffer
+ *          starts at 0 for the top-left position, and continues sequentially until the bottom-right,
+ *          wrapping from the end of one line to the beginning of the next line down.
+ */
 void ProcessDataStream::incPos()
 {
     primary_pos++;
@@ -1254,6 +1448,13 @@ void ProcessDataStream::incPos()
     }
 }
 
+/**
+ * @brief   ProcessDataStream::insertChar - insert a character to the screen from the keyboard
+ * @param   keycode - the character to insert
+ * @param   insMode - true to insert, false to overwrite
+ *
+ * @details Insert a character in the current field from the keyboard
+ */
 void ProcessDataStream::insertChar(unsigned char keycode, bool insMode)
 {
     if (screen->insertChar(cursor_pos, keycode, insMode))
@@ -1266,17 +1467,32 @@ void ProcessDataStream::insertChar(unsigned char keycode, bool insMode)
     }
 }
 
+/**
+ * @brief   ProcessDataStream::deleteChar - delete a character from the current field
+ *
+ * @details Delete a character from the current input field
+ */
 void ProcessDataStream::deleteChar()
 {
     screen->deleteChar(cursor_pos);
 }
 
-
+/**
+ * @brief   ProcessDataStream::eraseField - erase the rest of the input field
+ *
+ * @details Clear the rest of the current input field (Erase EOF)
+ */
 void ProcessDataStream::eraseField()
 {
     screen->eraseEOF(cursor_pos);
 }
 
+/**
+ * @brief   ProcessDataStream::moveCursor - move the cursor
+ * @param   x        - x position to move the cursor to
+ * @param   y        - y position to move the cursor to
+ * @param   absolute - true for an absolute position, false for relative
+ */
 void ProcessDataStream::moveCursor(int x, int y, bool absolute)
 {
     // Absolute or relative
@@ -1318,6 +1534,11 @@ void ProcessDataStream::moveCursor(int x, int y, bool absolute)
     emit cursorMoved(cursor_x, cursor_y);
 }
 
+/**
+ * @brief   ProcessDataStream::backspace - backspace one character
+ *
+ * @details Backspace one character, stopping at the field start
+ */
 void ProcessDataStream::backspace()
 {
     // If we're at a protected field, do nothing
@@ -1334,6 +1555,12 @@ void ProcessDataStream::backspace()
     moveCursor(-1 , 0);
 }
 
+/**
+ * @brief   ProcessDataStream::tab - tab to the next field
+ * @param   offset - offset from the current position
+ *
+ * @details Move the cursor to the next input field
+ */
 void ProcessDataStream::tab(int offset)
 {
     int nf = screen->findNextUnprotectedField(cursor_pos + offset);
@@ -1346,6 +1573,11 @@ void ProcessDataStream::tab(int offset)
     moveCursor(1, 0);
 }
 
+/**
+ * @brief   ProcessDataStream::backtab - back to the previous field start
+ *
+ * @details Move the cursor to the start of the previous field (which may be this field)
+ */
 void ProcessDataStream::backtab()
 {
     int pf = screen->findPrevUnprotectedField(cursor_pos);
@@ -1359,6 +1591,12 @@ void ProcessDataStream::backtab()
 
 }
 
+/**
+ * @brief   ProcessDataStream::home - move the cursor to the first field on the screen
+ *
+ * @details Move the cursor to the first field on the screen; searching starts at the very last position
+ *          in case that is a field start, and the first position is not.
+ */
 void ProcessDataStream::home()
 {
     // Find first field on screen; this might be position 0, so we need to look starting at the last screen pos
@@ -1370,6 +1608,11 @@ void ProcessDataStream::home()
     moveCursor(1, 0);
 }
 
+/**
+ * @brief   ProcessDataStream::newline - move the cursor to the first input field after the current line
+ *
+ * @details Move the cursor to the first input field found after the start of the next line.
+ */
 void ProcessDataStream::newline()
 {
     cursor_x = 0;
@@ -1385,6 +1628,11 @@ void ProcessDataStream::newline()
     tab(0);
 }
 
+/**
+ * @brief   ProcessDataStream::endline - move the cursor to the end of the current input field
+ *
+ * @details Move the cursor to the end of the text in the current input field.
+ */
 void ProcessDataStream::endline()
 {
     if (screen->isProtected(cursor_pos))
@@ -1432,18 +1680,35 @@ void ProcessDataStream::endline()
 
 }
 
+/**
+ * @brief   ProcessDataStream::toggleRuler - turn the ruler on or off
+ *
+ * @details Toggle the ruler (crosshairs) on or off
+ */
 void ProcessDataStream::toggleRuler()
 {
     screen->toggleRuler();
     screen->drawRuler(cursor_x, cursor_y);
 }
 
-
+/**
+ * @brief   ProcessDataStream::showInfo - show information about the character under the cursor
+ *
+ * @details Debugging routine to show data about the character the cursor is on
+ */
 void ProcessDataStream::showInfo()
 {
     screen->dumpInfo(cursor_pos);
 }
 
+/**
+ * @brief   ProcessDataStream::processAID - process an attention key
+ * @param   aid       - the key
+ * @param   shortRead - true for short read, false for normal
+ *
+ * @details Process an attention key. If the key was a short read key (like CLEAR, PA1 etc) then no
+ *          fields are returned to the host.
+ */
 void ProcessDataStream::processAID(int aid, bool shortRead)
 {
     QByteArray respBuffer = QByteArray();
@@ -1470,6 +1735,11 @@ void ProcessDataStream::processAID(int aid, bool shortRead)
     emit bufferReady(respBuffer);
 }
 
+/**
+ * @brief   ProcessDataStream::interruptProcess - interrupt the current process
+ *
+ * @details This is processing for ATTN
+ */
 void ProcessDataStream::interruptProcess()
 {
     QByteArray b = QByteArray();

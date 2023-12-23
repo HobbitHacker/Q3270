@@ -34,6 +34,16 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "SocketConnection.h"
 
+/**
+ * @brief   SocketConnection::SocketConnection - handle incoming TCPIP data
+ * @param   modelType - the terminal model type
+ *
+ * @details When a TCPIP connection is started, this routine handles the negotiation with the host. The
+ *          terminal type is used when negotiating the capability of the host.
+ *
+ *          Signals are connected for when the socket is successfully opened, closed and when there is
+ *          data to be read.
+ */
 SocketConnection::SocketConnection(int modelType)
 {
 //    dataSocket = new QSslSocket(this);
@@ -53,6 +63,11 @@ SocketConnection::SocketConnection(int modelType)
     tn3270e_Mode = false;
 }
 
+/**
+ * @brief   SocketConnection::~SocketConnection - destructor
+ *
+ * @details Disconnect the signals that were established and delete the socket.
+ */
 SocketConnection::~SocketConnection()
 {
     disconnect(dataSocket, &QSslSocket::disconnected, this, &SocketConnection::closed);
@@ -61,16 +76,31 @@ SocketConnection::~SocketConnection()
     dataSocket->deleteLater();
 }
 
+/**
+ * @brief   SocketConnection::opened - successful open of socket
+ *
+ * @details Slot called when the socket is successfully opened.
+ */
 void SocketConnection::opened()
 {
     emit connectionStarted();
 }
 
+/**
+ * @brief   SocketConnection::closed - socket has been closed
+ *
+ * @details Slot called when the socket has been closed.
+ */
 void SocketConnection::closed()
 {
     emit connectionEnded();
 }
 
+/**
+ * @brief   SocketConnection::disconnectMainframe - slot called when the connection is terminated
+ *
+ * @details Called when the user closes the connection.
+ */
 void SocketConnection::disconnectMainframe()
 {
 
@@ -80,7 +110,17 @@ void SocketConnection::disconnectMainframe()
     dataSocket->disconnectFromHost();
 }
 
-
+/**
+ * @brief   SocketConnection::connectMainframe - called when the user connects to a host
+ * @param   address - the target IP address
+ * @param   port    - the target port
+ * @param   luName  - the target LU name (may be empty)
+ * @param   d       - the ProcessDataStream object
+ *
+ * @details Called when the user connects to a host. The address, port are used to establish the connection
+ *          and the LU name is stored for later in the negotiation sequence. The ProcessDataStream object
+ *          is passed so that the ProcessDataStream can pass data back to the host.
+ */
 void SocketConnection::connectMainframe(QString &address, quint16 port, QString luName, ProcessDataStream *d)
 {
 /*    QList<QSslCipher> c = dataSocket->sslConfiguration().supportedCiphers();
@@ -98,6 +138,14 @@ void SocketConnection::connectMainframe(QString &address, quint16 port, QString 
     this->luName = luName;
 }
 
+/**
+ * @brief   SocketConnection::sslErrors - display SSL errors
+ * @param   errors - the list of errors
+ *
+ * @details Called when SSL errors happen, and displays them
+ *
+ * @note    SSL not currently supported by Q3270
+ */
 void SocketConnection::sslErrors(const QList<QSslError> &errors)
 {
     for(int i = 0; i < errors.size(); i++)
@@ -106,6 +154,14 @@ void SocketConnection::sslErrors(const QList<QSslError> &errors)
     }
 }
 
+/**
+ * @brief   SocketConnection::socketStateChanged - display SSL errors
+ * @param   state - socket state
+ *
+ * @details Display SSL errors. Called when a socket changes state.
+ *
+ * @note    SSL not currently supported by Q3270
+ */
 void SocketConnection::socketStateChanged(QAbstractSocket::SocketState state)
 {
 /*    qDebug() << state;
@@ -118,7 +174,12 @@ void SocketConnection::socketStateChanged(QAbstractSocket::SocketState state)
     }*/
 }
 
-
+/**
+ * @brief   SocketConnection::onReadyRead - process incoming TCPIP data
+ *
+ * @details This is the main driving routine for incoming TCPIP data. This routine handles all incoming
+ *          traffic, and caters for the TN3270 negotiation.
+ */
 void SocketConnection::onReadyRead()
 {
 
@@ -373,6 +434,13 @@ void SocketConnection::onReadyRead()
     }
 }
 
+/**
+ * @brief   SocketConnection::sendResponse - send data back to the host
+ * @param   b - the byte array containing the data
+ *
+ * @details Send data back to the host. This may be prefixed with a TN3270E header if TN3270E negotiation
+ *          happened earlier.
+ */
 void SocketConnection::sendResponse(QByteArray &b)
 {
     QByteArray response;
@@ -402,6 +470,12 @@ void SocketConnection::sendResponse(QByteArray &b)
     dataStream.writeRawData(response, 2);
 }
 
+/**
+ * @brief   SocketConnection::processSubNegotiation - process a TN3270E sub-negotiation packet
+ *
+ * @details If the incoming packet was identified as a TN3270E sub-negotiation packet, this routine
+ *          gets control and processes that packet, returning data to the host as needed.
+ */
 void SocketConnection::processSubNegotiation()
 {
     QDataStream dataStream(dataSocket);
@@ -421,7 +495,7 @@ void SocketConnection::processSubNegotiation()
                 response.append(termName.toLatin1().data(), strlen(termName.toLatin1().data()));
 
                 // Pass LU name if one was requested
-                if (luName.compare(""))
+                if (luName.compare("")) happen
                 {
                     response.append('@');
                     response.append(luName.toLatin1().data(), strlen(luName.toLatin1().data()));
@@ -534,11 +608,12 @@ void SocketConnection::processSubNegotiation()
 
 
 /**
- * @brief SocketConnection::dump
- *        Utility method to hexdump a buffer, formatted at 32 bytes, with ASCII character representation.
- * @param a - QByteArray to be dumped
- * @param title - A title to distinguish this from other hexdumps
+ * @brief   SocketConnection::dump - print out a buffer
+ * @param   a     - QByteArray to be dumped
+ * @param   title - A title to distinguish this from other hexdumps
  *
+ * @details Debugging utility method to hexdump a buffer, formatted at 32 bytes, with EBCDIC/ASCII character
+ *          representation.
  */
 void SocketConnection::dump(QByteArray &a, QString title)
 {

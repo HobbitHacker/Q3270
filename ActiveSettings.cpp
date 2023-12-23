@@ -36,9 +36,19 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ActiveSettings.h"
 
+/**
+ * @brief
+ * ActiveSettings represents the currently active settings. This is literally just the various flags
+ * and values that would be written to the saved settings file.
+ *
+ * @details When a setting is changed (rather than just set back to the value it currently is), a singal
+ *          is emitted. this avoids flagging a change when actually there wasn't one.
+ *
+ *          The constructor sets (my) factory setting defaults.
+ */
 ActiveSettings::ActiveSettings()
 {
-    rulerOn = false;
+    rulerState = false;
     ruler = Q3270_RULER_CROSSHAIR;
 
     cursorBlink = true;
@@ -50,39 +60,61 @@ ActiveSettings::ActiveSettings()
 
     termFont = QFont("ibm3270", 8);
     
-    termModel= 0;
+    termModel = Q3270_TERMINAL_MODEL2;
     termX = 80;
     termY = 24;
 
     codePage = "IBM-037";
     keyboardThemeName = "Factory";
     colourThemeName = "Factory";
-
-//    hostName = "";
-//    hostLU = "";
-//    hostPort = 0;
 }
 
-void ActiveSettings::setRulerOn(bool rulerOn)
+/**
+ * @brief   ActiveSettings::setRulerState - hide or display the ruler
+ * @param   rulerState - true to show the ruler, false to hide it.
+ *
+ * @details Change the state of the ruler display.
+ */
+void ActiveSettings::setRulerState(bool rulerState)
 {
-    if (rulerOn != this->rulerOn)
+    if (rulerState != this->rulerState)
     {
-        emit rulerChanged(rulerOn);
+        emit rulerChanged(rulerState);
     }
 
-    this->rulerOn = rulerOn;
+    this->rulerState = rulerState;
 }
 
-void ActiveSettings::setRulerStyle(int r)
+/**
+ * @brief   ActiveSettings::setRulerStyle
+ * @param   newStyle
+ *
+ * Value | Ruler Style
+ * ----- | ------------
+ * 0     | Crosshair
+ * 1     | Vertical
+ * 2     | Horizontal
+ *
+ * @sa Q3270.h
+ *
+ * @details Change the ruler style (crosshair, vertical, horizontal)
+ */
+void ActiveSettings::setRulerStyle(int newStyle)
 {
-    if (r != this->ruler)
+    if (newStyle != this->ruler)
     {
-        emit rulerStyleChanged(r);
+        emit rulerStyleChanged(newStyle);
     }
 
-    this->ruler = r;
+    this->ruler = newStyle;
 }
 
+/**
+ * @brief   ActiveSettings::setCursorBlink
+ * @param   cursorBlink - true to blink the cursor, false to make it static.
+ *
+ * @details Change whether the cursor blinks or not.
+ */
 void ActiveSettings::setCursorBlink(bool cursorBlink)
 {
     if (cursorBlink != this->cursorBlink)
@@ -93,6 +125,13 @@ void ActiveSettings::setCursorBlink(bool cursorBlink)
     this->cursorBlink = cursorBlink;
 }
 
+/**
+ * @brief   ActiveSettings::setCursorBlinkSpeed
+ * @param   cursorBlinkSpeed - the speed of the cursor blink.
+ *
+ * @details Set the speed of cursor blink. This setting has no effect if the cursor
+ *          isn't set to blink.
+ */
 void ActiveSettings::setCursorBlinkSpeed(int cursorBlinkSpeed)
 {
     if (cursorBlinkSpeed != this->cursorBlinkSpeed)
@@ -103,6 +142,14 @@ void ActiveSettings::setCursorBlinkSpeed(int cursorBlinkSpeed)
     this->cursorBlinkSpeed = cursorBlinkSpeed;
 }
 
+/**
+ * @brief   ActiveSettings::setCursorColourInherit
+ * @param   cursorInherit - true to inherit the colour of the cell, false for grey
+ *
+ * @details The cursor can inherit the colour of the underlying character cell, meaning that
+ *          there is some visual feedback to the user of the colour of the field in which
+ *          the cursor resides, or the cursor can be a simple grey colour.
+ */
 void ActiveSettings::setCursorColourInherit(bool cursorInherit)
 {
     if (cursorInherit != this->cursorColourInherit)
@@ -112,6 +159,11 @@ void ActiveSettings::setCursorColourInherit(bool cursorInherit)
     this->cursorColourInherit = cursorInherit;
 }
 
+/**
+ * @brief   ActiveSettings::setFont
+ * @param   font
+ * @details Change the font used for the display.
+ */
 void ActiveSettings::setFont(QFont font)
 {
     if (font != this->termFont)
@@ -121,6 +173,21 @@ void ActiveSettings::setFont(QFont font)
     this->termFont = font;
 }
 
+/**
+ * @brief ActiveSettings::setTerminal
+ * @param x     - the number of columns for the display
+ * @param y     - the number of rows for the display
+ * @param model - the model number
+ *
+ * @details Sets the size of the 3270 display (for the alternate screen). The primary screen is always 24x80
+ *          (model 2). The setting is only changed when there is no active connection because part of the
+ *          connection negotiation is to determine the screen size.
+ *
+ *          If one of the standard model types is used (2, 3, 4 or 5), the size is overridden and any
+ *          size paramteres passed are ignored.
+ *
+ *          This routine is called when the Preferences dialog's OK button is clicked.
+ */
 void ActiveSettings::setTerminal(int x, int y, int model)
 {
     // Prevent fixed size models overriding sizes
@@ -156,6 +223,18 @@ void ActiveSettings::setTerminal(int x, int y, int model)
     termModel = model;
 }
 
+/**
+ * @brief   ActiveSettings::setTerminal
+ * @param   x         - the number of columns for the display
+ * @param   y         - the number of rows for the display
+ * @param   modelName - the name of the model
+ *
+ * @details This routine is used to set the terminal size; it is called by TerminalTab when the
+ *          configuration file is read in (so that the config file stores an English name rather
+ *          than just a number)
+ *
+ *          Like setTerminal(), the size parameters are ignored if the model is a standard model.
+ */
 void ActiveSettings::setTerminal(int x, int y, QString modelName)
 {
     if (modelName == "Model2")
@@ -182,6 +261,13 @@ void ActiveSettings::setTerminal(int x, int y, QString modelName)
     setTerminal(x, y, Q3270_TERMINAL_DYNAMIC);
 }
 
+/**
+ * @brief   ActiveSettings::getTerminalModelName
+ * @return  The string form of the model name.
+ *
+ * @details This function returns the string format of the model name, which is stored in the config
+ *          file.
+ */
 QString ActiveSettings::getTerminalModelName()
 {
     switch(termModel)
@@ -199,6 +285,12 @@ QString ActiveSettings::getTerminalModelName()
     }
 }
 
+/**
+ * @brief   ActiveSettings::setCodePage
+ * @param   codepage - the new codepage.
+ *
+ * @details Change the code page to the one specified.
+ */
 void ActiveSettings::setCodePage(QString codepage)
 {
     if (this->codePage != codepage)
@@ -209,6 +301,14 @@ void ActiveSettings::setCodePage(QString codepage)
     this->codePage = codepage;
 }
 
+/**
+ * @brief   ActiveSettings::setKeyboardTheme
+ * @param   keyboards         - The KeyboardTheme class
+ * @param   keyboardThemeName - the name of the keyboard theme
+ *
+ * @details This setting holds the name of the keyboard theme. The KeyboardTheme class is needed
+ *          because that's actually where the keyboard definitions are stored.
+ */
 void ActiveSettings::setKeyboardTheme(KeyboardTheme &keyboards, QString keyboardThemeName)
 {
     if (this->keyboardThemeName != keyboardThemeName)
@@ -219,6 +319,12 @@ void ActiveSettings::setKeyboardTheme(KeyboardTheme &keyboards, QString keyboard
     this->keyboardThemeName = keyboardThemeName;
 }
 
+/**
+ * @brief   ActiveSettings::setColourTheme
+ * @param   colourthemeName - the name of the colour theme.
+ *
+ * @details The colour theme is set by name.
+ */
 void ActiveSettings::setColourTheme(QString colourthemeName)
 {
     if (this->colourThemeName != colourthemeName)
@@ -228,6 +334,15 @@ void ActiveSettings::setColourTheme(QString colourthemeName)
 
     this->colourThemeName = colourthemeName;
 }
+
+/**
+ * @brief   ActiveSettings::setHostAddress
+ * @param   hostName
+ * @param   hostPort
+ * @param   hostLU
+ *
+ * @details Set the host address, port and LU name.
+ */
 void ActiveSettings::setHostAddress(QString hostName, int hostPort, QString hostLU)
 {
     if (hostName != this->hostName || hostPort != this->hostPort || hostLU != this->hostLU)
@@ -240,16 +355,20 @@ void ActiveSettings::setHostAddress(QString hostName, int hostPort, QString host
     this->hostLU = hostLU;
 }
 
+/**
+ * @brief ActiveSettings::setHostAddress
+ * @param address - target host address.
+ *
+ * @details Set the host address. Host addresses can be of the form:
+ *
+ *   0700@localhost:3270
+ *   console@1.2.3.4:23
+ *   1.2.3.4:23
+ *
+ */
 void ActiveSettings::setHostAddress(QString address)
 {
     // Determine if the supplied address contains an '@' denoting the LU to be used.
-    //
-    // Addresses can be of the form:
-    //
-    //   0700@localhost:3270
-    //   console@1.2.3.4:23
-    //   1.2.3.4:23
-
     if (address.contains("@"))
     {
         hostLU = address.section("@", 0, 0);
@@ -265,6 +384,12 @@ void ActiveSettings::setHostAddress(QString address)
     emit hostChanged(hostName, hostPort, hostLU);
 }
 
+/**
+ * @brief   ActiveSettings::getHostAddress
+ * @return  The address of the host.
+ *
+ * @details The address of the host that Q3270 is connected to. This may include a port and LU.
+ */
 QString ActiveSettings::getHostAddress()
 {
     QString address;
@@ -288,6 +413,15 @@ QString ActiveSettings::getHostAddress()
     return address;
 }
 
+/**
+ * @brief   ActiveSettings::setBackspaceStop
+ * @param   backspaceStop - whether pressing backspace will allow the user to move the cursor beyond the field
+ *                        start.
+ *
+ * @details When backspace stop is enabled, the cursor will be prevented from continuing beyond the
+ *          beginning of the start of the field. When backspace stop is disabled, and backspace is pressed,
+ *          it will act like cursor left, rather than backspace.
+ */
 void ActiveSettings::setBackspaceStop(bool backspaceStop)
 {
     if (this->backspaceStop != backspaceStop)
@@ -298,6 +432,15 @@ void ActiveSettings::setBackspaceStop(bool backspaceStop)
     this->backspaceStop = backspaceStop;
 }
 
+/**
+ * @brief ActiveSettings::setStretchScreen
+ * @param stretch - true to ignore 4:3 ratio, and fill the window, false to enforce a 4:3 ratio.
+ *
+ * @details The screen can be made to fill the application window, so that the display is stretched to fill
+ *          all space in the application window. If this setting is disabled, the characters form a fixed
+ *          4:3 ratio size, and will have white space either side if the window is resized outside of a 4:3
+ *          ratio.
+ */
 void ActiveSettings::setStretchScreen(bool stretch)
 {
     if (this->stretchScreen != stretch)

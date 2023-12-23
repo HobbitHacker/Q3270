@@ -250,6 +250,22 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>KeyboardMap</sender>
+   <signal>itemClicked(QTableWidgetItem*)</signal>
+   <receiver>KeyboardTheme</receiver>
+   <slot>populateKeySequence(QTableWidgetItem*)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>350</x>
+     <y>232</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>350</x>
+     <y>256</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>addTheme()</slot>

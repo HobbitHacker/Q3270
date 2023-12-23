@@ -72,4 +72,5 @@ RESOURCES += \
     Q3270.qrc
 
 DISTFILES += \
-    README.md
+    README.md \
+    UserGuide.md

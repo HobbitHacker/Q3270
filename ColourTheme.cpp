@@ -2,6 +2,21 @@
 #include "ui_ColourTheme.h"
 #include "ui_NewTheme.h"
 
+/**
+ * @brief   ColourTheme::ColourTheme - Dialog for choosing the colours for 3270
+ * @param   parent
+ *
+ * @details ColourTheme is used to display the swatches for the different colours used by
+ *          the 3270 display.
+ *
+ *          There are two sets of colours; the basic 4 colour (blue, green, red, white), and
+ *          the standard 7 colour (black, blue, red, magenta or pink, green, cyan or turquoise,
+ *          yellow and white or neutral).
+ *
+ *          The theme names are picked up from the config file; Factory is always present
+ *          internally, and ignored if also found in the config file. These are used to build up
+ *          a list of available themes.
+ */
 ColourTheme::ColourTheme(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::ColourTheme)
@@ -12,9 +27,9 @@ ColourTheme::ColourTheme(QWidget *parent) :
     Colours palette;
 
     // Factory defaults
+    palette[UNPROTECTED_NORMAL]      = QColor(0,255,0);            /* Basic Green */
     palette[PROTECTED_NORMAL]        = QColor(128,128,255);        /* Basic Blue */
     palette[UNPROTECTED_INTENSIFIED] = QColor(255,0,0);            /* Basic Red */
-    palette[UNPROTECTED_NORMAL]      = QColor(0,255,0);            /* Basic Green */
     palette[PROTECTED_INTENSIFIED]   = QColor(255,255,255);        /* Basic White */
 
     palette[BLACK]   = QColor(0,0,0);          /* Black */
@@ -129,12 +144,21 @@ ColourTheme::ColourTheme(QWidget *parent) :
     currentThemeIndex = 0;
 }
 
+/**
+ * @brief   ColourTheme::~ColourTheme - destructor
+ *
+ * @details Destructor.
+ */
 ColourTheme::~ColourTheme()
 {
     qDebug() << "ColourTheme: Destroyed";
     delete ui;
 }
 
+/**
+ * @brief   ColourTheme::exec - dialog display.
+ * @return  OK or Cancel
+ */
 int ColourTheme::exec()
 {
     // Save state in the event of a cancel
@@ -145,6 +169,14 @@ int ColourTheme::exec()
     return QDialog::exec();
 }
 
+/**
+ * @brief   ColourTheme::setTheme - set colour theme
+ * @param   ThemeName - string name of theme to be set
+ *
+ * @details setTheme changes the theme to the one specified, changing the colours on the
+ *          swatches to match. If the passed theme name isn't found in the list, the Factory
+ *          internal one is used instead.
+ */
 void ColourTheme::setTheme(QString ThemeName)
 {
     // Set colour theme according to ThemeName, using Factory if not found
@@ -173,30 +205,43 @@ void ColourTheme::setTheme(QString ThemeName)
         ui->baseColours->setEnabled(true);
     }
 
-    setButtonColours(colourButtons, currentThemeName);
+    setButtonColours(currentThemeName);
 }
 
-void ColourTheme::setButtonColours(QHash<Colour, QPushButton *> theme, QString themeName)
+/**
+ * @brief   ColourTheme::setButtonColours - set the swatches to the colours specified
+ * @param   themeName - the name of theme
+ *
+ * @details setButtonColours is used to change the colours on the swatches of the dialog.
+ */
+void ColourTheme::setButtonColours(QString themeName)
 {
     Colours thisTheme = getTheme(themeName);
 
     // Change colour swatches
-    theme[UNPROTECTED_NORMAL]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[UNPROTECTED_NORMAL].name()));
-    theme[PROTECTED_NORMAL]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[PROTECTED_NORMAL].name()));
-    theme[UNPROTECTED_INTENSIFIED]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[UNPROTECTED_INTENSIFIED].name()));
-    theme[PROTECTED_INTENSIFIED]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[PROTECTED_INTENSIFIED].name()));
+    colourButtons[UNPROTECTED_NORMAL]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[UNPROTECTED_NORMAL].name()));
+    colourButtons[PROTECTED_NORMAL]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[PROTECTED_NORMAL].name()));
+    colourButtons[UNPROTECTED_INTENSIFIED]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[UNPROTECTED_INTENSIFIED].name()));
+    colourButtons[PROTECTED_INTENSIFIED]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[PROTECTED_INTENSIFIED].name()));
 
-    theme[BLACK]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[BLACK].name()));
-    theme[BLUE]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[BLUE].name()));
-    theme[RED]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[RED].name()));
-    theme[MAGENTA]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[MAGENTA].name()));
-    theme[GREEN]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[GREEN].name()));
-    theme[CYAN]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[CYAN].name()));
-    theme[YELLOW]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[YELLOW].name()));
-    theme[NEUTRAL]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[NEUTRAL].name()));
+    colourButtons[BLACK]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[BLACK].name()));
+    colourButtons[BLUE]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[BLUE].name()));
+    colourButtons[RED]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[RED].name()));
+    colourButtons[MAGENTA]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[MAGENTA].name()));
+    colourButtons[GREEN]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[GREEN].name()));
+    colourButtons[CYAN]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[CYAN].name()));
+    colourButtons[YELLOW]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[YELLOW].name()));
+    colourButtons[NEUTRAL]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[NEUTRAL].name()));
 }
 
-
+/**
+ * @brief   ColourTheme::setColour - the slot called when the user clicks on a swatch
+ *
+ * @details setColour is called when the swatch button is clicked, which enables the user to
+ *          modify the colour. As every swatch is connected to this slot, it compares the
+ *          button name to known values to display the colour selection dialog with that colour
+ *          selected.
+ */
 void ColourTheme::setColour()
 {
     // Process a change of colour
@@ -260,6 +305,14 @@ void ColourTheme::setColour()
     themes.find(currentThemeName).value() = currentTheme;
 }
 
+/**
+ * @brief   ColourTheme::colourDialog - display the colour collection dialog
+ * @param   c - the original colour of the button
+ * @param   b - the button that was pressed
+ *
+ * @details colourDialog presents the user with a colour selection dialog, and will
+ *          update the colour of the button that was pressed when the OK button is pressed.
+ */
 void ColourTheme::colourDialog(QColor &c, QPushButton *b)
 {
     // Display colour picker and set theme colour accordingly, along with button
@@ -281,6 +334,14 @@ void ColourTheme::colourDialog(QColor &c, QPushButton *b)
 }
 
 
+/**
+ * @brief   ColourTheme::themeChanged - update the colours when the theme is changed
+ * @param   index - the index of the selected theme
+ *
+ * @details themeChanged is triggered when the drop-down box of theme names is updated to show
+ *          a different theme. If the theme chosen is not the internal Factory theme, the theme
+ *          can be deleted.
+ */
 void ColourTheme::themeChanged(int index)
 {
     qDebug() << "This index: " << index << " Current Index: " << ui->colourTheme->currentIndex() << " Our Index: " << currentThemeIndex;
@@ -302,6 +363,16 @@ void ColourTheme::themeChanged(int index)
     }
 }
 
+/**
+ * @brief   ColourTheme::addTheme - a pop-up dialog box to create a new colour theme
+ *
+ * @details addTheme displays a dialog box to the user allowing them to enter a new name for
+ *          a new theme. The default name of the new theme is 'New Theme' and a number, increasing by
+ *          one for each "New Theme n" that is already present.
+ *
+ *          When the OK button is pressed, the new theme is added to the list of selectable
+ *          themes.
+ */
 void ColourTheme::addTheme()
 {
     QString newName = "New Theme";
@@ -331,6 +402,13 @@ void ColourTheme::addTheme()
     }
 }
 
+/**
+ * @brief   ColourTheme::checkDuplicate - check for duplicate theme names when adding a new theme
+ *
+ * @details checkDuplicate is triggered when the user modifies the input box for the new theme name.
+ *          When the theme name does not match any existing theme name, the OK button is enabled,
+ *          otherwise a "Duplicate theme name" message is shown.
+ */
 void ColourTheme::checkDuplicate()
 {
     // Check if new theme name being entered is a unique value
@@ -346,6 +424,11 @@ void ColourTheme::checkDuplicate()
     }
 }
 
+/**
+ * @brief   ColourTheme::deleteTheme - remove a theme
+ *
+ * @details deleteTheme removes an entry from the theme lists. It is triggered by the delete button.
+ */
 void ColourTheme::deleteTheme()
 {
     // Remove theme from lists
@@ -354,6 +437,13 @@ void ColourTheme::deleteTheme()
 }
 
 
+/**
+ * @brief   ColourTheme::getTheme - return the colour theme identified by theme
+ * @param   theme - the colour theme to be returned
+ * @return  the list of colours
+ *
+ * @details getTheme is called when the colour theme is changed.
+ */
 const ColourTheme::Colours ColourTheme::getTheme(QString theme)
 {
     // Return requested theme, if found, or Factory theme if not
@@ -365,12 +455,24 @@ const ColourTheme::Colours ColourTheme::getTheme(QString theme)
     return themes.constFind(theme).value();
 }
 
+/**
+ * @brief   ColourTheme::getThemes - return a list of theme names
+ * @return  the list of available theme names
+ *
+ * @details getThemes is called to return the list of available colour themes.
+ */
 QList<QString> ColourTheme::getThemes()
 {
     // Return all the Themes
     return themes.keys();
 }
 
+/**
+ * @brief   ColourTheme::accept - save colour theme changes
+ *
+ * @details accept is triggered by the OK button, and saves the colour themes to the config file.
+ *          The internal Factory theme is skipped.
+ */
 void ColourTheme::accept()
 {
     // Save settings
@@ -425,6 +527,11 @@ void ColourTheme::accept()
     QDialog::accept();
 }
 
+/**
+ * @brief   ColourTheme::reject - revert any changes made
+ *
+ * @details reject is triggered when the cancel button is pressed to undo any changes the user has done.
+ */
 void ColourTheme::reject()
 {
     // Restore state to before dialog displayed

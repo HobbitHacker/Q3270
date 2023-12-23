@@ -40,7 +40,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <QMap>
 
 /**
- * @brief The CodePage class
+ * @brief   The CodePage class
  *
  * @details This class is used to convert from EBCDIC to a Unicode character, or from an entered keyboard character
  *          to EBCDIC.

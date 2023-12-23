@@ -88,7 +88,6 @@ class TerminalTab : public QWidget
 
     public slots:
 
-        void connected();
         void closeConnection();
         void closeEvent(QCloseEvent *closeEvent);
         void setCurrentFont(QFont f);
@@ -108,6 +107,8 @@ class TerminalTab : public QWidget
     private:
 
         void connectSession(QString host, int port, QString luName);
+
+        void startTimers();
         void stopTimers();
 
         Keyboard &kbd;
