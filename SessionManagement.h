@@ -44,7 +44,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <QDebug>
 #include <QTableWidget>
 
-#include "TerminalTab.h"
+#include "Terminal.h"
 #include "PreferencesDialog.h"
 #include "ActiveSettings.h"
 
@@ -66,14 +66,14 @@ class SessionManagement : public QDialog
         ~SessionManagement();
 
         // Dialogs to open and save sessions; return true if session opened/saved
-        bool openSession(TerminalTab *t);
+        bool openSession(Terminal *t);
         bool saveSessionAs();
 
         // Save current named session details
         void saveSettings();
 
         // Open a named session
-        void openSession(TerminalTab *t, QString sessionName);
+        void openSession(Terminal *t, QString sessionName);
 
         // Manage sessions
         void manageSessions();

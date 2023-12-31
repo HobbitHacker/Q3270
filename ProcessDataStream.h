@@ -48,7 +48,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "DisplayScreen.h"
 
-class TerminalTab;
+class Terminal;
 
 class ProcessDataStream : public QObject
 {
@@ -60,29 +60,10 @@ class ProcessDataStream : public QObject
 
         bool processing;
 
-        ProcessDataStream(TerminalTab *t);
-
-        void insertChar(unsigned char keycode, bool insMode);
-
-        void moveCursor(int x, int y, bool absolute = false);
-
-        void tab(int offset = 1);
-        void backtab();
-        void home();
-        void eraseField();
-        void deleteChar();
-        void newline();
-        void toggleRuler();
-        void endline();
-        void backspace();
+        ProcessDataStream(Terminal *t);
 
         void showFields();
-        void showInfo();
-
         void resetMDTs();
-
-        void processAID(int aid, bool shortRead);
-        void interruptProcess();
 
     public slots:
 
@@ -92,7 +73,6 @@ class ProcessDataStream : public QObject
 
         void bufferReady(QByteArray &b);
         void keyboardUnlocked();
-        void cursorMoved(int x, int y);
         void blink();
         void disconnected();
 
@@ -100,7 +80,7 @@ class ProcessDataStream : public QObject
 
         DisplayScreen *screen;
 
-        TerminalTab *terminal;
+        Terminal *terminal;
 
         QByteArray::Iterator buffer;
 
@@ -115,10 +95,6 @@ class ProcessDataStream : public QObject
         int screen_x;
         int screen_y;
         int screenSize;
-
-        /* Cursor position */
-        int cursor_x, cursor_y;
-        int cursor_pos;
 
         bool resetMDT;
         bool restoreKeyboard;
@@ -164,9 +140,6 @@ class ProcessDataStream : public QObject
 
         int extractBufferAddress();
         void incPos();
-
-        void removeCursor();
-        void addCursor();
 
         void WSFreset();
         void WSFreadPartition();

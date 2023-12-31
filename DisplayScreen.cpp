@@ -35,16 +35,16 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <QGuiApplication>
 #include <QClipboard>
 
+#include <arpa/telnet.h>
+
 #include "Q3270.h"
 #include "DisplayScreen.h"
-
-
 
 /*
  * 
  * DisplayScreen represents a screen of the 3270 display. The class handles the display matrix.
  *
- * This is created by TerminalTab.
+ * This is created by Terminal.
  */
 
 /**
@@ -86,6 +86,8 @@ DisplayScreen::DisplayScreen(int screen_x, int screen_y, CodePage &cp, ColourThe
     blinkShow = false;
     cursorShow = true;
     cursorColour = true;
+
+    cursor_pos = 0;
 
     // Rubberband; QRubberBand can't be used directly on QGraphicsItems
     QPen myRbPen = QPen();
@@ -456,19 +458,6 @@ void DisplayScreen::setChar(int pos, short unsigned int c, bool fromKB)
         cell.at(pos)->setReverse(cell.at(fieldAttr)->isReverse());
         cell.at(pos)->setBlink(cell.at(fieldAttr)->isBlink());
     }
-}
-
-/**
- * @brief   DisplayScreen::getChar - return the ASCII character in the cell
- * @param   pos - the cell to retreive the character from
- * @return  the ASCII character
- *
- * @details getChar returns the ASCII character in the cell specified. This is used
- *          by the Endline function to find the first non-blank at the end of the line.
- */
-unsigned char DisplayScreen::getChar(int pos)
-{
-    return (cell.at(pos)->getChar().toLatin1());
 }
 
 /**
@@ -903,16 +892,16 @@ void DisplayScreen::resetMDTs()
  *
  *          If there isn't enough space, insertChar returns false, otherwise it returns true.
  */
-bool DisplayScreen::insertChar(int pos, unsigned char c, bool insertMode)
+bool DisplayScreen::insertChar(unsigned char c, bool insertMode)
 {
-    if (cell.at(pos)->isProtected() || cell.at(pos)->isFieldStart())
+    if (cell.at(cursor_pos)->isProtected() || cell.at(cursor_pos)->isFieldStart())
     {
         printf("Protected!\n");
         fflush(stdout);
         return false;
     }
 
-    int thisField = findField(pos);
+    int thisField = findField(cursor_pos);
 
     if (insertMode)
     {
@@ -937,7 +926,7 @@ bool DisplayScreen::insertChar(int pos, unsigned char c, bool insertMode)
          *  If the option to 'blank fill' is enabled, if the last char is a space, insert
          *  otherwise it's overflow.
          **/
-        int nextField = findNextField(pos);
+        int nextField = findNextField(cursor_pos);
         printf("This Field at: %d,%d, next field at %d,%d - last byte of this field %02X\n", (int)(thisField/screen_x), (int)(thisField-((int)(thisField/screen_x)*screen_x)), (int)(nextField/screen_x), (int)(nextField-((int)(nextField/screen_x)*screen_x)), cell.at(nextField - 1)->getEBCDIC() );
         uchar lastChar = cell.at(nextField - 1)->getEBCDIC();
         if (lastChar != IBM3270_CHAR_NULL && lastChar != IBM3270_CHAR_SPACE)
@@ -945,7 +934,7 @@ bool DisplayScreen::insertChar(int pos, unsigned char c, bool insertMode)
             // Insert not okay
         }
         int endPos = -1;
-        for(int i = pos; i < (pos + screenPos_max); i++)
+        for(int i = cursor_pos; i < (cursor_pos + screenPos_max); i++)
         {
             int offset = i % screenPos_max;
             if (cell.at(offset)->isProtected() || cell.at(offset)->isFieldStart())
@@ -965,7 +954,7 @@ bool DisplayScreen::insertChar(int pos, unsigned char c, bool insertMode)
             return false;
         }
 
-        for(int fld = endPos; fld > pos; fld--)
+        for(int fld = endPos; fld > cursor_pos; fld--)
         {
             int offset = fld % screenPos_max;
             int offsetPrev = (fld - 1) % screenPos_max;
@@ -976,7 +965,14 @@ bool DisplayScreen::insertChar(int pos, unsigned char c, bool insertMode)
 
     cell.at(thisField)->setMDT(true);
 
-    setChar(pos, c, true);
+    setChar(cursor_pos, c, true);
+
+    setCursor((cursor_pos + 1) % screenPos_max);
+
+    if (isAskip(cursor_pos))
+    {
+        tab(0);
+    }
 
     return true;
 }
@@ -1019,6 +1015,47 @@ bool DisplayScreen::isFieldStart(int pos)
 }
 
 /**
+ * @brief   DisplayScreen::newline - move the cursor to the first input field after the current line
+ *
+ * @details Move the cursor to the first input field found after the start of the next line.
+ */
+void DisplayScreen::newline()
+{
+    int cursor_y = (cursor_pos / screen_x) + 1;
+
+    if (cursor_y > screen_y)
+    {
+        cursor_y = 0;
+    }
+
+    cursor_pos = cursor_y * screen_x;
+
+    tab(0);
+}
+
+/**
+ * @brief   DisplayScreen::tab - tab to the next field
+ * @param   offset - offset from the current position
+ *
+ * @details Move the cursor to the next input field, skipping the attribute byte.
+ */
+void DisplayScreen::tab(int offset)
+{
+    // Move cursor to next unprotected field, plus one to skip Field Start byte
+    setCursor((findNextUnprotectedField(cursor_pos + offset) + 1) % screenPos_max);
+}
+
+/**
+ * @brief   DisplayScreen::backtab - back to the previous field start
+ *
+ * @details Move the cursor to the start of the previous field (which may be this field)
+ */
+void DisplayScreen::backtab()
+{
+    setCursor((findPrevUnprotectedField(cursor_pos) + 1) % screenPos_max);
+}
+
+/**
  * @brief   DisplayScreen::deleteChar - delete the character at the specified position
  * @param   pos - screen position
  *
@@ -1026,18 +1063,18 @@ bool DisplayScreen::isFieldStart(int pos)
  *          of the Cell at pos are shifted left by one character, and a null inserted at the end of the
  *          field.
  */
-void DisplayScreen::deleteChar(int pos)
+void DisplayScreen::deleteChar()
 {
-    if (cell.at(pos)->isProtected())
+    if (cell.at(cursor_pos)->isProtected())
     {
         printf("Protected!\n");
         fflush(stdout);
         return;
     }
 
-    int endPos = findNextField(pos);
+    int endPos = findNextField(cursor_pos);
 
-    for(int fld = pos; fld < endPos - 1 && cell.at(fld % screenPos_max)->getEBCDIC() != IBM3270_CHAR_NULL; fld++)
+    for(int fld = cursor_pos; fld < endPos - 1 && cell.at(fld % screenPos_max)->getEBCDIC() != IBM3270_CHAR_NULL; fld++)
     {        
         int offset = fld % screenPos_max;
         int offsetNext = (fld + 1) % screenPos_max;
@@ -1046,7 +1083,7 @@ void DisplayScreen::deleteChar(int pos)
     }
 
     cell.at(endPos - 1)->setChar(IBM3270_CHAR_NULL);
-    cell.at(findField(pos))->setMDT(true);
+    cell.at(findField(cursor_pos))->setMDT(true);
 }
 
 /**
@@ -1056,22 +1093,102 @@ void DisplayScreen::deleteChar(int pos)
  * @details eraseEOF is used when the Erase EOF function is used from the keyboard. The field that Cell
  *          is in is set to null, starting at position pos until the end of the field.
  */
-void DisplayScreen::eraseEOF(int pos)
+void DisplayScreen::eraseEOF()
 {
-    int nextField = findNextField(pos);
+    int nextField = findNextField(cursor_pos);
 
-    if (nextField < pos)
+    if (nextField < cursor_pos)
     {
         nextField += screenPos_max;
     }
 
     /* Blank field */
-    for(int i = pos; i < nextField; i++)
+    for(int i = cursor_pos; i < nextField; i++)
     {
         cell.at(i % screenPos_max)->setChar(0x00);
     }
 
-    cell.at(findField(pos))->setMDT(true);
+    cell.at(findField(cursor_pos))->setMDT(true);
+}
+
+/**
+ * @brief   DisplayScreen::endline - move the cursor to the end of the current input field
+ *
+ * @details Move the cursor to the end of the text in the current input field.
+ */
+void DisplayScreen::endline()
+{
+    if (isProtected(cursor_pos))
+    {
+        return;
+    }
+
+    int endPos = cursor_pos + screenPos_max;
+
+    int endField;
+
+    int i = cursor_pos;
+    int offset = cursor_pos;
+
+    endField = cursor_pos;
+    bool letter = false;
+
+    while(i < endPos && !isProtected(offset) && !isFieldStart(offset))
+    {
+        uchar thisChar = cell.at(offset)->getChar().toLatin1();
+        if (letter && (thisChar == 0x00 || thisChar == ' '))
+        {
+            endField = offset;
+            letter = false;
+        }
+
+        if (thisChar != 0x00 && thisChar != ' ')
+        {
+            letter = true;
+        }
+
+        offset = ++i % screenPos_max;
+    }
+
+    setCursor(endField);
+}
+
+/**
+ * @brief   DisplayScreen::home - move the cursor to the first field on the screen
+ *
+ * @details Move the cursor to the first field on the screen; searching starts at the very last position
+ *          in case that is a field start, and the first position is not.
+ */
+void DisplayScreen::home()
+{
+    // Find first field on screen; this might be position 0, so we need to look starting at the last screen pos
+    int nf = (findNextUnprotectedField(screenPos_max - 1) + 1) % screenPos_max;
+    int cursor_y = (nf / screen_x);
+    int cursor_x = nf - (cursor_y * screen_x);
+
+    // Move cursor right (skip attribute byte)
+    setCursor(cursor_x, cursor_y);
+}
+
+/**
+ * @brief   DisplayScreen::backspace - backspace one character
+ *
+ * @details Backspace one character, stopping at the field start
+ */
+void DisplayScreen::backspace()
+{
+    // If we're at a protected field, do nothing
+    if (isProtected(cursor_pos))
+        return;
+
+    // Discover whether the previous cursor position is a field start
+    int tempCursorPos = cursor_pos == 0 ? screenPos_max - 1 : cursor_pos - 1;
+
+    if (isFieldStart(tempCursorPos))
+        return;
+
+    // Backspace one character
+    setCursor(tempCursorPos);
 }
 
 /**
@@ -1131,6 +1248,40 @@ void DisplayScreen::setCursorColour(bool inherit)
     cursor.show();
 }
 
+
+/**
+ * @brief   DisplayScreen::moveCursor - move the cursor
+ * @param   x        - x position to move the cursor to
+ * @param   y        - y position to move the cursor to
+
+ */
+void DisplayScreen::moveCursor(int x, int y)
+{
+    int tmpCursorPos = (cursor_pos + (y * screen_x + x)) % screenPos_max;
+
+    if (tmpCursorPos < 0)
+    {
+        tmpCursorPos += screenPos_max;
+    }
+
+    setCursor(tmpCursorPos);
+}
+
+/**
+ * @brief   DisplayScreen::setCursor - position cursor
+ * @param   cursorPos - screen position
+ *
+ * @details setCursor is used when the cursor is moved either by the user or by the incoming 3270
+ *          data stream.
+ */
+void DisplayScreen::setCursor(int cursorPos)
+{
+    int cursor_y = (cursorPos / screen_x);
+    int cursor_x = cursorPos - (cursor_y * screen_x);
+
+    setCursor(cursor_x, cursor_y);
+}
+
 /**
  * @brief   DisplayScreen::setCursor - position cursor
  * @param   x - screen position
@@ -1143,17 +1294,17 @@ void DisplayScreen::setCursor(int x, int y)
 {
     cursor.setVisible(false);
 
-    int pos = y * screen_x + x;
+    cursor_pos = x + (y * screen_x);
 
     if (cursorColour)
     {
-        if (cell.at(pos)->isReverse())
+        if (cell.at(cursor_pos)->isReverse())
         {
-                cursor.setBrush(palette[ColourTheme::BLACK]);
+            cursor.setBrush(palette[ColourTheme::BLACK]);
         }
         else
         {
-                cursor.setBrush(palette[cell.at(pos)->getColour()]);
+            cursor.setBrush(palette[cell.at(cursor_pos)->getColour()]);
         }
 
     }
@@ -1162,6 +1313,10 @@ void DisplayScreen::setCursor(int x, int y)
 //    cursor.setData(0,pos);
 
     cursor.setVisible(true);
+
+    statusCursor.setText(QString("%1,%2").arg(x + 1, 3).arg(y + 1, -3));
+
+    setRuler();
 }
 
 /**
@@ -1184,18 +1339,6 @@ void DisplayScreen::showCursor()
 void DisplayScreen::setStatusXSystem(QString text)
 {
     statusXSystem.setText(text);
-}
-
-/**
- * @brief   DisplayScreen::showStatusCursorPosition - display cursor position
- * @param   x - screen position
- * @param   y - screen position
- *
- * @details Called to show the cursor position on the status line when the cursor moves.
- */
-void DisplayScreen::showStatusCursorPosition(int x, int y)
-{
-    statusCursor.setText(QString("%1,%2").arg(x + 1, 3).arg(y + 1, -3));
 }
 
 /**
@@ -1260,9 +1403,55 @@ void DisplayScreen::toggleRuler()
 }
 
 /**
- * @brief   DisplayScreen::setRuler - set the ruler style
+ * @brief   DisplayScreen::processAID - process an attention key
+ * @param   aid       - the key
+ * @param   shortRead - true for short read, false for normal
  *
- * @details Called by several other routines when the ruler needs to be changed.
+ * @details Process an attention key. If the key was a short read key (like CLEAR, PA1 etc) then no
+ *          fields are returned to the host.
+ */
+void DisplayScreen::processAID(int aid, bool shortRead)
+{
+    QByteArray respBuffer = QByteArray();
+
+    respBuffer.append(aid);
+
+    lastAID = aid;
+
+    if (!shortRead)
+    {
+        addPosToBuffer(respBuffer, cursor_pos);
+        getModifiedFields(respBuffer);
+    }
+
+    if (aid == IBM3270_AID_CLEAR)
+    {
+        setCursor(0);
+        clear();
+    }
+
+    emit bufferReady(respBuffer);
+}
+
+/**
+ * @brief   ProcessDataStream::interruptProcess - interrupt the current process
+ *
+ * @details This is processing for ATTN
+ */
+void DisplayScreen::interruptProcess()
+{
+    QByteArray b = QByteArray();
+
+    b.append((uchar) IAC);
+    b.append((uchar) IP);
+
+    emit bufferReady(b);
+}
+
+/**
+ * @brief   DisplayScreen::setRuler - set the ruler style and redraw it in case it needs to move
+ *
+ * @details Called by several other routines when the ruler needs to be changed or the cursor has moved.
  */
 void DisplayScreen::setRuler()
 {
@@ -1282,6 +1471,10 @@ void DisplayScreen::setRuler()
                 crosshair_X.show();
                 crosshair_Y.hide();
         }
+        int cursor_y = (cursor_pos / screen_x);
+        int cursor_x = cursor_pos - (cursor_y * screen_x);
+        crosshair_X.setPos((qreal) cursor_x * gridSize_X, 0);
+        crosshair_Y.setPos(0 , (qreal) (cursor_y + 1) * gridSize_Y);
     }
     else
     {
@@ -1291,27 +1484,9 @@ void DisplayScreen::setRuler()
 }
 
 /**
- * @brief   DisplayScreen::drawRuler - draw the ruler
- * @param   x - screen position
- * @param   y - screen position
- *
- * @details Called to draw the ruler. The ruler appears at the bottom left hand corner of the cursor
- *          position, although technically it's position is at the left hand position of the cursor, and the
- *          top of the next character down.
- */
-void DisplayScreen::drawRuler(int x, int y)
-{
-    if (rulerOn)
-    {
-       crosshair_X.setPos((qreal) x * gridSize_X, 0);
-       crosshair_Y.setPos(0 , (qreal) (y + 1) * gridSize_Y);
-    }
-}
-
-/**
  * @brief   DisplayScreen::blink - blink the display
  *
- * @details Called by a timer in TerminalTab to blink any characters that have blink enabled
+ * @details Called by a timer in Terminal to blink any characters that have blink enabled
  */
 void DisplayScreen::blink()
 {
@@ -1329,7 +1504,7 @@ void DisplayScreen::blink()
 /**
  * @brief   DisplayScreen::cursorBlink - blink the cursor
  *
- * @details Called by a timer in TerminalTab to blink the cursor
+ * @details Called by a timer in Terminal to blink the cursor
  */
 void DisplayScreen::cursorBlink()
 {
@@ -1621,44 +1796,43 @@ void DisplayScreen::dumpDisplay()
 
 /**
  * @brief   DisplayScreen::dumpInfo - display information about the Cell at pos
- * @param   pos - screen position
  *
  * @details Used to display information about the Cell at pos. Mapped to Ctrl-I.
  */
-void DisplayScreen::dumpInfo(int pos)
+void DisplayScreen::dumpInfo()
 {
-    int y = pos / screen_x;
-    int x = pos - y * screen_x;
-    printf("\nCell at %d (%d, %d)\n", pos, x, y);
-    printf("    Character: \"%c\" (hex %2.2X EBCDIC %2.2X)\n", cell.at(pos)->getChar().toLatin1(),cell.at(pos)->getChar().toLatin1(),cell.at(pos)->getEBCDIC());
+    int y = cursor_pos / screen_x;
+    int x = cursor_pos - y * screen_x;
+    printf("\nCell at %d (%d, %d)\n", cursor_pos, x, y);
+    printf("    Character: \"%c\" (hex %2.2X EBCDIC %2.2X)\n", cell.at(cursor_pos)->getChar().toLatin1(),cell.at(cursor_pos)->getChar().toLatin1(),cell.at(cursor_pos)->getEBCDIC());
 
-    printf("    Field Attribute: %d\n", cell.at(pos)->isFieldStart());
-    if (cell.at(pos)->isFieldStart())
+    printf("    Field Attribute: %d\n", cell.at(cursor_pos)->isFieldStart());
+    if (cell.at(cursor_pos)->isFieldStart())
     {
         printf("        MDT:       %d\n        Protected: %d\n        Numeric:   %d\n        Autoskip:  %d\n        Display:   %d\n",
-                cell.at(pos)->isMdtOn(),
-                cell.at(pos)->isProtected(),
-                cell.at(pos)->isNumeric(),
-                cell.at(pos)->isAutoSkip(),
-                cell.at(pos)->isDisplay());
+                cell.at(cursor_pos)->isMdtOn(),
+                cell.at(cursor_pos)->isProtected(),
+                cell.at(cursor_pos)->isNumeric(),
+                cell.at(cursor_pos)->isAutoSkip(),
+                cell.at(cursor_pos)->isDisplay());
     }
 
-    printf("    Extended: %d\n", cell.at(pos)->isExtended());
-    if (cell.at(pos)->isExtended())
+    printf("    Extended: %d\n", cell.at(cursor_pos)->isExtended());
+    if (cell.at(cursor_pos)->isExtended())
     {
         printf("        Intensify: %d\n        UScore:    %d\n        Reverse:   %d\n        Blink:     %d\n",
-               cell.at(pos)->isIntensify(),
-               cell.at(pos)->isUScore(),
-               cell.at(pos)->isReverse(),
-               cell.at(pos)->isBlink());
+               cell.at(cursor_pos)->isIntensify(),
+               cell.at(cursor_pos)->isUScore(),
+               cell.at(cursor_pos)->isReverse(),
+               cell.at(cursor_pos)->isBlink());
     }
 
     printf("    Character Attributes:\n        Extended: %d\n        CharSet:  %d\n        Colour:   %d\n    Colour: %d\n    Graphic: %d\n",
-                cell.at(pos)->hasCharAttrs(Cell::EXTENDED),
-                cell.at(pos)->hasCharAttrs(Cell::CHARSET),
-                cell.at(pos)->hasCharAttrs(Cell::COLOUR),
-                cell.at(pos)->getColour(),
-                cell.at(pos)->isGraphic());
+                cell.at(cursor_pos)->hasCharAttrs(Cell::EXTENDED),
+                cell.at(cursor_pos)->hasCharAttrs(Cell::CHARSET),
+                cell.at(cursor_pos)->hasCharAttrs(Cell::COLOUR),
+                cell.at(cursor_pos)->getColour(),
+                cell.at(cursor_pos)->isGraphic());
 
     fflush(stdout);
 
@@ -1673,6 +1847,10 @@ void DisplayScreen::dumpInfo(int pos)
  */
 void DisplayScreen::getScreen(QByteArray &buffer)
 {
+    buffer.append(lastAID);
+
+    addPosToBuffer(buffer, cursor_pos);
+
     dumpDisplay();
 
     for (int i = 0; i < screenPos_max; i++)
@@ -1813,7 +1991,7 @@ void DisplayScreen::mouseReleaseEvent(QGraphicsSceneMouseEvent *mEvent)
     if (!myRb->isVisible())
     {
         qDebug() << "Single click";
-        emit moveCursor(myRb->data(0).toInt(), myRb->data(1).toInt(), true);
+        setCursor(myRb->data(0).toInt(), myRb->data(1).toInt());
         return;
     }
 

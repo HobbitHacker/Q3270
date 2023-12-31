@@ -109,6 +109,8 @@ KeyboardTheme::KeyboardTheme(QWidget *parent) : QDialog(parent), ui(new Ui::Keyb
     theme.insert("Copy",        { "Ctrl+C" });
     theme.insert("Paste",       { "Ctrl+V" });
 
+    theme.insert("Info",        { "Ctrl+I" });
+
     // Add factory theme to list of themes
     themes.insert("Factory", theme);
 

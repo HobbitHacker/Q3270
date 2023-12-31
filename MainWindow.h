@@ -54,7 +54,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <QLabel>
 
 #include "PreferencesDialog.h"
-#include "TerminalTab.h"
+#include "Terminal.h"
 #include "ColourTheme.h"
 #include "KeyboardTheme.h"
 #include "SessionManagement.h"
@@ -131,8 +131,8 @@ class MainWindow : public QMainWindow
       Keyboard keyboard;
 
       CodePage codePage;
-
-      TerminalTab *terminal;
+      
+      Terminal *terminal;
 
 
       SessionManagement *sm;

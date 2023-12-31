@@ -32,8 +32,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#ifndef TERMINALTAB_H
-#define TERMINALTAB_H
+#ifndef TERMINAL_H
+#define TERMINAL_H
 
 #include "ProcessDataStream.h"
 #include "SocketConnection.h"
@@ -48,14 +48,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <QVBoxLayout>
 #include <QMenuBar>
 
-class TerminalTab : public QWidget
+class Terminal : public QWidget
 {
     Q_OBJECT
 
     public:
 
-        TerminalTab(QVBoxLayout *v, ActiveSettings &activeSettings, CodePage &cp, Keyboard &kb, ColourTheme &cs, QString sessionName);
-        ~TerminalTab();
+    Terminal(QVBoxLayout *v, ActiveSettings &activeSettings, CodePage &cp, Keyboard &kb, ColourTheme &cs, QString sessionName);
+        ~Terminal();
 
         void openConnection(QString address);
         void openConnection(QSettings& s);
@@ -84,7 +84,7 @@ class TerminalTab : public QWidget
 
         void connectionEstablished();
         void disconnected();
-        void windowClosed(TerminalTab *t);
+        void windowClosed(Terminal *t);
 
     public slots:
 
@@ -107,6 +107,8 @@ class TerminalTab : public QWidget
     private:
 
         void connectSession(QString host, int port, QString luName);
+        void connectKeyboard(DisplayScreen &s);
+        void disconnectKeyboard(DisplayScreen &s);
 
         void startTimers();
         void stopTimers();
@@ -132,8 +134,6 @@ class TerminalTab : public QWidget
         ProcessDataStream *datastream;
         SocketConnection *socket;
 
-
-
         bool sessionConnected;
 
         Qt::AspectRatioMode stretchScreen;
@@ -153,4 +153,4 @@ class TerminalTab : public QWidget
 
 };
 
-#endif // TERMINALTAB_H
+#endif // TERMINAL_H

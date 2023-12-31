@@ -495,7 +495,7 @@ void Cell::setAttrs(bool prot, bool mdt, bool num, bool pensel, bool blink, bool
  * @brief   Cell::blinkChar - blink a character
  * @param   blink - the current blink state
  *
- * @details blinkChar is called from DisplayScreen via a timer in TerminalTab connected to a signal.
+ * @details blinkChar is called from DisplayScreen via a timer in Terminal connected to a signal.
  *          At alternate intervals, the character is shown, then hidden.
  */
 void Cell::blinkChar(bool blink)

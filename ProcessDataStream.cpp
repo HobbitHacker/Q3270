@@ -32,8 +32,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
+#include "Q3270.h"
 #include "ProcessDataStream.h"
-#include "TerminalTab.h"
+#include "Terminal.h"
 
 /**
  * @brief   ProcessDataStream::ProcessDataStream - 3270 Data Stream processing
@@ -41,17 +42,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * @details Initialise the ProcessDataStream object, setting power on settings.
  */
-ProcessDataStream::ProcessDataStream(TerminalTab *t)
+ProcessDataStream::ProcessDataStream(Terminal *t)
 {
     terminal = t;
 
     primary_x = 0;
     primary_y = 0;
     primary_pos = 0;
-
-    cursor_x = 0;
-    cursor_y = 0;
-    cursor_pos = 0;
 
     lastAID = IBM3270_AID_NOAID;
     lastWasCmd = false;
@@ -373,10 +370,6 @@ void ProcessDataStream::processEW(bool alternate)
     primary_y = 0;
     primary_pos = 0;
 
-    cursor_x = 0;
-    cursor_y = 0;
-    cursor_pos = 0;
-
     screen->clear();
 
 }
@@ -389,11 +382,8 @@ void ProcessDataStream::processEW(bool alternate)
  */
 void ProcessDataStream::processRB()
 {
-    QByteArray screenContents;
+    QByteArray screenContents = QByteArray();
 
-    screenContents.append(lastAID);
-
-    screen->addPosToBuffer(screenContents, cursor_pos);
     screen->getScreen(screenContents);
 
     emit bufferReady(screenContents);
@@ -439,11 +429,11 @@ void ProcessDataStream::processWSF()
  */
 void ProcessDataStream::processRM()
 {
-    processAID(lastAID, false);
+    screen->processAID(lastAID, false);
 }
 
 /**
- * @brief   ProcessDataStream::processSF - The 3270 STAR FIELD order
+ * @brief   ProcessDataStream::processSF - The 3270 START FIELD order
  *
  * @details SF starts a field on the 3270 display.
  */
@@ -725,7 +715,7 @@ void ProcessDataStream::processMF()
 void ProcessDataStream::processIC()
 {
     printf("[InsertCursor(%d,%d)]", primary_x, primary_y);
-    moveCursor(primary_x, primary_y, true);
+    screen->setCursor(primary_x, primary_y);
 
     lastWasCmd = true;
 }
@@ -1446,306 +1436,4 @@ void ProcessDataStream::incPos()
             primary_y = 0;
         }
     }
-}
-
-/**
- * @brief   ProcessDataStream::insertChar - insert a character to the screen from the keyboard
- * @param   keycode - the character to insert
- * @param   insMode - true to insert, false to overwrite
- *
- * @details Insert a character in the current field from the keyboard
- */
-void ProcessDataStream::insertChar(unsigned char keycode, bool insMode)
-{
-    if (screen->insertChar(cursor_pos, keycode, insMode))
-    {
-        moveCursor(1, 0);
-        if (screen->isAskip(cursor_pos))
-        {
-            tab();
-        }
-    }
-}
-
-/**
- * @brief   ProcessDataStream::deleteChar - delete a character from the current field
- *
- * @details Delete a character from the current input field
- */
-void ProcessDataStream::deleteChar()
-{
-    screen->deleteChar(cursor_pos);
-}
-
-/**
- * @brief   ProcessDataStream::eraseField - erase the rest of the input field
- *
- * @details Clear the rest of the current input field (Erase EOF)
- */
-void ProcessDataStream::eraseField()
-{
-    screen->eraseEOF(cursor_pos);
-}
-
-/**
- * @brief   ProcessDataStream::moveCursor - move the cursor
- * @param   x        - x position to move the cursor to
- * @param   y        - y position to move the cursor to
- * @param   absolute - true for an absolute position, false for relative
- */
-void ProcessDataStream::moveCursor(int x, int y, bool absolute)
-{
-    // Absolute or relative
-    if (absolute)
-    {
-        cursor_x = x;
-        cursor_y = y;
-    }
-    else
-    {
-        cursor_x+= x;
-        cursor_y+= y;
-
-        if(cursor_x >= screen_x)
-        {
-            cursor_x = 0;
-            cursor_y++;
-        }
-        if (cursor_x < 0)
-        {
-            cursor_x = screen_x - 1;
-            cursor_y--;
-        }
-        if(cursor_y >= screen_y)
-        {
-            cursor_y = 0;
-        }
-        if (cursor_y < 0)
-        {
-            cursor_y = screen_y - 1;
-        }
-    }
-
-    cursor_pos = cursor_x + (cursor_y * screen_x);
-
-    screen->setCursor(cursor_x, cursor_y);
-    screen->drawRuler(cursor_x, cursor_y);
-
-    emit cursorMoved(cursor_x, cursor_y);
-}
-
-/**
- * @brief   ProcessDataStream::backspace - backspace one character
- *
- * @details Backspace one character, stopping at the field start
- */
-void ProcessDataStream::backspace()
-{
-    // If we're at a protected field, do nothing
-    if (screen->isProtected(cursor_pos))
-        return;
-
-    // Discover whether the previous cursor position is a field start
-    int tempCursorPos = cursor_pos == 0 ? screenSize : cursor_pos - 1;
-
-    if (screen->isFieldStart(tempCursorPos))
-        return;
-
-    // Backspace one character
-    moveCursor(-1 , 0);
-}
-
-/**
- * @brief   ProcessDataStream::tab - tab to the next field
- * @param   offset - offset from the current position
- *
- * @details Move the cursor to the next input field
- */
-void ProcessDataStream::tab(int offset)
-{
-    int nf = screen->findNextUnprotectedField(cursor_pos + offset);
-
-    cursor_y = (nf / screen_x);
-    cursor_x = nf - (cursor_y * screen_x);
-//    printf("Unprotected field found at %d (%d,%d) ", nf, cursor_x, cursor_y);
-
-    // Move cursor right (skip attribute byte)
-    moveCursor(1, 0);
-}
-
-/**
- * @brief   ProcessDataStream::backtab - back to the previous field start
- *
- * @details Move the cursor to the start of the previous field (which may be this field)
- */
-void ProcessDataStream::backtab()
-{
-    int pf = screen->findPrevUnprotectedField(cursor_pos);
-
-    cursor_y = (pf / screen_x);
-    cursor_x = pf - (cursor_y * screen_x);
-//    printf("Backtab: Unprotected field found at %d (%d,%d) ", pf, cursor_x, cursor_y);
-
-    // Move cursor right (skip attribute byte)
-    moveCursor(1, 0);
-
-}
-
-/**
- * @brief   ProcessDataStream::home - move the cursor to the first field on the screen
- *
- * @details Move the cursor to the first field on the screen; searching starts at the very last position
- *          in case that is a field start, and the first position is not.
- */
-void ProcessDataStream::home()
-{
-    // Find first field on screen; this might be position 0, so we need to look starting at the last screen pos
-    int nf = screen->findNextUnprotectedField(screenSize - 1);
-    cursor_y = (nf / screen_x);
-    cursor_x = nf - (cursor_y * screen_x);
-
-    // Move cursor right (skip attribute byte)
-    moveCursor(1, 0);
-}
-
-/**
- * @brief   ProcessDataStream::newline - move the cursor to the first input field after the current line
- *
- * @details Move the cursor to the first input field found after the start of the next line.
- */
-void ProcessDataStream::newline()
-{
-    cursor_x = 0;
-    cursor_y += 1;
-
-    if (cursor_y > screen_y)
-    {
-        cursor_y = 0;
-    }
-
-    cursor_pos = cursor_x + cursor_y * screen_x;
-
-    tab(0);
-}
-
-/**
- * @brief   ProcessDataStream::endline - move the cursor to the end of the current input field
- *
- * @details Move the cursor to the end of the text in the current input field.
- */
-void ProcessDataStream::endline()
-{
-    if (screen->isProtected(cursor_pos))
-    {
-        return;
-    }
-
-    int endPos = cursor_pos + screenSize;
-
-    QString field;
-    int endField;
-
-    int i = cursor_pos;
-    int offset = cursor_pos;
-
-    endField = cursor_pos;
-    bool letter = false;
-
-    while(i < endPos && !screen->isProtected(offset) && !screen->isFieldStart(offset))
-    {
-//        qDebug() << "Offset: " << offset << " Protected: " << screen->isProtected(offset) << " Character: " << (uchar)screen->getChar(offset) << "Field Start:" << screen->isFieldStart(offset);
-        uchar thisChar = screen->getChar(offset);
-        if (letter && (thisChar == 0x00 || thisChar == ' '))
-        {
-            endField = offset;
-            letter = false;
-        }
-
-        if (thisChar != 0x00 && thisChar != ' ')
-        {
-            letter = true;
-
-        }
-
-        field.append(screen->getChar(offset));
-        offset = ++i % screenSize;
-    }
-
-    cursor_pos = endField;
-
-    cursor_x = (cursor_pos / screen_x);
-    cursor_x = cursor_pos - (cursor_y * screen_x);
-
-    moveCursor(cursor_x, cursor_y, true);
-
-}
-
-/**
- * @brief   ProcessDataStream::toggleRuler - turn the ruler on or off
- *
- * @details Toggle the ruler (crosshairs) on or off
- */
-void ProcessDataStream::toggleRuler()
-{
-    screen->toggleRuler();
-    screen->drawRuler(cursor_x, cursor_y);
-}
-
-/**
- * @brief   ProcessDataStream::showInfo - show information about the character under the cursor
- *
- * @details Debugging routine to show data about the character the cursor is on
- */
-void ProcessDataStream::showInfo()
-{
-    screen->dumpInfo(cursor_pos);
-}
-
-/**
- * @brief   ProcessDataStream::processAID - process an attention key
- * @param   aid       - the key
- * @param   shortRead - true for short read, false for normal
- *
- * @details Process an attention key. If the key was a short read key (like CLEAR, PA1 etc) then no
- *          fields are returned to the host.
- */
-void ProcessDataStream::processAID(int aid, bool shortRead)
-{
-    QByteArray respBuffer = QByteArray();
-
-    respBuffer.append(aid);
-
-    lastAID = aid;
-
-    if (!shortRead)
-    {
-        screen->addPosToBuffer(respBuffer, cursor_pos);
-        screen->getModifiedFields(respBuffer);
-    }
-
-    if (aid == IBM3270_AID_CLEAR)
-    {
-        cursor_pos = 0;
-        cursor_x = 0;
-        cursor_y = 0;
-        screen->setCursor(0, 0);
-        screen->clear();
-    }
-
-    emit bufferReady(respBuffer);
-}
-
-/**
- * @brief   ProcessDataStream::interruptProcess - interrupt the current process
- *
- * @details This is processing for ATTN
- */
-void ProcessDataStream::interruptProcess()
-{
-    QByteArray b = QByteArray();
-
-    b.append((uchar) IAC);
-    b.append((uchar) IP);
-
-    emit bufferReady(b);
 }

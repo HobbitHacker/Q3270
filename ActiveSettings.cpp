@@ -229,7 +229,7 @@ void ActiveSettings::setTerminal(int x, int y, int model)
  * @param   y         - the number of rows for the display
  * @param   modelName - the name of the model
  *
- * @details This routine is used to set the terminal size; it is called by TerminalTab when the
+ * @details This routine is used to set the terminal size; it is called by Terminal when the
  *          configuration file is read in (so that the config file stores an English name rather
  *          than just a number)
  *

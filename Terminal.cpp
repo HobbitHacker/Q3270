@@ -32,10 +32,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#include "TerminalTab.h"
+#include "Terminal.h"
 
 /**
- * @brief   TerminalTab::TerminalTab - the terminal in the Qt window
+ * @brief   Terminal::Terminal - the terminal in the Qt window
  * @param   layout          - the central widget in which the QGraphicsView which shows the terminal
  * @param   activeSettings  - currently active settings
  * @param   cp              - shared CodePage object
@@ -51,7 +51,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *          There are two displays built; the primary one is always 24x80, and the alternate is defined
  *          by the user, based on the Terminal Model type selected.
  */
-TerminalTab::TerminalTab(QVBoxLayout *layout, ActiveSettings &activeSettings, CodePage &cp, Keyboard &kb, ColourTheme &cs, QString sessionName) :
+Terminal::Terminal(QVBoxLayout *layout, ActiveSettings &activeSettings, CodePage &cp, Keyboard &kb, ColourTheme &cs, QString sessionName) :
     kbd(kb), colourtheme(cs), cp(cp), activeSettings(activeSettings), sessionName(sessionName)
 {
     sessionConnected = false;
@@ -69,17 +69,18 @@ TerminalTab::TerminalTab(QVBoxLayout *layout, ActiveSettings &activeSettings, Co
     view->installEventFilter(&kbd);
 
     // Connect signals for changes to settings so they can be reflected here
-    connect(&activeSettings, &ActiveSettings::rulerStyleChanged, this, &TerminalTab::rulerStyle);
-    connect(&activeSettings, &ActiveSettings::rulerChanged, this, &TerminalTab::rulerChanged);
-    connect(&activeSettings, &ActiveSettings::cursorBlinkChanged, this, &TerminalTab::setBlink);
-    connect(&activeSettings, &ActiveSettings::cursorBlinkSpeedChanged, this, &TerminalTab::setBlinkSpeed);
-    connect(&activeSettings, &ActiveSettings::fontChanged, this, &TerminalTab::setFont);
-    connect(&activeSettings, &ActiveSettings::codePageChanged, this, &TerminalTab::changeCodePage);
+    connect(&activeSettings, &ActiveSettings::rulerStyleChanged, this, &Terminal::rulerStyle);
+    connect(&activeSettings, &ActiveSettings::rulerChanged, this, &Terminal::rulerChanged);
+    connect(&activeSettings, &ActiveSettings::cursorBlinkChanged, this, &Terminal::setBlink);
+    connect(&activeSettings, &ActiveSettings::cursorBlinkSpeedChanged, this, &Terminal::setBlinkSpeed);
+
+    connect(&activeSettings, &ActiveSettings::fontChanged, this, &Terminal::setFont);
+    connect(&activeSettings, &ActiveSettings::codePageChanged, this, &Terminal::changeCodePage);
     connect(&activeSettings, &ActiveSettings::keyboardThemeChanged, &kbd, &Keyboard::setTheme);
-    connect(&activeSettings, &ActiveSettings::stretchScreenChanged, this, &TerminalTab::setScreenStretch);
+    connect(&activeSettings, &ActiveSettings::stretchScreenChanged, this, &Terminal::setScreenStretch);
 
     //TODO: Move setColourTheme to ColourTheme - as Keyboard::setTheme? Would need to pass DisplayScreen
-    connect(&activeSettings, &ActiveSettings::colourThemeChanged, this, &TerminalTab::setColourTheme);
+    connect(&activeSettings, &ActiveSettings::colourThemeChanged, this, &Terminal::setColourTheme);
 
     // Build "Not Connected" display
     notConnectedScene = new QGraphicsScene();
@@ -116,29 +117,30 @@ TerminalTab::TerminalTab(QVBoxLayout *layout, ActiveSettings &activeSettings, Co
     blinker = new QTimer(this);
     cursorBlinker = new QTimer(this);
 
+    blink      = activeSettings.getCursorBlink();
     blinkSpeed = activeSettings.getCursorBlinkSpeed();
 
     palette = colourtheme.getTheme(activeSettings.getColourThemeName());
 }
 
 /**
- * @brief   TerminalTab::~TerminalTab - destructor
+ * @brief   Terminal::~Terminal - destructor
  *
  * @details Delete the objects obtained via new.
  */
-TerminalTab::~TerminalTab()
+Terminal::~Terminal()
 {
     delete notConnectedScene;
     delete view;
 }
 
 /**
- * @brief   TerminalTab::setFont - change the font on the primary and alternate screens
+ * @brief   Terminal::setFont - change the font on the primary and alternate screens
  * @param   font - the chosen font
  *
  * @details Called when the user changes the font.
  */
-void TerminalTab::setFont(QFont font)
+void Terminal::setFont(QFont font)
 {
     if (sessionConnected)
     {
@@ -148,7 +150,7 @@ void TerminalTab::setFont(QFont font)
 }
 
 /**
- * @brief   TerminalTab::setCurrentFont - temporarily change the font on the current screen
+ * @brief   Terminal::setCurrentFont - temporarily change the font on the current screen
  * @param   f - the chosen font
  *
  * @details Called to dynamically change the font on the currently displayed screen. Used during the
@@ -156,7 +158,7 @@ void TerminalTab::setFont(QFont font)
  *
  * @note    This processing is currently disabled.
  */
-void TerminalTab::setCurrentFont(QFont f)
+void Terminal::setCurrentFont(QFont f)
 {
     if (sessionConnected)
     {
@@ -165,25 +167,25 @@ void TerminalTab::setCurrentFont(QFont f)
 }
 
 /**
- * @brief   TerminalTab::setScreenStretch - toggle the screen stretch and fit the content
+ * @brief   Terminal::setScreenStretch - toggle the screen stretch and fit the content
  * @param   stretch - true to stretch to fit the window, false to maintain 4:3 ratio
  *
  * @details Called when the user has switched from stretching the screen to fit the window or to
  *          maintain a 4:3 ratio.
  */
-void TerminalTab::setScreenStretch(bool stretch)
+void Terminal::setScreenStretch(bool stretch)
 {
     stretchScreen = stretch ? Qt::IgnoreAspectRatio : Qt::KeepAspectRatio;
     fit();
 }
 
 /**
- * @brief   TerminalTab::setColourTheme - switch the colour theme
+ * @brief   Terminal::setColourTheme - switch the colour theme
  * @param   themeName - the new theme
  *
  * @details Called when the user changes the ColourTheme used.
  */
-void TerminalTab::setColourTheme(QString themeName)
+void Terminal::setColourTheme(QString themeName)
 {
     palette = colourtheme.getTheme(themeName);
 
@@ -199,12 +201,12 @@ void TerminalTab::setColourTheme(QString themeName)
 
 //FIXME: What is this meant to be for?
 /**
- * @brief   TerminalTab::setKeyboardTheme - switch the keyboard theme
+ * @brief   Terminal::setKeyboardTheme - switch the keyboard theme
  * @param   themeName - the new theme
  *
  * @details Called when the user changes the KeyboardTheme used.
  */
-void TerminalTab::setKeyboardTheme(QString themeName)
+void Terminal::setKeyboardTheme(QString themeName)
 {
     //keyboardTheme = themeName;
 
@@ -213,12 +215,12 @@ void TerminalTab::setKeyboardTheme(QString themeName)
 }
 
 /**
- * @brief   TerminalTab::rulerChanged - toggle the ruler
+ * @brief   Terminal::rulerChanged - toggle the ruler
  * @param   on - true to show, false to hide
  *
  * @details Called when the ruler is switched on or off in active settings.
  */
-void TerminalTab::rulerChanged(bool on)
+void Terminal::rulerChanged(bool on)
 {
     // Switch ruler on or off apporpriately
     if (sessionConnected)
@@ -229,12 +231,12 @@ void TerminalTab::rulerChanged(bool on)
 }
 
 /**
- * @brief   TerminalTab::rulerStyle - change the ruler style
+ * @brief   Terminal::rulerStyle - change the ruler style
  * @param   rulerStyle - the style of ruler
  *
  * @details Called when the ruler style is changed in active settings.
  */
-void TerminalTab::rulerStyle(int rulerStyle)
+void Terminal::rulerStyle(int rulerStyle)
 {
     // Change ruler style to match settings
     if (sessionConnected)
@@ -245,13 +247,13 @@ void TerminalTab::rulerStyle(int rulerStyle)
 }
 
 /**
- * @brief   TerminalTab::openConnection - open a connection
+ * @brief   Terminal::openConnection - open a connection
  * @param   address - target address, may contain an LU name
  *
  * @details Called when the user opens a connection with a address of the form luname@targetaddress:port.
  *          This is parsed and then passed to connectSession.
  */
-void TerminalTab::openConnection(QString address)
+void Terminal::openConnection(QString address)
 {
     if (address.contains("@"))
     {
@@ -271,13 +273,13 @@ void TerminalTab::openConnection(QString address)
 }
 
 /**
- * @brief   TerminalTab::openConnection - open a session
+ * @brief   Terminal::openConnection - open a session
  * @param   s - the session to be opened
  *
  * @details Called when a session is opened. The parameter points to the session already identified in the
  *          config file.
  */
-void TerminalTab::openConnection(QSettings& s)
+void Terminal::openConnection(QSettings& s)
 {
     // Set terminal characteristics
     activeSettings.setTerminal(s.value("TerminalX").toInt(), s.value("TerminalY").toInt(), s.value("TerminalModel").toString());
@@ -315,7 +317,7 @@ void TerminalTab::openConnection(QSettings& s)
 }
 
 /**
- * @brief   TerminalTab::connectSession - connect to a host
+ * @brief   Terminal::connectSession - connect to a host
  * @param   host   - the host to connect to
  * @param   port   - the port to use
  * @param   luName - LU name, may be blank
@@ -325,7 +327,7 @@ void TerminalTab::openConnection(QSettings& s)
  *
  *          Start timers to blink the cursor and any blinking characters on screen.
  */
-void TerminalTab::connectSession(QString host, int port, QString luName)
+void Terminal::connectSession(QString host, int port, QString luName)
 {
     setWindowTitle(windowTitle().append(" [").append(host).append("]"));
 
@@ -342,26 +344,17 @@ void TerminalTab::connectSession(QString host, int port, QString luName)
     datastream = new ProcessDataStream(this);
     socket = new SocketConnection(activeSettings.getTerminalModel());
 
+    connect(datastream, &ProcessDataStream::bufferReady, socket, &SocketConnection::sendResponse);
+
+    connect(primaryScreen, &DisplayScreen::bufferReady, socket, &SocketConnection::sendResponse);
+    connect(alternateScreen, &DisplayScreen::bufferReady, socket, &SocketConnection::sendResponse);
+
     connect(socket, &SocketConnection::dataStreamComplete, datastream, &ProcessDataStream::processStream);
-    connect(socket, &SocketConnection::connectionEnded, this, &TerminalTab::closeConnection);
-
-    // Primary screen settings
-    connect(&activeSettings, &ActiveSettings::cursorInheritChanged, primaryScreen, &DisplayScreen::setCursorColour);
-    connect(datastream, &ProcessDataStream::cursorMoved, primaryScreen, &DisplayScreen::showStatusCursorPosition);
-
-    connect(&kbd, &Keyboard::setLock, primaryScreen, &DisplayScreen::setStatusXSystem);
-    connect(&kbd, &Keyboard::setInsert, primaryScreen, &DisplayScreen::setStatusInsert);
+    connect(socket, &SocketConnection::connectionEnded, this, &Terminal::closeConnection);
 
     primaryScreen->setFont(activeSettings.getFont());
     primaryScreen->rulerMode(activeSettings.getRulerState());
     primaryScreen->setRulerStyle(activeSettings.getRulerStyle());
-
-    // Alternate screen settings
-    connect(&activeSettings, &ActiveSettings::cursorInheritChanged, alternateScreen, &DisplayScreen::setCursorColour);
-    connect(datastream, &ProcessDataStream::cursorMoved, alternateScreen, &DisplayScreen::showStatusCursorPosition);
-
-    connect(&kbd, &Keyboard::setLock, alternateScreen, &DisplayScreen::setStatusXSystem);
-    connect(&kbd, &Keyboard::setInsert, alternateScreen, &DisplayScreen::setStatusInsert);
 
     alternateScreen->setFont(activeSettings.getFont());
     alternateScreen->rulerMode(activeSettings.getRulerState());
@@ -370,32 +363,15 @@ void TerminalTab::connectSession(QString host, int port, QString luName)
     // Status bar updates
     connect(datastream, &ProcessDataStream::keyboardUnlocked, &kbd, &Keyboard::unlockKeyboard);
 
-    // Mouse click moves cursor
-    connect(primaryScreen, &DisplayScreen::moveCursor, datastream, &ProcessDataStream::moveCursor);
-    connect(alternateScreen, &DisplayScreen::moveCursor, datastream, &ProcessDataStream::moveCursor);
+//    connect(&activeSettings, &ActiveSettings::cursorInheritChanged, &screen, &DisplayScreen::setCursorColour);
+//    connect(datastream, &ProcessDataStream::cursorMoved, &screen, &DisplayScreen::showStatusCursorPosition);
+
+//    connectKeyboard(*current);
 
     // Keyboard inputs
-    connect(&kbd, &Keyboard::key_moveCursor, datastream, &ProcessDataStream::moveCursor);
-    connect(&kbd, &Keyboard::key_Backspace, datastream, &ProcessDataStream::backspace);
-    connect(&kbd, &Keyboard::key_Tab, datastream, &ProcessDataStream::tab);
-    connect(&kbd, &Keyboard::key_Backtab, datastream, &ProcessDataStream::backtab);
-    connect(&kbd, &Keyboard::key_Attn, datastream, &ProcessDataStream::interruptProcess);
-    connect(&kbd, &Keyboard::key_AID, datastream, &ProcessDataStream::processAID);
-    connect(&kbd, &Keyboard::key_Home, datastream, &ProcessDataStream::home);
-    connect(&kbd, &Keyboard::key_EraseEOF, datastream, &ProcessDataStream::eraseField);
-    connect(&kbd, &Keyboard::key_Delete, datastream, &ProcessDataStream::deleteChar);
-    connect(&kbd, &Keyboard::key_Newline, datastream, &ProcessDataStream::newline);
-    connect(&kbd, &Keyboard::key_End, datastream, &ProcessDataStream::endline);
-    connect(&kbd, &Keyboard::key_toggleRuler, datastream, &ProcessDataStream::toggleRuler);
-    connect(&kbd, &Keyboard::key_Character, datastream, &ProcessDataStream::insertChar);
-
-    connect(&kbd, &Keyboard::key_Copy, this, &TerminalTab::copyText);
-
-    connect(&kbd, &Keyboard::key_showInfo, datastream, &ProcessDataStream::showInfo);
+    connect(&kbd, &Keyboard::key_Copy, this, &Terminal::copyText);
 
     socket->connectMainframe(host, port, luName, datastream);
-
-    startTimers();
 
     sessionConnected = true;
 
@@ -410,56 +386,29 @@ void TerminalTab::connectSession(QString host, int port, QString luName)
 }
 
 /**
- * @brief   TerminalTab::closeConnection - terminate a connection
+ * @brief   Terminal::closeConnection - terminate a connection
  *
  * @details Close the connection, disconnect the Keyboard and delete the primary and alternate screens,
  *          the ProcessDataStream and the SocketConnection. Switch to the 'Not Connected' screen and
  *          stop the blinking timers.
  */
-void TerminalTab::closeConnection()
+void Terminal::closeConnection()
 {
     disconnect(socket, &SocketConnection::dataStreamComplete, datastream, &ProcessDataStream::processStream);
-    disconnect(socket, &SocketConnection::connectionEnded, this, &TerminalTab::closeConnection);
+    disconnect(socket, &SocketConnection::connectionEnded, this, &Terminal::closeConnection);
 
-    // Primary screen settings
-    disconnect(&activeSettings, &ActiveSettings::cursorInheritChanged, primaryScreen, &DisplayScreen::setCursorColour);
-    disconnect(datastream, &ProcessDataStream::cursorMoved, primaryScreen, &DisplayScreen::showStatusCursorPosition);
+    disconnect(datastream, &ProcessDataStream::bufferReady, socket, &SocketConnection::sendResponse);
 
-    disconnect(&kbd, &Keyboard::setLock, primaryScreen, &DisplayScreen::setStatusXSystem);
-    disconnect(&kbd, &Keyboard::setInsert, primaryScreen, &DisplayScreen::setStatusInsert);
+    disconnect(primaryScreen, &DisplayScreen::bufferReady, socket, &SocketConnection::sendResponse);
+    disconnect(alternateScreen, &DisplayScreen::bufferReady, socket, &SocketConnection::sendResponse);
 
-    // Alternate screen settings
-    disconnect(&activeSettings, &ActiveSettings::cursorInheritChanged, alternateScreen, &DisplayScreen::setCursorColour);
-    disconnect(datastream, &ProcessDataStream::cursorMoved, alternateScreen, &DisplayScreen::showStatusCursorPosition);
-
-    disconnect(&kbd, &Keyboard::setLock, alternateScreen, &DisplayScreen::setStatusXSystem);
-    disconnect(&kbd, &Keyboard::setInsert, alternateScreen, &DisplayScreen::setStatusInsert);
+    disconnectKeyboard(*primaryScreen);
+    disconnectKeyboard(*alternateScreen);
 
     // Status bar updates
     disconnect(datastream, &ProcessDataStream::keyboardUnlocked, &kbd, &Keyboard::unlockKeyboard);
 
-    // Mouse click moves cursor
-    disconnect(primaryScreen, &DisplayScreen::moveCursor, datastream, &ProcessDataStream::moveCursor);
-    disconnect(alternateScreen, &DisplayScreen::moveCursor, datastream, &ProcessDataStream::moveCursor);
-
-    // Keyboard inputs
-    disconnect(&kbd, &Keyboard::key_moveCursor, datastream, &ProcessDataStream::moveCursor);
-    disconnect(&kbd, &Keyboard::key_Backspace, datastream, &ProcessDataStream::backspace);
-    disconnect(&kbd, &Keyboard::key_Tab, datastream, &ProcessDataStream::tab);
-    disconnect(&kbd, &Keyboard::key_Backtab, datastream, &ProcessDataStream::backtab);
-    disconnect(&kbd, &Keyboard::key_Attn, datastream, &ProcessDataStream::interruptProcess);
-    disconnect(&kbd, &Keyboard::key_AID, datastream, &ProcessDataStream::processAID);
-    disconnect(&kbd, &Keyboard::key_Home, datastream, &ProcessDataStream::home);
-    disconnect(&kbd, &Keyboard::key_EraseEOF, datastream, &ProcessDataStream::eraseField);
-    disconnect(&kbd, &Keyboard::key_Delete, datastream, &ProcessDataStream::deleteChar);
-    disconnect(&kbd, &Keyboard::key_Newline, datastream, &ProcessDataStream::newline);
-    disconnect(&kbd, &Keyboard::key_End, datastream, &ProcessDataStream::endline);
-    disconnect(&kbd, &Keyboard::key_toggleRuler, datastream, &ProcessDataStream::toggleRuler);
-    disconnect(&kbd, &Keyboard::key_Character, datastream, &ProcessDataStream::insertChar);
-
-    disconnect(&kbd, &Keyboard::key_Copy, this, &TerminalTab::copyText);
-
-    disconnect(&kbd, &Keyboard::key_showInfo, datastream, &ProcessDataStream::showInfo);
+    disconnect(&kbd, &Keyboard::key_Copy, this, &Terminal::copyText);
 
     socket->disconnectMainframe();
 
@@ -487,12 +436,70 @@ void TerminalTab::closeConnection()
 }
 
 /**
- * @brief   TerminalTab::closeEvent - close the window
+ * @brief   Terminal::connectKeyboard - Connect keyboard
+ * @param   screen - the screen
+ *
+ * @details Connect the keyboard to the specified screen. Used to ensure the keyboard is connected to either the
+ *          primary or alternate.
+ */
+void Terminal::connectKeyboard(DisplayScreen &screen)
+{
+    connect(&kbd, &Keyboard::setLock, &screen, &DisplayScreen::setStatusXSystem);
+    connect(&kbd, &Keyboard::setInsert, &screen, &DisplayScreen::setStatusInsert);
+
+    connect(&kbd, &Keyboard::key_Character, &screen, &DisplayScreen::insertChar);
+
+    connect(&kbd, &Keyboard::key_Home, &screen, &DisplayScreen::home);
+    connect(&kbd, &Keyboard::key_Backspace, &screen, &DisplayScreen::backspace);
+    connect(&kbd, &Keyboard::key_Delete, &screen, &DisplayScreen::deleteChar);
+    connect(&kbd, &Keyboard::key_EraseEOF, &screen, &DisplayScreen::eraseEOF);
+    connect(&kbd, &Keyboard::key_Newline, &screen, &DisplayScreen::newline);
+    connect(&kbd, &Keyboard::key_Tab, &screen, &DisplayScreen::tab);
+    connect(&kbd, &Keyboard::key_End, &screen, &DisplayScreen::endline);
+    connect(&kbd, &Keyboard::key_Backtab, &screen, &DisplayScreen::backtab);
+    connect(&kbd, &Keyboard::key_moveCursor, &screen, &DisplayScreen::moveCursor);
+    connect(&kbd, &Keyboard::key_toggleRuler, &screen, &DisplayScreen::toggleRuler);
+    connect(&kbd, &Keyboard::key_showInfo, &screen, &DisplayScreen::dumpInfo);
+    connect(&kbd, &Keyboard::key_Attn, &screen, &DisplayScreen::interruptProcess);
+    connect(&kbd, &Keyboard::key_AID, &screen, &DisplayScreen::processAID);
+}
+
+/**
+ * @brief   Terminal::disconnectKeyboard - disconnect keyboard
+ * @param   screen - the screen
+ *
+ * @details Disconnect the keyboard from the specified screen.
+ */
+void Terminal::disconnectKeyboard(DisplayScreen &screen)
+{
+    disconnect(&kbd, &Keyboard::setLock, &screen, &DisplayScreen::setStatusXSystem);
+    disconnect(&kbd, &Keyboard::setInsert, &screen, &DisplayScreen::setStatusInsert);
+
+    disconnect(&kbd, &Keyboard::key_Character, &screen, &DisplayScreen::insertChar);
+
+    disconnect(&kbd, &Keyboard::key_Home, &screen, &DisplayScreen::home);
+    disconnect(&kbd, &Keyboard::key_Backspace, &screen, &DisplayScreen::backspace);
+    disconnect(&kbd, &Keyboard::key_Delete, &screen, &DisplayScreen::deleteChar);
+    disconnect(&kbd, &Keyboard::key_EraseEOF, &screen, &DisplayScreen::eraseEOF);
+    disconnect(&kbd, &Keyboard::key_Newline, &screen, &DisplayScreen::newline);
+    disconnect(&kbd, &Keyboard::key_Tab, &screen, &DisplayScreen::tab);
+    disconnect(&kbd, &Keyboard::key_End, &screen, &DisplayScreen::endline);
+    disconnect(&kbd, &Keyboard::key_Backtab, &screen, &DisplayScreen::backtab);
+    disconnect(&kbd, &Keyboard::key_moveCursor, &screen, &DisplayScreen::moveCursor);
+    disconnect(&kbd, &Keyboard::key_toggleRuler, &screen, &DisplayScreen::toggleRuler);
+    disconnect(&kbd, &Keyboard::key_showInfo, &screen, &DisplayScreen::dumpInfo);
+    disconnect(&kbd, &Keyboard::key_Attn, &screen, &DisplayScreen::interruptProcess);
+    disconnect(&kbd, &Keyboard::key_AID, &screen, &DisplayScreen::processAID);
+}
+
+
+/**
+ * @brief   Terminal::closeEvent - close the window
  * @param   closeEvent - the close event
  *
  * @details Close the window when the user clicks the 'X' on the top right.
  */
-void TerminalTab::closeEvent(QCloseEvent *closeEvent)
+void Terminal::closeEvent(QCloseEvent *closeEvent)
 {
     if (sessionConnected)
     {
@@ -502,14 +509,14 @@ void TerminalTab::closeEvent(QCloseEvent *closeEvent)
 }
 
 /**
- * @brief   TerminalTab::setBlink - turn cursor blinking on or off
+ * @brief   Terminal::setBlink - turn cursor blinking on or off
  * @param   blink - true to blink, false to stay static
  *
  * @details Called when the cursor blink preference changes. The cursor is shown if the display
  *          is connected to the host to ensure the cursor doesn't stay hidden if it happened to be in the
  *          'off' state of a blink.
  */
-void TerminalTab::setBlink(bool blink)
+void Terminal::setBlink(bool blink)
 {
     this->blink = blink;
     if (!blink)
@@ -527,12 +534,12 @@ void TerminalTab::setBlink(bool blink)
 }
 
 /**
- * @brief   TerminalTab::setBlinkSpeed - change the blink speed of the cursor
+ * @brief   Terminal::setBlinkSpeed - change the blink speed of the cursor
  * @param   speed - the speed
  *
  * @details The speed is 1 - 4, with 4 being the fastest blink.
  */
-void TerminalTab::setBlinkSpeed(int speed)
+void Terminal::setBlinkSpeed(int speed)
 {
     blinkSpeed = speed;
     cursorBlinker->stop();
@@ -543,36 +550,38 @@ void TerminalTab::setBlinkSpeed(int speed)
 }
 
 /**
- * @brief   TerminalTab::changeCodePage -  change the code page
+ * @brief   Terminal::changeCodePage -  change the code page
  *
  * @details Called when the CodePage preference is changed.
  */
-void TerminalTab::changeCodePage()
+void Terminal::changeCodePage()
 {
     if (sessionConnected)
         current->setCodePage();
 }
 
 /**
- * @brief   TerminalTab::stopTimers - stop the blinking timers
+ * @brief   Terminal::stopTimers - stop the blinking timers
  *
  * @details The cursor blink and the character blink timers are stopped.
  */
-void TerminalTab::stopTimers()
+void Terminal::stopTimers()
 {
     blinker->stop();
     cursorBlinker->stop();
 
     disconnect(blinker, &QTimer::timeout, current, &DisplayScreen::blink);
     disconnect(cursorBlinker, &QTimer::timeout, current, &DisplayScreen::cursorBlink);
+
+    current->showCursor();
 }
 
 /**
- * @brief   TerminalTab::startTimers - start the blinking timers
+ * @brief   Terminal::startTimers - start the blinking timers
  *
  * @details Start the cursor and character blinking timers.
  */
-void TerminalTab::startTimers()
+void Terminal::startTimers()
 {
     connect(blinker, &QTimer::timeout, current, &DisplayScreen::blink);
     connect(cursorBlinker, &QTimer::timeout, current, &DisplayScreen::cursorBlink);
@@ -582,12 +591,12 @@ void TerminalTab::startTimers()
 }
 
 /**
- * @brief   TerminalTab::blinkText - blink any text
+ * @brief   Terminal::blinkText - blink any text
  *
  * @details Slot signalled by the character blink timer when it reaches zero. Each iteration
  *          switches from on to off and back.
  */
-void TerminalTab::blinkText()
+void Terminal::blinkText()
 {
     if (sessionConnected)
     {
@@ -596,12 +605,12 @@ void TerminalTab::blinkText()
 }
 
 /**
- * @brief   TerminalTab::blinkCursor - blink the cursor
+ * @brief   Terminal::blinkCursor - blink the cursor
  *
  * @details Slot signalled by the cursor blink timer when it reaches zero. Each iteration
  *          switches from on to off and back.
  */
-void TerminalTab::blinkCursor()
+void Terminal::blinkCursor()
 {
     if (sessionConnected)
     {
@@ -610,27 +619,33 @@ void TerminalTab::blinkCursor()
 }
 
 /**
- * @brief   TerminalTab::setAlternateScreen - switch screens
+ * @brief   Terminal::setAlternateScreen - switch screens
  * @param   alt - true for alternate, false for primary
  * @return  the screen switched to
  *
- * @details Change the currently displayed screen in the view, and ensure it fits into the window,
- *          according to user preference. The switched-to screen is returned.
+ * @details Change the currently displayed screen in the view, connect the keyboard to the right screen, and ensure it
+ *          fits into the window, according to user preference. The switched-to screen is returned.
  */
-DisplayScreen *TerminalTab::setAlternateScreen(bool alt)
+DisplayScreen *Terminal::setAlternateScreen(bool alt)
 {
     stopTimers();
 
     if (!alt)
     {
+        disconnectKeyboard(*alternateScreen);
+        connectKeyboard(*primaryScreen);
         view->setScene(primary);
         current = primaryScreen;
     }
     else
     {
+        disconnectKeyboard(*primaryScreen);
+        connectKeyboard(*alternateScreen);
         view->setScene(alternate);
         current = alternateScreen;
     }
+
+    startTimers();
 
     fit();
 
@@ -638,12 +653,12 @@ DisplayScreen *TerminalTab::setAlternateScreen(bool alt)
 }
 
 /**
- * @brief   TerminalTab::fit - fit the window content according to user preference
+ * @brief   Terminal::fit - fit the window content according to user preference
  *
  * @details Fit the terminal display into the window, either fixed at 4:3 ratio or stretched to fill
  *          the window. If the 'Not Connected' display is shown, it's always stretched to fill the window.
  */
-void TerminalTab::fit()
+void Terminal::fit()
 {
     if (sessionConnected)
     {

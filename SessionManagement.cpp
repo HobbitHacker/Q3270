@@ -245,7 +245,7 @@ void SessionManagement::saveSettings()
  * @details Display a list of sessions for the user to select one to open a saved session. If they
  *          select one, open and connect to it.
  */
-bool SessionManagement::openSession(TerminalTab *t)
+bool SessionManagement::openSession(Terminal *t)
 {
     // Build UI
     QDialog openDialog;
@@ -300,7 +300,7 @@ bool SessionManagement::openSession(TerminalTab *t)
  * @details Open named sessions, either from the list of saved sessions, or from the most recently used
  *          list.
  */
-void SessionManagement::openSession(TerminalTab *t, QString sessionName)
+void SessionManagement::openSession(Terminal *t, QString sessionName)
 {
     QSettings s;
 

@@ -108,20 +108,20 @@ MainWindow::MainWindow(MainWindow::Session s) : QMainWindow(nullptr),
 
     // Set defaults for Connect options
     ui->actionDisconnect->setDisabled(true);
-
-    terminal = new TerminalTab(ui->terminalLayout, activeSettings, codePage, keyboard, colourTheme, s.session);
+    
+    terminal = new Terminal(ui->terminalLayout, activeSettings, codePage, keyboard, colourTheme, s.session);
 
     keyboard.setTheme(keyboardTheme, "Factory");
 
     // Used for dynamically showing font changes when using the font selection dialog
-    connect(settings, &PreferencesDialog::tempFontChange, terminal, &TerminalTab::setCurrentFont);
+    connect(settings, &PreferencesDialog::tempFontChange, terminal, &Terminal::setCurrentFont);
 
     // Enable/Disable menu entries if connected/disconnected
-    connect(terminal, &TerminalTab::disconnected, this, &MainWindow::disableDisconnectMenu);
-    connect(terminal, &TerminalTab::disconnected, settings, &PreferencesDialog::disconnected);
-
-    connect(terminal, &TerminalTab::connectionEstablished, this, &MainWindow::enableDisconnectMenu);
-    connect(terminal, &TerminalTab::connectionEstablished, settings, &PreferencesDialog::connected);
+    connect(terminal, &Terminal::disconnected, this, &MainWindow::disableDisconnectMenu);
+    connect(terminal, &Terminal::disconnected, settings, &PreferencesDialog::disconnected);
+    
+    connect(terminal, &Terminal::connectionEstablished, this, &MainWindow::enableDisconnectMenu);
+    connect(terminal, &Terminal::connectionEstablished, settings, &PreferencesDialog::connected);
 
     // If a session name was passed to the MainWindow, restore the window size/position
     // and open it
@@ -519,7 +519,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
         QMdiSubWindow *t = ui->mdiArea->subWindowList().at(i);
 
         applicationSettings.setValue("geometry", t->saveGeometry());
-        applicationSettings.setValue("address", ((TerminalTab *)t)->address());
+        applicationSettings.setValue("address", ((Terminal *)t)->address());
     }
 */
     applicationSettings.endArray();
@@ -569,7 +569,7 @@ void MainWindow::subWindowClosed(QObject *closedWindow)
 
     for (int i = 0; i < windows.size(); i++)
     {
-        TerminalTab *t = (TerminalTab *)windows.at(i);
+        Terminal *t = (Terminal *)windows.at(i);
 
         if (t != closedWindow)
         {

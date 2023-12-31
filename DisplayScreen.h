@@ -89,13 +89,12 @@ class DisplayScreen : public QObject, public QGraphicsRectItem
         int findNextUnprotectedField(int pos);
         int findPrevUnprotectedField(int pos);
 
-        bool insertChar(int pos, unsigned char c, bool insertMode);
-        void deleteChar(int pos);
-        void eraseEOF(int pos);
+        bool insertChar(unsigned char c, bool insertMode);
 
         void eraseUnprotected(int start, int end);
 
         void setCursor(int x, int y);
+        void setCursor(int pos);
         void showCursor();
         void cascadeAttrs(int startpos);
 
@@ -110,12 +109,12 @@ class DisplayScreen : public QObject, public QGraphicsRectItem
         void setFontScaling(bool fontScaling);
 
         void toggleRuler();
-        void drawRuler(int x, int y);
         void setRuler();
         void rulerMode(bool on);
         void setRulerStyle(int rulerStyle);
 
         void getScreen(QByteArray &buffer);
+        void readBuffer();
 
         void addPosToBuffer(QByteArray &buffer, int pos);
 
@@ -123,23 +122,35 @@ class DisplayScreen : public QObject, public QGraphicsRectItem
 
         void dumpFields();
         void dumpDisplay();
-        void dumpInfo(int pos);
+        void dumpInfo();
 
     signals:
 
-        // Mouse click moves cursor
-        void moveCursor(int x, int y, bool absolute);
+        void bufferReady(QByteArray &buffer);
 
     public slots:
 
         void blink();
         void cursorBlink();
         void setStatusXSystem(QString text);
-        void showStatusCursorPosition(int x, int y);
+//        void showStatusCursorPosition(int x, int y);
         void setStatusInsert(bool ins);
         void setCursorColour(bool inherit);
         void setCodePage();
         void copyText();
+
+        void moveCursor(int x, int y);
+        void deleteChar();
+        void newline();
+        void tab(int offset);
+        void backtab();
+        void home();
+        void backspace();
+        void eraseEOF();
+        void endline();
+
+        void processAID(int aid, bool shortread);
+        void interruptProcess();
 
     private:
 
@@ -164,6 +175,8 @@ class DisplayScreen : public QObject, public QGraphicsRectItem
         int screen_y;                /* Max Rows */
         int screenPos_max;           /* Max position on screen */
 
+        int cursor_pos;              /* Cursor position */
+
 //        QVector<Glyph *> glyph;               /* Character on screen */
         QVector<Cell *> cell;    /* Screen slot */
 //        QVector<QGraphicsLineItem *> uscore;  /* Underscores */
@@ -179,6 +192,7 @@ class DisplayScreen : public QObject, public QGraphicsRectItem
 
         bool unformatted;           // True if no fields are defined
 
+        int lastAID;                // Last attention key identifier
 
         /* Character Attributes in effect */
         bool useCharAttr;

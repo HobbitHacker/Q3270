@@ -33,6 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "SocketConnection.h"
+#include "Q3270.h"
 
 /**
  * @brief   SocketConnection::SocketConnection - handle incoming TCPIP data
@@ -103,8 +104,6 @@ void SocketConnection::closed()
  */
 void SocketConnection::disconnectMainframe()
 {
-
-    disconnect(displayDataStream, &ProcessDataStream::bufferReady, this, &SocketConnection::sendResponse);
     disconnect(dataSocket, &QSslSocket::readyRead, this, &SocketConnection::onReadyRead);
 
     dataSocket->disconnectFromHost();
@@ -134,7 +133,6 @@ void SocketConnection::connectMainframe(QString &address, quint16 port, QString 
     disconnect(dataSocket, QOverload<const QList<QSslError> &>::of(&QSslSocket::sslErrors), this, &SocketConnection::sslErrors);*/
     dataSocket->connectToHost(address, port);
     displayDataStream = d;
-    connect(displayDataStream, &ProcessDataStream::bufferReady, this, &SocketConnection::sendResponse);
     this->luName = luName;
 }
 
@@ -495,7 +493,7 @@ void SocketConnection::processSubNegotiation()
                 response.append(termName.toLatin1().data(), strlen(termName.toLatin1().data()));
 
                 // Pass LU name if one was requested
-                if (luName.compare("")) happen
+                if (luName.compare(""))
                 {
                     response.append('@');
                     response.append(luName.toLatin1().data(), strlen(luName.toLatin1().data()));

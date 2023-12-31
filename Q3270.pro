@@ -30,7 +30,7 @@ SOURCES += \
     PreferencesDialog.cpp \
     ProcessDataStream.cpp \
     SessionManagement.cpp \
-    TerminalTab.cpp \
+    Terminal.cpp \
     main.cpp \
     SocketConnection.cpp
 
@@ -47,8 +47,8 @@ HEADERS += \
     ProcessDataStream.h \
     Q3270.h \
     SessionManagement.h \
-    TerminalTab.h \
-    SocketConnection.h
+    SocketConnection.h \
+    Terminal.h
 
 FORMS += \
     About.ui \
