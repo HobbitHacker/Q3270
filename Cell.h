@@ -83,6 +83,9 @@ public:
     inline bool isReverse()                         { return reverse; };
     inline bool isBlink()                           { return blink; };
 
+    inline int  getField()                          { return fieldPos; };
+    inline void setField(int f)                     { fieldPos = f; };
+
     bool hasCharAttrs(Cell::CharAttr ca);
 
     // Setters
@@ -113,7 +116,7 @@ public:
 
     void blinkChar(bool blink);
 
-    void updateCell();
+    bool updateCell();
 
 private:
 
@@ -141,6 +144,9 @@ private:
     // Is this a field start?
     bool fieldStart;
 
+    // Field position
+    int fieldPos;
+
     // Field attributes
     bool num;
     bool mdt;
@@ -166,6 +172,13 @@ private:
 
     // Cell changed with this data transmission
     bool changed;
+    bool displayChanged;
+    bool colourChanged;
+    bool reverseChanged;
+    bool uscoreChanged;
+    bool glyphChanged;
+
+    int updateCount;
 };
 
 #endif // CELL_H

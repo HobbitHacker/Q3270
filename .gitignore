@@ -3,6 +3,7 @@
 
 # Untracked local files for testing
 /Untracked
+/Docs
 
 *~
 *.autosave

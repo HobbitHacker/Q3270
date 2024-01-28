@@ -88,7 +88,6 @@ class ProcessDataStream : public QObject
         bool alternate_size;
 
         /* Screen position according to incoming 3270 data stream */
-        int primary_x, primary_y;
         int primary_pos;
 
         /* Dimensions of currently active screen */

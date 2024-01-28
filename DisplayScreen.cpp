@@ -329,7 +329,7 @@ void DisplayScreen::clear()
         cell.at(i)->setColour(ColourTheme::GREEN);
 
         cell.at(i)->setChar(0x00);
-
+        cell.at(i)->setField(-1);
     }
     resetCharAttr();
 
@@ -351,12 +351,20 @@ void DisplayScreen::clear()
  *          The field containing the character is used to determine the colour of the character, unless
  *          character attributes are in effect.
  */
-void DisplayScreen::setChar(int pos, short unsigned int c, bool fromKB)
+void DisplayScreen::setChar(int pos, uchar c, bool fromKB)
 {
 
-    cell.at(pos)->setFieldStart(false);
+    int fieldAttr = cell.at(pos)->getField();
+    if (fieldAttr == -1)
+    {
+        fieldAttr = pos;
+    }
 
-    int fieldAttr = findField(pos);
+    if (cell.at(pos)->isFieldStart())
+    {
+        cell.at(pos)->setFieldStart(false);
+        cell.at(pos)->setField(fieldAttr = findField(pos));
+    }
 
     // Reset character attributes for this cell
     cell.at(pos)->resetCharAttrs();
@@ -735,6 +743,7 @@ void DisplayScreen::cascadeAttrs(int pos)
             int offset = i++ % screenPos_max;
             tmpCol = cell[offset]->hasCharAttrs(Cell::COLOUR) ? cell[offset]->getColour() : col;
             cell[offset]->setAttrs(prot, mdt, num, pensel, blink, disp, under, rev, tmpCol);
+            cell.at(offset)->setField(pos);
         }
 }
 
@@ -745,7 +754,7 @@ void DisplayScreen::cascadeAttrs(int pos)
  *          settings. These require Qt calls which, when issued repeatedly for the same cell, are
  *          expensive in processing time.
  *
- *          This occurs because a Srart Field modofies all following characters until the next
+ *          This occurs because a Start Field modifies all following characters until the next
  *          Field Start; the very first field on a screen, therefore, modifies the rest of the screen.
  *          The next field modifies some of those cells again, and so on.
  *
@@ -901,7 +910,7 @@ bool DisplayScreen::insertChar(unsigned char c, bool insertMode)
         return false;
     }
 
-    int thisField = findField(cursor_pos);
+    int thisField = cell.at(cursor_pos)->getField();
 
     if (insertMode)
     {
@@ -1074,6 +1083,11 @@ void DisplayScreen::deleteChar()
 
     int endPos = findNextField(cursor_pos);
 
+    if (endPos < cursor_pos)
+    {
+        endPos += screenPos_max;
+    }
+
     for(int fld = cursor_pos; fld < endPos - 1 && cell.at(fld % screenPos_max)->getEBCDIC() != IBM3270_CHAR_NULL; fld++)
     {        
         int offset = fld % screenPos_max;
@@ -1082,8 +1096,8 @@ void DisplayScreen::deleteChar()
         cell.at(offset)->copy(*(cell.at(offsetNext)));
     }
 
-    cell.at(endPos - 1)->setChar(IBM3270_CHAR_NULL);
-    cell.at(findField(cursor_pos))->setMDT(true);
+    cell.at((endPos - 1) % screenPos_max)->setChar(IBM3270_CHAR_NULL);
+    cell.at(cell.at(cursor_pos)->getField())->setMDT(true);
 }
 
 /**
@@ -1108,7 +1122,7 @@ void DisplayScreen::eraseEOF()
         cell.at(i % screenPos_max)->setChar(0x00);
     }
 
-    cell.at(findField(cursor_pos))->setMDT(true);
+    cell.at(cell.at(cursor_pos)->getField())->setMDT(true);
 }
 
 /**
@@ -1207,7 +1221,8 @@ void DisplayScreen::eraseUnprotected(int start, int end)
         end += screenPos_max;
     }
 
-    int thisField = findField(start);
+    int thisField = cell.at(start)->getField();
+
     if (cell.at(thisField)->isProtected())
     {
         start = findNextUnprotectedField(start);
@@ -1531,19 +1546,19 @@ void DisplayScreen::cursorBlink()
  */
 int DisplayScreen::findField(int pos)
 {
+//    qDebug() << "Searching for field for" << pos;
     int endPos = pos - screenPos_max;
+    int offset = pos;
 
     for (int i = pos; i > endPos ; i--)
     {
-        int offset = i;
-        if (i < 0)
-        {
-            offset = screenPos_max + i;
-        }
-
         if (cell.at(offset)->isFieldStart())
         {
             return offset;
+        }
+        if (--offset < 0)
+        {
+            offset = screenPos_max - 1;
         }
     }
     return pos;

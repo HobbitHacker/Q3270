@@ -193,13 +193,9 @@ void SocketConnection::onReadyRead()
     char socketByte;
     bool subNegotiationProcessing = false;
 
-    // Debugging - formatted data dump variables
-    int byteCount = 0;
-    int byteTot   = 0;
-
-    QString charRep;
-    QString byteList;
+    QByteArray response;
     QString byteNotes;
+
 
     // start an infinite loop
     for (;;)
@@ -207,36 +203,14 @@ void SocketConnection::onReadyRead()
         // Start a transaction so we can revert to the previous state in case we try to read more data than is available on the socket
         dataStream.startTransaction();
 
+        response.clear();
+
         // Read incoming data, and convert to unsigned
         dataStream.readRawData(&socketByte, 1);
         unsignedSocketByte = (uchar) socketByte;
 
         if (dataStream.commitTransaction())
         {
-
-            // Debugging - if we've reached 32 bytes, pretty print them.
-            if (byteCount>31)
-            {
-                qDebug().noquote() << QString("SocketConnection: %1 - %2 | %3 | %4").arg(byteTot, 4, 16).arg(byteList.toUpper()).arg(charRep, 32).arg(byteNotes);
-                charRep = "";
-                byteList = "";
-                byteNotes = "";
-                byteTot += 32;
-                byteCount = 0;
-            }
-
-            // Debugging - add this byte to the hexdump
-            byteList.append(QString("%1 ").arg(unsignedSocketByte, 2, 16, QLatin1Char('0')));
-
-            // Debugging - add this byte as a character if it's alphanumeric
-            if (isalnum(unsignedSocketByte))
-                charRep.append(unsignedSocketByte);
-            else
-                charRep.append(".");
-
-            byteCount++;
-
-            QByteArray response;
 
             qDebug();
 
@@ -297,17 +271,8 @@ void SocketConnection::onReadyRead()
                             byteNotes.append("SE ");
                             if (subNegotiationProcessing)
                             {
-                                // Debugging - if there are bytes we haven't printed, print them.
-                                if (byteCount>0)
-                                {
-                                    qDebug().noquote() << QString("SocketConnection: %1 - %2 | %3 | %4").arg(byteTot, 4, 16).arg(byteList.toUpper().leftJustified(96)).arg(charRep.leftJustified(32)).arg(byteNotes);
-                                    charRep = "";
-                                    byteList = "";
-                                    byteNotes = "";
-                                    byteTot += 32;
-                                    byteCount = 0;
-                                }
-                                qDebug() << "";
+                                qDebug() << byteNotes;
+                                byteNotes = "";
                                 processSubNegotiation();
                             }
                             else
@@ -320,17 +285,9 @@ void SocketConnection::onReadyRead()
                         case EOR:
                             byteNotes.append("EOR ");
                             telnetState = TELNET_STATE_DATA;
-                            if (byteCount>0)
-                            {
-                                // Debugging - if there are bytes we haven't printed, print them.
-                                qDebug().noquote() << QString("SocketConnection: %1 - %2 | %3 | %4").arg(byteTot, 4, 16).arg(byteList.toUpper().leftJustified(96)).arg(charRep.leftJustified(32)).arg(byteNotes);
-                                charRep = "";
-                                byteList = "";
-                                byteNotes = "";
-                                byteTot += 32;
-                                byteCount = 0;
-                            }
-                            qDebug() << "";
+                            qDebug() << byteNotes;
+                            byteNotes = "";
+                            dump(incomingData,"Incoming Data");
                             emit dataStreamComplete(incomingData, tn3270e_Mode);
                             incomingData.clear();
 							break;
@@ -632,9 +589,10 @@ void SocketConnection::dump(QByteArray &a, QString title)
     {
         if (w > 31)
         {
-            qDebug().noquote() << QString("SocketConnection: %1 - %2 | %3 |").arg(i - 31, 4, 16).arg(bytes.toUpper().leftJustified(96)).arg(bytesASCII.leftJustified(32));
+            qDebug().noquote() << QString("SocketConnection: %1 - %2 | %3 | %4 |").arg(i - 31, 4, 16).arg(bytes.toUpper().leftJustified(96)).arg(bytesASCII.leftJustified(32)).arg(bytesEBCDIC.leftJustified(32));
 
             bytesASCII = "";
+            bytesEBCDIC = "";
             bytes = "";
             w = 0;
         }

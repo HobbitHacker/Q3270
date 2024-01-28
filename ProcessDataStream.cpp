@@ -46,8 +46,6 @@ ProcessDataStream::ProcessDataStream(Terminal *t)
 {
     terminal = t;
 
-    primary_x = 0;
-    primary_y = 0;
     primary_pos = 0;
 
     lastAID = IBM3270_AID_NOAID;
@@ -162,7 +160,7 @@ void ProcessDataStream::processStream(QByteArray &b, bool tn3270e)
             return;
     }
 
-    while(buffer != b.end())
+    while(buffer < b.end())
     {
         if (wsfProcessing)
         {
@@ -190,7 +188,7 @@ void ProcessDataStream::processStream(QByteArray &b, bool tn3270e)
     }
 //    screen->dumpFields();
 //    screen->dumpDisplay();
-    fflush(stdout);
+//    fflush(stdout);
 
     screen->refresh();
 
@@ -335,7 +333,7 @@ void ProcessDataStream::processW()
     processWCC();
 
     printf("]");
-    fflush(stdout);
+//    fflush(stdout);
 }
 
 /**
@@ -364,10 +362,8 @@ void ProcessDataStream::processEW(bool alternate)
     processWCC();
 
     printf("]");
-    fflush(stdout);
+//    fflush(stdout);
 
-    primary_x = 0;
-    primary_y = 0;
     primary_pos = 0;
 
     screen->clear();
@@ -382,6 +378,8 @@ void ProcessDataStream::processEW(bool alternate)
  */
 void ProcessDataStream::processRB()
 {
+    printf("[ReadBuffer]");
+
     QByteArray screenContents = QByteArray();
 
     screen->getScreen(screenContents);
@@ -429,6 +427,7 @@ void ProcessDataStream::processWSF()
  */
 void ProcessDataStream::processRM()
 {
+    printf("[ReadModified]");
     screen->processAID(lastAID, false);
 }
 
@@ -440,13 +439,13 @@ void ProcessDataStream::processRM()
 void ProcessDataStream::processSF()
 {
     unsigned char fa = *++buffer;
-    printf("[Start Field: %02X ", fa);
+//    printf("[Start Field: %02X ", fa);
 
     screen->setField(primary_pos, fa, false);
 //    screen->setFieldAttrs(primary_pos);
 
-    printf("]");
-    fflush(stdout);
+//    printf("]");
+//    fflush(stdout);
 
     incPos();
 
@@ -610,10 +609,10 @@ void ProcessDataStream::processSBA()
 
     primary_pos = tmp_pos;
 
-    primary_y = (primary_pos / screen_x);
-    primary_x = primary_pos - (primary_y * screen_x);
-//    printf("%d,%d]", primary_x, primary_y);
-
+/*    int primary_y = (primary_pos / screen_x);
+    int primary_x = primary_pos - (primary_y * screen_x);
+    printf("%d,%d]", primary_x, primary_y);
+*/
     lastWasCmd = true;
 }
 
@@ -627,6 +626,7 @@ void ProcessDataStream::processSA()
 {
     uchar extendedType = *++buffer;
     uchar extendedValue = *++buffer;
+//    printf("[SetAttribute %02X,%02X]", extendedType, extendedValue);
     screen->setCharAttr(extendedType, extendedValue);
 
     lastWasCmd = true;
@@ -714,7 +714,10 @@ void ProcessDataStream::processMF()
  */
 void ProcessDataStream::processIC()
 {
+    int primary_y = (primary_pos / screen_x);
+    int primary_x = primary_pos - (primary_y * screen_x);
     printf("[InsertCursor(%d,%d)]", primary_x, primary_y);
+
     screen->setCursor(primary_x, primary_y);
 
     lastWasCmd = true;
@@ -799,8 +802,6 @@ void ProcessDataStream::processPT()
 
     // Adjust position according to the field we found
     primary_pos = nextField;
-    primary_y = (primary_pos / screen_x);
-    primary_x = primary_pos - (primary_y * screen_x);
 
     lastWasCmd = true;
 }
@@ -818,45 +819,46 @@ void ProcessDataStream::processRA()
     uchar newChar = *++buffer;
 
     bool geRA = false;
-
+//    printf("[RepeatToAddress %d to %d (", primary_pos, endPos);
     // Check to see if it's <RA><GE><CHAR>
     if (newChar == IBM3270_GE)
     {
         geRA = true;
         newChar = *++buffer;
+//        printf(" GE");
     }
 
     if (endPos > screenSize || endPos < 0)
     {
         printf("[*** RA buffer end position invalid %d - discarded ***]", endPos);
-        fflush(stdout);
+//        fflush(stdout);
         return;
     }
 
-//    printf("[RepeatToAddress %d to %d (0x%2.2X)]", primary_pos, endPos, newChar);
-    fflush(stdout);
+//    printf("%02.2X)", newChar);
 
     if (endPos <= primary_pos)
     {
         endPos += screenSize;
     }
 
+    //int offset;
+
+    int count = 0;
+
     for(int i = primary_pos; i < endPos; i++)
     {
-        int offset = i % screenSize;
-
         if (geRA)
         {
             screen->setGraphicEscape();
         }
-        screen->setChar(offset, newChar, false);
+        placeChar(newChar);
+        count++;
+//        qDebug() << newChar << "at" << primary_pos;
     }
 
-    primary_pos = endPos % screenSize;
-    primary_y = (primary_pos / screen_x);
-    primary_x = primary_pos - (primary_y * screen_x);
-
     lastWasCmd = true;
+//    printf(" (%d characters placed)]", count);
 }
 
 /**
@@ -874,11 +876,11 @@ void ProcessDataStream::processEUA()
     if (stopAddress >= screenSize || stopAddress < 0)
     {
         printf("[*** EUA buffer end position invalid %d - discarded ***]", stopAddress);
-        fflush(stdout);
+//        fflush(stdout);
         return;
     }
 
-    printf("[EraseUnprotected to Address %d ]", stopAddress);
+    printf("[EraseUnprotected to Address %d]", stopAddress);
 
     screen->eraseUnprotected(primary_pos, stopAddress);
     restoreKeyboard = true;
@@ -893,7 +895,7 @@ void ProcessDataStream::processEUA()
  */
 void ProcessDataStream::processGE()
 {
-//    printf("[GraphicEscape ");
+//    printf("[GraphicEscape]");
     screen->setGraphicEscape();
     placeChar((uchar) *++buffer);
 //    printf("]");
@@ -955,7 +957,7 @@ void ProcessDataStream::WSFoutbound3270DS()
 void ProcessDataStream::WSFreset()
 {
     printf("\n\n[** Reset Partition %02X - Not Implemented **]\n\n", *++buffer);
-    fflush(stdout);
+//    fflush(stdout);
     return;
 }
 
@@ -1398,22 +1400,8 @@ int ProcessDataStream::extractBufferAddress()
  */
 void ProcessDataStream::placeChar(uchar ebcdic)
 {
-    switch(ebcdic)
-    {
-        case IBM3270_CHAR_NULL:
-            screen->setChar(primary_pos, 0x00, false);
-            break;
-        default:
-            screen->setChar(primary_pos, ebcdic, false);
-    }
-
+    screen->setChar(primary_pos, ebcdic, false);
     incPos();
-    if (primary_x == 0)
-    {
-        printf("\n");
-        fflush(stdout);
-    }
-
     lastWasCmd = false;
 }
 
@@ -1426,14 +1414,8 @@ void ProcessDataStream::placeChar(uchar ebcdic)
  */
 void ProcessDataStream::incPos()
 {
-    primary_pos++;
-    if (++primary_x >= screen_x)
+    if (++primary_pos > screenSize)
     {
-        primary_x = 0;
-        if (++primary_y >= screen_y)
-        {
-            primary_pos = 0;
-            primary_y = 0;
-        }
+        primary_pos = 0;
     }
 }

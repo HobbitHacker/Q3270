@@ -558,11 +558,11 @@ void Cell::setFont(QFont f)
  *
  *          This routine updates Qt based on what has changed for this datastream.
  */
-void Cell::updateCell()
+bool Cell::updateCell()
 {
     if (!changed)
     {
-        return;
+        return false;
     }
 
     changed = false;
@@ -604,4 +604,6 @@ void Cell::updateCell()
         glyph.setBrush(palette[colNum]);
         this->setBrush(palette[ColourTheme::Colour::BLACK]);
     }
+
+    return true;
 }
