@@ -81,10 +81,6 @@ PreferencesDialog::PreferencesDialog(ColourTheme &colours, KeyboardTheme &keyboa
     colourButtons[ColourTheme::YELLOW]       = ui->colourYellow;
     colourButtons[ColourTheme::NEUTRAL]      = ui->colourWhite;
 
-    // Setup Manage Themes buttons
-    connect(ui->manageColourThemes, &QPushButton::clicked, this, &PreferencesDialog::manageColourThemes);
-    connect(ui->manageKeyboardThemes, &QPushButton::clicked, this, &PreferencesDialog::manageKeyboardThemes);
-
     // TODO: "Enter" when displaying font selection causes font dialog to vanish from widget
 
     // Build a QFontDialog for use within our Settings dialog
@@ -419,5 +415,7 @@ void PreferencesDialog::keyboardThemeDropDownChanged([[maybe_unused]] int index)
  */
 void PreferencesDialog::manageKeyboardThemes()
 {
-    //
+    keyboards.exec();
+
+    populateKeyboardThemeNames();
 }

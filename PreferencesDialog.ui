@@ -43,7 +43,7 @@
       </sizepolicy>
      </property>
      <property name="currentIndex">
-      <number>1</number>
+      <number>4</number>
      </property>
      <widget class="QWidget" name="connection">
       <attribute name="title">
@@ -1048,6 +1048,22 @@
     <hint type="destinationlabel">
      <x>545</x>
      <y>215</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>manageKeyboardThemes</sender>
+   <signal>clicked()</signal>
+   <receiver>PreferencesDialog</receiver>
+   <slot>manageKeyboardThemes()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>502</x>
+     <y>53</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>339</x>
+     <y>274</y>
     </hint>
    </hints>
   </connection>
