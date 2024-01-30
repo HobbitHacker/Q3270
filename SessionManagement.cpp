@@ -222,6 +222,7 @@ void SessionManagement::saveSettings()
     s.setValue("RulerStyle", activeSettings.getRulerStyle());
     s.setValue("Font", activeSettings.getFont().family());
     s.setValue("FontSize", activeSettings.getFont().pointSize());
+    s.setValue("FontStyle", activeSettings.getFont().styleName());
     s.setValue("ScreenStretch", activeSettings.getStretchScreen());
     s.setValue("Codepage",activeSettings.getCodePage());
 

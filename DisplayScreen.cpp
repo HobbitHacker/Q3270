@@ -40,13 +40,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Q3270.h"
 #include "DisplayScreen.h"
 
-/*
- * 
- * DisplayScreen represents a screen of the 3270 display. The class handles the display matrix.
- *
- * This is created by Terminal.
- */
-
 /**
  * @brief   DisplayScreen::DisplayScreen - the 3270 display matrix, representing primary or alternate screens.
  * @param   screen_x - the width of the screen
