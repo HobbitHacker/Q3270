@@ -293,10 +293,12 @@ void DisplayScreen::setCodePage()
  */
 void DisplayScreen::resetColours()
 {
-   for (int i = 0; i < screenPos_max; i++)
+    for (int i = 0; i < screenPos_max; i++)
     {
         cell.at(i)->setColour(cell.at(i)->getColour());
     }
+
+    refresh();
 }
 
 
