@@ -150,6 +150,11 @@ class Terminal : public QWidget
         int blinkSpeed;
         bool blink;
 
+        // Whether the timer for a blink operation is short (blink timers when the
+        // thing being blinked is hidden are short so the 'off' phase is brief)
+        bool shortCursorBlink;
+        bool shortCharacterBlink;
+
         QTimer *blinker;
         QTimer *cursorBlinker;
 

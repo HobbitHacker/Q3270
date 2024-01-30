@@ -83,7 +83,7 @@ DisplayScreen::DisplayScreen(int screen_x, int screen_y, CodePage &cp, ColourThe
     // Default settings
     ruler = Q3270_RULER_CROSSHAIR;
     rulerOn = false;
-    blinkShow = false;
+    blinkShow = true;
     cursorShow = true;
     cursorColour = true;
 
@@ -1507,15 +1507,16 @@ void DisplayScreen::setRuler()
  */
 void DisplayScreen::blink()
 {
-    blinkShow = !blinkShow;
-
     for (int i = 0; i < screenPos_max; i++)
     {
         if (cell.at(i)->isBlink())
         {
-            cell.at(i)->blinkChar(blinkShow);
+            // blinkChar is true for hiding the character
+            cell.at(i)->blinkChar(!blinkShow);
         }
     }
+
+    blinkShow = !blinkShow;
 }
 
 /**
@@ -1525,9 +1526,7 @@ void DisplayScreen::blink()
  */
 void DisplayScreen::cursorBlink()
 {
-    cursorShow = !cursorShow;
-
-    if (!cursorShow)
+    if (cursorShow)
     {
         cursor.hide();
     }
@@ -1535,6 +1534,8 @@ void DisplayScreen::cursorBlink()
     {
         cursor.show();
     }
+
+    cursorShow = !cursorShow;
 }
 
 /**

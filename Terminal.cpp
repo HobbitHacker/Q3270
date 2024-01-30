@@ -195,7 +195,6 @@ void Terminal::setColourTheme(QString themeName)
     {
         primaryScreen->resetColours();
         alternateScreen->resetColours();
-
     }
 }
 
@@ -566,8 +565,8 @@ void Terminal::stopTimers()
     blinker->stop();
     cursorBlinker->stop();
 
-    disconnect(blinker, &QTimer::timeout, current, &DisplayScreen::blink);
-    disconnect(cursorBlinker, &QTimer::timeout, current, &DisplayScreen::cursorBlink);
+    disconnect(blinker, &QTimer::timeout, this, &Terminal::blinkText);
+    disconnect(cursorBlinker, &QTimer::timeout, this, &Terminal::blinkCursor);
 
     current->showCursor();
 }
@@ -579,8 +578,8 @@ void Terminal::stopTimers()
  */
 void Terminal::startTimers()
 {
-    connect(blinker, &QTimer::timeout, current, &DisplayScreen::blink);
-    connect(cursorBlinker, &QTimer::timeout, current, &DisplayScreen::cursorBlink);
+    connect(blinker, &QTimer::timeout, this, &Terminal::blinkText);
+    connect(cursorBlinker, &QTimer::timeout, this, &Terminal::blinkCursor);
 
     blinker->start(1000);
     setBlinkSpeed(blinkSpeed);
@@ -597,6 +596,16 @@ void Terminal::blinkText()
     if (sessionConnected)
     {
         current->blink();
+        if (!shortCharacterBlink)
+        {
+            blinker->setInterval(250);
+        }
+        else
+        {
+            blinker->setInterval(1000);
+        }
+
+        shortCharacterBlink = !shortCharacterBlink;
     }
 }
 
@@ -611,6 +620,16 @@ void Terminal::blinkCursor()
     if (sessionConnected)
     {
         current->cursorBlink();
+        if (!shortCursorBlink)
+        {
+            cursorBlinker->setInterval(250);
+        }
+        else
+        {
+            cursorBlinker->setInterval((5 - blinkSpeed) * 250);
+        }
+
+        shortCursorBlink = !shortCursorBlink;
     }
 }
 
@@ -625,6 +644,10 @@ void Terminal::blinkCursor()
 DisplayScreen *Terminal::setAlternateScreen(bool alt)
 {
     stopTimers();
+
+    // Initially the cursor and characters are shown
+    shortCursorBlink = false;
+    shortCharacterBlink = false;
 
     if (!alt)
     {
