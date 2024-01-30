@@ -55,6 +55,8 @@ class PreferencesDialog : public QDialog
 {
         Q_OBJECT
 
+        typedef QMap<QString, QStringList> KeyboardMap;
+
 //        Q_ENUM(RulerStyle);
 
     public:
@@ -108,7 +110,7 @@ class PreferencesDialog : public QDialog
         ColourTheme::Colours colourTheme;
 
         QString keyboardThemeName;
-        KeyboardTheme::KeyboardMap keyboardTheme;
+        KeyboardMap keyboardTheme;
 
 
         QFont qfdFont;

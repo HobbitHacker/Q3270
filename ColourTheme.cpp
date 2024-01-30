@@ -1,3 +1,4 @@
+#include "Q3270.h"
 #include "ColourTheme.h"
 #include "ui_ColourTheme.h"
 #include "ui_NewTheme.h"
@@ -47,15 +48,18 @@ ColourTheme::ColourTheme(QWidget *parent) :
     // Set the default colour theme to Factory
     ui->colourTheme->addItem("Factory");
 
-    // Populate Themes map with settings from config file
-    QSettings s;
+    QSettings settings(Q3270_SETTINGS);
 
     // Begin Themes main group
-    s.beginGroup("ColourThemes");
+    settings.beginGroup("ColourThemes");
 
     // Get Themes, and sort them
-    QStringList ThemeList = s.childGroups();
+    QStringList ThemeList = settings.childGroups();
     ThemeList.sort(Qt::CaseSensitive);
+
+    qDebug() << "ColourTheme Settings:" << settings.organizationName() << "," << settings.applicationName();
+    qDebug() << "Groups: " << settings.childGroups();
+    qDebug() << "Keys: " << settings.childKeys();
 
     // Populate Themes list and combo boxes from config file
     for (int sc = 0; sc < ThemeList.count(); sc++)
@@ -65,35 +69,35 @@ ColourTheme::ColourTheme(QWidget *parent) :
         {
             qDebug() << "Storing " << ThemeList.at(sc);
             // Begin theme specific group
-            s.beginGroup(ThemeList.at(sc));
+            settings.beginGroup(ThemeList.at(sc));
 
             // Base colours
-            palette[UNPROTECTED_NORMAL]      = QColor(s.value("UnprotectedNormal").toString());
-            palette[UNPROTECTED_INTENSIFIED] = QColor(s.value("UnprotectedIntensified").toString());
-            palette[PROTECTED_NORMAL]        = QColor(s.value("ProtectedNormal").toString());
-            palette[PROTECTED_INTENSIFIED]   = QColor(s.value("ProtectedIntensified").toString());
+            palette[UNPROTECTED_NORMAL]      = QColor(settings.value("UnprotectedNormal").toString());
+            palette[UNPROTECTED_INTENSIFIED] = QColor(settings.value("UnprotectedIntensified").toString());
+            palette[PROTECTED_NORMAL]        = QColor(settings.value("ProtectedNormal").toString());
+            palette[PROTECTED_INTENSIFIED]   = QColor(settings.value("ProtectedIntensified").toString());
 
             // Extended Colours
-            palette[BLACK]     = QColor(s.value("Black").toString());
-            palette[BLUE]      = QColor(s.value("Blue").toString());
-            palette[RED]       = QColor(s.value("Red").toString());
-            palette[MAGENTA]   = QColor(s.value("Magenta").toString());
-            palette[GREEN]     = QColor(s.value("Green").toString());
-            palette[CYAN]      = QColor(s.value("Cyan").toString());
-            palette[YELLOW]    = QColor(s.value("Yellow").toString());
-            palette[NEUTRAL]   = QColor(s.value("Neutral").toString());
+            palette[BLACK]     = QColor(settings.value("Black").toString());
+            palette[BLUE]      = QColor(settings.value("Blue").toString());
+            palette[RED]       = QColor(settings.value("Red").toString());
+            palette[MAGENTA]   = QColor(settings.value("Magenta").toString());
+            palette[GREEN]     = QColor(settings.value("Green").toString());
+            palette[CYAN]      = QColor(settings.value("Cyan").toString());
+            palette[YELLOW]    = QColor(settings.value("Yellow").toString());
+            palette[NEUTRAL]   = QColor(settings.value("Neutral").toString());
 
             // Save theme
             themes.insert(ThemeList.at(sc), palette);
             ui->colourTheme->addItem(ThemeList.at(sc));
 
             // End theme specific group
-            s.endGroup();
+            settings.endGroup();
         }
     }
 
     // End Themes main group
-    s.endGroup();
+    settings.endGroup();
 
     // Set colour buttons actions
     connect(ui->baseUnprotected, &QPushButton::clicked, this, &ColourTheme::setColour);
@@ -436,6 +440,22 @@ void ColourTheme::deleteTheme()
     ui->colourTheme->removeItem(currentThemeIndex);
 }
 
+/**
+ * @brief   ColourTheme::getThemes - return a list of theme names
+ * @return  the list of available theme names
+ *
+ * @details Extract a list of available colour themes; the Factory theme is always first.
+ */
+QList<QString> ColourTheme::getThemes()
+{
+    QList<QString> tk = themes.keys();
+
+    // Factory theme should always be at the top
+    tk.removeAt(tk.indexOf("Factory"));
+    tk.prepend("Factory");
+
+    return tk;
+}
 
 /**
  * @brief   ColourTheme::getTheme - return the colour theme identified by theme
@@ -456,18 +476,6 @@ const ColourTheme::Colours ColourTheme::getTheme(QString theme)
 }
 
 /**
- * @brief   ColourTheme::getThemes - return a list of theme names
- * @return  the list of available theme names
- *
- * @details getThemes is called to return the list of available colour themes.
- */
-QList<QString> ColourTheme::getThemes()
-{
-    // Return all the Themes
-    return themes.keys();
-}
-
-/**
  * @brief   ColourTheme::accept - save colour theme changes
  *
  * @details accept is triggered by the OK button, and saves the colour themes to the config file.
@@ -475,8 +483,8 @@ QList<QString> ColourTheme::getThemes()
  */
 void ColourTheme::accept()
 {
-    // Save settings
-    QSettings settings;
+
+    QSettings settings(Q3270_SETTINGS);
 
     // Group for Colours
     settings.beginGroup("ColourThemes");

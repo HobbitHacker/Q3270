@@ -32,6 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
+#include "Q3270.h"
 #include "SessionManagement.h"
 #include "ui_SaveSession.h"
 #include "ui_OpenSession.h"
@@ -200,7 +201,7 @@ void SessionManagement::saveRowClicked(int row, [[maybe_unused]] int column)
 void SessionManagement::saveSettings()
 {
 
-    QSettings s;
+    QSettings s(Q3270_SETTINGS);
 
     // Sessions are stored under the "Sessions" key, under their key of their name
     s.beginGroup("Sessions");
@@ -266,7 +267,7 @@ bool SessionManagement::openSession(Terminal *t)
     // Process open request if 'OK' (or double-clicked)
     if (openDialog.exec() != QDialog::Rejected)
     {
-        QSettings settings;
+        QSettings settings(Q3270_SETTINGS);
 
         // Open named session
         openSession(t, load->tableWidget->item(load->tableWidget->currentRow(), 0)->text());
@@ -302,7 +303,7 @@ bool SessionManagement::openSession(Terminal *t)
  */
 void SessionManagement::openSession(Terminal *t, QString sessionName)
 {
-    QSettings s;
+    QSettings s(Q3270_SETTINGS);
 
     // Position at Sessions group
     s.beginGroup("Sessions");
@@ -390,7 +391,7 @@ void SessionManagement::manageSessions()
 void SessionManagement::deleteSession()
 {
 
-    QSettings settings;
+    QSettings settings(Q3270_SETTINGS);
 
     // Narrow to Sessions group
     settings.beginGroup("Sessions");
@@ -436,10 +437,10 @@ void SessionManagement::manageRowClicked([[maybe_unused]] int x, [[maybe_unused]
  */
 void SessionManagement::manageAutoStartList()
 {
-    QSettings settings;
+    QSettings settings(Q3270_SETTINGS);
 
     // Used to access the session details
-    QSettings sessionSettings;
+    QSettings sessionSettings(Q3270_SETTINGS);
 
     // Focus on the sessions
     sessionSettings.beginGroup("Sessions");
@@ -622,7 +623,7 @@ void SessionManagement::deleteAutoStart()
 void SessionManagement::populateTable(QTableWidget *table)
 {
     // Extract current Session names and descriptions, and add to table
-    QSettings settings;
+    QSettings settings(Q3270_SETTINGS);
     settings.beginGroup("Sessions");
 
     // Get a list of all existing sessions

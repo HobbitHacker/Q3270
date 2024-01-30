@@ -45,7 +45,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <QDialogButtonBox>
 #include <QTableWidgetItem>
 
-
 namespace Ui {
     class KeyboardTheme;
     class NewTheme;
@@ -55,9 +54,9 @@ class KeyboardTheme : public QDialog
 {
         Q_OBJECT
 
-    public:
+    typedef QMap<QString, QStringList> KeyboardMap;
 
-        typedef QMap<QString, QStringList> KeyboardMap;
+    public:
 
         KeyboardTheme(QWidget *parent = nullptr);
 

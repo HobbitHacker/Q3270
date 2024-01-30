@@ -41,6 +41,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * @param   cp              - shared CodePage object
  * @param   kb              - shared Keyboard object
  * @param   cs              - shared ColourTheme object
+ * @param   kt              - shared KeyboardTheme object
  * @param   sessionName     - the session name
  *
  * @details This is the controlling widget for the terminal. It comprises a QGraphicsView which is used to
@@ -51,8 +52,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *          There are two displays built; the primary one is always 24x80, and the alternate is defined
  *          by the user, based on the Terminal Model type selected.
  */
-Terminal::Terminal(QVBoxLayout *layout, ActiveSettings &activeSettings, CodePage &cp, Keyboard &kb, ColourTheme &cs, QString sessionName) :
-    kbd(kb), colourtheme(cs), cp(cp), activeSettings(activeSettings), sessionName(sessionName)
+Terminal::Terminal(QVBoxLayout *layout, ActiveSettings &activeSettings, CodePage &cp, Keyboard &kb, ColourTheme &cs, KeyboardTheme &kt, QString sessionName) :
+    kbd(kb), colourtheme(cs), keyboardtheme(kt), cp(cp), activeSettings(activeSettings), sessionName(sessionName)
 {
     sessionConnected = false;
 
@@ -76,10 +77,9 @@ Terminal::Terminal(QVBoxLayout *layout, ActiveSettings &activeSettings, CodePage
 
     connect(&activeSettings, &ActiveSettings::fontChanged, this, &Terminal::setFont);
     connect(&activeSettings, &ActiveSettings::codePageChanged, this, &Terminal::changeCodePage);
-    connect(&activeSettings, &ActiveSettings::keyboardThemeChanged, &kbd, &Keyboard::setTheme);
     connect(&activeSettings, &ActiveSettings::stretchScreenChanged, this, &Terminal::setScreenStretch);
 
-    //TODO: Move setColourTheme to ColourTheme - as Keyboard::setTheme? Would need to pass DisplayScreen
+    connect(&activeSettings, &ActiveSettings::keyboardThemeChanged, this, &Terminal::setKeyboardTheme);
     connect(&activeSettings, &ActiveSettings::colourThemeChanged, this, &Terminal::setColourTheme);
 
     // Build "Not Connected" display
@@ -199,7 +199,6 @@ void Terminal::setColourTheme(QString themeName)
     }
 }
 
-//FIXME: What is this meant to be for?
 /**
  * @brief   Terminal::setKeyboardTheme - switch the keyboard theme
  * @param   themeName - the new theme
@@ -208,10 +207,7 @@ void Terminal::setColourTheme(QString themeName)
  */
 void Terminal::setKeyboardTheme(QString themeName)
 {
-    //keyboardTheme = themeName;
-
-    // Set keyboard theme by name; pass obtained theme to setKeyboard()
-
+    kbd.setTheme(keyboardtheme.getTheme(themeName));
 }
 
 /**
@@ -307,8 +303,8 @@ void Terminal::openConnection(QSettings& s)
     activeSettings.setStretchScreen(s.value("ScreenStretch").toBool());
 
     // Set themes
-    setColourTheme(s.value("ColourTheme").toString());
-    setKeyboardTheme(s.value("KeyboardTheme").toString());
+    activeSettings.setColourTheme(s.value("ColourTheme").toString());
+    activeSettings.setKeyboardTheme(s.value("KeyboardTheme").toString());
 
     setSessionName(s.group());
 

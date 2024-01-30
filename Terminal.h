@@ -39,6 +39,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "SocketConnection.h"
 #include "Keyboard.h"
 #include "ColourTheme.h"
+#include "KeyboardTheme.h"
 #include "CodePage.h"
 #include "ActiveSettings.h"
 
@@ -54,7 +55,7 @@ class Terminal : public QWidget
 
     public:
 
-    Terminal(QVBoxLayout *v, ActiveSettings &activeSettings, CodePage &cp, Keyboard &kb, ColourTheme &cs, QString sessionName);
+    Terminal(QVBoxLayout *v, ActiveSettings &activeSettings, CodePage &cp, Keyboard &kb, ColourTheme &cs, KeyboardTheme &kt, QString sessionName);
         ~Terminal();
 
         void openConnection(QString address);
@@ -115,6 +116,7 @@ class Terminal : public QWidget
 
         Keyboard &kbd;
         ColourTheme &colourtheme;
+        KeyboardTheme &keyboardtheme;
         CodePage &cp;
 
         ColourTheme::Colours palette;

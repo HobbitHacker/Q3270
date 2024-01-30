@@ -39,8 +39,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <QObject>
 
-#include "KeyboardTheme.h"
-
 class ActiveSettings : public QObject
 {
     Q_OBJECT
@@ -92,7 +90,7 @@ class ActiveSettings : public QObject
         void setCodePage(QString codePage);
 
         QString getKeyboardThemeName()                   { return keyboardThemeName; }
-        void setKeyboardTheme(KeyboardTheme &keyboards, QString keyboardThemeName);
+        void setKeyboardTheme(QString keyboardThemeName);
 
         QString getColourThemeName()                     { return colourThemeName; }
         void setColourTheme(QString colourThemeName);
@@ -113,7 +111,7 @@ class ActiveSettings : public QObject
 
         void codePageChanged(QString codepage);
 
-        void keyboardThemeChanged(KeyboardTheme &keyboards, QString keyboardThemeName);
+        void keyboardThemeChanged(QString keyboardThemeName);
         void colourThemeChanged(QString colourThemeName);
 
         void hostChanged(QString hostName, int hostPport, QString hostLu);

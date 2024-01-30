@@ -32,9 +32,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#include "Q3270.h"
-
 #include "ActiveSettings.h"
+
+#include "Q3270.h"
 
 /**
  * @brief
@@ -309,11 +309,11 @@ void ActiveSettings::setCodePage(QString codepage)
  * @details This setting holds the name of the keyboard theme. The KeyboardTheme class is needed
  *          because that's actually where the keyboard definitions are stored.
  */
-void ActiveSettings::setKeyboardTheme(KeyboardTheme &keyboards, QString keyboardThemeName)
+void ActiveSettings::setKeyboardTheme(QString keyboardThemeName)
 {
     if (this->keyboardThemeName != keyboardThemeName)
     {
-        emit keyboardThemeChanged(keyboards, keyboardThemeName);
+        emit keyboardThemeChanged(keyboardThemeName);
     }
 
     this->keyboardThemeName = keyboardThemeName;

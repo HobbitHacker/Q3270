@@ -35,10 +35,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef N3270_H
 #define N3270_H
 
-#include <QObject>
+#define Q3270_SETTINGS "andyWare", "Q3270"
 
 /* 3270 Write Commands */
-#include "qobjectdefs.h"
 #define IBM3270_W    0xF1  /* Write */
 #define IBM3270_EW   0xF5  /* Erase Write */
 #define IBM3270_EWA  0x7E  /* Erase/Write Alternate */
@@ -213,6 +212,8 @@ enum Indicators {
 #define Q3270_NOT_SHORT_READ false
 #define Q3270_SHORT_READ true
 
-#define Q3270_
+// Left Ctrl and Right Ctrl hard wiring; this may break with non-X11 Windowing systems
+#define Q3270_LEFT_CTRL 65507
+#define Q3270_RIGHT_CTRL 65508
 
 #endif // N3270_H

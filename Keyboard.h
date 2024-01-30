@@ -43,17 +43,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <QVector>
 #include <QMap>
 
-#include "KeyboardTheme.h"
-
-// Left Ctrl and Right Ctrl hard wiring; this may break with non-X11 Windowing systems
-#define Q3270_LEFT_CTRL 65507
-#define Q3270_RIGHT_CTRL 65508
-
-
 class Keyboard : public QObject
 {    
 
     Q_OBJECT
+
+    typedef QMap<QString, QStringList> KeyboardMap;
 
     public:
 
@@ -88,7 +83,7 @@ class Keyboard : public QObject
         void lockKeyboard();
         void setConnected(bool state);
 
-        void setTheme(KeyboardTheme &keyboardTheme, QString theme);
+        void setTheme(KeyboardMap theme);
 
     protected:
         bool eventFilter( QObject *dist, QEvent *event );

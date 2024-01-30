@@ -36,6 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "MainWindow.h"
 #include "ui_About.h"
 
+#include "Q3270.h"
 /**
  * @brief   MainWindow::MainWindow - the main application
  * @param   s - a name
@@ -46,16 +47,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 MainWindow::MainWindow(MainWindow::Session s) : QMainWindow(nullptr),
                                                 ui(new(Ui::MainWindow))
-{
-
-    QCoreApplication::setOrganizationDomain("styles.homeip.net");
-    QCoreApplication::setApplicationName("Q3270");
-    QCoreApplication::setOrganizationName("andyWare");
-
-    ui->setupUi(this);
+{    ui->setupUi(this);
 
     // Read global settings
-    QSettings savedSettings;
+    QSettings savedSettings(Q3270_SETTINGS);
+
+    qDebug() << "Main Settings:" << savedSettings.organizationName() << "," << savedSettings.applicationName();
 
     // Most-recently used; default to 10
     maxMruCount = savedSettings.value("MRUMax", 10).toInt();
@@ -109,9 +106,7 @@ MainWindow::MainWindow(MainWindow::Session s) : QMainWindow(nullptr),
     // Set defaults for Connect options
     ui->actionDisconnect->setDisabled(true);
     
-    terminal = new Terminal(ui->terminalLayout, activeSettings, codePage, keyboard, colourTheme, s.session);
-
-    keyboard.setTheme(keyboardTheme, "Factory");
+    terminal = new Terminal(ui->terminalLayout, activeSettings, codePage, keyboard, colourTheme, keyboardTheme, s.session);
 
     // Used for dynamically showing font changes when using the font selection dialog
     connect(settings, &PreferencesDialog::tempFontChange, terminal, &Terminal::setCurrentFont);
@@ -468,7 +463,8 @@ void MainWindow::updateMRUlist(QString address)
         ui->menuRecentSessions->addAction(entry + mruList.at(i), this, [this]() { mruConnect(); } );
     }
 
-    QSettings applicationSettings;
+
+   QSettings applicationSettings(Q3270_SETTINGS);
 
     applicationSettings.beginWriteArray("RecentlyUsed");
     for(int i = 0; i < mruList.size() && i < maxMruCount; i++)
@@ -497,7 +493,7 @@ void MainWindow::menuQuit()
  */
 void MainWindow::closeEvent(QCloseEvent *event)
 {
-    QSettings applicationSettings;
+    QSettings applicationSettings(Q3270_SETTINGS);
 
     applicationSettings.setValue("mainwindowgeometry", saveGeometry());
     applicationSettings.setValue("mainwindowstate", saveState());

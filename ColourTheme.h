@@ -88,6 +88,7 @@ class ColourTheme : public QDialog
         int exec();
 
     private:
+
         Ui::ColourTheme *ui;
         Ui::NewTheme *newTheme;
 

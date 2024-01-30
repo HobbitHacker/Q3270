@@ -32,6 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
+#include "Q3270.h"
 #include "ui_NewTheme.h"
 #include "KeyboardTheme.h"
 #include "ui_KeyboardTheme.h"
@@ -127,7 +128,7 @@ KeyboardTheme::KeyboardTheme(QWidget *parent) : QDialog(parent), ui(new Ui::Keyb
     ui->keyboardThemes->addItem("Factory");
 
     // Now add those from the config file
-    QSettings s;
+    QSettings s(Q3270_SETTINGS);
 
     // Keyboard themes are all stored under the KeyboardThemes group
     s.beginGroup("KeyboardThemes");
@@ -211,11 +212,16 @@ KeyboardTheme::KeyboardTheme(QWidget *parent) : QDialog(parent), ui(new Ui::Keyb
  * @brief   KeyboardTheme::getThemes - return a list of themes
  * @return  A QStringList of theme names
  *
- * @details Extract a list of available themes
+ * @details Extract a list of available keyboard themes; the Factory theme is always first.
  */
 QStringList KeyboardTheme::getThemes()
 {
-    // Return a list of themes
+    QList<QString> tk = themes.keys();
+
+    // Factory theme should always be at the top
+    tk.removeAt(tk.indexOf("Factory"));
+    tk.prepend("Factory");
+
     return themes.keys();
 }
 
@@ -290,8 +296,8 @@ void KeyboardTheme::populateTable(QTableWidget *table, QString mapName)
 
     int row = 0;
 
-    KeyboardTheme::KeyboardMap map = getTheme(mapName);
-    KeyboardTheme::KeyboardMap::ConstIterator i = map.constBegin();
+    KeyboardMap map = getTheme(mapName);
+    KeyboardMap::ConstIterator i = map.constBegin();
 
     // Iterate over keyboard map and insert into table
     while(i != map.constEnd())
@@ -447,7 +453,7 @@ int KeyboardTheme::exec()
 void KeyboardTheme::accept()
 {
     // Save settings
-    QSettings settings;
+    QSettings settings(Q3270_SETTINGS);
 
     // Group for Colours
     settings.beginGroup("KeyboardThemes");

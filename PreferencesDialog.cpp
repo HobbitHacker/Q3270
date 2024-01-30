@@ -32,12 +32,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#include "Q3270.h"
-
 #include "ui_PreferencesDialog.h"
 #include "PreferencesDialog.h"
 #include <QDebug>
 #include "PreferencesDialog.h"
+
+#include "Q3270.h"
 
 /**
  * @brief   PreferencesDialog::PreferencesDialog - The preferences dialog
@@ -172,7 +172,6 @@ void PreferencesDialog::showForm()
     ui->terminalCols->setValue(activeSettings.getTerminalX());
     ui->terminalRows->setValue(activeSettings.getTerminalY());
 
-
     // Cursor blink enabled & speed
     ui->cursorBlink->setChecked(activeSettings.getCursorBlink());
     ui->cursorBlinkSpeed->setSliderPosition(activeSettings.getCursorBlinkSpeed());
@@ -189,6 +188,10 @@ void PreferencesDialog::showForm()
 
     populateColourThemeNames();
     populateKeyboardThemeNames();
+
+    // Select the right themes in the comboboxes
+    ui->colourTheme->setCurrentIndex(ui->colourTheme->findText(activeSettings.getColourThemeName()));
+    ui->keyboardTheme->setCurrentIndex(ui->keyboardTheme->findText(activeSettings.getKeyboardThemeName()));
 
     // Colour the buttons, based on Settings
     colours.setButtonColours(activeSettings.getColourThemeName());
@@ -302,7 +305,7 @@ void PreferencesDialog::accept()
     activeSettings.setCursorColourInherit(ui->cursorColour->QAbstractButton::isChecked());
     activeSettings.setFont(qfd->currentFont());
     activeSettings.setCodePage(ui->CodePages->currentText());
-    activeSettings.setKeyboardTheme(keyboards, ui->keyboardTheme->currentText());
+    activeSettings.setKeyboardTheme(ui->keyboardTheme->currentText());
     activeSettings.setColourTheme(ui->colourTheme->currentText());
     activeSettings.setHostAddress(ui->hostName->text(), ui->hostPort->text().toInt(), ui->hostLU->text());
     activeSettings.setStretchScreen(ui->stretch->QAbstractButton::isChecked());
@@ -347,7 +350,6 @@ void PreferencesDialog::populateCodePages(QMap<QString, QString> codepagelist)
  */
 void PreferencesDialog::colourThemeDropDownChanged([[maybe_unused]] int index)
 {
-
    setButtonColours(ui->colourTheme->currentText());
 }
 

@@ -33,7 +33,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "Keyboard.h"
+
 #include "Q3270.h"
+
 /**
  * @class   Keyboard Keyboard.h
  * @brief   Keyboard::Keyboard - Keyboard input processing
@@ -1137,7 +1139,7 @@ void Keyboard::setMapping(QString key, QString function)
  *          Keyboard maps are defined as QMap<QString, QStringList>; each function can have multiple
  *          keys assigned to it (e.g. F8 and PgDown are both defined to call F8 by default).
  */
-void Keyboard::setTheme(KeyboardTheme &keyboardTheme, QString theme)
+void Keyboard::setTheme(KeyboardMap theme)
 {
     // Switch to a new keyboard map based on the theme
 
@@ -1149,13 +1151,10 @@ void Keyboard::setTheme(KeyboardTheme &keyboardTheme, QString theme)
     metaMap.clear();
 
     // Keyboard themes are defined as { Q3270 function, { key, key, key } }
-
-    KeyboardTheme::KeyboardMap kbm = keyboardTheme.getTheme(theme);
-
-    KeyboardTheme::KeyboardMap::ConstIterator i = kbm.constBegin();
+    QMap<QString, QStringList>::const_iterator i = theme.constBegin();
 
     // Iterate over the keyboard theme, and apply
-    while(i != kbm.constEnd())
+    while(i != theme.constEnd())
     {
         // Each Q3270 function in the map may have multiple keys defined for it
         for (int s = 0; s < i.value().size(); s++)
