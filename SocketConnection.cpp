@@ -59,9 +59,16 @@ SocketConnection::SocketConnection(int modelType)
 
     connect(dataSocket, &QSslSocket::readyRead, this, &SocketConnection::onReadyRead);
     // Forward the error signal, QOverload is necessary as error() is overloaded, see the Qt docs
-//    connect(dataSocket, QOverload<QAbstractSocket::SocketError>::of(&QAbstractSocket::errorOccurred), this, &SocketConnection::error);
+    connect(dataSocket, QOverload<QAbstractSocket::SocketError>::of(&QAbstractSocket::errorOccurred), this, &SocketConnection::error);
 
     tn3270e_Mode = false;
+}
+
+void SocketConnection::error(QAbstractSocket::SocketError socketError)
+{
+    qDebug() << dataSocket->errorString();
+
+    emit connectionEnded(dataSocket->errorString());
 }
 
 /**
@@ -71,8 +78,8 @@ SocketConnection::SocketConnection(int modelType)
  */
 SocketConnection::~SocketConnection()
 {
-    disconnect(dataSocket, &QSslSocket::disconnected, this, &SocketConnection::closed);
     disconnect(dataSocket, &QSslSocket::readyRead, this, &SocketConnection::onReadyRead);
+    disconnect(dataSocket, &QSslSocket::disconnected, this, &SocketConnection::closed);
 
     dataSocket->deleteLater();
 }

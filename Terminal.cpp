@@ -56,6 +56,7 @@ Terminal::Terminal(QVBoxLayout *layout, ActiveSettings &activeSettings, CodePage
     kbd(kb), colourtheme(cs), keyboardtheme(kt), cp(cp), activeSettings(activeSettings), sessionName(sessionName)
 {
     sessionConnected = false;
+    stretchScreen = Qt::IgnoreAspectRatio;
 
     // Create terminal display
     view = new QGraphicsView();
@@ -92,8 +93,10 @@ Terminal::Terminal(QVBoxLayout *layout, ActiveSettings &activeSettings, CodePage
     notConnectedScene->addItem(mRect);
 
     QGraphicsSimpleTextItem *ncMessage = new QGraphicsSimpleTextItem("Not Connected", mRect);
+    ncReason = new QGraphicsSimpleTextItem("", mRect);
 
     ncMessage->setPen(QColor(Qt::white));
+    ncReason->setPen(QColor(Qt::red));
 
     QFont font("mono", 24);
     ncMessage->setFont(font);
@@ -387,7 +390,7 @@ void Terminal::connectSession(QString host, int port, QString luName)
  *          the ProcessDataStream and the SocketConnection. Switch to the 'Not Connected' screen and
  *          stop the blinking timers.
  */
-void Terminal::closeConnection()
+void Terminal::closeConnection(QString message)
 {
     disconnect(socket, &SocketConnection::dataStreamComplete, datastream, &ProcessDataStream::processStream);
     disconnect(socket, &SocketConnection::connectionEnded, this, &Terminal::closeConnection);
@@ -409,6 +412,18 @@ void Terminal::closeConnection()
 
     stopTimers();
 
+    if (!message.isEmpty())
+    {
+        QFont font("mono", 12);
+        // Centre not connected reason based on font size. 640x480 halved, less the size of the font
+        QFontMetrics fm(font);
+        ncReason->setText(message);
+        ncReason->setFont(font);
+        int xPos = 320 - fm.horizontalAdvance(ncReason->text()) / 2;
+        int yPos = 320 - fm.height() / 2;
+        ncReason->setPos(xPos, yPos);
+    }
+
     view->setScene(notConnectedScene);
 
     delete primaryScreen;
@@ -418,7 +433,7 @@ void Terminal::closeConnection()
     delete alternate;
 
     delete datastream;
-    delete socket;
+    socket->deleteLater();
 
     sessionConnected = false;
 

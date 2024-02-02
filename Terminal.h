@@ -89,7 +89,7 @@ class Terminal : public QWidget
 
     public slots:
 
-        void closeConnection();
+        void closeConnection(QString message = "");
         void closeEvent(QCloseEvent *closeEvent);
         void setCurrentFont(QFont f);
         void rulerStyle(int r);
@@ -128,6 +128,8 @@ class Terminal : public QWidget
         QGraphicsScene *notConnectedScene;
         QGraphicsScene *primary;
         QGraphicsScene *alternate;
+
+        QGraphicsSimpleTextItem *ncReason;
 
         DisplayScreen *primaryScreen;
         DisplayScreen *alternateScreen;

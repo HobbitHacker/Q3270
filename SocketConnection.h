@@ -75,14 +75,14 @@ class SocketConnection : public QObject
 
     signals:
         void connectionStarted();
-        void connectionEnded();
+        void connectionEnded(QString message = "");
         void dataStreamComplete(QByteArray &b, bool tn3270e);
-        void error(QAbstractSocket::SocketError socketError);
 
     private slots:
         void onReadyRead();
         void sslErrors(const QList<QSslError> &errors);
         void socketStateChanged(QAbstractSocket::SocketState state);
+        void error(QAbstractSocket::SocketError socketError);
 
     private:
 
