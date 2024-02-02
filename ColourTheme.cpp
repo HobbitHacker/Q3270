@@ -57,17 +57,12 @@ ColourTheme::ColourTheme(QWidget *parent) :
     QStringList ThemeList = settings.childGroups();
     ThemeList.sort(Qt::CaseSensitive);
 
-    qDebug() << "ColourTheme Settings:" << settings.organizationName() << "," << settings.applicationName();
-    qDebug() << "Groups: " << settings.childGroups();
-    qDebug() << "Keys: " << settings.childKeys();
-
     // Populate Themes list and combo boxes from config file
     for (int sc = 0; sc < ThemeList.count(); sc++)
     {
         // Ignore Factory theme (shouldn't be present, but in case of accidents, or user fudging)
         if (ThemeList.at(sc).compare("Factory"))
         {
-            qDebug() << "Storing " << ThemeList.at(sc);
             // Begin theme specific group
             settings.beginGroup(ThemeList.at(sc));
 
@@ -141,8 +136,6 @@ ColourTheme::ColourTheme(QWidget *parent) :
     colourButtons[YELLOW]       = ui->colourYellow;
     colourButtons[NEUTRAL]      = ui->colourWhite;
 
-    qDebug() << themes.keys();
-
     setTheme("Factory");
 
     currentThemeIndex = 0;
@@ -155,8 +148,8 @@ ColourTheme::ColourTheme(QWidget *parent) :
  */
 ColourTheme::~ColourTheme()
 {
-    qDebug() << "ColourTheme: Destroyed";
     delete ui;
+    delete newTheme;
 }
 
 /**
@@ -184,8 +177,6 @@ int ColourTheme::exec()
 void ColourTheme::setTheme(QString ThemeName)
 {
     // Set colour theme according to ThemeName, using Factory if not found
-    qDebug() << "Changing colours to " << ThemeName;
-
     if (themes.find(ThemeName) == themes.end())
     {
         currentTheme = themes.constFind("Factory").value();
@@ -325,14 +316,10 @@ void ColourTheme::colourDialog(QColor &c, QPushButton *b)
     // Store colour in lists, and update colour button
     if (dialogColour.isValid())
     {
-        qDebug() << "New colour chosen: " << dialogColour.name();
-
         if (c != dialogColour)
         {
             b->setStyleSheet(QString("background-color: %1;").arg(dialogColour.name()));
-            qDebug() << c.name();
             c = dialogColour;
-            qDebug() << c.name();
         }
     }
 }
@@ -348,8 +335,6 @@ void ColourTheme::colourDialog(QColor &c, QPushButton *b)
  */
 void ColourTheme::themeChanged(int index)
 {
-    qDebug() << "This index: " << index << " Current Index: " << ui->colourTheme->currentIndex() << " Our Index: " << currentThemeIndex;
-
     // When the combobox is changed, update the palette colours
     setTheme(ui->colourTheme->itemText(index));
 
@@ -398,8 +383,6 @@ void ColourTheme::addTheme()
         // Save theme name
         newName = newTheme->newName->text();
         themes.insert(newName, currentTheme);
-
-        qDebug() << "Added " << newName << " Total items: " << themes.count();
 
         ui->colourTheme->addItem(newName);
         ui->colourTheme->setCurrentIndex(ui->colourTheme->count() - 1);

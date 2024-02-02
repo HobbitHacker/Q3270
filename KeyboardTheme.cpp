@@ -46,7 +46,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *          config file, and then populates the dialog box with the list of themes.
  */
 KeyboardTheme::KeyboardTheme(QWidget *parent) : QDialog(parent), ui(new Ui::KeyboardTheme)
-{   
+{
     ui->setupUi(this);
 
     // Set up factory map
@@ -141,12 +141,9 @@ KeyboardTheme::KeyboardTheme(QWidget *parent) : QDialog(parent), ui(new Ui::Keyb
     // Populate themes list and combo boxes from config file
     for (int sc = 0; sc < themeList.count(); sc++)
     {
-        qDebug() << themeList.at(sc);
-
         // Ignore Factory theme (shouldn't be present, but in case of accidents, or user fudging)
         if (themeList.at(sc).compare("Factory"))
         {
-            qDebug() << "Storing " << themeList.at(sc);
             // Begin theme specific group
             s.beginGroup(themeList.at(sc));
 
@@ -206,6 +203,18 @@ KeyboardTheme::KeyboardTheme(QWidget *parent) : QDialog(parent), ui(new Ui::Keyb
     // is shown for multiply-mapped functions
     lastRow = -1;
     lastSeq = -1;
+}
+
+/**
+ * @brief   KeyboardTheme::~KeyboardTheme - destructor
+ * @return  Nothing
+ *
+ * @details Destructor to remove objects
+ */
+KeyboardTheme::~KeyboardTheme()
+{
+    delete ui;
+    delete newTheme;
 }
 
 /**
@@ -304,7 +313,6 @@ void KeyboardTheme::populateTable(QTableWidget *table, QString mapName)
     {
         // Insert new row into table widget, and add details
         table->insertRow(row);
-        qDebug() << i.value();
         table->setItem(row, 0, new QTableWidgetItem(i.key()));
         table->setItem(row, 1, new QTableWidgetItem(i.value().join(", ")));
         i++;
@@ -386,9 +394,6 @@ void KeyboardTheme::addTheme()
         theme = themes[currentTheme];
         themes.insert(newName, theme);
         setTheme(newName);
-
-        qDebug() << "Added " << newName << " Total items: " << themes.count();
-
         ui->keyboardThemes->addItem(newName);
         ui->keyboardThemes->setCurrentIndex(ui->keyboardThemes->count() - 1);
     }
@@ -603,8 +608,6 @@ void KeyboardTheme::setKey()
             // If the mapping is found, remove it because we can only have one key sequence mapped to a function
             if (QKeySequence(i.value()[s]) == ui->keySequenceEdit->keySequence())
             {
-                printf("Found %s as %s - removing\n", i.value()[s].toLatin1().data(), i.key().toLatin1().data());
-                fflush(stdout);
                 // Remove existing entry
                 i.value().removeAt(s);
             }
@@ -616,10 +619,7 @@ void KeyboardTheme::setKey()
              // If the selected function was not 'Unassigned' - index 0 - then store the mapping
              if (ui->KeyboardFunctionList->currentIndex() != 0)
              {
-                 printf("Adding to %s\n", i.key().toLatin1().data());
-                 fflush(stdout);
                  theme[i.key()].append(ui->keySequenceEdit->keySequence().toString());
-                 qDebug() << i.key() << i.value();
              }
         }
         i++;

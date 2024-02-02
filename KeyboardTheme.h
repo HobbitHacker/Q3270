@@ -59,6 +59,7 @@ class KeyboardTheme : public QDialog
     public:
 
         KeyboardTheme(QWidget *parent = nullptr);
+        ~KeyboardTheme();
 
         QStringList getThemes();
         KeyboardMap getTheme(QString keyboardThemeName);

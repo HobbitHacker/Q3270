@@ -557,7 +557,6 @@ void SessionManagement::autoStartCellClicked([[maybe_unused]] int row, [[maybe_u
  */
 void SessionManagement::addAutoStart()
 {
-
     // Build dialog for adding a new autostart session to the list.
     QDialog a;
 

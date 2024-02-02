@@ -1923,7 +1923,7 @@ void DisplayScreen::mousePressEvent(QGraphicsSceneMouseEvent *mEvent)
     int x = mEvent->pos().x() / gridSize_X;
     int y = mEvent->pos().y() / gridSize_Y;
 
-    qDebug() << "Mouse press at" << mEvent->pos() << "- char pos" << x << "," << y << "scaled pos" << x * gridSize_X << "," << y * gridSize_Y;
+//    qDebug() << "Mouse press at" << mEvent->pos() << "- char pos" << x << "," << y << "scaled pos" << x * gridSize_X << "," << y * gridSize_Y;
 
     mouseStart = mapFromItem(this, QPoint(x * gridSize_X, y * gridSize_Y));
 
@@ -1979,7 +1979,7 @@ void DisplayScreen::mouseMoveEvent(QGraphicsSceneMouseEvent *mEvent)
     int w = botRightX - topLeftX + 1;
     int h = botRightY - topLeftY + 1;
 
-    qDebug() << "Move" << mEvent->pos() << "this " << thisX << "," << thisY << " mpX,mpY" << mpX << "," << mpY << "    topLeftX,topLeftY" << topLeftX << "," << topLeftY << "    botRightX,botRightY" << botRightX << "," << botRightY << "w,h" << w << "x" << h;
+//    qDebug() << "Move" << mEvent->pos() << "this " << thisX << "," << thisY << " mpX,mpY" << mpX << "," << mpY << "    topLeftX,topLeftY" << topLeftX << "," << topLeftY << "    botRightX,botRightY" << botRightX << "," << botRightY << "w,h" << w << "x" << h;
 
     myRb->setRect(topLeftX * gridSize_X, topLeftY * gridSize_Y, w * gridSize_X, h * gridSize_Y);
 
@@ -1996,23 +1996,23 @@ void DisplayScreen::mouseMoveEvent(QGraphicsSceneMouseEvent *mEvent)
  */
 void DisplayScreen::mouseReleaseEvent(QGraphicsSceneMouseEvent *mEvent)
 {
-    qDebug() << "Mouse release at " << mEvent->pos();
+//    qDebug() << "Mouse release at " << mEvent->pos();
 
     // Single click, move cursor
     if (!myRb->isVisible())
     {
-        qDebug() << "Single click";
+//        qDebug() << "Single click";
         setCursor(myRb->data(0).toInt(), myRb->data(1).toInt());
         return;
     }
 
-    int top = std::min(myRb->data(1).toInt(), myRb->data(3).toInt());
+  /*  int top = std::min(myRb->data(1).toInt(), myRb->data(3).toInt());
     int bottom = std::max(myRb->data(1).toInt(), myRb->data(3).toInt());
 
     int left = std::min(myRb->data(0).toInt(), myRb->data(2).toInt());
     int right = std::max(myRb->data(0).toInt(), myRb->data(2).toInt());
-
-    qDebug() << "Selected" << left << "," << top << "x" << right << "," << bottom;
+*/
+//    qDebug() << "Selected" << left << "," << top << "x" << right << "," << bottom;
 }
 
 /**

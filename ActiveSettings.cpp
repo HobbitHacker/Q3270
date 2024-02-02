@@ -174,10 +174,10 @@ void ActiveSettings::setFont(QFont font)
 }
 
 /**
- * @brief ActiveSettings::setTerminal
- * @param x     - the number of columns for the display
- * @param y     - the number of rows for the display
- * @param model - the model number
+ * @brief   ActiveSettings::setTerminal
+ * @param   x     - the number of columns for the display
+ * @param   y     - the number of rows for the display
+ * @param   model - the model number
  *
  * @details Sets the size of the 3270 display (for the alternate screen). The primary screen is always 24x80
  *          (model 2). The setting is only changed when there is no active connection because part of the
@@ -197,16 +197,20 @@ void ActiveSettings::setTerminal(int x, int y, int model)
             x = 80;
             y = 32;
             break;
+
         case Q3270_TERMINAL_MODEL4:
             x = 80;
             y = 43;
             break;
+
         case Q3270_TERMINAL_MODEL5:
             x = 132;
             y = 27;
             break;
+
         case Q3270_TERMINAL_DYNAMIC:
             break;
+
         default: // model 2 or unknown
             x = 80;
             y = 24;

@@ -47,12 +47,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 MainWindow::MainWindow(MainWindow::Session s) : QMainWindow(nullptr),
                                                 ui(new(Ui::MainWindow))
-{    ui->setupUi(this);
+{
+    ui->setupUi(this);
 
     // Read global settings
     QSettings savedSettings(Q3270_SETTINGS);
-
-    qDebug() << "Main Settings:" << savedSettings.organizationName() << "," << savedSettings.applicationName();
 
     // Most-recently used; default to 10
     maxMruCount = savedSettings.value("MRUMax", 10).toInt();
@@ -169,9 +168,6 @@ MainWindow::MainWindow(MainWindow::Session s) : QMainWindow(nullptr),
 
         savedSettings.endArray();
     }
-
-    qDebug() << ui->centralwidget->size();
-
 }
 
 /**
