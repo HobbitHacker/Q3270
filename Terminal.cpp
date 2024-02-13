@@ -95,6 +95,9 @@ Terminal::Terminal(QVBoxLayout *layout, ActiveSettings &activeSettings, CodePage
     QGraphicsSimpleTextItem *ncMessage = new QGraphicsSimpleTextItem("Not Connected", mRect);
     ncReason = new QGraphicsSimpleTextItem("", mRect);
 
+    ncMessage->setBrush(QColor(Qt::white));
+    ncReason->setBrush(QColor(Qt::red));
+
     ncMessage->setPen(QColor(Qt::white));
     ncReason->setPen(QColor(Qt::red));
 
@@ -422,6 +425,10 @@ void Terminal::closeConnection(QString message)
         int xPos = 320 - fm.horizontalAdvance(ncReason->text()) / 2;
         int yPos = 320 - fm.height() / 2;
         ncReason->setPos(xPos, yPos);
+    }
+    else
+    {
+        ncReason->setText("");
     }
 
     view->setScene(notConnectedScene);
