@@ -53,6 +53,9 @@ MainWindow::MainWindow(MainWindow::Session s) : QMainWindow(nullptr),
     // Read global settings
     QSettings savedSettings(Q3270_SETTINGS);
 
+    // Set Factory keyboard map
+    keyboard.setTheme(keyboardTheme.getTheme("Factory"));
+
     // Most-recently used; default to 10
     maxMruCount = savedSettings.value("MRUMax", 10).toInt();
 
