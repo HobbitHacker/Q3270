@@ -883,7 +883,7 @@ void ProcessDataStream::processEUA()
     printf("[EraseUnprotected to Address %d]", stopAddress);
 
     screen->eraseUnprotected(primary_pos, stopAddress);
-    restoreKeyboard = true;
+//    restoreKeyboard = true;
 
     lastWasCmd = true;
 }
