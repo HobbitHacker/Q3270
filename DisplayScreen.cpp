@@ -350,6 +350,7 @@ void DisplayScreen::setChar(int pos, uchar c, bool fromKB)
 {
 
     int fieldAttr = cell.at(pos)->getField();
+
     if (fieldAttr == -1)
     {
         fieldAttr = pos;
@@ -365,23 +366,42 @@ void DisplayScreen::setChar(int pos, uchar c, bool fromKB)
     cell.at(pos)->resetCharAttrs();
 
     // Set character attribute flags if applicable
-    if (!fromKB && useCharAttr)
+    if (useCharAttr)
     {
         if (!charAttr.colour_default)
         {
             cell.at(pos)->setCharAttrs(Cell::COLOUR, true);
         }
+        else
+        {
+            cell.at(pos)->setColour(cell.at(fieldAttr)->getColour());
+        }
+
         if (!charAttr.blink_default)
         {
             cell.at(pos)->setCharAttrs(Cell::EXTENDED, true);
         }
+        else
+        {
+            cell.at(pos)->setBlink(cell.at(fieldAttr)->isBlink());
+        }
+
         if (!charAttr.reverse_default)
         {
             cell.at(pos)->setCharAttrs(Cell::EXTENDED, true);
         }
+        else
+        {
+            cell.at(pos)->setReverse(cell.at(fieldAttr)->isReverse());
+        }
+
         if (!charAttr.uscore_default)
         {
             cell.at(pos)->setCharAttrs(Cell::EXTENDED, true);
+        }
+        else
+        {
+            cell.at(pos)->setUnderscore(cell.at(fieldAttr)->isUScore());
         }
     }
 
@@ -970,6 +990,8 @@ bool DisplayScreen::insertChar(unsigned char c, bool insertMode)
     cell.at(thisField)->setMDT(true);
 
     setChar(cursor_pos, c, true);
+
+    cell.at(cursor_pos)->updateCell();
 
     setCursor((cursor_pos + 1) % screenPos_max);
 
