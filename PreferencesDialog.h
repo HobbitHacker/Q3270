@@ -45,6 +45,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ColourTheme.h"
 #include "KeyboardTheme.h"
+#include "CodePage.h"
 #include "ActiveSettings.h"
 
 namespace Ui {
@@ -61,13 +62,10 @@ class PreferencesDialog : public QDialog
 
     public:
 
-        explicit PreferencesDialog(ColourTheme &colours, KeyboardTheme &keyboards, ActiveSettings &activeSettings, QWidget *parent = nullptr);
+        explicit PreferencesDialog(ColourTheme &colours, KeyboardTheme &keyboards, CodePage &codepages, ActiveSettings &activeSettings, QWidget *parent = nullptr);
         ~PreferencesDialog();
 
         void showForm();
-
-        // FIXME: Remove this somehow
-        void populateCodePages(QMap<QString, QString> codepagelist);
 
     signals:
 
@@ -104,6 +102,7 @@ class PreferencesDialog : public QDialog
 
         ColourTheme &colours;
         KeyboardTheme &keyboards;
+        CodePage &codepages;
         ActiveSettings &activeSettings;
 
         QString colourThemeName;

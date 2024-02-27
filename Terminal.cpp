@@ -571,8 +571,10 @@ void Terminal::setBlinkSpeed(int speed)
  *
  * @details Called when the CodePage preference is changed.
  */
-void Terminal::changeCodePage()
+void Terminal::changeCodePage(QString codepage)
 {
+    cp.setCodePage(codepage);
+
     if (sessionConnected)
         current->setCodePage();
 }

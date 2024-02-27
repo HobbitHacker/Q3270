@@ -111,7 +111,7 @@ void CodePage::setCodePage(QString codepage)
 }
 
 /**
- * @brief   CodePage::getCodePageList - return a QMap<> of the available codepages
+ * @brief   CodePage::getCodePageList - return a QStringList of the available codepages
  * @return  A list of the available code pages
  *
  * @details getCodePageList is used in the Preferences dialog to provide a drop-down list of
@@ -120,15 +120,15 @@ void CodePage::setCodePage(QString codepage)
  *          Codepages can be hidden from the user's view by setting the 'selectable' flag in the
  *          structure to false.
  */
-QMap<QString, QString> CodePage::getCodePageList()
+QStringList CodePage::getCodePageList()
 {
-    QMap<QString, QString> cl;
+    QStringList cl;
 
     for(int i = 0; i < CODEPAGE_COUNT; i++)
     {
         if (cpList[i].selectable)
         {
-            cl.insert(cpList[i].displayName, cpList[i].cpName);
+            cl.append(cpList[i].displayName);
         }
     }
 

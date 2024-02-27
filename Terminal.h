@@ -94,7 +94,7 @@ class Terminal : public QWidget
         void setCurrentFont(QFont f);
         void rulerStyle(int r);
         void rulerChanged(bool on);
-        void changeCodePage();
+        void changeCodePage(QString codepage);
         void setFont(QFont font);
 
         // Set themes by name

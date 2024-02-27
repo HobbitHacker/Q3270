@@ -48,11 +48,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * @details Initialise the Preferences dialog.
  */
-PreferencesDialog::PreferencesDialog(ColourTheme &colours, KeyboardTheme &keyboards, ActiveSettings &activeSettings, QWidget *parent) :
+PreferencesDialog::PreferencesDialog(ColourTheme &colours, KeyboardTheme &keyboards, CodePage &codepages, ActiveSettings &activeSettings, QWidget *parent) :
     QDialog(parent),
     ui(new Ui::PreferencesDialog),
     colours(colours),
     keyboards(keyboards),
+    codepages(codepages),
     activeSettings(activeSettings)
 {
     ui->setupUi(this);
@@ -80,6 +81,9 @@ PreferencesDialog::PreferencesDialog(ColourTheme &colours, KeyboardTheme &keyboa
     colourButtons[ColourTheme::CYAN]         = ui->colourTurq;
     colourButtons[ColourTheme::YELLOW]       = ui->colourYellow;
     colourButtons[ColourTheme::NEUTRAL]      = ui->colourWhite;
+
+    // Populate code page list
+    ui->CodePages->addItems(codepages.getCodePageList());
 
     // TODO: "Enter" when displaying font selection causes font dialog to vanish from widget
 
@@ -325,17 +329,6 @@ void PreferencesDialog::reject()
     emit tempFontChange(activeSettings.getFont());
 
     QDialog::reject();
-}
-
-/**
- * @brief   PreferencesDialog::populateCodePages - populate the code page list
- * @param   codepagelist - the list of code pages
- *
- * @details Called when Q3270 starts up to populate the list of code pages from the CodePage object.
- */
-void PreferencesDialog::populateCodePages(QMap<QString, QString> codepagelist)
-{
-    ui->CodePages->addItems(codepagelist.keys());
 }
 
 /**

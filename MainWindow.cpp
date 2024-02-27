@@ -90,11 +90,7 @@ MainWindow::MainWindow(MainWindow::Session s) : QMainWindow(nullptr),
     sessionGroup = new QActionGroup(this);
 
     // Preferences dialog
-    settings = new PreferencesDialog(colourTheme, keyboardTheme, activeSettings);
-
-    // FIXME: is this bad?
-    // Populate code page list
-    settings->populateCodePages(codePage.getCodePageList());
+    settings = new PreferencesDialog(colourTheme, keyboardTheme, codePage, activeSettings);
 
     // Session Management dialog
     sm = new SessionManagement(activeSettings);
