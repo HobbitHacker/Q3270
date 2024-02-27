@@ -819,32 +819,22 @@ void ProcessDataStream::processRA()
     uchar newChar = *++buffer;
 
     bool geRA = false;
-//    printf("[RepeatToAddress %d to %d (", primary_pos, endPos);
-    // Check to see if it's <RA><GE><CHAR>
     if (newChar == IBM3270_GE)
     {
         geRA = true;
         newChar = *++buffer;
-//        printf(" GE");
     }
 
     if (endPos > screenSize || endPos < 0)
     {
         printf("[*** RA buffer end position invalid %d - discarded ***]", endPos);
-//        fflush(stdout);
         return;
     }
-
-//    printf("%02.2X)", newChar);
 
     if (endPos <= primary_pos)
     {
         endPos += screenSize;
     }
-
-    //int offset;
-
-    int count = 0;
 
     for(int i = primary_pos; i < endPos; i++)
     {
@@ -853,12 +843,9 @@ void ProcessDataStream::processRA()
             screen->setGraphicEscape();
         }
         placeChar(newChar);
-        count++;
-//        qDebug() << newChar << "at" << primary_pos;
     }
 
     lastWasCmd = true;
-//    printf(" (%d characters placed)]", count);
 }
 
 /**
@@ -876,14 +863,12 @@ void ProcessDataStream::processEUA()
     if (stopAddress >= screenSize || stopAddress < 0)
     {
         printf("[*** EUA buffer end position invalid %d - discarded ***]", stopAddress);
-//        fflush(stdout);
         return;
     }
 
     printf("[EraseUnprotected to Address %d]", stopAddress);
 
     screen->eraseUnprotected(primary_pos, stopAddress);
-//    restoreKeyboard = true;
 
     lastWasCmd = true;
 }
@@ -895,11 +880,8 @@ void ProcessDataStream::processEUA()
  */
 void ProcessDataStream::processGE()
 {
-//    printf("[GraphicEscape]");
     screen->setGraphicEscape();
     placeChar((uchar) *++buffer);
-//    printf("]");
-//    fflush(stdout);
 
     lastWasCmd = false;
 }
@@ -957,7 +939,6 @@ void ProcessDataStream::WSFoutbound3270DS()
 void ProcessDataStream::WSFreset()
 {
     printf("\n\n[** Reset Partition %02X - Not Implemented **]\n\n", *++buffer);
-//    fflush(stdout);
     return;
 }
 
@@ -1134,7 +1115,7 @@ void ProcessDataStream::replySummary(QByteArray &queryReply)
        00 2b - height of alternate screen (43)
 
      */
-//    unsigned char qrt[] = { 0x81, 0x80, 0x86, 0x87, 0xA6 0x87 };
+
     unsigned char qrt[] = {
                             0x00, 0x09,    /* Length */
                             IBM3270_SF_QUERYREPLY,
@@ -1184,7 +1165,7 @@ void ProcessDataStream::replySummary(QByteArray &queryReply)
                                     0x00, 0x0D,
                                     IBM3270_SF_QUERYREPLY,
                                     IBM3270_SF_QUERYREPLY_HIGHLIGHT,
-                                    0x04,  /* Number of pairs */
+                                    0x04,        /* Number of pairs */
                                     0x00, 0xF0,  /* Default */
                                     0xF1, 0xF1,  /* Blink */
                                     0xF2, 0xF2,  /* Reverse */
