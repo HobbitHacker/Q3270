@@ -114,6 +114,8 @@ void SocketConnection::disconnectMainframe()
     disconnect(dataSocket, &QSslSocket::readyRead, this, &SocketConnection::onReadyRead);
 
     dataSocket->disconnectFromHost();
+
+    dataSocket->close();
 }
 
 /**

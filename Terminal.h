@@ -81,6 +81,8 @@ class Terminal : public QWidget
 
         void fit();
 
+        inline bool isConnected() { return sessionConnected; };
+
     signals:
 
         void connectionEstablished();

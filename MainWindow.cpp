@@ -243,6 +243,10 @@ void MainWindow::menuManageSessions()
  */
 void MainWindow::mruConnect()
 {
+    if (terminal->isConnected())
+    {
+        terminal->closeConnection();
+    }
     // Find the sending object - the line in the 'Recent' menu
     QAction *sender = (QAction *)QObject::sender();
 
