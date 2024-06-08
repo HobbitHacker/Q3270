@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>419</width>
-    <height>301</height>
+    <height>318</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -30,12 +30,18 @@
      </property>
      <column>
       <property name="text">
-       <string>New Column</string>
+       <string>Session</string>
+      </property>
+      <property name="textAlignment">
+       <set>AlignLeading|AlignVCenter</set>
       </property>
      </column>
      <column>
       <property name="text">
        <string>Description</string>
+      </property>
+      <property name="textAlignment">
+       <set>AlignLeading|AlignVCenter</set>
       </property>
      </column>
     </widget>
@@ -59,6 +65,20 @@
        </property>
        <property name="placeholderText">
         <string>Description</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="1">
+      <widget class="QLabel" name="label_2">
+       <property name="text">
+        <string>New Session Description</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="0">
+      <widget class="QLabel" name="label">
+       <property name="text">
+        <string>New Session Name</string>
        </property>
       </widget>
      </item>
