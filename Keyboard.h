@@ -77,6 +77,7 @@ class Keyboard : public QObject
         void key_Character(unsigned char keycode, bool insMode);
 
         void key_showInfo();
+        void key_showFields();
 
     public slots:
         void unlockKeyboard();
@@ -186,6 +187,7 @@ class Keyboard : public QObject
         void copy();
         void paste();
         void info();
+        void fields();
 
         void nextKey();
         bool needtoWait(QKeyEvent *q);

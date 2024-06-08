@@ -138,6 +138,7 @@ void Keyboard::setMap()
     functionMap.insert("Copy",&Keyboard::copy);
     functionMap.insert("Paste",&Keyboard::paste);
     functionMap.insert("Info", &Keyboard::info);
+    functionMap.insert("Fields", &Keyboard::fields);
 
     functionMap.insert("Blah", &Keyboard::unlockKeyboard);
 }
@@ -1044,6 +1045,16 @@ void Keyboard::paste()
 void Keyboard::info()
 {
     emit key_showInfo();
+}
+
+/**
+ * @brief   Keyboard::fields - show details about the fields defined on the screen
+ *
+ * @details A debugging routine that will display all the fields defined in the 3270 matrix.
+ */
+void Keyboard::fields()
+{
+    emit key_showFields();
 }
 
 /**

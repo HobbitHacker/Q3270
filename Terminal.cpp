@@ -477,6 +477,7 @@ void Terminal::connectKeyboard(DisplayScreen &screen)
     connect(&kbd, &Keyboard::key_moveCursor, &screen, &DisplayScreen::moveCursor);
     connect(&kbd, &Keyboard::key_toggleRuler, &screen, &DisplayScreen::toggleRuler);
     connect(&kbd, &Keyboard::key_showInfo, &screen, &DisplayScreen::dumpInfo);
+    connect(&kbd, &Keyboard::key_showFields, &screen, &DisplayScreen::dumpFields);
     connect(&kbd, &Keyboard::key_Attn, &screen, &DisplayScreen::interruptProcess);
     connect(&kbd, &Keyboard::key_AID, &screen, &DisplayScreen::processAID);
 }
@@ -505,6 +506,7 @@ void Terminal::disconnectKeyboard(DisplayScreen &screen)
     disconnect(&kbd, &Keyboard::key_moveCursor, &screen, &DisplayScreen::moveCursor);
     disconnect(&kbd, &Keyboard::key_toggleRuler, &screen, &DisplayScreen::toggleRuler);
     disconnect(&kbd, &Keyboard::key_showInfo, &screen, &DisplayScreen::dumpInfo);
+    disconnect(&kbd, &Keyboard::key_showFields, &screen, &DisplayScreen::dumpFields);
     disconnect(&kbd, &Keyboard::key_Attn, &screen, &DisplayScreen::interruptProcess);
     disconnect(&kbd, &Keyboard::key_AID, &screen, &DisplayScreen::processAID);
 }
