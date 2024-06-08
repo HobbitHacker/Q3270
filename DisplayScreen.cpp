@@ -348,18 +348,29 @@ void DisplayScreen::clear()
  */
 void DisplayScreen::setChar(int pos, uchar c, bool fromKB)
 {
+    if (cell.at(pos)->isFieldStart())
+    {
+        cell.at(pos)->setFieldStart(false);
+        int lastField;
+        if (pos == 0)
+            lastField = cell.at(screenPos_max - 1)->getField();
+        else
+            lastField = cell.at(pos - 1)->getField();
+        int nextField = findNextField(pos);
+//        qDebug() << "Existing field found at" << pos << "Last field was at" << lastField << "Next field at" << nextField;
+        for (int i = pos; i < nextField; i++)
+        {
+//            qDebug() << "Anchoring cell at" << i << "to field" << lastField;
+            cell.at(i)->setField(lastField);
+        }
+
+    }
 
     int fieldAttr = cell.at(pos)->getField();
 
     if (fieldAttr == -1)
     {
         fieldAttr = pos;
-    }
-
-    if (cell.at(pos)->isFieldStart())
-    {
-        cell.at(pos)->setFieldStart(false);
-        cell.at(pos)->setField(fieldAttr = findField(pos));
     }
 
     // Reset character attributes for this cell
@@ -660,6 +671,7 @@ void DisplayScreen::setField(int pos, unsigned char c, bool sfe)
     cell.at(pos)->setMDT(mdt);
     cell.at(pos)->setExtended(sfe);
     cell.at(pos)->setFieldStart(true);
+    cell.at(pos)->setField(pos);
 
     // Fields are set to 0x00
     cell.at(pos)->setChar(IBM3270_CHAR_NULL);
@@ -1597,7 +1609,9 @@ int DisplayScreen::findNextField(int pos)
     {
         pos++;
     }
-    int tmpPos;
+
+    int tmpPos = (pos + 1) % screenPos_max;
+
     for(int i = pos; i < (pos + screenPos_max); i++)
     {
         tmpPos = i % screenPos_max;
@@ -1783,19 +1797,30 @@ void DisplayScreen::addPosToBuffer(QByteArray &buffer, int pos)
  */
 void DisplayScreen::dumpFields()
 {
-    printf("Screen_X = %d, screen_Y =%d\n", screen_x, screen_y);
-    fflush(stdout);
-    for(int i = 0; i < screenPos_max; i++)
+    QString line = "";
+    for (int i = 0; i < screen_x; i++)
     {
-        if (cell.at(i)->isFieldStart())
-        {
-            int tmpy = i / screen_x;
-            int tmpx = i - (tmpy * screen_x);
-
-            printf("Field at %4d (%2d,%2d) : Prot: %d\n", i, tmpx, tmpy, cell.at(i)->isProtected());
-        }
+        line.append(QString("%1").arg(i%10));
     }
-    fflush(stdout);
+
+    qDebug() << "     " << line;
+
+    for(int i = 0; i < screen_y; i++)
+    {
+        line = "";
+        for (int j = 0; j < screen_x; j++)
+        {
+            int tmppos = i * screen_x + j;
+
+            if (cell.at(tmppos)->isFieldStart())
+                line.append("F");
+            else if (cell.at(cell.at(tmppos)->getField())->isFieldStart())
+                line.append(".");
+            else
+                line.append("X");
+        }
+        qDebug() << QString("%1").arg(i, 3) <<  line;
+    }
 }
 
 /**
@@ -1840,25 +1865,25 @@ void DisplayScreen::dumpInfo()
     printf("    Character: \"%c\" (hex %2.2X EBCDIC %2.2X)\n", cell.at(cursor_pos)->getChar().toLatin1(),cell.at(cursor_pos)->getChar().toLatin1(),cell.at(cursor_pos)->getEBCDIC());
 
     printf("    Field Attribute: %d\n", cell.at(cursor_pos)->isFieldStart());
-    if (cell.at(cursor_pos)->isFieldStart())
-    {
+//    if (cell.at(cursor_pos)->isFieldStart())
+//    {
         printf("        MDT:       %d\n        Protected: %d\n        Numeric:   %d\n        Autoskip:  %d\n        Display:   %d\n",
                 cell.at(cursor_pos)->isMdtOn(),
                 cell.at(cursor_pos)->isProtected(),
                 cell.at(cursor_pos)->isNumeric(),
                 cell.at(cursor_pos)->isAutoSkip(),
                 cell.at(cursor_pos)->isDisplay());
-    }
+//    }
 
     printf("    Extended: %d\n", cell.at(cursor_pos)->isExtended());
-    if (cell.at(cursor_pos)->isExtended())
-    {
+//    if (cell.at(cursor_pos)->isExtended())
+//    {
         printf("        Intensify: %d\n        UScore:    %d\n        Reverse:   %d\n        Blink:     %d\n",
                cell.at(cursor_pos)->isIntensify(),
                cell.at(cursor_pos)->isUScore(),
                cell.at(cursor_pos)->isReverse(),
                cell.at(cursor_pos)->isBlink());
-    }
+//    }
 
     printf("    Character Attributes:\n        Extended: %d\n        CharSet:  %d\n        Colour:   %d\n    Colour: %d\n    Graphic: %d\n",
                 cell.at(cursor_pos)->hasCharAttrs(Cell::EXTENDED),
@@ -1866,6 +1891,9 @@ void DisplayScreen::dumpInfo()
                 cell.at(cursor_pos)->hasCharAttrs(Cell::COLOUR),
                 cell.at(cursor_pos)->getColour(),
                 cell.at(cursor_pos)->isGraphic());
+
+    int fieldStart = cell.at(cursor_pos)->getField();
+    printf("    Field Position: %d (%d, %d)\n", fieldStart, (int) (fieldStart / screen_x), (int) (fieldStart - (int) (fieldStart / screen_x)));
 
     fflush(stdout);
 
