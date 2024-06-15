@@ -94,6 +94,8 @@ class PreferencesDialog : public QDialog
         void manageColourThemes();
         void manageKeyboardThemes();
 
+        void securityChanged(int state);
+
     private:
 
         Ui::PreferencesDialog *ui;

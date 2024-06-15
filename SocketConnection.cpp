@@ -47,8 +47,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 SocketConnection::SocketConnection(int modelType)
 {
-//    dataSocket = new QSslSocket(this);
-    dataSocket = new QTcpSocket(this);
+    dataSocket = new QSslSocket(this);
+//    dataSocket = new QTcpSocket(this);
 	telnetState = TELNET_STATE_DATA;
 
     this->termName = tn3270e_terminal_types[modelType];
@@ -62,11 +62,23 @@ SocketConnection::SocketConnection(int modelType)
     connect(dataSocket, QOverload<QAbstractSocket::SocketError>::of(&QAbstractSocket::errorOccurred), this, &SocketConnection::error);
 
     tn3270e_Mode = false;
+    secureMode = false;
+    verifyCerts = false;
+}
+
+void SocketConnection::setSecure(bool s)
+{
+    secureMode = s;
+}
+
+void SocketConnection::setVerify(bool v)
+{
+    verifyCerts = v;
 }
 
 void SocketConnection::error(QAbstractSocket::SocketError socketError)
 {
-    qDebug() << dataSocket->errorString();
+    qDebug() << "Error:" << dataSocket->errorString();
 
     emit connectionEnded(dataSocket->errorString());
 }
@@ -131,16 +143,29 @@ void SocketConnection::disconnectMainframe()
  */
 void SocketConnection::connectMainframe(QString &address, quint16 port, QString luName, ProcessDataStream *d)
 {
-/*    QList<QSslCipher> c = dataSocket->sslConfiguration().supportedCiphers();
+    QList<QSslCipher> c = dataSocket->sslConfiguration().supportedCiphers();
     for(int i=0; i<c.size();i++)
     {
         qDebug() << c.at(i);
     }
+
     connect(dataSocket, &QSslSocket::stateChanged, this, &SocketConnection::socketStateChanged);
     connect(dataSocket, QOverload<const QList<QSslError> &>::of(&QSslSocket::sslErrors), this, &SocketConnection::sslErrors);
-    dataSocket->connectToHostEncrypted(address, port);
-    disconnect(dataSocket, QOverload<const QList<QSslError> &>::of(&QSslSocket::sslErrors), this, &SocketConnection::sslErrors);*/
-    dataSocket->connectToHost(address, port);
+
+    if (secureMode)
+    {
+        dataSocket->connectToHostEncrypted(address, port);
+    }
+    else
+    {
+        dataSocket->connectToHost(address, port);
+    }
+
+    qDebug() << "Encrypted:" << dataSocket->isEncrypted();
+    qDebug() << "Certificate:" << dataSocket->peerCertificate();
+
+//    disconnect(dataSocket, QOverload<const QList<QSslError> &>::of(&QSslSocket::sslErrors), this, &SocketConnection::sslErrors);
+//    dataSocket->connectToHost(address, port);
     displayDataStream = d;
     this->luName = luName;
 }
@@ -150,14 +175,22 @@ void SocketConnection::connectMainframe(QString &address, quint16 port, QString 
  * @param   errors - the list of errors
  *
  * @details Called when SSL errors happen, and displays them
- *
- * @note    SSL not currently supported by Q3270
  */
 void SocketConnection::sslErrors(const QList<QSslError> &errors)
 {
-    for(int i = 0; i < errors.size(); i++)
+    if (!verifyCerts)
     {
-        qDebug() << errors.at(i);
+        dataSocket->ignoreSslErrors(errors);
+    }
+    else
+    {
+        QString errs = "";
+        for(int i = 0; i < errors.size(); i++)
+        {
+            errs.append(errors.at(i).errorString());
+            qDebug() << "sslErrors:" << errors.at(i);
+        }
+        emit connectionEnded(errs);
     }
 }
 
@@ -166,19 +199,38 @@ void SocketConnection::sslErrors(const QList<QSslError> &errors)
  * @param   state - socket state
  *
  * @details Display SSL errors. Called when a socket changes state.
- *
- * @note    SSL not currently supported by Q3270
  */
 void SocketConnection::socketStateChanged(QAbstractSocket::SocketState state)
 {
-/*    qDebug() << state;
+    qDebug() << "SocketStateChanged: " << state;
 
     QList<QSslError> e = dataSocket->sslHandshakeErrors();
 
     for(int i = 0; i < e.size(); i++)
     {
-        qDebug() << e.at(i);
-    }*/
+        qDebug() << "SocketStateChanged Handshake Errors:" << e.at(i);
+    }
+    switch(state)
+    {
+        case QAbstractSocket::UnconnectedState:
+            emit encryptedConnection(Q3270::Unencrypted);
+            break;
+        case QAbstractSocket::ConnectedState:
+            if (dataSocket->isEncrypted())
+            {
+                if (!verifyCerts)
+                {
+                    emit encryptedConnection(Q3270::SemiEncrypted);
+                }
+                else
+                {
+                    emit encryptedConnection(Q3270::Encrypted);
+                }
+            }
+            break;
+        default:
+            emit encryptedConnection(Q3270::Unencrypted);
+    }
 }
 
 /**
@@ -189,6 +241,8 @@ void SocketConnection::socketStateChanged(QAbstractSocket::SocketState state)
  */
 void SocketConnection::onReadyRead()
 {
+
+    qDebug() << "Encrypted: " << dataSocket->isEncrypted();
 
     // create a QDataStream operating on the socket
     QDataStream dataStream(dataSocket);

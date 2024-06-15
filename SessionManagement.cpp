@@ -225,6 +225,8 @@ void SessionManagement::saveSettings()
     s.setValue("FontStyle", activeSettings.getFont().styleName());
     s.setValue("ScreenStretch", activeSettings.getStretchScreen());
     s.setValue("Codepage",activeSettings.getCodePage());
+    s.setValue("SecureConnection", activeSettings.getSecureMode());
+    s.setValue("VerifyCertificate", activeSettings.getVerifyCerts());
 
     // End group for session
     s.endGroup();

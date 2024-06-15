@@ -65,6 +65,8 @@ class SocketConnection : public QObject
         explicit SocketConnection(int modelType);
         ~SocketConnection();
 
+        void setSecure(bool s);
+        void setVerify(bool v);
         void sendResponse(QByteArray &b);
 
     public slots:
@@ -77,6 +79,7 @@ class SocketConnection : public QObject
         void connectionStarted();
         void connectionEnded(QString message = "");
         void dataStreamComplete(QByteArray &b, bool tn3270e);
+        void encryptedConnection(Q3270::Encryption e);
 
     private slots:
         void onReadyRead();
@@ -106,9 +109,12 @@ class SocketConnection : public QObject
 
         bool tn3270e_Mode;
 
+        bool secureMode;
+        bool verifyCerts;
+
         TelnetState telnetState;
-//        QSslSocket *dataSocket;
-        QTcpSocket *dataSocket;
+        QSslSocket *dataSocket;
+//        QTcpSocket *dataSocket;
         QDataStream dataStream;
         ProcessDataStream *displayDataStream;
 

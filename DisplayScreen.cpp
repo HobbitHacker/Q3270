@@ -151,11 +151,30 @@ DisplayScreen::DisplayScreen(int screen_x, int screen_y, CodePage &cp, ColourThe
     QFont statusBarText = QFont("ibm3270");
     statusBarText.setPixelSize(8);
 
+    QFontMetrics fm = QFontMetrics(statusBarText);
+
     // Connect status at 0% across
     statusConnect.setText("4-A");
     statusConnect.setPos(0, 481);
     statusConnect.setFont(statusBarText);
     statusConnect.setBrush(QBrush(QColor(0x80, 0x80, 0xFF)));
+
+    unlock = new QGraphicsSvgItem(":/Icons/unlock.svg");
+    lock = new QGraphicsSvgItem(":/Icons/lock.svg");
+    locktick = new QGraphicsSvgItem(":/Icons/lock-tick.svg");
+
+    statusSecureSVG = unlock;
+
+    // Connect status at 10% across
+    statusSecure.setPos(gridSize_X * (screen_x * .05), 482);
+    statusSecure.setRect(0, 0, 9, 9);
+
+    QRectF r = statusSecureSVG->boundingRect();
+    statusSecureSVG->setScale(8 / r.height());
+
+    statusSecureSVG->setParentItem(&statusSecure);
+
+    qDebug() << statusSecureSVG->boundingRect();
 
     // XSystem 20% across status bar
     statusXSystem.setText("");
@@ -176,6 +195,7 @@ DisplayScreen::DisplayScreen(int screen_x, int screen_y, CodePage &cp, ColourThe
     statusCursor.setBrush(QBrush(QColor(0x80, 0x80, 0xFF)));
 
     scene->addItem(&statusBar);
+    scene->addItem(&statusSecure);
     scene->addItem(&statusConnect);
     scene->addItem(&statusXSystem);
     scene->addItem(&statusCursor);
@@ -1431,6 +1451,35 @@ void DisplayScreen::setRulerStyle(int rulerStyle)
 {
     this->ruler = rulerStyle;
     setRuler();
+}
+
+/**
+ * @brief  DisplayScreen::setEncrypted - change encryption status bar icon
+ * @param  encrypted - the encryption state
+ *
+ *        encrypted  | Description
+ *        ---------- | -----------
+ *          0        | Unencrypted
+ *          1        | Encrypted without validating certs
+ *          2        | Encrypted
+ */
+void DisplayScreen::setEncrypted(Q3270::Encryption encrypted)
+{
+    switch(encrypted)
+    {
+        case Q3270::Unencrypted:
+            statusSecureSVG = unlock;
+            break;
+        case Q3270::SemiEncrypted:
+            statusSecureSVG = lock;
+            break;
+        case Q3270::Encrypted:
+            statusSecureSVG = locktick;
+            break;
+    }
+
+    QRectF r = statusSecureSVG->boundingRect();
+    statusSecureSVG->setScale(8 / r.height());
 }
 
 /**

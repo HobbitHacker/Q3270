@@ -286,6 +286,9 @@ void Terminal::openConnection(QSettings& s)
     activeSettings.setTerminal(s.value("TerminalX").toInt(), s.value("TerminalY").toInt(), s.value("TerminalModel").toString());
     activeSettings.setCodePage(s.value("Codepage").toString());
 
+    activeSettings.setSecureMode(s.value("SecureConnection", false).toBool());
+    activeSettings.setVerifyCerts(s.value("VerifyCertificate", false).toBool());
+
     openConnection(s.value("Address").toString());
 
     // Cursor settings
@@ -345,12 +348,19 @@ void Terminal::connectSession(QString host, int port, QString luName)
     datastream = new ProcessDataStream(this);
     socket = new SocketConnection(activeSettings.getTerminalModel());
 
+    socket->setSecure(activeSettings.getSecureMode());
+    socket->setVerify(activeSettings.getVerifyCerts());
+
     connect(datastream, &ProcessDataStream::bufferReady, socket, &SocketConnection::sendResponse);
 
     connect(primaryScreen, &DisplayScreen::bufferReady, socket, &SocketConnection::sendResponse);
     connect(alternateScreen, &DisplayScreen::bufferReady, socket, &SocketConnection::sendResponse);
 
     connect(socket, &SocketConnection::dataStreamComplete, datastream, &ProcessDataStream::processStream);
+
+    connect(socket, &SocketConnection::encryptedConnection, primaryScreen, &DisplayScreen::setEncrypted);
+    connect(socket, &SocketConnection::encryptedConnection, alternateScreen, &DisplayScreen::setEncrypted);
+
     connect(socket, &SocketConnection::connectionEnded, this, &Terminal::closeConnection);
 
     primaryScreen->setFont(activeSettings.getFont());
@@ -432,6 +442,9 @@ void Terminal::closeConnection(QString message)
     }
 
     view->setScene(notConnectedScene);
+
+    disconnect(socket, &SocketConnection::encryptedConnection, primaryScreen, &DisplayScreen::setEncrypted);
+    disconnect(socket, &SocketConnection::encryptedConnection, alternateScreen, &DisplayScreen::setEncrypted);
 
     delete primaryScreen;
     delete alternateScreen;

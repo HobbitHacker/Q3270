@@ -75,6 +75,12 @@ class ActiveSettings : public QObject
         bool getBackspaceStop()                          { return backspaceStop; }
         void setBackspaceStop(bool backspaceStop);
 
+        bool getSecureMode()                             { return secureMode; }
+        void setSecureMode(bool secureMode);
+
+        bool getVerifyCerts()                           { return verifyCerts; }
+        void setVerifyCerts(bool verifyCerts);
+
         QFont getFont()                                  { return termFont; }
         void setFont(QFont font);
 
@@ -121,6 +127,9 @@ class ActiveSettings : public QObject
         void cursorColourInheritChanged(bool cursorColourInherit);
         void fontScalingChanged(bool scaling);
 
+        void secureModeChanged(bool secureMode);
+        void verifyCertsChanged(bool verifyCerts);
+
     private:
 
 //        Q_ENUM(RulerStyle);
@@ -138,6 +147,9 @@ class ActiveSettings : public QObject
         QString hostName;
         int     hostPort;
         QString hostLU;
+
+        bool secureMode;
+        bool verifyCerts;
 
 
         // Themes

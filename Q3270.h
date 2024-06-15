@@ -187,13 +187,41 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define TN3270E_DATATYPE_SSCP_LU_DATA    0x07
 #define TN3270E_DATATYPE_PRINT_EOJ       0x08
 
-enum Indicators {
-    Unlocked,
-    SystemLock,
-    TerminalWait,
-    OvertypeMode,
-    InsertMode,
-    GoElsewhere
+
+namespace Q3270 {
+
+    enum Indicators {
+        Unlocked,
+        SystemLock,
+        TerminalWait,
+        OvertypeMode,
+        InsertMode,
+        GoElsewhere
+    };
+
+    enum Encryption {
+        Unencrypted    = 0,
+        SemiEncrypted  = 1,
+        Encrypted      = 2
+    };
+
+    enum Colour
+    {
+        BLACK                      = 0,
+        BLUE                       = 1,
+        RED                        = 2,
+        MAGENTA                    = 3,
+        GREEN                      = 4,
+        CYAN                       = 5,
+        YELLOW                     = 6,
+        NEUTRAL                    = 7,
+
+        UNPROTECTED_NORMAL         = 32,
+        PROTECTED_NORMAL           = 33,
+        UNPROTECTED_INTENSIFIED    = 34,
+        PROTECTED_INTENSIFIED      = 35
+    };
+
 };
 
 #define Q3270_RULER_CROSSHAIR   0

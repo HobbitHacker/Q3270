@@ -124,6 +124,9 @@ void PreferencesDialog::connected()
     ui->hostName->setDisabled(true);
     ui->hostPort->setDisabled(true);
     ui->hostLU->setDisabled(true);
+
+    ui->secureConnection->setDisabled(true);
+    ui->verifyCerts->setDisabled(true);
 }
 
 /**
@@ -152,6 +155,9 @@ void PreferencesDialog::disconnected()
     ui->hostName->setEnabled(true);
     ui->hostPort->setEnabled(true);
     ui->hostLU->setEnabled(true);
+
+    ui->secureConnection->setEnabled(true);
+    ui->verifyCerts->setEnabled(ui->secureConnection->checkState() == Qt::Checked);
 }
 
 /**
@@ -197,6 +203,10 @@ void PreferencesDialog::showForm()
     colours.setButtonColours(activeSettings.getColourThemeName());
 
     ui->CodePages->setCurrentIndex(ui->CodePages->findText(activeSettings.getCodePage()));
+
+    ui->secureConnection->setChecked(activeSettings.getSecureMode());
+    ui->verifyCerts->setChecked(activeSettings.getVerifyCerts());
+    ui->verifyCerts->setEnabled(ui->secureConnection->isChecked());
 
     this->exec();
 }
@@ -309,6 +319,8 @@ void PreferencesDialog::accept()
     activeSettings.setColourTheme(ui->colourTheme->currentText());
     activeSettings.setHostAddress(ui->hostName->text(), ui->hostPort->text().toInt(), ui->hostLU->text());
     activeSettings.setStretchScreen(ui->stretch->QAbstractButton::isChecked());
+    activeSettings.setSecureMode(ui->secureConnection->isChecked());
+    activeSettings.setVerifyCerts(ui->verifyCerts->isChecked());
 
     //emit setStretch(ui->stretch);
 
@@ -411,4 +423,24 @@ void PreferencesDialog::manageKeyboardThemes()
     keyboards.exec();
 
     populateKeyboardThemeNames();
+}
+
+/**
+ *  @brief   PreferencesDialog::securityChanged - invoked when the user toggles 'connection security'
+ *
+ *  @details When the user toggles the connection security checkbox, if the check box is ticked, the
+ *           'verify certificate' check box is enabled. If the security check box is not ticked, the
+ *           'verify certificate' check box is disabled.
+ */
+void PreferencesDialog::securityChanged(int t)
+{
+    if (t == Qt::Checked)
+    {
+        ui->verifyCerts->setEnabled(true);
+
+    }
+    else
+    {
+        ui->verifyCerts->setDisabled(true);
+    }
 }

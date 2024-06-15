@@ -1,5 +1,8 @@
 <RCC>
     <qresource prefix="/">
         <file>Q3270.png</file>
+        <file>Icons/lock-tick.svg</file>
+        <file>Icons/lock.svg</file>
+        <file>Icons/unlock.svg</file>
     </qresource>
 </RCC>

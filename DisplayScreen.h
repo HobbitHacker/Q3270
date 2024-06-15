@@ -41,12 +41,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <QGraphicsSceneMouseEvent>
 #include <QString>
 #include <QDebug>
+#include <QtSvg>
 #include <QTimer>
 #include <QObject>
 
 #include "Cell.h"
 #include "ColourTheme.h"
 #include "CodePage.h"
+#include "Q3270.h"
 
 class DisplayScreen : public QObject, public QGraphicsRectItem
 {
@@ -152,6 +154,8 @@ class DisplayScreen : public QObject, public QGraphicsRectItem
         void processAID(int aid, bool shortread);
         void interruptProcess();
 
+        void setEncrypted(Q3270::Encryption e);
+
     private:
 
         const unsigned char twelveBitBufferAddress[64] = {
@@ -219,10 +223,20 @@ class DisplayScreen : public QObject, public QGraphicsRectItem
 
         // Status bar
         QGraphicsLineItem statusBar;
+
         QGraphicsSimpleTextItem statusConnect;
         QGraphicsSimpleTextItem statusXSystem;
         QGraphicsSimpleTextItem statusCursor;
         QGraphicsSimpleTextItem statusInsert;
+
+        // Padlocks
+        QGraphicsSvgItem *statusSecureSVG;
+        QGraphicsSvgItem *locktick;
+        QGraphicsSvgItem *unlock;
+        QGraphicsSvgItem *lock;
+
+        QGraphicsRectItem statusSecure;
+
 
         qreal gridSize_X;
         qreal gridSize_Y;

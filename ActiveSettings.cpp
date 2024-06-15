@@ -437,8 +437,8 @@ void ActiveSettings::setBackspaceStop(bool backspaceStop)
 }
 
 /**
- * @brief ActiveSettings::setStretchScreen
- * @param stretch - true to ignore 4:3 ratio, and fill the window, false to enforce a 4:3 ratio.
+ * @brief   ActiveSettings::setStretchScreen
+ * @param   stretch - true to ignore 4:3 ratio, and fill the window, false to enforce a 4:3 ratio.
  *
  * @details The screen can be made to fill the application window, so that the display is stretched to fill
  *          all space in the application window. If this setting is disabled, the characters form a fixed
@@ -453,4 +453,36 @@ void ActiveSettings::setStretchScreen(bool stretch)
     }
 
     this->stretchScreen = stretch;
+}
+
+/**
+ * @brief   ActiveSettings::setSecureMode
+ * @param   stretch - true to use SSL, TLS
+ *
+ * @details Switches to SSL mode
+ */
+void ActiveSettings::setSecureMode(bool secureMode)
+{
+    if (this->secureMode != secureMode)
+    {
+        emit secureModeChanged(secureMode);
+    }
+
+    this->secureMode = secureMode;
+}
+
+/**
+ * @brief   ActiveSettings::setVerifyCerts
+ * @param   stretch - true to verify certificates of hosts
+ *
+ * @details Allows for self-signed certificates
+ */
+void ActiveSettings::setVerifyCerts(bool verify)
+{
+    if (this->verifyCerts != verify)
+    {
+        emit verifyCertsChanged(verify);
+    }
+
+    this->verifyCerts = verify;
 }
