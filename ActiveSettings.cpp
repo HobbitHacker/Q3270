@@ -31,10 +31,9 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
+#include <QMetaEnum>
 
 #include "ActiveSettings.h"
-
-#include "Q3270.h"
 
 /**
  * @brief
@@ -49,7 +48,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ActiveSettings::ActiveSettings()
 {
     rulerState = false;
-    ruler = Q3270_RULER_CROSSHAIR;
+    ruler = Q3270::CrossHair;
 
     cursorBlink = true;
     cursorBlinkSpeed = 4;
@@ -99,7 +98,7 @@ void ActiveSettings::setRulerState(bool rulerState)
  *
  * @details Change the ruler style (crosshair, vertical, horizontal)
  */
-void ActiveSettings::setRulerStyle(int newStyle)
+void ActiveSettings::setRulerStyle(Q3270::RulerStyle newStyle)
 {
     if (newStyle != this->ruler)
     {
@@ -107,6 +106,43 @@ void ActiveSettings::setRulerStyle(int newStyle)
     }
 
     this->ruler = newStyle;
+}
+
+/**
+ * @brief   ActiveSettings::setRulerStyleName
+ * @param   newStyle - a string representing the keys in enum Q3270::RulerStyle
+ *
+ * @sa      Q3270.h
+ *
+ * @details Change the ruler style by name (CrossHair, Horizontal, Vertical). Defaults to CrossHair
+ *          if an invalid one is passed.
+ */
+void ActiveSettings::setRulerStyleName(QString newStyle)
+{
+    QMetaEnum metaEnum = QMetaEnum::fromType<Q3270::RulerStyle>();
+
+    if (metaEnum.keyToValue(newStyle.toLatin1()) == -1)
+    {
+        setRulerStyle(Q3270::CrossHair);
+    }
+    else
+    {
+        setRulerStyle(Q3270::RulerStyle(metaEnum.keyToValue(newStyle.toLatin1())));
+    }
+}
+
+/**
+ * @brief   ActiveSettings::getRulerStyleName
+ *
+ * @sa      Q3270.h
+ *
+ * @details Return the name of the ruler style (CrossHair, Horizontal, Vertical).
+ */
+QString ActiveSettings::getRulerStyleName()
+{
+    QMetaEnum metaEnum = QMetaEnum::fromType<Q3270::RulerStyle>();
+
+    return QString(metaEnum.valueToKey(this->ruler));
 }
 
 /**

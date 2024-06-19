@@ -237,7 +237,7 @@ void Terminal::rulerChanged(bool on)
  *
  * @details Called when the ruler style is changed in active settings.
  */
-void Terminal::rulerStyle(int rulerStyle)
+void Terminal::rulerStyle(Q3270::RulerStyle rulerStyle)
 {
     // Change ruler style to match settings
     if (sessionConnected)
@@ -298,7 +298,7 @@ void Terminal::openConnection(QSettings& s)
 
     // Ruler
     activeSettings.setRulerState(s.value("Ruler").toBool());
-    activeSettings.setRulerStyle(s.value("RulerStyle").toInt());
+    activeSettings.setRulerStyleName(s.value("RulerStyle").toString());
 
     // Font settings
     QFont f;

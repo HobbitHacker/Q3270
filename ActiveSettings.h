@@ -35,9 +35,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef ACTIVESETTINGS_H
 #define ACTIVESETTINGS_H
 
-#include "qfont.h"
-
+#include <QFont>
 #include <QObject>
+
+#include "Q3270.h"
 
 class ActiveSettings : public QObject
 {
@@ -57,8 +58,10 @@ class ActiveSettings : public QObject
         bool getRulerState()                             { return rulerState; }
         void setRulerState(bool rulerOn);
 
-        int getRulerStyle()                              { return ruler; }
-        void setRulerStyle(int r);
+        Q3270::RulerStyle getRulerStyle()                { return ruler; }
+        void setRulerStyle(Q3270::RulerStyle r);
+        QString getRulerStyleName();
+        void setRulerStyleName(QString s);
 
         bool getCursorBlink()                            { return cursorBlink; }
         void setCursorBlink(bool blink);
@@ -104,7 +107,7 @@ class ActiveSettings : public QObject
     signals:
 
         void rulerChanged(bool rulerOn);
-        void rulerStyleChanged(int r);
+        void rulerStyleChanged(Q3270::RulerStyle r);
 
         void cursorBlinkChanged(bool cursorBlink);
         void cursorBlinkSpeedChanged(int b);
@@ -162,7 +165,7 @@ class ActiveSettings : public QObject
         bool cursorColourInherit;           // Whether the cursor colour matches the colour of the character underneath
 
         bool rulerState;                    // Whether crosshairs are shown
-        int ruler;                          // Type of crosshairs, when shown
+        Q3270::RulerStyle ruler;                          // Type of crosshairs, when shown
 
         bool cursorBlink;                   // Whether the cursor blinks
         int cursorBlinkSpeed;               // How fast the cursor blinks

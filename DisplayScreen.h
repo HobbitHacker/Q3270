@@ -113,7 +113,7 @@ class DisplayScreen : public QObject, public QGraphicsRectItem
         void toggleRuler();
         void setRuler();
         void rulerMode(bool on);
-        void setRulerStyle(int rulerStyle);
+        void setRulerStyle(Q3270::RulerStyle rulerStyle);
 
         void getScreen(QByteArray &buffer);
         void readBuffer();
@@ -192,7 +192,7 @@ class DisplayScreen : public QObject, public QGraphicsRectItem
         bool geActive;              // Next character is Graphic Escape
 
         bool rulerOn;               // Whether ruler is displayed
-        int ruler;                  // Style of ruler
+        Q3270::RulerStyle ruler;    // Style of ruler
 
         bool unformatted;           // True if no fields are defined
 

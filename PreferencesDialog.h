@@ -119,7 +119,7 @@ class PreferencesDialog : public QDialog
         QHash<ColourTheme::Colour, QPushButton *> colourButtons;
 
         // Used to populate the combobox with nice names
-        QMap<QString, int> comboRulerStyle;
+        QMap<QString, Q3270::RulerStyle> comboRulerStyle;
 
         void accept();
         void reject();

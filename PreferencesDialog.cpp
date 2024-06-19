@@ -60,9 +60,9 @@ PreferencesDialog::PreferencesDialog(ColourTheme &colours, KeyboardTheme &keyboa
     ui->TabsWidget->setCurrentIndex(0);
 
     // Set up vector to coordinate combox box for crosshair types
-    comboRulerStyle.insert("Crosshairs", Q3270_RULER_CROSSHAIR);
-    comboRulerStyle.insert("Vertical", Q3270_RULER_VERTICAL);
-    comboRulerStyle.insert("Horizontal", Q3270_RULER_HORIZONTAL);
+    comboRulerStyle.insert("Crosshairs", Q3270::CrossHair);
+    comboRulerStyle.insert("Vertical", Q3270::Vertical);
+    comboRulerStyle.insert("Horizontal", Q3270::Horizontal);
 
     // Populate combo box from vector keys
     ui->crosshair->addItems(comboRulerStyle.keys());

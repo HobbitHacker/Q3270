@@ -208,6 +208,9 @@ void SessionManagement::saveSettings()
 
     // Each session is stored under the Sessions/<session name> key
     s.beginGroup(sessionName);
+
+    QMetaEnum metaEnum = QMetaEnum::fromType<Q3270::RulerStyle>();
+
     s.setValue("Description", sessionDesc);
     s.setValue("ColourTheme", activeSettings.getColourThemeName());
     s.setValue("KeyboardTheme", activeSettings.getKeyboardThemeName());
@@ -219,7 +222,7 @@ void SessionManagement::saveSettings()
     s.setValue("CursorBlinkSpeed", activeSettings.getCursorBlinkSpeed());
     s.setValue("CursorInheritColour", activeSettings.getCursorColourInherit());
     s.setValue("Ruler", activeSettings.getRulerState());
-    s.setValue("RulerStyle", activeSettings.getRulerStyle());
+    s.setValue("RulerStyle", QString(metaEnum.valueToKey(activeSettings.getRulerStyle())));
     s.setValue("Font", activeSettings.getFont().family());
     s.setValue("FontSize", activeSettings.getFont().pointSize());
     s.setValue("FontStyle", activeSettings.getFont().styleName());

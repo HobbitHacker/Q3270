@@ -94,7 +94,7 @@ class Terminal : public QWidget
         void closeConnection(QString message = "");
         void closeEvent(QCloseEvent *closeEvent);
         void setCurrentFont(QFont f);
-        void rulerStyle(int r);
+        void rulerStyle(Q3270::RulerStyle r);
         void rulerChanged(bool on);
         void changeCodePage(QString codepage);
         void setFont(QFont font);

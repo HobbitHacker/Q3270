@@ -74,7 +74,7 @@ DisplayScreen::DisplayScreen(int screen_x, int screen_y, CodePage &cp, ColourThe
     screenPos_max = screen_x * screen_y;
 
     // Default settings
-    ruler = Q3270_RULER_CROSSHAIR;
+    ruler = Q3270::CrossHair;
     rulerOn = false;
     blinkShow = true;
     cursorShow = true;
@@ -879,41 +879,39 @@ void DisplayScreen::setExtendedColour(int pos, bool foreground, unsigned char c)
  * @brief   DisplayScreen::setExtendedBlink - switch blink on
  * @param   pos - screen position
  *
- * @details Set the cell at position to blink. Blink, Reverse and Uunderscore are mutually exclusive.
+ * @details Set the cell at position to blink. Blink, Reverse and Underscore are mutually exclusive.
  */
 void DisplayScreen::setExtendedBlink(int pos)
 {
-    // FIXME: Whast about underscore?
+    cell.at(pos)->setUnderscore(false);
     cell.at(pos)->setReverse(false);
     cell.at(pos)->setBlink(true);
-//    printf("[Blink]");
 }
 
 /**
  * @brief   DisplayScreen::setExtendedReverse - switch reverse on
  * @param   pos - screen position
  *
- * @details Set the cell at position to reverse. Blink, Reverse and Uunderscore are mutually exclusive.
+ * @details Set the cell at position to reverse. Blink, Reverse and Underscore are mutually exclusive.
  */
 void DisplayScreen::setExtendedReverse(int pos)
 {
-    // FIXME: What about underscore?
+    cell.at(pos)->setUnderscore(false);
     cell.at(pos)->setBlink(false);
     cell.at(pos)->setReverse(true);
-//    printf("[Reverse]");
 }
 
 /**
  * @brief   DisplayScreen::setExtendedUscore - switch underscore on
  * @param   pos - screen position
  *
- * @details Set the cell at position to underscore. Blink, Reverse and Uunderscore are mutually exclusive.
+ * @details Set the cell at position to underscore. Blink, Reverse and Underscore are mutually exclusive.
  */
 void DisplayScreen::setExtendedUscore(int pos)
 {
-    // FIXME: What about blink and reverse?
+    cell.at(pos)->setBlink(false);
+    cell.at(pos)->setReverse(false);
     cell.at(pos)->setUnderscore(true);
-//    printf("[UScore]");
 }
 
 /**
@@ -1447,7 +1445,7 @@ void DisplayScreen::rulerMode(bool on)
  *          2        | Horizontal
  *        other      | Off
  */
-void DisplayScreen::setRulerStyle(int rulerStyle)
+void DisplayScreen::setRulerStyle(Q3270::RulerStyle rulerStyle)
 {
     this->ruler = rulerStyle;
     setRuler();
@@ -1550,17 +1548,18 @@ void DisplayScreen::setRuler()
 {
     if (rulerOn)
     {
+
         switch(ruler)
         {
-            case Q3270_RULER_CROSSHAIR:
+            case Q3270::CrossHair:
                 crosshair_X.show();
                 crosshair_Y.show();
                 break;
-            case Q3270_RULER_VERTICAL:
+            case Q3270::Vertical:
                 crosshair_X.hide();
                 crosshair_Y.show();
                 break;
-            case Q3270_RULER_HORIZONTAL:
+            case Q3270::Horizontal:
                 crosshair_X.show();
                 crosshair_Y.hide();
         }

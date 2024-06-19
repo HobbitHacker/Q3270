@@ -35,6 +35,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef N3270_H
 #define N3270_H
 
+#include <QObject>
+
 #define Q3270_SETTINGS "andyWare", "Q3270"
 
 /* 3270 Write Commands */
@@ -187,8 +189,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define TN3270E_DATATYPE_SSCP_LU_DATA    0x07
 #define TN3270E_DATATYPE_PRINT_EOJ       0x08
 
-
 namespace Q3270 {
+
+    Q_NAMESPACE
 
     enum Indicators {
         Unlocked,
@@ -222,11 +225,17 @@ namespace Q3270 {
         PROTECTED_INTENSIFIED      = 35
     };
 
+    enum RulerStyle
+    {
+        CrossHair,
+        Vertical,
+        Horizontal
+    };
+
+    Q_ENUM_NS(RulerStyle)
 };
 
-#define Q3270_RULER_CROSSHAIR   0
-#define Q3270_RULER_VERTICAL    1
-#define Q3270_RULER_HORIZONTAL  3
+Q_DECLARE_METATYPE(Q3270::RulerStyle)
 
 #define Q3270_TERMINAL_MODEL2   0
 #define Q3270_TERMINAL_MODEL3   1
