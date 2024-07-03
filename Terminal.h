@@ -83,6 +83,8 @@ class Terminal : public QWidget
 
         inline bool isConnected() { return sessionConnected; };
 
+        QList<QSslCertificate> getCertDetails()    { return socket->getCertDetails(); };
+
     signals:
 
         void connectionEstablished();

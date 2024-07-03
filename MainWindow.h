@@ -59,10 +59,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "KeyboardTheme.h"
 #include "SessionManagement.h"
 #include "ActiveSettings.h"
+#include "CertificateDetails.h"
 
 QT_BEGIN_NAMESPACE
 
-namespace Ui { class MainWindow; }
+namespace Ui {
+    class MainWindow;
+    class CertificateDetails;
+}
 
 QT_END_NAMESPACE
 
@@ -111,8 +115,9 @@ class MainWindow : public QMainWindow
       void menuKeyboardTheme();
       void menuColourTheme();
 
-      // The Help->About dialog
+      // The Help menu
       void menuAbout();
+      void menuAboutConnection();
 
       // Triggered by Terminal on connection state, and Settings if Hostname is empty
       void enableConnectMenu(bool state);

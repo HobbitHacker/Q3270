@@ -35,6 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ui_MainWindow.h"
 #include "MainWindow.h"
 #include "ui_About.h"
+#include "ui_CertificateDetails.h"
 
 #include "Q3270.h"
 /**
@@ -394,6 +395,18 @@ void MainWindow::menuAbout()
 }
 
 /**
+ * @brief   MainWindow::menuAboutConnection - display the 'About Connection' dialog.
+ *
+ * @details Show some details about the connection to the host
+ */
+void MainWindow::menuAboutConnection()
+{
+    CertificateDetails certDetails(terminal->getCertDetails());
+    certDetails.exec();
+}
+
+
+/**
  * @brief   MainWindow::enableConnectMenu - enable/disable the Connect menu
  * @param   state - true to enable, false to disable
  *
@@ -402,6 +415,7 @@ void MainWindow::menuAbout()
 void MainWindow::enableConnectMenu(bool state)
 {
     ui->actionConnect->setEnabled(state);
+    ui->actionConnection_Information->setDisabled(true);
 }
 
 /**
@@ -413,6 +427,7 @@ void MainWindow::enableDisconnectMenu()
 {
     ui->actionDisconnect->setEnabled(true);
     ui->actionConnect->setDisabled(true);
+    ui->actionConnection_Information->setEnabled(true);
 }
 
 /**
@@ -424,6 +439,7 @@ void MainWindow::disableDisconnectMenu()
 {
     ui->actionDisconnect->setDisabled(true);
     ui->actionConnect->setEnabled(true);
+    ui->actionConnection_Information->setEnabled(true);
 }
 
 /**

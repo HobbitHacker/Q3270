@@ -21,6 +21,7 @@ DEFINES += QT_DEPRECATED_WARNINGS \
 SOURCES += \
     ActiveSettings.cpp \
     Cell.cpp \
+    CertificateDetails.cpp \
     CodePage.cpp \
     ColourTheme.cpp \
     DisplayScreen.cpp \
@@ -37,6 +38,7 @@ SOURCES += \
 HEADERS += \
     ActiveSettings.h \
     Cell.h \
+    CertificateDetails.h \
     CodePage.h \
     ColourTheme.h \
     DisplayScreen.h \
@@ -54,6 +56,7 @@ FORMS += \
     About.ui \
     AutoStart.ui \
     AutoStartAdd.ui \
+    CertificateDetails.ui \
     ColourTheme.ui \
     KeyboardTheme.ui \
     MainWindow.ui \
