@@ -208,7 +208,7 @@ void Cell::setCharFromKB(uchar ascii)
  *          do the heavy lifting of calling Qt yet, as potentially any data stream may incur multiple
  *          calls to set the colour of same cell. The Qt part is done in updateCell().
  */
-void Cell::setColour(ColourTheme::Colour c)
+void Cell::setColour(Q3270::Colour c)
 {
     colNum = c;
     changed = true;
@@ -373,20 +373,20 @@ void Cell::setBlink(bool b)
  *
  * @warning Q3270 does not handle any other character attribute than extended.
  */
-void Cell::setCharAttrs(Cell::CharAttr ca, bool c)
+void Cell::setCharAttrs(Q3270::CharAttr ca, bool c)
 {
     switch(ca)
     {
-        case EXTENDED:
+        case Q3270::ExtendedAttr:
             charAttrExtended = c;
             break;
-        case COLOUR:
+        case Q3270::ColourAttr:
             charAttrColour = c;
             break;
-        case CHARSET:
+        case Q3270::CharsetAttr:
             charAttrCharSet = c;
             break;
-        case TRANSPARENCY:
+        case Q3270::TransparencyAttr:
             charAttrTransparency = c;
     }
 }
@@ -398,17 +398,17 @@ void Cell::setCharAttrs(Cell::CharAttr ca, bool c)
  *
  * @details This routine returns the state of the specified character attrbute for this Cell.
  */
-bool Cell::hasCharAttrs(Cell::CharAttr ca)
+bool Cell::hasCharAttrs(Q3270::CharAttr ca)
 {
     switch(ca)
     {
-        case EXTENDED:
+        case Q3270::ExtendedAttr:
             return charAttrExtended;
-        case COLOUR:
+        case Q3270::ColourAttr:
             return charAttrColour;
-        case CHARSET:
+        case Q3270::CharsetAttr:
             return charAttrCharSet;
-        case TRANSPARENCY:
+        case Q3270::TransparencyAttr:
             return charAttrTransparency;
     }
 
@@ -453,10 +453,10 @@ void Cell::copy(Cell &fromCell)
 
     graphic = fromCell.isGraphic();
 
-    setCharAttrs(EXTENDED, fromCell.hasCharAttrs(EXTENDED));
-    setCharAttrs(COLOUR, fromCell.hasCharAttrs(COLOUR));
-    setCharAttrs(TRANSPARENCY, fromCell.hasCharAttrs(TRANSPARENCY));
-    setCharAttrs(CHARSET, fromCell.hasCharAttrs(CHARSET));
+    setCharAttrs(Q3270::ExtendedAttr, fromCell.hasCharAttrs(Q3270::ExtendedAttr));
+    setCharAttrs(Q3270::ColourAttr, fromCell.hasCharAttrs(Q3270::ColourAttr));
+    setCharAttrs(Q3270::TransparencyAttr, fromCell.hasCharAttrs(Q3270::TransparencyAttr));
+    setCharAttrs(Q3270::CharsetAttr, fromCell.hasCharAttrs(Q3270::CharsetAttr));
 
     setChar(fromCell.getEBCDIC());
 
@@ -478,7 +478,7 @@ void Cell::copy(Cell &fromCell)
  * @details setAttrs forms a shortcut to calling all the relevant routines in one go. This routine is used when
  *          setting a Field Start, and cascading all the attributes to the end of the (new) field.
  */
-void Cell::setAttrs(bool prot, bool mdt, bool num, bool pensel, bool blink, bool disp, bool under, bool rev, ColourTheme::Colour col)
+void Cell::setAttrs(bool prot, bool mdt, bool num, bool pensel, bool blink, bool disp, bool under, bool rev, Q3270::Colour col)
 {
     setProtected(prot);
     setMDT(mdt);
@@ -506,7 +506,7 @@ void Cell::blinkChar(bool blink)
     }
     else
     {
-        glyph.setBrush(palette[ColourTheme::Colour::BLACK]);
+        glyph.setBrush(palette[Q3270::Black]);
     }
 }
 
@@ -577,14 +577,14 @@ bool Cell::updateCell()
         }
         if (reverse)
         {
-            glyph.setBrush(palette[ColourTheme::Colour::BLACK]);
+            glyph.setBrush(palette[Q3270::Black]);
             this->setBrush(palette[colNum]);
 
         }
         else
         {
             glyph.setBrush(palette[colNum]);
-            this->setBrush(palette[ColourTheme::Colour::BLACK]);
+            this->setBrush(palette[Q3270::Black]);
 
         }
         if (!display)
@@ -602,7 +602,7 @@ bool Cell::updateCell()
     {
         underscore.setVisible(false);
         glyph.setBrush(palette[colNum]);
-        this->setBrush(palette[ColourTheme::Colour::BLACK]);
+        this->setBrush(palette[Q3270::Black]);
     }
 
     return true;

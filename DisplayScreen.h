@@ -172,9 +172,6 @@ class DisplayScreen : public QObject, public QGraphicsRectItem
         CodePage &cp;
         ColourTheme::Colours &palette;
 
-        const char *colName[12] = { "black", "blue", "red", "magenta", "green", "cyan", "yellow", "neutral",
-                                    "protected", "unprotected,intensfied", "unprotected", "protected, intensified"};
-
         int screen_x;                /* Max Columns */
         int screen_y;                /* Max Rows */
         int screenPos_max;           /* Max position on screen */
@@ -212,7 +209,7 @@ class DisplayScreen : public QObject, public QGraphicsRectItem
                 bool blink_default;
 
                 QBrush colour;
-                ColourTheme::Colour colNum;
+                Q3270::Colour colNum;
                 bool colour_default;
         } charAttr;
 

@@ -39,6 +39,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <QObject>
 #include <QGraphicsScene>
 
+#include "Q3270.h"
 #include "ColourTheme.h"
 #include "CodePage.h"
 
@@ -51,15 +52,6 @@ public:
 
     QRectF boundingRect() const;
 
-    // Attributes that may have character-specific attributes
-    enum CharAttr
-    {
-        EXTENDED,
-        COLOUR,
-        CHARSET,
-        TRANSPARENCY
-    };
-
     void setChar(uchar ebcdic);
     void setCharFromKB(uchar ascii);
 
@@ -67,7 +59,7 @@ public:
     inline uchar getEBCDIC()                        { return ebcdic; };
     inline QChar getChar()                          { return glyph.text().at(0); }
 
-    inline ColourTheme::Colour getColour()          { return colNum; };
+    inline Q3270::Colour getColour()                { return colNum; };
 
     inline bool isFieldStart()                      { return fieldStart; };
     inline bool isAutoSkip()                        { return prot & num; };
@@ -86,10 +78,10 @@ public:
     inline int  getField()                          { return fieldPos; };
     inline void setField(int f)                     { fieldPos = f; };
 
-    bool hasCharAttrs(Cell::CharAttr ca);
+    bool hasCharAttrs(Q3270::CharAttr ca);
 
     // Setters
-    void setColour(ColourTheme::Colour c);
+    void setColour(Q3270::Colour c);
     void setFieldStart(bool fs);
     void setNumeric(bool n);
     void setGraphic(bool ge);
@@ -105,12 +97,12 @@ public:
 
     void setFont(QFont f);
 
-    void setCharAttrs(Cell::CharAttr ca, bool c);
+    void setCharAttrs(Q3270::CharAttr ca, bool c);
     void resetCharAttrs();
 
     void copy(Cell &c);
 
-    void setAttrs(bool prot, bool mdt, bool num, bool pensel, bool blink, bool disp, bool under, bool rev, ColourTheme::Colour col);
+    void setAttrs(bool prot, bool mdt, bool num, bool pensel, bool blink, bool disp, bool under, bool rev, Q3270::Colour col);
 
     void refreshCodePage();
 
@@ -168,7 +160,7 @@ private:
     bool charAttrTransparency;
 
     // Colour of glyph
-    ColourTheme::Colour colNum;
+    Q3270::Colour colNum;
 
     // Cell changed with this data transmission
     bool changed;

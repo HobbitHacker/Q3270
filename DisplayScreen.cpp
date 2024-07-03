@@ -163,18 +163,22 @@ DisplayScreen::DisplayScreen(int screen_x, int screen_y, CodePage &cp, ColourThe
     lock = new QGraphicsSvgItem(":/Icons/lock.svg");
     locktick = new QGraphicsSvgItem(":/Icons/lock-tick.svg");
 
-    statusSecureSVG = unlock;
-
     // Connect status at 10% across
     statusSecure.setPos(gridSize_X * (screen_x * .05), 482);
     statusSecure.setRect(0, 0, 9, 9);
 
-    QRectF r = statusSecureSVG->boundingRect();
-    statusSecureSVG->setScale(8 / r.height());
+    QRectF r = lock->boundingRect();
 
-    statusSecureSVG->setParentItem(&statusSecure);
+    lock->setScale(8 / r.height());
+    unlock->setScale(8 / r.height());
+    locktick->setScale(8 / r.height());
 
-    qDebug() << statusSecureSVG->boundingRect();
+    unlock->setParentItem(&statusSecure);
+    lock->setParentItem(&statusSecure);
+    locktick->setParentItem(&statusSecure);
+
+    lock->hide();
+    locktick->hide();
 
     // XSystem 20% across status bar
     statusXSystem.setText("");
@@ -341,7 +345,7 @@ void DisplayScreen::clear()
         cell.at(i)->setReverse(false);
         cell.at(i)->setBlink(false);
 
-        cell.at(i)->setColour(ColourTheme::GREEN);
+        cell.at(i)->setColour(Q3270::Green);
 
         cell.at(i)->setChar(0x00);
         cell.at(i)->setField(-1);
@@ -401,7 +405,7 @@ void DisplayScreen::setChar(int pos, uchar c, bool fromKB)
     {
         if (!charAttr.colour_default)
         {
-            cell.at(pos)->setCharAttrs(Cell::COLOUR, true);
+            cell.at(pos)->setCharAttrs(Q3270::ColourAttr, true);
         }
         else
         {
@@ -410,7 +414,7 @@ void DisplayScreen::setChar(int pos, uchar c, bool fromKB)
 
         if (!charAttr.blink_default)
         {
-            cell.at(pos)->setCharAttrs(Cell::EXTENDED, true);
+            cell.at(pos)->setCharAttrs(Q3270::ExtendedAttr, true);
         }
         else
         {
@@ -419,7 +423,7 @@ void DisplayScreen::setChar(int pos, uchar c, bool fromKB)
 
         if (!charAttr.reverse_default)
         {
-            cell.at(pos)->setCharAttrs(Cell::EXTENDED, true);
+            cell.at(pos)->setCharAttrs(Q3270::ExtendedAttr, true);
         }
         else
         {
@@ -428,7 +432,7 @@ void DisplayScreen::setChar(int pos, uchar c, bool fromKB)
 
         if (!charAttr.uscore_default)
         {
-            cell.at(pos)->setCharAttrs(Cell::EXTENDED, true);
+            cell.at(pos)->setCharAttrs(Q3270::ExtendedAttr, true);
         }
         else
         {
@@ -457,7 +461,7 @@ void DisplayScreen::setChar(int pos, uchar c, bool fromKB)
     geActive = false;
 
     // If character colour attributes are present, use them
-    if (cell.at(pos)->hasCharAttrs(Cell::CharAttr::COLOUR))
+    if (cell.at(pos)->hasCharAttrs(Q3270::ColourAttr))
     {
         // Colour
         if (!charAttr.colour_default)
@@ -474,7 +478,7 @@ void DisplayScreen::setChar(int pos, uchar c, bool fromKB)
         cell.at(pos)->setColour(cell.at(fieldAttr)->getColour());
     }
 
-    if (cell.at(pos)->hasCharAttrs(Cell::CharAttr::EXTENDED))
+    if (cell.at(pos)->hasCharAttrs(Q3270::ExtendedAttr))
     {
         // Reverse video
         if (!charAttr.reverse_default)
@@ -588,8 +592,8 @@ void DisplayScreen::setCharAttr(unsigned char extendedType, unsigned char extend
             }
             else
             {
-                charAttr.colour = palette[(ColourTheme::Colour)(extendedValue&7)];
-                charAttr.colNum = (ColourTheme::Colour)(extendedValue&7);
+                charAttr.colour = palette[(Q3270::Colour)(extendedValue&7)];
+                charAttr.colNum = (Q3270::Colour)(extendedValue&7);
                 charAttr.colour_default = false;
 //                printf("fg colour %s (extendedValue %02X)", colName[charAttr.colNum], extendedValue);
             }
@@ -602,8 +606,8 @@ void DisplayScreen::setCharAttr(unsigned char extendedType, unsigned char extend
             }
             else
             {
-                charAttr.colour = palette[(ColourTheme::Colour)(extendedValue&7)];
-                charAttr.colNum = (ColourTheme::Colour)(extendedValue&7);
+                charAttr.colour = palette[(Q3270::Colour)(extendedValue&7)];
+                charAttr.colNum = (Q3270::Colour)(extendedValue&7);
                 charAttr.colour_default = false;
 //                printf("bg colour %s", colName[charAttr.colNum]);
             }
@@ -701,19 +705,19 @@ void DisplayScreen::setField(int pos, unsigned char c, bool sfe)
 //    {
         if (cell.at(pos)->isProtected() && !cell.at(pos)->isIntensify())
         {
-            cell.at(pos)->setColour(ColourTheme::PROTECTED_NORMAL);        /* Protected (Blue) */
+            cell.at(pos)->setColour(Q3270::ProtectedNormal);        /* Protected (Blue) */
         }
         else if (cell.at(pos)->isProtected() && cell.at(pos)->isIntensify())
         {
-            cell.at(pos)->setColour(ColourTheme::PROTECTED_INTENSIFIED);   /* Protected, Intensified (White) */
+            cell.at(pos)->setColour(Q3270::ProtectedIntensified);   /* Protected, Intensified (White) */
         }
         else if (!cell.at(pos)->isProtected() && !cell.at(pos)->isIntensify())
         {
-            cell.at(pos)->setColour(ColourTheme::UNPROTECTED_NORMAL);      /* Unprotected (Green) */
+            cell.at(pos)->setColour(Q3270::UnprotectedNormal);      /* Unprotected (Green) */
         }
         else
         {
-            cell.at(pos)->setColour(ColourTheme::UNPROTECTED_INTENSIFIED); /* Unrprotected, Intensified (Red) */
+            cell.at(pos)->setColour(Q3270::UnprotectedIntensified); /* Unrprotected, Intensified (Red) */
         }
 //    }
 
@@ -781,14 +785,14 @@ void DisplayScreen::cascadeAttrs(int pos)
         bool under = cell.at(pos)->isUScore();
         bool rev   = cell.at(pos)->isReverse();
 
-        ColourTheme::Colour col = cell.at(pos)->getColour();
-        ColourTheme::Colour tmpCol;
+        Q3270::Colour col = cell.at(pos)->getColour();
+        Q3270::Colour tmpCol;
 
         int i = pos + 1;
         while(i < endPos && !(cell.at(i % screenPos_max)->isFieldStart()))
         {
             int offset = i++ % screenPos_max;
-            tmpCol = cell[offset]->hasCharAttrs(Cell::COLOUR) ? cell[offset]->getColour() : col;
+            tmpCol = cell[offset]->hasCharAttrs(Q3270::ColourAttr) ? cell[offset]->getColour() : col;
             cell[offset]->setAttrs(prot, mdt, num, pensel, blink, disp, under, rev, tmpCol);
             cell.at(offset)->setField(pos);
         }
@@ -828,7 +832,7 @@ void DisplayScreen::resetExtended(int pos)
 {
     resetExtendedHilite(pos);
 
-    cell.at(pos)->setColour(ColourTheme::BLUE);
+    cell.at(pos)->setColour(Q3270::Blue);
 
     cell.at(pos)->setDisplay(true);
     cell.at(pos)->setNumeric(false);
@@ -868,7 +872,7 @@ void DisplayScreen::setExtendedColour(int pos, bool foreground, unsigned char c)
         return;
         c = IBM3270_EXT_DEFAULT_COLOR;
     }
-    cell.at(pos)->setColour((ColourTheme::Colour)(c&7));
+    cell.at(pos)->setColour((Q3270::Colour)(c&7));
 /*    if(foreground)
     {
         qDebug() << colName[cell.at(pos)->getColour()];
@@ -1362,7 +1366,7 @@ void DisplayScreen::setCursor(int x, int y)
     {
         if (cell.at(cursor_pos)->isReverse())
         {
-            cursor.setBrush(palette[ColourTheme::BLACK]);
+            cursor.setBrush(palette[Q3270::Black]);
         }
         else
         {
@@ -1463,21 +1467,25 @@ void DisplayScreen::setRulerStyle(Q3270::RulerStyle rulerStyle)
  */
 void DisplayScreen::setEncrypted(Q3270::Encryption encrypted)
 {
+    lock->hide();
+    unlock->hide();
+    locktick->hide();
+
     switch(encrypted)
     {
         case Q3270::Unencrypted:
-            statusSecureSVG = unlock;
+            unlock->show();
             break;
         case Q3270::SemiEncrypted:
-            statusSecureSVG = lock;
+            lock->show();
             break;
         case Q3270::Encrypted:
-            statusSecureSVG = locktick;
+            locktick->show();
             break;
     }
 
-    QRectF r = statusSecureSVG->boundingRect();
-    statusSecureSVG->setScale(8 / r.height());
+//    QRectF r = statusSecureSVG->boundingRect();
+//    statusSecureSVG->setScale(8 / r.height());
 }
 
 /**
@@ -1934,9 +1942,9 @@ void DisplayScreen::dumpInfo()
 //    }
 
     printf("    Character Attributes:\n        Extended: %d\n        CharSet:  %d\n        Colour:   %d\n    Colour: %d\n    Graphic: %d\n",
-                cell.at(cursor_pos)->hasCharAttrs(Cell::EXTENDED),
-                cell.at(cursor_pos)->hasCharAttrs(Cell::CHARSET),
-                cell.at(cursor_pos)->hasCharAttrs(Cell::COLOUR),
+                cell.at(cursor_pos)->hasCharAttrs(Q3270::ExtendedAttr),
+                cell.at(cursor_pos)->hasCharAttrs(Q3270::CharsetAttr),
+                cell.at(cursor_pos)->hasCharAttrs(Q3270::ColourAttr),
                 cell.at(cursor_pos)->getColour(),
                 cell.at(cursor_pos)->isGraphic());
 

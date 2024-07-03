@@ -69,6 +69,8 @@ class SocketConnection : public QObject
         void setVerify(bool v);
         void sendResponse(QByteArray &b);
 
+        QList<QSslCertificate> getCertDetails();
+
     public slots:
         void connectMainframe(QString &address, quint16 port, QString luName, ProcessDataStream *d);
         void disconnectMainframe();
@@ -86,33 +88,17 @@ class SocketConnection : public QObject
         void sslErrors(const QList<QSslError> &errors);
         void socketStateChanged(QAbstractSocket::SocketState state);
         void error(QAbstractSocket::SocketError socketError);
+        void socketEncrypted();
 
     private:
-
-        enum TelnetState {
-            TELNET_STATE_DATA,
-            TELNET_STATE_IAC,
-            TELNET_STATE_IAC_DO,
-            TELNET_STATE_IAC_DONT,
-            TELNET_STATE_IAC_WILL,
-            TELNET_STATE_IAC_WONT,
-            TELNET_STATE_IAC_SB,
-            TELNET_STATE_SB,
-            TELNET_STATE_SB_IAC,
-            TELNET_STATE_SB_TTYPE,
-            TELNET_STATE_SB_TTYPE_SEND,
-            TELNET_STATE_SB_TTYPE_SEND_IAC,
-            TELNET_STATE_SB_TN3270E,
-            TELNET_STATE_SB_TN3270E_SEND,
-            TELNET_STATE_SB_TN3270E_SEND_DEVICE_TYPE
-        };
 
         bool tn3270e_Mode;
 
         bool secureMode;
         bool verifyCerts;
+        bool certErrors;
 
-        TelnetState telnetState;
+        Q3270::TelnetState telnetState;
         QSslSocket *dataSocket;
 //        QTcpSocket *dataSocket;
         QDataStream dataStream;

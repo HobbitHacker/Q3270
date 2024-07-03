@@ -28,19 +28,19 @@ ColourTheme::ColourTheme(QWidget *parent) :
     Colours palette;
 
     // Factory defaults
-    palette[UNPROTECTED_NORMAL]      = QColor(0,255,0);            /* Basic Green */
-    palette[PROTECTED_NORMAL]        = QColor(128,128,255);        /* Basic Blue */
-    palette[UNPROTECTED_INTENSIFIED] = QColor(255,0,0);            /* Basic Red */
-    palette[PROTECTED_INTENSIFIED]   = QColor(255,255,255);        /* Basic White */
+    palette[Q3270::UnprotectedNormal]      = QColor(0,255,0);            /* Basic Green */
+    palette[Q3270::ProtectedNormal]        = QColor(128,128,255);        /* Basic Blue */
+    palette[Q3270::UnprotectedIntensified] = QColor(255,0,0);            /* Basic Red */
+    palette[Q3270::ProtectedIntensified]   = QColor(255,255,255);        /* Basic White */
 
-    palette[BLACK]   = QColor(0,0,0);          /* Black */
-    palette[BLUE]    = QColor(128,128,255);    /* Blue */
-    palette[RED]     = QColor(255,0,0);        /* Red */
-    palette[MAGENTA] = QColor(255,0, 255);     /* Magenta */
-    palette[GREEN]   = QColor(0,255,0);        /* Green */
-    palette[CYAN]    = QColor(0,255,255);      /* Cyan */
-    palette[YELLOW]  = QColor(255,255,0);      /* Yellow */
-    palette[NEUTRAL] = QColor(255,255,255);    /* White */
+    palette[Q3270::Black]   = QColor(0,0,0);          /* Black */
+    palette[Q3270::Blue]    = QColor(128,128,255);    /* Blue */
+    palette[Q3270::Red]     = QColor(255,0,0);        /* Red */
+    palette[Q3270::Magenta] = QColor(255,0, 255);     /* Magenta */
+    palette[Q3270::Green]   = QColor(0,255,0);        /* Green */
+    palette[Q3270::Cyan]    = QColor(0,255,255);      /* Cyan */
+    palette[Q3270::Yellow]  = QColor(255,255,0);      /* Yellow */
+    palette[Q3270::Neutral] = QColor(255,255,255);    /* White */
 
     // Add the factory theme to the list
     themes.insert("Factory", palette);
@@ -67,20 +67,20 @@ ColourTheme::ColourTheme(QWidget *parent) :
             settings.beginGroup(ThemeList.at(sc));
 
             // Base colours
-            palette[UNPROTECTED_NORMAL]      = QColor(settings.value("UnprotectedNormal").toString());
-            palette[UNPROTECTED_INTENSIFIED] = QColor(settings.value("UnprotectedIntensified").toString());
-            palette[PROTECTED_NORMAL]        = QColor(settings.value("ProtectedNormal").toString());
-            palette[PROTECTED_INTENSIFIED]   = QColor(settings.value("ProtectedIntensified").toString());
+            palette[Q3270::UnprotectedNormal]      = QColor(settings.value("UnprotectedNormal").toString());
+            palette[Q3270::UnprotectedIntensified] = QColor(settings.value("UnprotectedIntensified").toString());
+            palette[Q3270::ProtectedNormal]        = QColor(settings.value("ProtectedNormal").toString());
+            palette[Q3270::ProtectedIntensified]   = QColor(settings.value("ProtectedIntensified").toString());
 
             // Extended Colours
-            palette[BLACK]     = QColor(settings.value("Black").toString());
-            palette[BLUE]      = QColor(settings.value("Blue").toString());
-            palette[RED]       = QColor(settings.value("Red").toString());
-            palette[MAGENTA]   = QColor(settings.value("Magenta").toString());
-            palette[GREEN]     = QColor(settings.value("Green").toString());
-            palette[CYAN]      = QColor(settings.value("Cyan").toString());
-            palette[YELLOW]    = QColor(settings.value("Yellow").toString());
-            palette[NEUTRAL]   = QColor(settings.value("Neutral").toString());
+            palette[Q3270::Black]     = QColor(settings.value("Black").toString());
+            palette[Q3270::Blue]      = QColor(settings.value("Blue").toString());
+            palette[Q3270::Red]       = QColor(settings.value("Red").toString());
+            palette[Q3270::Magenta]   = QColor(settings.value("Magenta").toString());
+            palette[Q3270::Green]     = QColor(settings.value("Green").toString());
+            palette[Q3270::Cyan]      = QColor(settings.value("Cyan").toString());
+            palette[Q3270::Yellow]    = QColor(settings.value("Yellow").toString());
+            palette[Q3270::Neutral]   = QColor(settings.value("Neutral").toString());
 
             // Save theme
             themes.insert(ThemeList.at(sc), palette);
@@ -122,19 +122,19 @@ ColourTheme::ColourTheme(QWidget *parent) :
     connect(newTheme->buttonBox, &QDialogButtonBox::rejected, &newThemePopUp, &QDialog::reject);
 
     // Set up a list of buttons for use in setButtonColours
-    colourButtons[UNPROTECTED_NORMAL]      = ui->baseUnprotected;
-    colourButtons[PROTECTED_NORMAL]        = ui->baseProtected;
-    colourButtons[UNPROTECTED_INTENSIFIED] = ui->baseUnprotectedIntensify;
-    colourButtons[PROTECTED_INTENSIFIED]   =  ui->baseProtectedIntensify;
+    colourButtons[Q3270::UnprotectedNormal]      = ui->baseUnprotected;
+    colourButtons[Q3270::ProtectedNormal]        = ui->baseProtected;
+    colourButtons[Q3270::UnprotectedIntensified] = ui->baseUnprotectedIntensify;
+    colourButtons[Q3270::ProtectedIntensified]   = ui->baseProtectedIntensify;
 
-    colourButtons[BLACK]        = ui->colourBlack;
-    colourButtons[BLUE]         = ui->colourBlue;
-    colourButtons[RED]          = ui->colourRed;
-    colourButtons[MAGENTA]      = ui->colourPink;
-    colourButtons[GREEN]        = ui->colourGreen;
-    colourButtons[CYAN]         = ui->colourTurq;
-    colourButtons[YELLOW]       = ui->colourYellow;
-    colourButtons[NEUTRAL]      = ui->colourWhite;
+    colourButtons[Q3270::Black]        = ui->colourBlack;
+    colourButtons[Q3270::Blue]         = ui->colourBlue;
+    colourButtons[Q3270::Red]          = ui->colourRed;
+    colourButtons[Q3270::Magenta]      = ui->colourPink;
+    colourButtons[Q3270::Green]        = ui->colourGreen;
+    colourButtons[Q3270::Cyan]         = ui->colourTurq;
+    colourButtons[Q3270::Yellow]       = ui->colourYellow;
+    colourButtons[Q3270::Neutral]      = ui->colourWhite;
 
     setTheme("Factory");
 
@@ -214,19 +214,19 @@ void ColourTheme::setButtonColours(QString themeName)
     Colours thisTheme = getTheme(themeName);
 
     // Change colour swatches
-    colourButtons[UNPROTECTED_NORMAL]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[UNPROTECTED_NORMAL].name()));
-    colourButtons[PROTECTED_NORMAL]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[PROTECTED_NORMAL].name()));
-    colourButtons[UNPROTECTED_INTENSIFIED]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[UNPROTECTED_INTENSIFIED].name()));
-    colourButtons[PROTECTED_INTENSIFIED]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[PROTECTED_INTENSIFIED].name()));
+    colourButtons[Q3270::UnprotectedNormal]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[Q3270::UnprotectedNormal].name()));
+    colourButtons[Q3270::ProtectedNormal]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[Q3270::ProtectedNormal].name()));
+    colourButtons[Q3270::UnprotectedIntensified]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[Q3270::UnprotectedIntensified].name()));
+    colourButtons[Q3270::ProtectedIntensified]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[Q3270::ProtectedIntensified].name()));
 
-    colourButtons[BLACK]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[BLACK].name()));
-    colourButtons[BLUE]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[BLUE].name()));
-    colourButtons[RED]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[RED].name()));
-    colourButtons[MAGENTA]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[MAGENTA].name()));
-    colourButtons[GREEN]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[GREEN].name()));
-    colourButtons[CYAN]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[CYAN].name()));
-    colourButtons[YELLOW]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[YELLOW].name()));
-    colourButtons[NEUTRAL]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[NEUTRAL].name()));
+    colourButtons[Q3270::Black]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[Q3270::Black].name()));
+    colourButtons[Q3270::Blue]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[Q3270::Blue].name()));
+    colourButtons[Q3270::Red]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[Q3270::Red].name()));
+    colourButtons[Q3270::Magenta]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[Q3270::Magenta].name()));
+    colourButtons[Q3270::Green]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[Q3270::Green].name()));
+    colourButtons[Q3270::Cyan]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[Q3270::Cyan].name()));
+    colourButtons[Q3270::Yellow]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[Q3270::Yellow].name()));
+    colourButtons[Q3270::Neutral]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[Q3270::Neutral].name()));
 }
 
 /**
@@ -249,51 +249,51 @@ void ColourTheme::setColour()
 
     if (!button.compare("colourBlack"))
     {
-        colourDialog(currentTheme[BLACK], buttonSender);
+        colourDialog(currentTheme[Q3270::Black], buttonSender);
     }
     else if (!button.compare("colourBlue"))
     {
-        colourDialog(currentTheme[BLUE], buttonSender);
+        colourDialog(currentTheme[Q3270::Blue], buttonSender);
     }
     else if (!button.compare("colourRed"))
     {
-        colourDialog(currentTheme[RED], buttonSender);
+        colourDialog(currentTheme[Q3270::Red], buttonSender);
     }
     else if (!button.compare("colourPink"))
     {
-        colourDialog(currentTheme[MAGENTA], buttonSender);
+        colourDialog(currentTheme[Q3270::Magenta], buttonSender);
     }
     else if (!button.compare("colourGreen"))
     {
-        colourDialog(currentTheme[GREEN], buttonSender);
+        colourDialog(currentTheme[Q3270::Green], buttonSender);
     }
     else if (!button.compare("colourTurq"))
     {
-        colourDialog(currentTheme[CYAN], buttonSender);
+        colourDialog(currentTheme[Q3270::Cyan], buttonSender);
     }
     else if (!button.compare("colourYellow"))
     {
-        colourDialog(currentTheme[YELLOW], buttonSender);
+        colourDialog(currentTheme[Q3270::Yellow], buttonSender);
     }
     else if (!button.compare("colourWhite"))
     {
-        colourDialog(currentTheme[NEUTRAL], buttonSender);
+        colourDialog(currentTheme[Q3270::Neutral], buttonSender);
     }
     else if (!button.compare("baseProtected"))
     {
-        colourDialog(currentTheme[PROTECTED_NORMAL], buttonSender);
+        colourDialog(currentTheme[Q3270::ProtectedNormal], buttonSender);
     }
     else if (!button.compare("baseUnprotectedIntensify"))
     {
-        colourDialog(currentTheme[UNPROTECTED_INTENSIFIED], buttonSender);
+        colourDialog(currentTheme[Q3270::UnprotectedIntensified], buttonSender);
     }
     else if (!button.compare("baseUnprotected"))
     {
-        colourDialog(currentTheme[UNPROTECTED_NORMAL], buttonSender);
+        colourDialog(currentTheme[Q3270::UnprotectedNormal], buttonSender);
     }
     else if (!button.compare("baseProtectedIntensify"))
     {
-        colourDialog(currentTheme[PROTECTED_INTENSIFIED], buttonSender);
+        colourDialog(currentTheme[Q3270::ProtectedIntensified], buttonSender);
     }
 
     // Update the map with the new colour
@@ -475,7 +475,7 @@ void ColourTheme::accept()
     // Clear any existing settings
     settings.remove("");
 
-    QMap<QString, QMap<ColourTheme::Colour, QColor>>::const_iterator i = themes.constBegin();
+    QMap<QString, QMap<Q3270::Colour, QColor>>::const_iterator i = themes.constBegin();
 
     while(i != themes.constEnd())
     {
@@ -488,20 +488,20 @@ void ColourTheme::accept()
             Colours c = i.value();
 
             // Save base colours
-            settings.setValue("UnprotectedNormal", c[UNPROTECTED_NORMAL].name());
-            settings.setValue("UnprotectedIntensified", c[UNPROTECTED_INTENSIFIED].name());
-            settings.setValue("ProtectedNormal", c[PROTECTED_NORMAL].name());
-            settings.setValue("ProtectedIntensified", c[PROTECTED_INTENSIFIED].name());
+            settings.setValue("UnprotectedNormal", c[Q3270::UnprotectedNormal].name());
+            settings.setValue("UnprotectedIntensified", c[Q3270::UnprotectedIntensified].name());
+            settings.setValue("ProtectedNormal", c[Q3270::ProtectedNormal].name());
+            settings.setValue("ProtectedIntensified", c[Q3270::ProtectedIntensified].name());
 
             // Save Extended colours
-            settings.setValue("Black", c[BLACK].name());
-            settings.setValue("Blue", c[BLUE].name());
-            settings.setValue("Red", c[RED].name());
-            settings.setValue("Magenta", c[MAGENTA].name());
-            settings.setValue("Green", c[GREEN].name());
-            settings.setValue("Cyan", c[CYAN].name());
-            settings.setValue("Yellow", c[YELLOW].name());
-            settings.setValue("Neutral", c[NEUTRAL].name());
+            settings.setValue("Black", c[Q3270::Black].name());
+            settings.setValue("Blue", c[Q3270::Blue].name());
+            settings.setValue("Red", c[Q3270::Red].name());
+            settings.setValue("Magenta", c[Q3270::Magenta].name());
+            settings.setValue("Green", c[Q3270::Green].name());
+            settings.setValue("Cyan", c[Q3270::Cyan].name());
+            settings.setValue("Yellow", c[Q3270::Yellow].name());
+            settings.setValue("Neutral", c[Q3270::Neutral].name());
 
             // End Theme group
             settings.endGroup();

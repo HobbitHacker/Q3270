@@ -193,6 +193,26 @@ namespace Q3270 {
 
     Q_NAMESPACE
 
+    // Telnet states (what to expect next)
+    enum TelnetState {
+        TELNET_STATE_DATA,
+        TELNET_STATE_IAC,
+        TELNET_STATE_IAC_DO,
+        TELNET_STATE_IAC_DONT,
+        TELNET_STATE_IAC_WILL,
+        TELNET_STATE_IAC_WONT,
+        TELNET_STATE_IAC_SB,
+        TELNET_STATE_SB,
+        TELNET_STATE_SB_IAC,
+        TELNET_STATE_SB_TTYPE,
+        TELNET_STATE_SB_TTYPE_SEND,
+        TELNET_STATE_SB_TTYPE_SEND_IAC,
+        TELNET_STATE_SB_TN3270E,
+        TELNET_STATE_SB_TN3270E_SEND,
+        TELNET_STATE_SB_TN3270E_SEND_DEVICE_TYPE
+    };
+
+    // Status bar indicators
     enum Indicators {
         Unlocked,
         SystemLock,
@@ -202,29 +222,41 @@ namespace Q3270 {
         GoElsewhere
     };
 
+    // Socket encryption state
     enum Encryption {
         Unencrypted    = 0,
         SemiEncrypted  = 1,
         Encrypted      = 2
     };
 
+    // Colours and their 3270 codes
     enum Colour
     {
-        BLACK                      = 0,
-        BLUE                       = 1,
-        RED                        = 2,
-        MAGENTA                    = 3,
-        GREEN                      = 4,
-        CYAN                       = 5,
-        YELLOW                     = 6,
-        NEUTRAL                    = 7,
+        Black                     = 0,
+        Blue                      = 1,
+        Red                       = 2,
+        Magenta                   = 3,
+        Green                     = 4,
+        Cyan                      = 5,
+        Yellow                    = 6,
+        Neutral                   = 7,
 
-        UNPROTECTED_NORMAL         = 32,
-        PROTECTED_NORMAL           = 33,
-        UNPROTECTED_INTENSIFIED    = 34,
-        PROTECTED_INTENSIFIED      = 35
+        UnprotectedNormal         = 32,
+        ProtectedNormal           = 33,
+        UnprotectedIntensified    = 34,
+        ProtectedIntensified      = 35
     };
 
+    // Attributes that may have character-specific attributes
+    enum CharAttr
+    {
+        ExtendedAttr,
+        ColourAttr,
+        CharsetAttr,
+        TransparencyAttr
+    };
+
+    // Ruler styles
     enum RulerStyle
     {
         CrossHair,
@@ -232,7 +264,10 @@ namespace Q3270 {
         Horizontal
     };
 
+    Q_ENUM_NS(TelnetState)
     Q_ENUM_NS(RulerStyle)
+    Q_ENUM_NS(Colour)
+    Q_ENUM_NS(CharAttr)
 };
 
 Q_DECLARE_METATYPE(Q3270::RulerStyle)

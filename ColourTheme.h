@@ -47,6 +47,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <QLabel>
 #include <QMap>
 
+#include "Q3270.h"
+
 namespace Ui {
     class ColourTheme;
     class NewTheme;
@@ -58,24 +60,7 @@ class ColourTheme : public QDialog
 
     public:
 
-        enum Colour
-        {
-            BLACK                      = 0,
-            BLUE                       = 1,
-            RED                        = 2,
-            MAGENTA                    = 3,
-            GREEN                      = 4,
-            CYAN                       = 5,
-            YELLOW                     = 6,
-            NEUTRAL                    = 7,
-
-            UNPROTECTED_NORMAL         = 32,
-            PROTECTED_NORMAL           = 33,
-            UNPROTECTED_INTENSIFIED    = 34,
-            PROTECTED_INTENSIFIED      = 35
-        };
-
-        typedef QMap<Colour, QColor> Colours;
+        typedef QMap<Q3270::Colour, QColor> Colours;
 
         explicit ColourTheme(QWidget *parent = nullptr);
         ~ColourTheme();
@@ -94,7 +79,7 @@ class ColourTheme : public QDialog
 
         QDialog newThemePopUp;
 
-        QHash<Colour, QPushButton *> colourButtons;
+        QHash<Q3270::Colour, QPushButton *> colourButtons;
         QList<QPushButton *> extendedButtons;
 
         QMap<QString, Colours> themes;

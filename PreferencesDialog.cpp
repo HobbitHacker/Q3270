@@ -68,19 +68,19 @@ PreferencesDialog::PreferencesDialog(ColourTheme &colours, KeyboardTheme &keyboa
     ui->crosshair->addItems(comboRulerStyle.keys());
 
     // Set up a list of buttons for use in setButtonColours
-    colourButtons[ColourTheme::UNPROTECTED_NORMAL]      = ui->baseUnprotected;
-    colourButtons[ColourTheme::PROTECTED_NORMAL]        = ui->baseProtected;
-    colourButtons[ColourTheme::UNPROTECTED_INTENSIFIED] = ui->baseUnprotectedIntensify;
-    colourButtons[ColourTheme::PROTECTED_INTENSIFIED]   = ui->baseProtectedIntensify;
+    colourButtons[Q3270::UnprotectedNormal]      = ui->baseUnprotected;
+    colourButtons[Q3270::ProtectedNormal]        = ui->baseProtected;
+    colourButtons[Q3270::UnprotectedIntensified] = ui->baseUnprotectedIntensify;
+    colourButtons[Q3270::ProtectedIntensified]   = ui->baseProtectedIntensify;
 
-    colourButtons[ColourTheme::BLACK]        = ui->colourBlack;
-    colourButtons[ColourTheme::BLUE]         = ui->colourBlue;
-    colourButtons[ColourTheme::RED]          = ui->colourRed;
-    colourButtons[ColourTheme::MAGENTA]      = ui->colourPink;
-    colourButtons[ColourTheme::GREEN]        = ui->colourGreen;
-    colourButtons[ColourTheme::CYAN]         = ui->colourTurq;
-    colourButtons[ColourTheme::YELLOW]       = ui->colourYellow;
-    colourButtons[ColourTheme::NEUTRAL]      = ui->colourWhite;
+    colourButtons[Q3270::Black]        = ui->colourBlack;
+    colourButtons[Q3270::Blue]         = ui->colourBlue;
+    colourButtons[Q3270::Red]          = ui->colourRed;
+    colourButtons[Q3270::Magenta]      = ui->colourPink;
+    colourButtons[Q3270::Green]        = ui->colourGreen;
+    colourButtons[Q3270::Cyan]         = ui->colourTurq;
+    colourButtons[Q3270::Yellow]       = ui->colourYellow;
+    colourButtons[Q3270::Neutral]      = ui->colourWhite;
 
     // Populate code page list
     ui->CodePages->addItems(codepages.getCodePageList());
@@ -223,19 +223,19 @@ void PreferencesDialog::setButtonColours(QString themeName)
     ColourTheme::Colours thisTheme = colours.getTheme(themeName);
 
     // Change colour swatches
-    colourButtons[ColourTheme::UNPROTECTED_NORMAL]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[ColourTheme::UNPROTECTED_NORMAL].name()));
-    colourButtons[ColourTheme::PROTECTED_NORMAL]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[ColourTheme::PROTECTED_NORMAL].name()));
-    colourButtons[ColourTheme::UNPROTECTED_INTENSIFIED]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[ColourTheme::UNPROTECTED_INTENSIFIED].name()));
-    colourButtons[ColourTheme::PROTECTED_INTENSIFIED]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[ColourTheme::PROTECTED_INTENSIFIED].name()));
+    colourButtons[Q3270::UnprotectedNormal]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[Q3270::UnprotectedNormal].name()));
+    colourButtons[Q3270::ProtectedNormal]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[Q3270::ProtectedNormal].name()));
+    colourButtons[Q3270::UnprotectedIntensified]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[Q3270::UnprotectedIntensified].name()));
+    colourButtons[Q3270::ProtectedIntensified]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[Q3270::ProtectedIntensified].name()));
 
-    colourButtons[ColourTheme::BLACK]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[ColourTheme::BLACK].name()));
-    colourButtons[ColourTheme::BLUE]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[ColourTheme::BLUE].name()));
-    colourButtons[ColourTheme::RED]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[ColourTheme::RED].name()));
-    colourButtons[ColourTheme::MAGENTA]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[ColourTheme::MAGENTA].name()));
-    colourButtons[ColourTheme::GREEN]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[ColourTheme::GREEN].name()));
-    colourButtons[ColourTheme::CYAN]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[ColourTheme::CYAN].name()));
-    colourButtons[ColourTheme::YELLOW]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[ColourTheme::YELLOW].name()));
-    colourButtons[ColourTheme::NEUTRAL]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[ColourTheme::NEUTRAL].name()));
+    colourButtons[Q3270::Black]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[Q3270::Black].name()));
+    colourButtons[Q3270::Blue]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[Q3270::Blue].name()));
+    colourButtons[Q3270::Red]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[Q3270::Red].name()));
+    colourButtons[Q3270::Magenta]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[Q3270::Magenta].name()));
+    colourButtons[Q3270::Green]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[Q3270::Green].name()));
+    colourButtons[Q3270::Cyan]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[Q3270::Cyan].name()));
+    colourButtons[Q3270::Yellow]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[Q3270::Yellow].name()));
+    colourButtons[Q3270::Neutral]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[Q3270::Neutral].name()));
 }
 
 /**

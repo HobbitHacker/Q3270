@@ -49,7 +49,7 @@ SocketConnection::SocketConnection(int modelType)
 {
     dataSocket = new QSslSocket(this);
 //    dataSocket = new QTcpSocket(this);
-	telnetState = TELNET_STATE_DATA;
+    telnetState = Q3270::TELNET_STATE_DATA;
 
     this->termName = tn3270e_terminal_types[modelType];
 	
@@ -66,16 +66,33 @@ SocketConnection::SocketConnection(int modelType)
     verifyCerts = false;
 }
 
+/**
+ * @brief   SocketConnection::setSecure - indicate that this connection should be secured
+ *
+ * @details Signalled when the user selects the 'Secure Connection' option in the dialog
+ */
 void SocketConnection::setSecure(bool s)
 {
     secureMode = s;
 }
 
+/**
+ * @brief   SocketConnection::setVerify - indicate that the certificates should be verified for
+ *          a secure connection.
+ *
+ * @details Signalled when the user selects the 'Verfiy Certficates' option in the dialog
+ */
 void SocketConnection::setVerify(bool v)
 {
     verifyCerts = v;
 }
 
+/**
+ *  @brief   SocketConnection:error - called when a socket error occurs
+ *
+ *  @details Signalled when a socket error happens, such as the remote host closing the
+ *           connection.
+ */
 void SocketConnection::error(QAbstractSocket::SocketError socketError)
 {
     qDebug() << "Error:" << dataSocket->errorString();
@@ -103,7 +120,9 @@ SocketConnection::~SocketConnection()
  */
 void SocketConnection::opened()
 {
+    emit encryptedConnection(Q3270::Unencrypted);
     emit connectionStarted();
+
 }
 
 /**
@@ -114,6 +133,7 @@ void SocketConnection::opened()
 void SocketConnection::closed()
 {
     emit connectionEnded();
+    emit encryptedConnection(Q3270::Unencrypted);
 }
 
 /**
@@ -143,6 +163,8 @@ void SocketConnection::disconnectMainframe()
  */
 void SocketConnection::connectMainframe(QString &address, quint16 port, QString luName, ProcessDataStream *d)
 {
+    certErrors = false;
+
     QList<QSslCipher> c = dataSocket->sslConfiguration().supportedCiphers();
     for(int i=0; i<c.size();i++)
     {
@@ -150,6 +172,7 @@ void SocketConnection::connectMainframe(QString &address, quint16 port, QString 
     }
 
     connect(dataSocket, &QSslSocket::stateChanged, this, &SocketConnection::socketStateChanged);
+    connect(dataSocket, &QSslSocket::encrypted, this, &SocketConnection::socketEncrypted);
     connect(dataSocket, QOverload<const QList<QSslError> &>::of(&QSslSocket::sslErrors), this, &SocketConnection::sslErrors);
 
     if (secureMode)
@@ -171,16 +194,20 @@ void SocketConnection::connectMainframe(QString &address, quint16 port, QString 
 }
 
 /**
- * @brief   SocketConnection::sslErrors - display SSL errors
+ * @brief   SocketConnection::sslErrors - handle SSL errors
  * @param   errors - the list of errors
  *
- * @details Called when SSL errors happen, and displays them
+ * @details Called when SSL errors happen. If the user has chosen to not verify the certificates
+ *          for an SSL connection, the connection is failed, otherwise, the SSL errors are
+ *          enumerated and passed to Qt to be ignored, after which the connection can be
+ *          considered 'semi secure'.
  */
 void SocketConnection::sslErrors(const QList<QSslError> &errors)
 {
     if (!verifyCerts)
     {
         dataSocket->ignoreSslErrors(errors);
+        certErrors = true;
     }
     else
     {
@@ -192,6 +219,30 @@ void SocketConnection::sslErrors(const QList<QSslError> &errors)
         }
         emit connectionEnded(errs);
     }
+}
+
+/**
+ * @brief   SocketConnection::socketEncrypted
+ * @param   errors - the list of errors
+ *
+ * @details Called when SSL errors happen, switches the padlock icon
+ */
+void SocketConnection::socketEncrypted()
+{
+    qDebug() << "Encypted!";
+    if (certErrors)
+    {
+        emit encryptedConnection(Q3270::SemiEncrypted);
+    }
+    else
+    {
+        emit encryptedConnection(Q3270::Encrypted);
+    }
+}
+
+QList<QSslCertificate> SocketConnection::getCertDetails()
+{
+    return dataSocket->peerCertificateChain();
 }
 
 /**
@@ -216,17 +267,6 @@ void SocketConnection::socketStateChanged(QAbstractSocket::SocketState state)
             emit encryptedConnection(Q3270::Unencrypted);
             break;
         case QAbstractSocket::ConnectedState:
-            if (dataSocket->isEncrypted())
-            {
-                if (!verifyCerts)
-                {
-                    emit encryptedConnection(Q3270::SemiEncrypted);
-                }
-                else
-                {
-                    emit encryptedConnection(Q3270::Encrypted);
-                }
-            }
             break;
         default:
             emit encryptedConnection(Q3270::Unencrypted);
@@ -280,18 +320,18 @@ void SocketConnection::onReadyRead()
             switch (telnetState)
 			{
 
-				case TELNET_STATE_DATA:
+                case Q3270::TELNET_STATE_DATA:
                     if (unsignedSocketByte == IAC)
 					{
                         byteNotes.append("IAC ");
-						telnetState = TELNET_STATE_IAC;
+                        telnetState = Q3270::TELNET_STATE_IAC;
 					} else 
 					{
                         incomingData.append(unsignedSocketByte);
 					}
 					break;
 
-				case TELNET_STATE_IAC:
+                case Q3270::TELNET_STATE_IAC:
                     switch (unsignedSocketByte)
 					{
                         case IAC: // double IAC (0xFF) means a single data byte 0xFF
@@ -299,35 +339,35 @@ void SocketConnection::onReadyRead()
                             {
                                 // socketByte is 0xFF here, so we don't double up the incoming buffer
                                 subNegotiationBuffer.append(unsignedSocketByte);
-                                telnetState = TELNET_STATE_SB;
+                                telnetState = Q3270::TELNET_STATE_SB;
                             }
                             else
                             {
                                 // socketByte is 0xFF here, so we don't double up the incoming buffer
                                 incomingData.append(unsignedSocketByte);
-                                telnetState = TELNET_STATE_DATA;
+                                telnetState = Q3270::TELNET_STATE_DATA;
                             }
                             byteNotes.append("Double 0xFF ");;
 							break;
 						case DO:		// Request something, or confirm WILL request
                             byteNotes.append("DO ");
-							telnetState = TELNET_STATE_IAC_DO;
+                            telnetState = Q3270::TELNET_STATE_IAC_DO;
 							break;
 						case DONT: 		// Request to not do something, or reject WILL request
                             byteNotes.append("DONT ");
-							telnetState = TELNET_STATE_IAC_DONT;
+                            telnetState = Q3270::TELNET_STATE_IAC_DONT;
 							break;
 						case WILL:  	// Offer to do something, or confirm DO request
                             byteNotes.append("WILL ");
-							telnetState = TELNET_STATE_IAC_WILL;
+                            telnetState = Q3270::TELNET_STATE_IAC_WILL;
 							break;
 						case WONT: 		// Reject DO request
                             byteNotes.append("WONT ");
-                            telnetState = TELNET_STATE_IAC_WONT;
+                            telnetState = Q3270::TELNET_STATE_IAC_WONT;
 							break;
 						case SB:
                             byteNotes.append("SB ");
-                            telnetState = TELNET_STATE_SB;
+                            telnetState = Q3270::TELNET_STATE_SB;
                             subNegotiationProcessing = true;
 							break;
                         case SE:
@@ -343,11 +383,11 @@ void SocketConnection::onReadyRead()
                                 byteNotes.append("- IAC SE, no SB? ");
                             }
                             subNegotiationProcessing = false;
-                            telnetState = TELNET_STATE_DATA;
+                            telnetState = Q3270::TELNET_STATE_DATA;
                             break;
                         case EOR:
                             byteNotes.append("EOR ");
-                            telnetState = TELNET_STATE_DATA;
+                            telnetState = Q3270::TELNET_STATE_DATA;
                             qDebug() << byteNotes;
                             byteNotes = "";
                             dump(incomingData,"Incoming Data");
@@ -360,7 +400,7 @@ void SocketConnection::onReadyRead()
 					}
                     break;
 
-				case TELNET_STATE_IAC_DO:
+                case Q3270::TELNET_STATE_IAC_DO:
                     switch (unsignedSocketByte)
 					{
                         // Note fall-through
@@ -375,20 +415,20 @@ void SocketConnection::onReadyRead()
                             response.append((uchar) WILL);
                             response.append(unsignedSocketByte);
                             dataStream.writeRawData(response, 3);
-							telnetState = TELNET_STATE_DATA;
+                            telnetState = Q3270::TELNET_STATE_DATA;
 							break;
 						default:
                             response.append((uchar) IAC);
                             response.append((uchar) WONT);
                             response.append(unsignedSocketByte);
                             dataStream.writeRawData(response, 3);
-							telnetState = TELNET_STATE_DATA;
+                            telnetState = Q3270::TELNET_STATE_DATA;
                             byteNotes.append(QString("Not sure: %1 ").arg(unsignedSocketByte, 2, 16));
                             break;
 					}
 					break;		
 
-				case TELNET_STATE_IAC_DONT:
+                case Q3270::TELNET_STATE_IAC_DONT:
                     switch(unsignedSocketByte)
                     {
                         case TELOPT_TN3270E:
@@ -397,11 +437,11 @@ void SocketConnection::onReadyRead()
                             break;
                         default:
                             byteNotes.append(QString("Not sure: %1 ").arg(unsignedSocketByte, 2, 16));
-                            telnetState = TELNET_STATE_DATA;
+                            telnetState = Q3270::TELNET_STATE_DATA;
                             break;
                     }
                     break;
-				case TELNET_STATE_IAC_WILL:
+                case Q3270::TELNET_STATE_IAC_WILL:
                     switch (unsignedSocketByte)
 					{
 						case TELOPT_BINARY:
@@ -411,29 +451,29 @@ void SocketConnection::onReadyRead()
                             response.append((uchar) DO);
                             response.append(unsignedSocketByte);
                             dataStream.writeRawData(response, 3);
-							telnetState = TELNET_STATE_DATA;
+                            telnetState = Q3270::TELNET_STATE_DATA;
 							break;
 						default:
                             response.append((uchar) IAC);
                             response.append((uchar) DONT);
                             response.append(unsignedSocketByte);
                             dataStream.writeRawData(response, 3);
-							telnetState = TELNET_STATE_DATA;
+                            telnetState = Q3270::TELNET_STATE_DATA;
                             byteNotes.append(QString("Not sure: %1 ").arg(unsignedSocketByte, 2, 16));
 							break;
 					}
 					break;
 
-				case TELNET_STATE_IAC_WONT:
+                case Q3270::TELNET_STATE_IAC_WONT:
                     byteNotes.append(QString("Not sure: %1 ").arg(unsignedSocketByte, 2, 16));
-                    telnetState = TELNET_STATE_DATA;
+                    telnetState = Q3270::TELNET_STATE_DATA;
 					break;
 
-                case TELNET_STATE_SB:
+                case Q3270::TELNET_STATE_SB:
                     switch(unsignedSocketByte)
                     {
                         case IAC:
-                            telnetState = TELNET_STATE_IAC;
+                            telnetState = Q3270::TELNET_STATE_IAC;
                             byteNotes.append("IAC ");
                             break;
                         default:
@@ -618,7 +658,7 @@ void SocketConnection::processSubNegotiation()
             dump(subNegotiationBuffer, "SubNegotitation - Unknown request");
             break;
     }
-    telnetState = TELNET_STATE_DATA;
+    telnetState = Q3270::TELNET_STATE_DATA;
 
     // Finished processing this buffer, so clear it.
     subNegotiationBuffer.clear();
