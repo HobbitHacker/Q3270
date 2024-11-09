@@ -240,6 +240,12 @@ void SocketConnection::socketEncrypted()
     }
 }
 
+/**
+ * @brief   SocketConnection::getCertDetails()
+ * @return  The certfiicate chain
+ *
+ * @details Called to fetch certificate details for Certificate Display dialog
+ */
 QList<QSslCertificate> SocketConnection::getCertDetails()
 {
     return dataSocket->peerCertificateChain();
