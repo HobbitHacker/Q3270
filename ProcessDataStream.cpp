@@ -93,6 +93,7 @@ void ProcessDataStream::processStream(QByteArray &b, bool tn3270e)
 */
 //    b->dump();
 
+    qApp->processEvents();
     wsfProcessing = false;
 
     //TODO: Multiple structured field WRITE commands
@@ -1395,7 +1396,7 @@ void ProcessDataStream::placeChar(uchar ebcdic)
  */
 void ProcessDataStream::incPos()
 {
-    if (++primary_pos > screenSize)
+    if (++primary_pos >= screenSize)
     {
         primary_pos = 0;
     }
