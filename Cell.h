@@ -102,7 +102,7 @@ public:
 
     void copy(Cell &c);
 
-    void setAttrs(bool prot, bool mdt, bool num, bool pensel, bool blink, bool disp, bool under, bool rev, Q3270::Colour col);
+    void setAttrs(bool prot, bool mdt, bool num, bool pensel, bool blink, bool disp, bool under, bool rev, bool intens, Q3270::Colour col);
 
     void refreshCodePage();
 

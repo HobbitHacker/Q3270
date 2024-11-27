@@ -232,6 +232,27 @@ void Cell::setFieldStart(bool fs)
         setUnderscore(false);
         setReverse(false);
         setBlink(false);
+
+        if (!extended)
+        {
+            if (prot & !intensify)
+            {
+                colNum = Q3270::ProtectedNormal;
+            }
+            else if (prot & intensify)
+            {
+                colNum = Q3270::ProtectedIntensified;
+            }
+            else if (!prot & !intensify)
+            {
+                colNum = Q3270::UnprotectedNormal;
+            }
+            else
+            {
+                colNum = Q3270::UnprotectedIntensified;
+            }
+            changed = true;
+        }
     }
 }
 
@@ -323,6 +344,7 @@ void Cell::setPenSelect(bool p)
 void Cell::setIntensify(bool i)
 {
     intensify = i;
+    changed = true;
 }
 
 /**
@@ -478,16 +500,19 @@ void Cell::copy(Cell &fromCell)
  * @details setAttrs forms a shortcut to calling all the relevant routines in one go. This routine is used when
  *          setting a Field Start, and cascading all the attributes to the end of the (new) field.
  */
-void Cell::setAttrs(bool prot, bool mdt, bool num, bool pensel, bool blink, bool disp, bool under, bool rev, Q3270::Colour col)
+void Cell::setAttrs(bool prot, bool mdt, bool num, bool pensel, bool blink, bool disp, bool under, bool rev, bool intens, Q3270::Colour col)
 {
     setProtected(prot);
-    setMDT(mdt);
     setNumeric(num);
     setPenSelect(pensel);
-    setBlink(blink);
+    setIntensify(intens);
     setDisplay(disp);
+    setMDT(mdt);
+
+    setBlink(blink);
     setUnderscore(under);
     setReverse(rev);
+
     setColour(col);
 }
 

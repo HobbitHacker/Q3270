@@ -374,20 +374,35 @@ void DisplayScreen::setChar(int pos, uchar c, bool fromKB)
 {
     if (cell.at(pos)->isFieldStart())
     {
+//        dumpFields();
+//        qDebug() << "Pos = " << pos << cell.at(pos)->isFieldStart();
         cell.at(pos)->setFieldStart(false);
-        int lastField;
-        if (pos == 0)
-            lastField = cell.at(screenPos_max - 1)->getField();
-        else
-            lastField = cell.at(pos - 1)->getField();
-        int nextField = findNextField(pos);
-//        qDebug() << "Existing field found at" << pos << "Last field was at" << lastField << "Next field at" << nextField;
-        for (int i = pos; i < nextField; i++)
-        {
-//            qDebug() << "Anchoring cell at" << i << "to field" << lastField;
-            cell.at(i)->setField(lastField);
-        }
 
+        int lastField;
+
+        // If this is the first position on the screen, we need the last screen position's field
+        lastField = pos == 0 ? cell.at(screenPos_max - 1)->getField() : cell.at(pos - 1)->getField();
+
+        int nextField = findNextField(pos);
+//        qDebug() << "Previous field is " << lastField << " and next field is " << nextField;
+//        qDebug() << "Existing field found at" << pos << "Last field was at" << lastField << "Next field at" << nextField;
+
+        // The 'next' field might actually be before the current position
+        int range = nextField > lastField ? nextField : nextField + screenPos_max;
+
+//        qDebug() << "Range = " << range;
+        for (int i = pos; i < range; i++)
+        {
+            int i1 = i % screenPos_max;
+//            qDebug() << "Anchoring cell at" << i << "to field" << lastField;
+            cell.at(i1)->setProtected(cell.at(lastField)->isProtected());
+            cell.at(i1)->setNumeric(cell.at(lastField)->isNumeric());
+            cell.at(i1)->setDisplay(cell.at(lastField)->isDisplay());
+            cell.at(i1)->setPenSelect(cell.at(lastField)->isPenSelect());
+            cell.at(i1)->setIntensify(cell.at(lastField)->isIntensify());
+            cell.at(i1)->setField(lastField);
+        }
+//        dumpFields();
     }
 
     int fieldAttr = cell.at(pos)->getField();
@@ -680,12 +695,12 @@ void DisplayScreen::setField(int pos, unsigned char c, bool sfe)
     unformatted = false;
 
     // Set field attribute flags
-    bool prot = (c>>5) & 1;
-    bool num = (c>>4) & 1;
-    bool disp = ((c>>2) & 3) != 3;
+    bool prot   = (c>>5) & 1;
+    bool num    = (c>>4) & 1;
+    bool disp   = ((c>>2) & 3) != 3;
     bool pensel = (( c >> 2) & 3) == 2 || (( c >> 2) & 3) == 1;
     bool intens = ((c >> 2) & 3) == 2;
-    bool mdt = c & 1;
+    bool mdt    = c & 1;
 
     cell.at(pos)->setProtected(prot);
     cell.at(pos)->setNumeric(num);
@@ -693,6 +708,7 @@ void DisplayScreen::setField(int pos, unsigned char c, bool sfe)
     cell.at(pos)->setPenSelect(pensel);
     cell.at(pos)->setIntensify(intens);
     cell.at(pos)->setMDT(mdt);
+
     cell.at(pos)->setExtended(sfe);
     cell.at(pos)->setFieldStart(true);
     cell.at(pos)->setField(pos);
@@ -700,68 +716,7 @@ void DisplayScreen::setField(int pos, unsigned char c, bool sfe)
     // Fields are set to 0x00
     cell.at(pos)->setChar(IBM3270_CHAR_NULL);
 
-    // If it's not an Extended Field, set colours accordingly
-//    if (!sfe)
-//    {
-        if (cell.at(pos)->isProtected() && !cell.at(pos)->isIntensify())
-        {
-            cell.at(pos)->setColour(Q3270::ProtectedNormal);        /* Protected (Blue) */
-        }
-        else if (cell.at(pos)->isProtected() && cell.at(pos)->isIntensify())
-        {
-            cell.at(pos)->setColour(Q3270::ProtectedIntensified);   /* Protected, Intensified (White) */
-        }
-        else if (!cell.at(pos)->isProtected() && !cell.at(pos)->isIntensify())
-        {
-            cell.at(pos)->setColour(Q3270::UnprotectedNormal);      /* Unprotected (Green) */
-        }
-        else
-        {
-            cell.at(pos)->setColour(Q3270::UnprotectedIntensified); /* Unrprotected, Intensified (Red) */
-        }
-//    }
-
     cascadeAttrs(pos);
-    // Cascade all the attributes until the next field
-        /*
-    QString attrs;
-
-    if(!cell.at(pos)->isProtected())
-    {
-        attrs = "unprot,";
-    }
-    else
-    {
-        attrs = "prot,";
-    }
-    if(cell.at(pos)->isIntensify())
-    {
-        attrs.append("intens,");
-    }
-    if (cell.at(pos)->isAutoSkip())
-    {
-        attrs.append("askip,");
-    }
-    if (!cell.at(pos)->isDisplay())
-    {
-        attrs.append("nondisp,");
-    }
-    if (cell.at(pos)->isPenSelect())
-    {
-        attrs.append("pen,");
-    }
-    if (cell.at(pos)->isNumeric())
-    {
-        attrs.append("num,");
-    }
-    if (cell.at(pos)->isMdtOn())
-    {
-        attrs.append("mdt,");
-    }
-
-    printf("%s", attrs.toLatin1().data());
-    fflush(stdout);
-*/
 }
 
 /**
@@ -784,6 +739,7 @@ void DisplayScreen::cascadeAttrs(int pos)
         bool disp = cell.at(pos)->isDisplay();
         bool under = cell.at(pos)->isUScore();
         bool rev   = cell.at(pos)->isReverse();
+        bool intens = cell.at(pos)->isIntensify();
 
         Q3270::Colour col = cell.at(pos)->getColour();
         Q3270::Colour tmpCol;
@@ -792,8 +748,13 @@ void DisplayScreen::cascadeAttrs(int pos)
         while(i < endPos && !(cell.at(i % screenPos_max)->isFieldStart()))
         {
             int offset = i++ % screenPos_max;
+            int offset1 = i  % screenPos_max;
             tmpCol = cell[offset]->hasCharAttrs(Q3270::ColourAttr) ? cell[offset]->getColour() : col;
-            cell[offset]->setAttrs(prot, mdt, num, pensel, blink, disp, under, rev, tmpCol);
+            if (cell.at(offset1)->isFieldStart())
+            {
+                qDebug() << "Cascading" << pos << "Protect" << prot << "to" << offset;
+            }
+            cell[offset]->setAttrs(prot, mdt, num, pensel, blink, disp, under, rev, intens, tmpCol);
             cell.at(offset)->setField(pos);
         }
 }
@@ -818,6 +779,7 @@ void DisplayScreen::refresh()
         {
             cell.at(i)->updateCell();
         }
+        resetCharAttr();
 }
 
 /**
@@ -825,7 +787,7 @@ void DisplayScreen::refresh()
  * @param   pos - the field position
  *
  * @details When a SFE order is encountered, there is no way to know which attributes will be set in the
- *          extended attribute pairs that follow the SFE, so this routine makea sure that any existing
+ *          extended attribute pairs that follow the SFE, so this routine makes sure that any existing
  *          attribute settings are cleared before processing the pairs.
  */
 void DisplayScreen::resetExtended(int pos)
@@ -873,10 +835,6 @@ void DisplayScreen::setExtendedColour(int pos, bool foreground, unsigned char c)
         c = IBM3270_EXT_DEFAULT_COLOR;
     }
     cell.at(pos)->setColour((Q3270::Colour)(c&7));
-/*    if(foreground)
-    {
-        qDebug() << colName[cell.at(pos)->getColour()];
-    }*/
 }
 
 /**
@@ -985,7 +943,7 @@ bool DisplayScreen::insertChar(unsigned char c, bool insertMode)
          *  otherwise it's overflow.
          **/
         int nextField = findNextField(cursor_pos);
-        printf("This Field at: %d,%d, next field at %d,%d - last byte of this field %02X\n", (int)(thisField/screen_x), (int)(thisField-((int)(thisField/screen_x)*screen_x)), (int)(nextField/screen_x), (int)(nextField-((int)(nextField/screen_x)*screen_x)), cell.at(nextField - 1)->getEBCDIC() );
+//        printf("This Field at: %d,%d, next field at %d,%d - last byte of this field %02X\n", (int)(thisField/screen_x), (int)(thisField-((int)(thisField/screen_x)*screen_x)), (int)(nextField/screen_x), (int)(nextField-((int)(nextField/screen_x)*screen_x)), cell.at(nextField - 1)->getEBCDIC() );
         uchar lastChar = cell.at(nextField - 1)->getEBCDIC();
         if (lastChar != IBM3270_CHAR_NULL && lastChar != IBM3270_CHAR_SPACE)
         {
@@ -1661,12 +1619,12 @@ int DisplayScreen::findField(int pos)
  */
 int DisplayScreen::findNextField(int pos)
 {
+    int tmpPos;
+
     if(cell.at(pos)->isFieldStart())
     {
         pos++;
     }
-
-    int tmpPos = (pos + 1) % screenPos_max;
 
     for(int i = pos; i < (pos + screenPos_max); i++)
     {
@@ -1921,25 +1879,19 @@ void DisplayScreen::dumpInfo()
     printf("    Character: \"%c\" (hex %2.2X EBCDIC %2.2X)\n", cell.at(cursor_pos)->getChar().toLatin1(),cell.at(cursor_pos)->getChar().toLatin1(),cell.at(cursor_pos)->getEBCDIC());
 
     printf("    Field Attribute: %d\n", cell.at(cursor_pos)->isFieldStart());
-//    if (cell.at(cursor_pos)->isFieldStart())
-//    {
-        printf("        MDT:       %d\n        Protected: %d\n        Numeric:   %d\n        Autoskip:  %d\n        Display:   %d\n",
-                cell.at(cursor_pos)->isMdtOn(),
-                cell.at(cursor_pos)->isProtected(),
-                cell.at(cursor_pos)->isNumeric(),
-                cell.at(cursor_pos)->isAutoSkip(),
-                cell.at(cursor_pos)->isDisplay());
-//    }
+    printf("        MDT:       %d\n        Protected: %d\n        Numeric:   %d\n        Autoskip:  %d\n        Display:   %d\n",
+            cell.at(cursor_pos)->isMdtOn(),
+            cell.at(cursor_pos)->isProtected(),
+            cell.at(cursor_pos)->isNumeric(),
+            cell.at(cursor_pos)->isAutoSkip(),
+            cell.at(cursor_pos)->isDisplay());
 
     printf("    Extended: %d\n", cell.at(cursor_pos)->isExtended());
-//    if (cell.at(cursor_pos)->isExtended())
-//    {
-        printf("        Intensify: %d\n        UScore:    %d\n        Reverse:   %d\n        Blink:     %d\n",
-               cell.at(cursor_pos)->isIntensify(),
-               cell.at(cursor_pos)->isUScore(),
-               cell.at(cursor_pos)->isReverse(),
-               cell.at(cursor_pos)->isBlink());
-//    }
+    printf("        Intensify: %d\n        UScore:    %d\n        Reverse:   %d\n        Blink:     %d\n",
+           cell.at(cursor_pos)->isIntensify(),
+           cell.at(cursor_pos)->isUScore(),
+           cell.at(cursor_pos)->isReverse(),
+           cell.at(cursor_pos)->isBlink());
 
     printf("    Character Attributes:\n        Extended: %d\n        CharSet:  %d\n        Colour:   %d\n    Colour: %d\n    Graphic: %d\n",
                 cell.at(cursor_pos)->hasCharAttrs(Q3270::ExtendedAttr),
@@ -1950,6 +1902,8 @@ void DisplayScreen::dumpInfo()
 
     int fieldStart = cell.at(cursor_pos)->getField();
     printf("    Field Position: %d (%d, %d)\n", fieldStart, (int) (fieldStart / screen_x), (int) (fieldStart - (int) (fieldStart / screen_x)));
+
+    dumpFields();
 
     fflush(stdout);
 
