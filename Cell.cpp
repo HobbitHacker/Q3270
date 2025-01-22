@@ -47,21 +47,22 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * This class is where the colours, visibility and reverse status are set.
  *
- * @param x_pos     -the across position in the 3270 display of this cell
- * @param y_pos    - the down position in the 3270 display of this cell
- * @param x        - the width of the cell in the parent QGraphicRectItem terms
- * @param y        - the height of the cell in the parent QGraphicsRectItem terms
- * @param &cp      - the codepage of the display (there is one codepage for all the display)
- * @param &palette - the colour palette of the display
- * @param *parent  - the parent QGraphicsRectItem (which owns all the Cells)
- * @param *scene   - the scene object
+ * @param celladdress - the address within the matrix of this cell (0 - max screen pos)
+ * @param x_pos       - the across position in the 3270 display of this cell
+ * @param y_pos       - the down position in the 3270 display of this cell
+ * @param x           - the width of the cell in the parent QGraphicRectItem terms
+ * @param y           - the height of the cell in the parent QGraphicsRectItem terms
+ * @param &cp         - the codepage of the display (there is one codepage for all the display)
+ * @param &palette    - the colour palette of the display
+ * @param *parent     - the parent QGraphicsRectItem (which owns all the Cells)
+ * @param *scene      - the scene object
  *
  * @details
  * The scene object is the parent for the overall display, each character and the underscore.
  *
  * Underscores are owned by the scene, as is the character itself (the glyph). The Cell is owned
  * by the 3270 display (24x80 etc) so that the Cell (a QGraphicsRectItem) can have inverted colours
- * which fill the rectangle.
+ * which fill the rectangle. Glpyhs are clipped to the parent size so no overlapping occurs.
  *
  * The underscore is set at 98% of the height. It is always a single pixel high and is logically
  * the highest layer.
@@ -85,9 +86,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * Each Cell contains attributes that are only relevant in particular situations - protection, display, numeric and
  * others can only be set by a Field Start, but given that any cell on the screen can be a field, all cells need to
  * have that potential setting.
+ *
+ * Each cell also contains a pointer to its Field Start cell (if one exists on the display), and field attributes
+ * colours, etc are taken from that cell (if appropriate).
  */
 
-Cell::Cell(qreal x_pos, qreal y_pos, qreal x, qreal y, CodePage &cp, ColourTheme::Colours &palette, QGraphicsItem *parent, QGraphicsScene *scene) : xsize(x), ysize(y), palette(palette), cp(cp)
+Cell::Cell(int celladdress, qreal x_pos, qreal y_pos, qreal x, qreal y, CodePage &cp, ColourTheme::Colours &palette, QGraphicsItem *parent, QGraphicsScene *scene) : address(celladdress), xsize(x), ysize(y), palette(palette), cp(cp)
 {
     QPen p;
     p.setStyle(Qt::NoPen);
@@ -115,17 +119,15 @@ Cell::Cell(qreal x_pos, qreal y_pos, qreal x, qreal y, CodePage &cp, ColourTheme
     scene->addItem(&underscore);
 
     changed = false;
-}
 
-/**
- * @brief   Cell::boundingRect
- * @return  the rectangle comprising the cell.
- *
- * @details Not sure this is needed any more.
- */
-QRectF Cell::boundingRect() const
-{
-    return QRectF(0, 0, xsize, ysize);
+    field = nullptr;
+
+    uscore = false;
+    display = true;
+    num = false;
+    mdt = false;
+
+    glyph.setFlag(ItemClipsToShape);
 }
 
 /**
@@ -222,6 +224,8 @@ void Cell::setColour(Q3270::Colour c)
  *          called when the cell used to be a field start, but that has now been overwritten.
  *
  *          Setting the cell to a Field Start causes underscore, reverse and blinking to be switched off.
+ *          If the FieldStart is set, this cell's field pointer is set to null (otherwise the cell would
+ *          point to itself).
  */
 void Cell::setFieldStart(bool fs)
 {
@@ -229,6 +233,7 @@ void Cell::setFieldStart(bool fs)
 
     if (fieldStart)
     {
+        field = nullptr;
         setUnderscore(false);
         setReverse(false);
         setBlink(false);
@@ -285,11 +290,20 @@ void Cell::setGraphic(bool ge)
  * @brief   Cell::setMDT - switch the MDT flag on or off
  * @param   m - true to turn it on, false to turn it off
  *
- * @details The MDT flag is used to indicate whether the user has modified a particular field.
+ * @details The MDT flag is used to indicate whether the user has modified a particular field. If this
+ *          cell is not a field start, the value is taken from the field cell instead.
  */
 void Cell::setMDT(bool m)
 {
-    mdt = m;
+    if (field)
+    {
+        field->mdt = m;
+    }
+
+    if (fieldStart)
+    {
+        mdt = m;
+    }
 }
 
 /**
@@ -331,7 +345,10 @@ void Cell::setDisplay(bool d)
  */
 void Cell::setPenSelect(bool p)
 {
-    pen = p;
+    if (fieldStart)
+    {
+        pen = p;
+    }
 }
 
 /**
@@ -385,6 +402,100 @@ void Cell::setBlink(bool b)
 {
     blink = b;
 }
+
+
+/**
+ *  @brief   Cell::setField - set this cell's field pointer
+ *  @param   field - the address of the field in memory, or null
+ *
+ *  @details This routine is called when this cell's field position is changed. This occurs when the incoming
+ *           3270 data stream defines a new field, or when an existing field is overwritten by the incoming
+ *           data.
+ *
+ *           When the field is set (rather than being set to null), the cell colour is taken from the field,
+ *           unless character attributes are in effect.
+ */
+void Cell::setField(Cell *field)
+{
+    this->field = field;
+
+    if (field)
+    {
+        if (!charAttrColour)
+        {
+            colNum = field->colNum;
+        }
+    }
+
+    changed = true;
+};
+
+/**
+ * @brief   Cell::getField - get the address of the field cell that owns this one
+ * @return  The address of this cell's field within the 3270 matrix.
+ *
+ * @details When characters are entered into the display, either from the 3270 stream or from the keyboard,
+ *          the field address is required to pick up the field attributes - if this field is a field start, then return
+ *          this address, otherwise return the address of the field that owns this cell if there is one.
+ */
+int Cell::getField()
+{
+    if (field)
+    {
+        return field->address;
+    }
+    if (fieldStart)
+    {
+        return address;
+    }
+
+    return -1;
+};
+
+/**
+ * @brief   Cell::isProtected - return whether this field is protected or not
+ * @return  True for a protected field, false otherwise
+ *
+ * @details Return the protected status of this cell. If this is a field start, then it's always
+ *          protected.
+ */
+bool Cell::isProtected()
+{
+    if (fieldStart)
+    {
+        return prot;
+    }
+
+    if (field)
+    {
+        return field->prot;
+    }
+
+    return false;
+};
+
+
+/**
+ * @brief   Cell::isUScore - return the state of the underscore
+ * @return  True if the underscore is showing, false otherwise
+ *
+ * @details Returns the state of the underscore, based on the field start or this cell's underscore
+ *          state if this is a field start.
+ */
+bool Cell::isUScore()
+{
+    if (fieldStart)
+    {
+        return uscore;
+    }
+
+    if (field)
+    {
+        return field->uscore;
+    }
+
+    return false;
+};
 
 /**
  * @brief   Cell::setCharAttrs - set the characater attribute
@@ -461,11 +572,12 @@ void Cell::resetCharAttrs()
  */
 void Cell::copy(Cell &fromCell)
 {
-    prot = fromCell.isProtected();
-    mdt = fromCell.isMdtOn();
-    num = fromCell.isNumeric();
-    pen = fromCell.isPenSelect();
-    setDisplay(fromCell.isDisplay());
+//    these should come from the Field Attribute
+//    prot = fromCell.isProtected();
+//    mdt = fromCell.isMdtOn();
+//    num = fromCell.isNumeric();
+//    pen = fromCell.isPenSelect();
+//    setDisplay(fromCell.isDisplay());
 
     blink = fromCell.isBlink();
 
@@ -500,14 +612,15 @@ void Cell::copy(Cell &fromCell)
  * @details setAttrs forms a shortcut to calling all the relevant routines in one go. This routine is used when
  *          setting a Field Start, and cascading all the attributes to the end of the (new) field.
  */
-void Cell::setAttrs(bool prot, bool mdt, bool num, bool pensel, bool blink, bool disp, bool under, bool rev, bool intens, Q3270::Colour col)
+//void Cell::setAttrs(bool prot, bool mdt, bool num, bool pensel, bool blink, bool disp, bool under, bool rev, bool intens, Q3270::Colour col)
+void Cell::setAttrs(bool blink, bool under, bool rev, Q3270::Colour col)
 {
-    setProtected(prot);
-    setNumeric(num);
-    setPenSelect(pensel);
-    setIntensify(intens);
-    setDisplay(disp);
-    setMDT(mdt);
+//    setProtected(prot);
+//    setNumeric(num);
+//    setPenSelect(pensel);
+//    setIntensify(intens);
+//    setDisplay(disp);
+//    setMDT(mdt);
 
     setBlink(blink);
     setUnderscore(under);
@@ -560,7 +673,8 @@ void Cell::setFont(QFont f)
     f.setStyleStrategy(QFont::NoSubpixelAntialias);
 
     xs = fm.horizontalAdvance("┼", 1);
-    ys = fm.height();
+    //ys = fm.height();
+    ys = fm.lineSpacing();
 
     QTransform fontScale;
 
@@ -592,36 +706,43 @@ bool Cell::updateCell()
 
     changed = false;
 
+    Q3270::Colour tmpCol = Q3270::Colour::UnprotectedNormal;
+
+    bool display = true;
+
+    bool reverse = false;
+    bool uscore = isUScore();
+
+    if (field)
+    {
+        display = field->display;
+        reverse = field->reverse;
+        tmpCol = field->colNum;
+    }
+
+    if (charAttrColour)
+    {
+        tmpCol = colNum;
+    }
+
+    if (charAttrExtended)
+    {
+        reverse = this->reverse || reverse;
+        uscore = this->uscore || uscore;
+    }
 
     if (!fieldStart)
     {
-        underscore.setVisible(uscore);
         if (uscore)
         {
-            underscore.setPen(QPen(QColor(palette[colNum]), 0));
+            underscore.setPen(QPen(QColor(palette[tmpCol]), 0));
         }
-        if (reverse)
-        {
-            glyph.setBrush(palette[Q3270::Black]);
-            this->setBrush(palette[colNum]);
 
-        }
-        else
-        {
-            glyph.setBrush(palette[colNum]);
-            this->setBrush(palette[Q3270::Black]);
+        glyph.setBrush(reverse ? palette[Q3270::Black] : palette[tmpCol]);
+        this->setBrush(reverse ? palette[tmpCol] : palette[Q3270::Black]);
 
-        }
-        if (!display)
-        {
-            glyph.setVisible(false);
-            underscore.setVisible(false);
-        }
-        else
-        {
-            glyph.setVisible(true);
-            underscore.setVisible(uscore);
-        }
+        glyph.setVisible(display);
+        underscore.setVisible(display && uscore);
     }
     else
     {

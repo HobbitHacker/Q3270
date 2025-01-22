@@ -107,7 +107,7 @@ DisplayScreen::DisplayScreen(int screen_x, int screen_y, CodePage &cp, ColourThe
 
             qreal x_pos = (qreal) x * gridSize_X;
 
-            cell.replace(pos, new Cell(x_pos, y_pos, gridSize_X, gridSize_Y, cp, palette, this, scene));
+            cell.replace(pos, new Cell(pos, x_pos, y_pos, gridSize_X, gridSize_Y, cp, palette, this, scene));
         }
     }
 
@@ -348,7 +348,7 @@ void DisplayScreen::clear()
         cell.at(i)->setColour(Q3270::Green);
 
         cell.at(i)->setChar(0x00);
-        cell.at(i)->setField(-1);
+        cell.at(i)->setField(nullptr);
     }
     resetCharAttr();
 
@@ -372,37 +372,26 @@ void DisplayScreen::clear()
  */
 void DisplayScreen::setChar(int pos, uchar c, bool fromKB)
 {
+
+    // If we're overlaying a Field Start, the subsequent positions on the screen now have a different
+    // field start, so update them accordingly.
     if (cell.at(pos)->isFieldStart())
     {
-//        dumpFields();
-//        qDebug() << "Pos = " << pos << cell.at(pos)->isFieldStart();
         cell.at(pos)->setFieldStart(false);
 
         int lastField;
 
         // If this is the first position on the screen, we need the last screen position's field
-        lastField = pos == 0 ? cell.at(screenPos_max - 1)->getField() : cell.at(pos - 1)->getField();
+        lastField = cell.at(pos == 0 ? screenPos_max - 1 : pos - 1)->getField();
 
-        int nextField = findNextField(pos);
-//        qDebug() << "Previous field is " << lastField << " and next field is " << nextField;
-//        qDebug() << "Existing field found at" << pos << "Last field was at" << lastField << "Next field at" << nextField;
+        int tmpPos = pos;
 
-        // The 'next' field might actually be before the current position
-        int range = nextField > lastField ? nextField : nextField + screenPos_max;
-
-//        qDebug() << "Range = " << range;
-        for (int i = pos; i < range; i++)
+        while(!cell.at(tmpPos % screenPos_max)->isFieldStart() && tmpPos < pos + screenPos_max)
         {
-            int i1 = i % screenPos_max;
-//            qDebug() << "Anchoring cell at" << i << "to field" << lastField;
-            cell.at(i1)->setProtected(cell.at(lastField)->isProtected());
-            cell.at(i1)->setNumeric(cell.at(lastField)->isNumeric());
-            cell.at(i1)->setDisplay(cell.at(lastField)->isDisplay());
-            cell.at(i1)->setPenSelect(cell.at(lastField)->isPenSelect());
-            cell.at(i1)->setIntensify(cell.at(lastField)->isIntensify());
-            cell.at(i1)->setField(lastField);
+            int i1 = tmpPos++ % screenPos_max;
+//          qDebug() << "Field at" << pos << "was FieldStart. Updating" << i1 << "as" << lastField;
+            cell.at(i1)->setField(cell.at(lastField));
         }
-//        dumpFields();
     }
 
     int fieldAttr = cell.at(pos)->getField();
@@ -413,7 +402,7 @@ void DisplayScreen::setChar(int pos, uchar c, bool fromKB)
     }
 
     // Reset character attributes for this cell
-    cell.at(pos)->resetCharAttrs();
+    //ll.at(pos)->resetCharAttrs();
 
     // Set character attribute flags if applicable
     if (useCharAttr)
@@ -455,12 +444,6 @@ void DisplayScreen::setChar(int pos, uchar c, bool fromKB)
         }
     }
 
-    // Non-display comes from field attribute
-    cell.at(pos)->setDisplay(cell.at(fieldAttr)->isDisplay());
-
-    // Protected comes from the field attribute
-    cell.at(pos)->setProtected(cell.at(fieldAttr)->isProtected());
-
     // Choose a graphic character if needed
     cell.at(pos)->setGraphic(geActive);
 
@@ -475,7 +458,7 @@ void DisplayScreen::setChar(int pos, uchar c, bool fromKB)
 
     geActive = false;
 
-    // If character colour attributes are present, use them
+    // If character colour attributes are present, use them instead
     if (cell.at(pos)->hasCharAttrs(Q3270::ColourAttr))
     {
         // Colour
@@ -487,10 +470,6 @@ void DisplayScreen::setChar(int pos, uchar c, bool fromKB)
         {
             cell.at(pos)->setColour(cell.at(fieldAttr)->getColour());
         }
-    }
-    else
-    {
-        cell.at(pos)->setColour(cell.at(fieldAttr)->getColour());
     }
 
     if (cell.at(pos)->hasCharAttrs(Q3270::ExtendedAttr))
@@ -525,12 +504,12 @@ void DisplayScreen::setChar(int pos, uchar c, bool fromKB)
             cell.at(pos)->setBlink(cell.at(fieldAttr)->isBlink());
         }
     }
-    else
-    {
-        cell.at(pos)->setUnderscore(cell.at(fieldAttr)->isUScore());
-        cell.at(pos)->setReverse(cell.at(fieldAttr)->isReverse());
-        cell.at(pos)->setBlink(cell.at(fieldAttr)->isBlink());
-    }
+//    else
+//    {
+//        cell.at(pos)->setUnderscore(cell.at(fieldAttr)->isUScore());
+//        cell.at(pos)->setReverse(cell.at(fieldAttr)->isReverse());
+//        cell.at(pos)->setBlink(cell.at(fieldAttr)->isBlink());
+//    }
 }
 
 /**
@@ -710,12 +689,17 @@ void DisplayScreen::setField(int pos, unsigned char c, bool sfe)
     cell.at(pos)->setMDT(mdt);
 
     cell.at(pos)->setExtended(sfe);
+
     cell.at(pos)->setFieldStart(true);
-    cell.at(pos)->setField(pos);
 
     // Fields are set to 0x00
     cell.at(pos)->setChar(IBM3270_CHAR_NULL);
 
+/*  if (pos == screenPos_max - 1)
+    {
+        qDebug() << "I'm here";
+    }
+*/
     cascadeAttrs(pos);
 }
 
@@ -731,31 +715,11 @@ void DisplayScreen::cascadeAttrs(int pos)
 {
         int endPos = pos + screenPos_max;
 
-        bool prot = cell.at(pos)->isProtected();
-        bool mdt = cell.at(pos)->isMdtOn();
-        bool num = cell.at(pos)->isNumeric();
-        bool pensel = cell.at(pos)->isPenSelect();
-        bool blink = cell.at(pos)->isBlink();
-        bool disp = cell.at(pos)->isDisplay();
-        bool under = cell.at(pos)->isUScore();
-        bool rev   = cell.at(pos)->isReverse();
-        bool intens = cell.at(pos)->isIntensify();
-
-        Q3270::Colour col = cell.at(pos)->getColour();
-        Q3270::Colour tmpCol;
-
         int i = pos + 1;
         while(i < endPos && !(cell.at(i % screenPos_max)->isFieldStart()))
         {
             int offset = i++ % screenPos_max;
-            int offset1 = i  % screenPos_max;
-            tmpCol = cell[offset]->hasCharAttrs(Q3270::ColourAttr) ? cell[offset]->getColour() : col;
-            if (cell.at(offset1)->isFieldStart())
-            {
-                qDebug() << "Cascading" << pos << "Protect" << prot << "to" << offset;
-            }
-            cell[offset]->setAttrs(prot, mdt, num, pensel, blink, disp, under, rev, intens, tmpCol);
-            cell.at(offset)->setField(pos);
+            cell.at(offset)->setField(cell.at(pos));
         }
 }
 
@@ -800,7 +764,8 @@ void DisplayScreen::resetExtended(int pos)
     cell.at(pos)->setNumeric(false);
     cell.at(pos)->setMDT(false);
     cell.at(pos)->setPenSelect(false);
-    cell.at(pos)->setProtected(false);
+    // FIXME: is this right that setProtected is commented out? Protecton comes from the field attr
+    // cell.at(pos)->setProtected(false);
 }
 
 /**
@@ -888,6 +853,7 @@ void DisplayScreen::resetMDTs()
     {
         if (cell.at(i)->isFieldStart() && cell.at(i)->isMdtOn())
         {
+  /*        qDebug() << "Resetting MDT at" << i;*/
             cell.at(i)->setMDT(false);
         }
 
@@ -917,7 +883,7 @@ bool DisplayScreen::insertChar(unsigned char c, bool insertMode)
         return false;
     }
 
-    int thisField = cell.at(cursor_pos)->getField();
+    //int thisField = cell.at(cursor_pos)->getField();
 
     if (insertMode)
     {
@@ -979,7 +945,7 @@ bool DisplayScreen::insertChar(unsigned char c, bool insertMode)
         }
     }
 
-    cell.at(thisField)->setMDT(true);
+    cell.at(cursor_pos)->setMDT(true);
 
     setChar(cursor_pos, c, true);
 
@@ -1106,7 +1072,7 @@ void DisplayScreen::deleteChar()
     }
 
     cell.at((endPos - 1) % screenPos_max)->setChar(IBM3270_CHAR_NULL);
-    cell.at(cell.at(cursor_pos)->getField())->setMDT(true);
+    cell.at(cursor_pos)->setMDT(true);
 }
 
 /**
@@ -1131,7 +1097,7 @@ void DisplayScreen::eraseEOF()
         cell.at(i % screenPos_max)->setChar(0x00);
     }
 
-    cell.at(cell.at(cursor_pos)->getField())->setMDT(true);
+    cell.at(cursor_pos)->setMDT(true);
 }
 
 /**
@@ -1230,9 +1196,7 @@ void DisplayScreen::eraseUnprotected(int start, int end)
         end += screenPos_max;
     }
 
-    int thisField = cell.at(start)->getField();
-
-    if (cell.at(thisField)->isProtected())
+    if (cell.at(start)->isProtected())
     {
         start = findNextUnprotectedField(start);
     }
@@ -1716,34 +1680,38 @@ void DisplayScreen::getModifiedFields(QByteArray &buffer)
     {
         if (!unformatted)
         {
-            if (cell.at(i)->isFieldStart() && !cell.at(i)->isProtected())
+            if (!cell.at(i)->isProtected())
             {
-                // This assumes that where two fields are adajcent to each other, the first cannot have MDT set
-                if (cell.at(i)->isMdtOn() && !cell.at(i)->isProtected())
+                if (cell.at(i)->isFieldStart())
                 {
-                    buffer.append(IBM3270_SBA);
-
-                    int nextPos = (i + 1) % screenPos_max;
-
-                    addPosToBuffer(buffer, nextPos);
-
-                    do
+                    qDebug() << "Input field found at " << i << "MDT is" << cell.at(i)->isMdtOn();
+                    // This assumes that where two fields are adajcent to each other, the first cannot have MDT set
+                    if (cell.at(i)->isMdtOn())
                     {
-                        uchar b = cell.at(nextPos++)->getEBCDIC();
-                        if (b != IBM3270_CHAR_NULL)
+                        buffer.append(IBM3270_SBA);
+
+                        int nextPos = (i + 1) % screenPos_max;
+
+                        addPosToBuffer(buffer, nextPos);
+
+                        do
                         {
-                            buffer.append(b);
+                            uchar b = cell.at(nextPos++)->getEBCDIC();
+                            if (b != IBM3270_CHAR_NULL)
+                            {
+                                buffer.append(b);
+                            }
+                            nextPos = nextPos % screenPos_max;
+                            //FIXME: Not sure this is right. This was a quick hack to cater for there being only one unprotected
+                            //       field on the screen.
+                            if (nextPos == 0)
+                            {
+                                printf("Wrapped!");
+                                return;
+                            }
                         }
-                        nextPos = nextPos % screenPos_max;
-                        //FIXME: Not sure this is right. This was a quick hack to cater for there being only one unprotected
-                        //       field on the screen.
-                        if (nextPos == 0)
-                        {
-                            printf("Wrapped!");
-                            return;
-                        }
+                        while(!cell.at(nextPos)->isFieldStart());
                     }
-                    while(!cell.at(nextPos)->isFieldStart());
                 }
             }
         }
@@ -1827,7 +1795,10 @@ void DisplayScreen::dumpFields()
             int tmppos = i * screen_x + j;
 
             if (cell.at(tmppos)->isFieldStart())
-                line.append("F");
+                if (cell.at(tmppos)->isMdtOn())
+                    line.append("F");
+                else
+                    line.append("f");
             else if (cell.at(cell.at(tmppos)->getField())->isFieldStart())
                 line.append(".");
             else
@@ -1901,7 +1872,7 @@ void DisplayScreen::dumpInfo()
                 cell.at(cursor_pos)->isGraphic());
 
     int fieldStart = cell.at(cursor_pos)->getField();
-    printf("    Field Position: %d (%d, %d)\n", fieldStart, (int) (fieldStart / screen_x), (int) (fieldStart - (int) (fieldStart / screen_x)));
+    printf("    Field Position: %d (%d, %d)\n", fieldStart, (int) (fieldStart / screen_x), (int) (fieldStart - (int) (fieldStart / screen_x) * screen_x));
 
     dumpFields();
 

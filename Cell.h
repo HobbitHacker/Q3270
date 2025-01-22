@@ -38,22 +38,24 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <QGraphicsSimpleTextItem>
 #include <QObject>
 #include <QGraphicsScene>
+#include <QPointer>
 
 #include "Q3270.h"
 #include "ColourTheme.h"
 #include "CodePage.h"
+
 
 class Cell : public QObject, public QGraphicsRectItem
 {
     Q_OBJECT
 
 public:
-    Cell(qreal x_pos, qreal y_pos, qreal x, qreal y, CodePage &cp, ColourTheme::Colours &palette, QGraphicsItem *parent, QGraphicsScene *scene);
+    Cell(int celladdress, qreal x_pos, qreal y_pos, qreal x, qreal y, CodePage &cp, ColourTheme::Colours &palette, QGraphicsItem *parent, QGraphicsScene *scene);
 
-    QRectF boundingRect() const;
+    //QRectF boundingRect() const;
 
-    void setChar(uchar ebcdic);
-    void setCharFromKB(uchar ascii);
+    void setChar(uchar);
+    void setCharFromKB(uchar);
 
     // Getters, inline for speed
     inline uchar getEBCDIC()                        { return ebcdic; };
@@ -66,54 +68,60 @@ public:
     inline bool isNumeric()                         { return num; };
     inline bool isGraphic()                         { return graphic; };
     inline bool isMdtOn()                           { return mdt; };
-    inline bool isProtected()                       { return prot; };
+    bool isProtected();
     inline bool isDisplay()                         { return display; };
     inline bool isPenSelect()                       { return pen; };
     inline bool isIntensify()                       { return intensify; };
     inline bool isExtended()                        { return extended; };
-    inline bool isUScore()                          { return uscore; };
+    bool isUScore();
     inline bool isReverse()                         { return reverse; };
     inline bool isBlink()                           { return blink; };
 
-    inline int  getField()                          { return fieldPos; };
-    inline void setField(int f)                     { fieldPos = f; };
+    int getField();
 
-    bool hasCharAttrs(Q3270::CharAttr ca);
+    void setField(Cell *);
+    void setField(QPointer <Cell>);
+
+    bool hasCharAttrs(Q3270::CharAttr);
 
     // Setters
-    void setColour(Q3270::Colour c);
-    void setFieldStart(bool fs);
-    void setNumeric(bool n);
-    void setGraphic(bool ge);
-    void setMDT(bool m);
-    void setProtected(bool p);
-    void setDisplay(bool d);
-    void setPenSelect(bool p);
-    void setIntensify(bool i);
-    void setExtended(bool e);
-    void setUnderscore(bool u);
-    void setReverse(bool r);
-    void setBlink(bool b);
+    void setColour(Q3270::Colour);
+    void setColourFromField()                       { setColour(field->getColour()); };
 
-    void setFont(QFont f);
+    void setFieldStart(bool);
+    void setNumeric(bool);
+    void setGraphic(bool);
+    void setMDT(bool);
+    void setProtected(bool);
+    void setDisplay(bool);
+    void setPenSelect(bool);
+    void setIntensify(bool);
+    void setExtended(bool);
+    void setUnderscore(bool);
+    void setReverse(bool);
+    void setBlink(bool);
 
-    void setCharAttrs(Q3270::CharAttr ca, bool c);
+    void setFont(QFont);
+
+    void setCharAttrs(Q3270::CharAttr, bool);
     void resetCharAttrs();
 
-    void copy(Cell &c);
+    void copy(Cell &);
 
-    void setAttrs(bool prot, bool mdt, bool num, bool pensel, bool blink, bool disp, bool under, bool rev, bool intens, Q3270::Colour col);
+    void setAttrs(bool, bool, bool, Q3270::Colour);
 
     void refreshCodePage();
 
-    void blinkChar(bool blink);
-
-    bool updateCell();
+    void blinkChar(bool);
+     bool updateCell();
 
 private:
 
     QGraphicsLineItem underscore;
     QGraphicsSimpleTextItem glyph;
+
+    // Screen position of this cell
+    int address;
 
     qreal xsize;
     qreal ysize;
@@ -137,7 +145,7 @@ private:
     bool fieldStart;
 
     // Field position
-    int fieldPos;
+    Cell *field;
 
     // Field attributes
     bool num;
