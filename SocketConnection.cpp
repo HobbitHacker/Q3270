@@ -556,13 +556,13 @@ void SocketConnection::processSubNegotiation()
                 response.append((uchar) SB);
                 response.append((uchar) TELOPT_TTYPE);
                 response.append((uchar) TELQUAL_IS);
-                response.append(termName.toLatin1().data(), strlen(termName.toLatin1().data()));
+                response.append(termName.toLatin1());
 
                 // Pass LU name if one was requested
                 if (luName.compare(""))
                 {
                     response.append('@');
-                    response.append(luName.toLatin1().data(), strlen(luName.toLatin1().data()));
+                    response.append(luName.toLatin1());
                 }
 
                 response.append((uchar) IAC);
@@ -587,7 +587,7 @@ void SocketConnection::processSubNegotiation()
                 response.append((uchar) TELOPT_TN3270E);
                 response.append((uchar) TN3270E_DEVICE_TYPE);
                 response.append((uchar) TN3270E_REQUEST);
-                response.append(termName.toLatin1().data(), strlen(termName.toLatin1().data()));
+                response.append(termName.toLatin1());
                 response.append((uchar) IAC);
                 response.append((uchar) SE);
 
