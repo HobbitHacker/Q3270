@@ -146,6 +146,7 @@ class ProcessDataStream : public QObject
 
         void replySummary(QByteArray &buffer);
         void addBytes(QByteArray &buffer, uchar *bytes, int len);
+        void processAttributePairs(int mode);
 };
 
 #endif // DISPLAYDATASTREAM_H
