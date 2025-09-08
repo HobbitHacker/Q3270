@@ -1168,10 +1168,8 @@ void Keyboard::setTheme(KeyboardMap theme)
     while(i != theme.constEnd())
     {
         // Each Q3270 function in the map may have multiple keys defined for it
-        for (int s = 0; s < i.value().size(); s++)
-        {
-            // Set mapping for this key to this function
-            setMapping(i.value()[s], i.key());
+        for (const auto &key : i.value()) {
+            setMapping(key, i.key());
         }
         i++;
     }
