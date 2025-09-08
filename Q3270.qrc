@@ -4,5 +4,9 @@
         <file>Icons/lock-tick.svg</file>
         <file>Icons/lock.svg</file>
         <file>Icons/unlock.svg</file>
+        <file>Icons/connect.svg</file>
+        <file>Icons/disconnect.svg</file>
+        <file>Icons/settings.svg</file>
+        <file>Icons/floppy.svg</file>
     </qresource>
 </RCC>

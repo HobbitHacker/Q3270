@@ -24,7 +24,10 @@ SOURCES += \
     CertificateDetails.cpp \
     CodePage.cpp \
     ColourTheme.cpp \
-    DisplayScreen.cpp \
+    DisplayScreen/DisplayScreen.cpp \
+    DisplayScreen/DisplayScreen_Cursor.cpp \
+    DisplayScreen/DisplayScreen_Status.cpp \
+    DisplayScreen/DisplayScreen_Mouse.cpp \
     Keyboard.cpp \
     KeyboardTheme.cpp \
     MainWindow.cpp \
