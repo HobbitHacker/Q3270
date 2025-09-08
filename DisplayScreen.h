@@ -56,17 +56,17 @@ class DisplayScreen : public QObject, public QGraphicsRectItem
 
     public:
 
-    DisplayScreen(int screen_x, int screen_y, CodePage &cp, ColourTheme::Colours &palette, QGraphicsScene *scene);
+    explicit DisplayScreen(int screen_x, int screen_y, CodePage &cp, ColourTheme::Colours &palette, QGraphicsScene *scene);
         ~DisplayScreen();
 
-        void mousePressEvent(QGraphicsSceneMouseEvent *mEvent);
-        void mouseMoveEvent(QGraphicsSceneMouseEvent *mEvent);
-        void mouseReleaseEvent(QGraphicsSceneMouseEvent *mEvent);
+        void mousePressEvent(QGraphicsSceneMouseEvent *mEvent) override;
+        void mouseMoveEvent(QGraphicsSceneMouseEvent *mEvent) override;
+        void mouseReleaseEvent(QGraphicsSceneMouseEvent *mEvent) override;
 
-        int width();
-        int height();
-        qreal gridWidth();
-        qreal gridHeight();
+        int width() const;
+        int height() const;
+        qreal gridWidth() const;
+        qreal gridHeight() const;
 
         void setChar(int pos, uchar c, bool fromKB);
         void setCharAttr(unsigned char c, unsigned char d);
@@ -100,15 +100,12 @@ class DisplayScreen : public QObject, public QGraphicsRectItem
         void showCursor();
         void cascadeAttrs(int startpos);
 
-        unsigned char getChar(int pos);
-
-        bool isAskip(int pos);
-        bool isProtected(int pos);
-        bool isFieldStart(int pos);
+        bool isAskip(int pos) const;
+        bool isProtected(int pos) const;
+        bool isFieldStart(int pos) const;
 
         void clear();
         void setFont(QFont font);
-        void setFontScaling(bool fontScaling);
 
         void toggleRuler();
         void setRuler();
@@ -157,6 +154,8 @@ class DisplayScreen : public QObject, public QGraphicsRectItem
         void setEncrypted(Q3270::Encryption e);
 
     private:
+        void applyCharAttributes(int pos, int fieldAttr);
+        void applyCharAttrsOverrides(int pos, int fieldAttr);
 
         const unsigned char twelveBitBufferAddress[64] = {
             0x40, 0xC1, 0xC2, 0xC3, 0xC4, 0xC5, 0xC6, 0xC7,  /* 00 0000 to 00 0011 */

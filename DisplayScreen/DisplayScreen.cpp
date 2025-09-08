@@ -225,7 +225,7 @@ DisplayScreen::~DisplayScreen()
  *          Read Partition (Query) structure field which responds to the host with the capabilities
  *          of the terminal. 
  */
-int DisplayScreen::width()
+int DisplayScreen::width() const
 {
     return screen_x;
 }
@@ -238,7 +238,7 @@ int DisplayScreen::width()
  *          Read Partition (Query) structure field which responds to the host with the capabilities
  *          of the terminal. 
  */
-int DisplayScreen::height()
+int DisplayScreen::height() const
 {
     return screen_y;
 }
@@ -253,7 +253,7 @@ int DisplayScreen::height()
  *          
  *          The cell size is calculated as 640 / screen_x.
  */
-qreal DisplayScreen::gridWidth()
+qreal DisplayScreen::gridWidth() const
 {
     return gridSize_X;
 }
@@ -268,7 +268,7 @@ qreal DisplayScreen::gridWidth()
  *          
  *          The cell size is calculated as 480 / screen_y.
  */
-qreal DisplayScreen::gridHeight()
+qreal DisplayScreen::gridHeight() const
 {
     return gridSize_Y;
 }
@@ -396,53 +396,13 @@ void DisplayScreen::setChar(int pos, uchar c, bool fromKB)
 
     int fieldAttr = cell.at(pos)->getField();
 
+    // If the field attribute is not set, use the current position
     if (fieldAttr == -1)
-    {
         fieldAttr = pos;
-    }
-
-    // Reset character attributes for this cell
-    //ll.at(pos)->resetCharAttrs();
 
     // Set character attribute flags if applicable
     if (useCharAttr)
-    {
-        if (!charAttr.colour_default)
-        {
-            cell.at(pos)->setCharAttrs(Q3270::ColourAttr, true);
-        }
-        else
-        {
-            cell.at(pos)->setColour(cell.at(fieldAttr)->getColour());
-        }
-
-        if (!charAttr.blink_default)
-        {
-            cell.at(pos)->setCharAttrs(Q3270::ExtendedAttr, true);
-        }
-        else
-        {
-            cell.at(pos)->setBlink(cell.at(fieldAttr)->isBlink());
-        }
-
-        if (!charAttr.reverse_default)
-        {
-            cell.at(pos)->setCharAttrs(Q3270::ExtendedAttr, true);
-        }
-        else
-        {
-            cell.at(pos)->setReverse(cell.at(fieldAttr)->isReverse());
-        }
-
-        if (!charAttr.uscore_default)
-        {
-            cell.at(pos)->setCharAttrs(Q3270::ExtendedAttr, true);
-        }
-        else
-        {
-            cell.at(pos)->setUnderscore(cell.at(fieldAttr)->isUScore());
-        }
-    }
+        applyCharAttributes(pos, fieldAttr);
 
     // Choose a graphic character if needed
     cell.at(pos)->setGraphic(geActive);
@@ -459,57 +419,8 @@ void DisplayScreen::setChar(int pos, uchar c, bool fromKB)
     geActive = false;
 
     // If character colour attributes are present, use them instead
-    if (cell.at(pos)->hasCharAttrs(Q3270::ColourAttr))
-    {
-        // Colour
-        if (!charAttr.colour_default)
-        {
-            cell.at(pos)->setColour(charAttr.colNum);
-        }
-        else
-        {
-            cell.at(pos)->setColour(cell.at(fieldAttr)->getColour());
-        }
-    }
-
-    if (cell.at(pos)->hasCharAttrs(Q3270::ExtendedAttr))
-    {
-        // Reverse video
-        if (!charAttr.reverse_default)
-        {
-            cell.at(pos)->setReverse(charAttr.reverse);
-        }
-        else
-        {
-            cell.at(pos)->setReverse(cell.at(fieldAttr)->isReverse());
-        }
-
-        // Underscore
-        if (!charAttr.uscore_default)
-        {
-            cell.at(pos)->setUnderscore(charAttr.uscore);
-        }
-        else
-        {
-            cell.at(pos)->setUnderscore(cell.at(fieldAttr)->isUScore());
-        }
-
-        // Blink
-        if (!charAttr.blink_default)
-        {
-            cell.at(pos)->setBlink(charAttr.blink);
-        }
-        else
-        {
-            cell.at(pos)->setBlink(cell.at(fieldAttr)->isBlink());
-        }
-    }
-//    else
-//    {
-//        cell.at(pos)->setUnderscore(cell.at(fieldAttr)->isUScore());
-//        cell.at(pos)->setReverse(cell.at(fieldAttr)->isReverse());
-//        cell.at(pos)->setBlink(cell.at(fieldAttr)->isBlink());
-//    }
+    if (cell.at(pos)->hasCharAttrs(Q3270::ColourAttr) || cell.at(pos)->hasCharAttrs(Q3270::ExtendedAttr))
+        applyCharAttrsOverrides(pos, fieldAttr);
 }
 
 /**
@@ -969,7 +880,7 @@ bool DisplayScreen::insertChar(unsigned char c, bool insertMode)
  * @details isAskip returns a boolean indicating whether the supplied screen position contains
  *          autoskip.
  */
-bool DisplayScreen::isAskip(int pos)
+bool DisplayScreen::isAskip(int pos) const
 {
     return cell.at(pos)->isAutoSkip();
 }
@@ -981,7 +892,7 @@ bool DisplayScreen::isAskip(int pos)
  *
  * @details isProtected returns true if the Cell is protected.
  */
-bool DisplayScreen::isProtected(int pos)
+bool DisplayScreen::isProtected(int pos) const
 {
     return cell.at(pos)->isProtected();
 }
@@ -993,50 +904,9 @@ bool DisplayScreen::isProtected(int pos)
  *
  * @details isFieldStart returns true if the Cell is a Field Start
  */
-bool DisplayScreen::isFieldStart(int pos)
+bool DisplayScreen::isFieldStart(int pos) const
 {
     return cell.at(pos)->isFieldStart();
-}
-
-/**
- * @brief   DisplayScreen::newline - move the cursor to the first input field after the current line
- *
- * @details Move the cursor to the first input field found after the start of the next line.
- */
-void DisplayScreen::newline()
-{
-    int cursor_y = (cursor_pos / screen_x) + 1;
-
-    if (cursor_y > screen_y)
-    {
-        cursor_y = 0;
-    }
-
-    cursor_pos = cursor_y * screen_x;
-
-    tab(0);
-}
-
-/**
- * @brief   DisplayScreen::tab - tab to the next field
- * @param   offset - offset from the current position
- *
- * @details Move the cursor to the next input field, skipping the attribute byte.
- */
-void DisplayScreen::tab(int offset)
-{
-    // Move cursor to next unprotected field, plus one to skip Field Start byte
-    setCursor((findNextUnprotectedField(cursor_pos + offset) + 1) % screenPos_max);
-}
-
-/**
- * @brief   DisplayScreen::backtab - back to the previous field start
- *
- * @details Move the cursor to the start of the previous field (which may be this field)
- */
-void DisplayScreen::backtab()
-{
-    setCursor((findPrevUnprotectedField(cursor_pos) + 1) % screenPos_max);
 }
 
 /**
@@ -1100,85 +970,6 @@ void DisplayScreen::eraseEOF()
     cell.at(cursor_pos)->setMDT(true);
 }
 
-/**
- * @brief   DisplayScreen::endline - move the cursor to the end of the current input field
- *
- * @details Move the cursor to the end of the text in the current input field.
- */
-void DisplayScreen::endline()
-{
-    if (isProtected(cursor_pos))
-    {
-        return;
-    }
-
-    int endPos = cursor_pos + screenPos_max;
-
-    int endField;
-
-    int i = cursor_pos;
-    int offset = cursor_pos;
-
-    endField = cursor_pos;
-    bool letter = false;
-
-    while(i < endPos && !isProtected(offset) && !isFieldStart(offset))
-    {
-        uchar thisChar = cell.at(offset)->getChar().toLatin1();
-        if (letter && (thisChar == 0x00 || thisChar == ' '))
-        {
-            endField = offset;
-            letter = false;
-        }
-
-        if (thisChar != 0x00 && thisChar != ' ')
-        {
-            letter = true;
-        }
-
-        offset = ++i % screenPos_max;
-    }
-
-    setCursor(endField);
-}
-
-/**
- * @brief   DisplayScreen::home - move the cursor to the first field on the screen
- *
- * @details Move the cursor to the first field on the screen; searching starts at the very last position
- *          in case that is a field start, and the first position is not.
- */
-void DisplayScreen::home()
-{
-    // Find first field on screen; this might be position 0, so we need to look starting at the last screen pos
-    int nf = (findNextUnprotectedField(screenPos_max - 1) + 1) % screenPos_max;
-    int cursor_y = (nf / screen_x);
-    int cursor_x = nf - (cursor_y * screen_x);
-
-    // Move cursor right (skip attribute byte)
-    setCursor(cursor_x, cursor_y);
-}
-
-/**
- * @brief   DisplayScreen::backspace - backspace one character
- *
- * @details Backspace one character, stopping at the field start
- */
-void DisplayScreen::backspace()
-{
-    // If we're at a protected field, do nothing
-    if (isProtected(cursor_pos))
-        return;
-
-    // Discover whether the previous cursor position is a field start
-    int tempCursorPos = cursor_pos == 0 ? screenPos_max - 1 : cursor_pos - 1;
-
-    if (isFieldStart(tempCursorPos))
-        return;
-
-    // Backspace one character
-    setCursor(tempCursorPos);
-}
 
 /**
  * @brief   DisplayScreen::eraseUnprotected - erase unprotected fields between addresses
@@ -1212,215 +1003,6 @@ void DisplayScreen::eraseUnprotected(int start, int end)
                 cell.at(i)->setChar(IBM3270_CHAR_SPACE);
         }
     }
-}
-
-/**
- * @brief   DisplayScreen::setCursorColour - set the cursor colour
- * @param   inherit - whether the cursor inherits the underlying character colour
- *
- * @details setCursorColour is called when the user changes the way the colour of the cursor is
- *          chosen. The default is for the cursor to be shown with the the colour of the Cell on
- *          which the cursor is placed, but it can be changed to be a static grey colour.
- */
-void DisplayScreen::setCursorColour(bool inherit)
-{
-    cursorColour = inherit;
-    if (inherit)
-    {
-        cursor.setBrush(palette[cell.at(cursor.data(0).toInt())->getColour()]);
-    }
-    else
-    {
-        cursor.setBrush(QBrush(QColor(0xBB, 0xBB, 0xBB)));
-    }
-    cursor.show();
-}
-
-
-/**
- * @brief   DisplayScreen::moveCursor - move the cursor
- * @param   x        - x position to move the cursor to
- * @param   y        - y position to move the cursor to
-
- */
-void DisplayScreen::moveCursor(int x, int y)
-{
-    int tmpCursorPos = (cursor_pos + (y * screen_x + x)) % screenPos_max;
-
-    if (tmpCursorPos < 0)
-    {
-        tmpCursorPos += screenPos_max;
-    }
-
-    setCursor(tmpCursorPos);
-}
-
-/**
- * @brief   DisplayScreen::setCursor - position cursor
- * @param   cursorPos - screen position
- *
- * @details setCursor is used when the cursor is moved either by the user or by the incoming 3270
- *          data stream.
- */
-void DisplayScreen::setCursor(int cursorPos)
-{
-    int cursor_y = (cursorPos / screen_x);
-    int cursor_x = cursorPos - (cursor_y * screen_x);
-
-    setCursor(cursor_x, cursor_y);
-}
-
-/**
- * @brief   DisplayScreen::setCursor - position cursor
- * @param   x - screen position
- * @param   y - screen position
- *
- * @details setCursor is used when the cursor is moved either by the user or by the incoming 3270
- *          data stream.
- */
-void DisplayScreen::setCursor(int x, int y)
-{
-    cursor.setVisible(false);
-
-    cursor_pos = x + (y * screen_x);
-
-    if (cursorColour)
-    {
-        if (cell.at(cursor_pos)->isReverse())
-        {
-            cursor.setBrush(palette[Q3270::Black]);
-        }
-        else
-        {
-            cursor.setBrush(palette[cell.at(cursor_pos)->getColour()]);
-        }
-
-    }
-
-    cursor.setPos(gridSize_X * (qreal) x, gridSize_Y * (qreal) y);
-//    cursor.setData(0,pos);
-
-    cursor.setVisible(true);
-
-    statusCursor.setText(QString("%1,%2").arg(x + 1, 3).arg(y + 1, -3));
-
-    setRuler();
-}
-
-/**
- * @brief   DisplayScreen::showCursor - display cursor
- *
- * @details Called when the cursor blink is switched off to ensure that the cursor doesn't
- *          remain hidden if the blink happened to be at the point the cursor was hidden.
- */
-void DisplayScreen::showCursor()
-{
-    cursor.show();
-}
-
-/**
- * @brief   DisplayScreen::setStatusXSystem - set XSystem text
- * @param   text - text to be shown
- *
- * @details Called when XSystem is to be shown or removed.
- */
-void DisplayScreen::setStatusXSystem(QString text)
-{
-    statusXSystem.setText(text);
-}
-
-/**
- * @brief   DisplayScreen::setStatusInsert - the Insert mode text
- * @param   ins - true for insert mode, false for overwrite
- *
- * @details Called to show the Insert status on the status line.
- */
-void DisplayScreen::setStatusInsert(bool ins)
-{
-    if (ins)
-    {
-        statusInsert.setText("\uFF3E");
-    }
-    else
-    {
-        statusInsert.setText("");
-    }
-}
-
-/**
- * @brief   DisplayScreen::rulerMode - display/hide the ruler
- * @param   on - whether ruler is shown or not
- *
- * @details Called when Settings changes ruler to on or off.
- */
-void DisplayScreen::rulerMode(bool on)
-{
-
-    rulerOn = on;
-    setRuler();
-}
-
-/**
- * @brief  DisplayScreen::setRulerStyle - change ruler style
- * @param  rulerStyle - ruler style
- *
- *        rulerStyle | Description
- *        ---------- | -----------
- *          0        | Crosshair
- *          1        | Vertical
- *          2        | Horizontal
- *        other      | Off
- */
-void DisplayScreen::setRulerStyle(Q3270::RulerStyle rulerStyle)
-{
-    this->ruler = rulerStyle;
-    setRuler();
-}
-
-/**
- * @brief  DisplayScreen::setEncrypted - change encryption status bar icon
- * @param  encrypted - the encryption state
- *
- *        encrypted  | Description
- *        ---------- | -----------
- *          0        | Unencrypted
- *          1        | Encrypted without validating certs
- *          2        | Encrypted
- */
-void DisplayScreen::setEncrypted(Q3270::Encryption encrypted)
-{
-    lock->hide();
-    unlock->hide();
-    locktick->hide();
-
-    switch(encrypted)
-    {
-        case Q3270::Unencrypted:
-            unlock->show();
-            break;
-        case Q3270::SemiEncrypted:
-            lock->show();
-            break;
-        case Q3270::Encrypted:
-            locktick->show();
-            break;
-    }
-
-//    QRectF r = statusSecureSVG->boundingRect();
-//    statusSecureSVG->setScale(8 / r.height());
-}
-
-/**
- * @brief   DisplayScreen::toggleRuler - toggle the ruler on or off
- *
- * @details Called when the user switches the ruler on or off.
- */
-void DisplayScreen::toggleRuler()
-{
-    // Invert ruler
-    rulerOn = !rulerOn;
-
-    setRuler();
 }
 
 /**
@@ -1467,42 +1049,6 @@ void DisplayScreen::interruptProcess()
     b.append((uchar) IP);
 
     emit bufferReady(b);
-}
-
-/**
- * @brief   DisplayScreen::setRuler - set the ruler style and redraw it in case it needs to move
- *
- * @details Called by several other routines when the ruler needs to be changed or the cursor has moved.
- */
-void DisplayScreen::setRuler()
-{
-    if (rulerOn)
-    {
-
-        switch(ruler)
-        {
-            case Q3270::CrossHair:
-                crosshair_X.show();
-                crosshair_Y.show();
-                break;
-            case Q3270::Vertical:
-                crosshair_X.hide();
-                crosshair_Y.show();
-                break;
-            case Q3270::Horizontal:
-                crosshair_X.show();
-                crosshair_Y.hide();
-        }
-        int cursor_y = (cursor_pos / screen_x);
-        int cursor_x = cursor_pos - (cursor_y * screen_x);
-        crosshair_X.setPos((qreal) cursor_x * gridSize_X, 0);
-        crosshair_Y.setPos(0 , (qreal) (cursor_y + 1) * gridSize_Y);
-    }
-    else
-    {
-        crosshair_X.hide();
-        crosshair_Y.hide();
-    }
 }
 
 /**
@@ -1936,160 +1482,67 @@ void DisplayScreen::getScreen(QByteArray &buffer)
 }
 
 /**
- * @brief   DisplayScreen::mousePressEvent - process a mouse event
- * @param   mEvent - the event
+ * @brief   DisplayScreen::applyCharAttributes - apply the character attributes to the cell
+ * @param   pos       - screen position
+ * @param   fieldAttr - field attribute
  *
- * @details Called when a mouse event happens in DisplayScreen. This routine handles a left-click, and
- *          stores the coordinates of the click. The Rubberband is hidden (it will be shown if the mouse
- *          is moved).
+ * @details Apply the character attributes to the cell at pos. This is used when the datastream
+ *          selected a different colour for the specified cell.
  */
-void DisplayScreen::mousePressEvent(QGraphicsSceneMouseEvent *mEvent)
+void DisplayScreen::applyCharAttributes(int pos, int fieldAttr)
 {
-    if (mEvent->button() != Qt::LeftButton)
-    {
-        mEvent->ignore();
-        return;
-    }
+    if (!charAttr.colour_default)
+        cell.at(pos)->setCharAttrs(Q3270::ColourAttr, true);
+    else
+        cell.at(pos)->setColour(cell.at(fieldAttr)->getColour());
 
-    int x = mEvent->pos().x() / gridSize_X;
-    int y = mEvent->pos().y() / gridSize_Y;
+    if (!charAttr.blink_default)
+        cell.at(pos)->setCharAttrs(Q3270::ExtendedAttr, true);
+    else
+        cell.at(pos)->setBlink(cell.at(fieldAttr)->isBlink());
 
-//    qDebug() << "Mouse press at" << mEvent->pos() << "- char pos" << x << "," << y << "scaled pos" << x * gridSize_X << "," << y * gridSize_Y;
+    if (!charAttr.reverse_default)
+        cell.at(pos)->setCharAttrs(Q3270::ExtendedAttr, true);
+    else
+        cell.at(pos)->setReverse(cell.at(fieldAttr)->isReverse());
 
-    mouseStart = mapFromItem(this, QPoint(x * gridSize_X, y * gridSize_Y));
-
-    myRb->setData(0, x);
-    myRb->setData(1, y);
-    myRb->setData(2, x);
-    myRb->setData(3, y);
-
-    myRb->hide();
+    if (!charAttr.uscore_default)
+        cell.at(pos)->setCharAttrs(Q3270::ExtendedAttr, true);
+    else
+        cell.at(pos)->setUnderscore(cell.at(fieldAttr)->isUScore());
 }
 
 /**
- * @brief   DisplayScreen::mouseMoveEvent - process a mouse move event
- * @param   mEvent - the event
+ * @brief   DisplayScreen::applyCharAttrsOverrides - apply the character attributes to the cell
+ * @param   pos       - screen position
+ * @param   fieldAttr - field attribute
  *
- * @details Called when the mouse is moved after a click. This routine calculates the Cells around which
- *          the rubberband is to be drawn and then makes it visible.
+ * @details Apply the character attributes to the cell at pos. This is used when the datastream
+ *          selected a different colour for the specified cell.
  */
-void DisplayScreen::mouseMoveEvent(QGraphicsSceneMouseEvent *mEvent)
-{   
-    //FIXME: Some of this could probably be simplified so we're not working out
-    //       the min/max values in mouseReleaseEvent
-
-    // Calculate character position of mouse
-    int thisX = mEvent->pos().x() / gridSize_X;
-    int thisY = mEvent->pos().y() / gridSize_Y;
-
-    // Normalise the position to within the bounds of the character display
-    thisX = std::min(thisX, screen_x - 1);
-    thisY = std::min(thisY, screen_y - 1);
-
-    thisX = std::max(thisX, 0);
-    thisY = std::max(thisY, 0);
-
-    // Retrieve the start point of the selection
-    int mpX = myRb->data(0).toInt();
-    int mpY = myRb->data(1).toInt();
-
-    /* Normalise the new mouse position
-       If the user moves the mouse up and/or left, this is the new start point,
-       and the old start point becomes the bottom right
-    */
-    int topLeftX = std::min(mpX, thisX);
-    int topLeftY = std::min(mpY, thisY);
-
-    int botRightX = std::max(thisX, mpX);
-    int botRightY = std::max(thisY, mpY);
-
-    myRb->setData(2, thisX);
-    myRb->setData(3, thisY);
-
-    // Add one to sizing to ensure rectangle moves when mouse moves to next character
-    int w = botRightX - topLeftX + 1;
-    int h = botRightY - topLeftY + 1;
-
-//    qDebug() << "Move" << mEvent->pos() << "this " << thisX << "," << thisY << " mpX,mpY" << mpX << "," << mpY << "    topLeftX,topLeftY" << topLeftX << "," << topLeftY << "    botRightX,botRightY" << botRightX << "," << botRightY << "w,h" << w << "x" << h;
-
-    myRb->setRect(topLeftX * gridSize_X, topLeftY * gridSize_Y, w * gridSize_X, h * gridSize_Y);
-
-    myRb->show();
-}
-
-/**
- * @brief   DisplayScreen::mouseReleaseEvent - process a mouse release event
- * @param   mEvent - the event
- *
- * @details Called when the left mouse button is released. If the mouse button was released without
- *          moving the mouse, the rubberband will be invisible, and this is interpreted as the user
- *          wishing to move the cursor by clicking somewhere in the display.
- */
-void DisplayScreen::mouseReleaseEvent(QGraphicsSceneMouseEvent *mEvent)
+void DisplayScreen::applyCharAttrsOverrides(int pos, int fieldAttr)
 {
-//    qDebug() << "Mouse release at " << mEvent->pos();
+    // Colour
+    if (!charAttr.colour_default)
+        cell.at(pos)->setColour(charAttr.colNum);
+    else
+        cell.at(pos)->setColour(cell.at(fieldAttr)->getColour());
 
-    // Single click, move cursor
-    if (!myRb->isVisible())
-    {
-//        qDebug() << "Single click";
-        setCursor(myRb->data(0).toInt(), myRb->data(1).toInt());
-        return;
-    }
+    // Reverse
+    if (!charAttr.reverse_default)
+        cell.at(pos)->setReverse(charAttr.reverse);
+    else
+        cell.at(pos)->setReverse(cell.at(fieldAttr)->isReverse());
 
-  /*  int top = std::min(myRb->data(1).toInt(), myRb->data(3).toInt());
-    int bottom = std::max(myRb->data(1).toInt(), myRb->data(3).toInt());
+    // Underscore
+    if (!charAttr.uscore_default)
+        cell.at(pos)->setUnderscore(charAttr.uscore);
+    else
+        cell.at(pos)->setUnderscore(cell.at(fieldAttr)->isUScore());
 
-    int left = std::min(myRb->data(0).toInt(), myRb->data(2).toInt());
-    int right = std::max(myRb->data(0).toInt(), myRb->data(2).toInt());
-*/
-//    qDebug() << "Selected" << left << "," << top << "x" << right << "," << bottom;
-}
-
-/**
- * @brief   DisplayScreen::copyText - copy the text within the rubberband to the clipboard
- *
- * @details Called when the user invokes the Copy function (default Ctrl-C) to copy the text
- *          contained within the rubberband region to the clipboard. Each new line within the
- *          rubberband generates a newline on the clipboard.
- */
-void DisplayScreen::copyText()
-{
-    // If the rubberband isn't showing, do nothing
-    if (!myRb->isVisible()) {
-        return;
-    }
-
-    // Build up a string with the selected characters
-    QString cbText = "";
-
-    int top = std::min(myRb->data(1).toInt(), myRb->data(3).toInt());
-    int bottom = std::max(myRb->data(1).toInt(), myRb->data(3).toInt());
-
-    int left = std::min(myRb->data(0).toInt(), myRb->data(2).toInt());
-    int right = std::max(myRb->data(0).toInt(), myRb->data(2).toInt());
-
-    qDebug() << "Selection " << top << "," << left << " x " << bottom << "," << right;
-
-    for(int y = top; y <= bottom; y++)
-    {
-        // Append a newline if there's more than one row selected
-        if (y > top) {
-            cbText = cbText + "\n";
-        }
-
-        for(int x = left; x <= right; x++)
-        {
-            int thisPos = screen_x * y + x;
-            cbText = cbText + cell.at(thisPos)->getChar();
-        }
-    }
-
-    qDebug() << "Clipboard text: " << cbText;
-
-    QClipboard *clipboard = QGuiApplication::clipboard();
-
-    clipboard->setText(cbText);
-
-    myRb->hide();
+    // Blink
+    if (!charAttr.blink_default)
+        cell.at(pos)->setBlink(charAttr.blink);
+    else
+        cell.at(pos)->setBlink(cell.at(fieldAttr)->isBlink());
 }
