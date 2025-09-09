@@ -107,6 +107,9 @@ class ActiveSettings : public QObject
         QString getSessionName() const                   { return sessionName; }
         void setSessionName(const QString &name);
 
+        QString getDescription() const                   { return description; }
+        void setDescription(const QString &description);
+
     signals:
 
         void rulerChanged(bool rulerOn);
@@ -138,11 +141,14 @@ class ActiveSettings : public QObject
 
         void sessionNameChanged(const QString name);
 
+        void descriptionChanged(const QString description);
+
     private:
 
 //        Q_ENUM(RulerStyle);
 
         QString sessionName;
+        QString description;
 
         QFont termFont;
 

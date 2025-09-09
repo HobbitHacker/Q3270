@@ -534,3 +534,13 @@ void ActiveSettings::setSessionName(const QString &name)
     }
 
 }
+
+
+void ActiveSettings::setDescription(const QString &desc)
+{
+    if (desc != description)
+    {
+        description = desc;
+        emit descriptionChanged(desc);
+    }
+}
