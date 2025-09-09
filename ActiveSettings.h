@@ -104,6 +104,9 @@ class ActiveSettings : public QObject
         QString getColourThemeName()                     { return colourThemeName; }
         void setColourTheme(QString colourThemeName);
 
+        QString getSessionName() const                   { return sessionName; }
+        void setSessionName(const QString &name);
+
     signals:
 
         void rulerChanged(bool rulerOn);
@@ -133,9 +136,13 @@ class ActiveSettings : public QObject
         void secureModeChanged(bool secureMode);
         void verifyCertsChanged(bool verifyCerts);
 
+        void sessionNameChanged(const QString name);
+
     private:
 
 //        Q_ENUM(RulerStyle);
+
+        QString sessionName;
 
         QFont termFont;
 

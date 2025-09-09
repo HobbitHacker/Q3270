@@ -72,10 +72,6 @@ class Terminal : public QWidget
         void setScreenStretch(bool scale);
 
         void setKeyboardTheme(QString themeName);
-        
-        // Return current session name
-        inline QString getSessionName()    { return sessionName; };
-        inline void    setSessionName(QString sessionName) { this->sessionName = sessionName; };
 
         DisplayScreen *setAlternateScreen(bool alt);
 
@@ -149,9 +145,6 @@ class Terminal : public QWidget
         QLabel *cursorAddress;
         QLabel *syslock;
         QLabel *insMode;
-
-        // Session name
-        QString sessionName;
 
         int blinkSpeed;
         bool blink;

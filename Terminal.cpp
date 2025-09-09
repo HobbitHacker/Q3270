@@ -314,7 +314,8 @@ void Terminal::openConnection(QSettings& s)
     activeSettings.setColourTheme(s.value("ColourTheme").toString());
     activeSettings.setKeyboardTheme(s.value("KeyboardTheme").toString());
 
-    setSessionName(s.group());
+    // Set the name
+    activeSettings.setSessionName(s.group());
 
     // Update settings with address
     activeSettings.setHostAddress(s.value("Address").toString());

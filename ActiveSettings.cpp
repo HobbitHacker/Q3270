@@ -66,6 +66,7 @@ ActiveSettings::ActiveSettings()
     codePage = "IBM-037";
     keyboardThemeName = "Factory";
     colourThemeName = "Factory";
+    sessionName = "";
 }
 
 /**
@@ -521,4 +522,15 @@ void ActiveSettings::setVerifyCerts(bool verify)
     }
 
     this->verifyCerts = verify;
+}
+
+
+void ActiveSettings::setSessionName(const QString &name)
+{
+    if (name != sessionName)
+    {
+        sessionName = name;
+        emit sessionNameChanged(name);
+    }
+
 }
