@@ -40,13 +40,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Q3270.h"
 /**
  * @brief   MainWindow::MainWindow - the main application
- * @param   s - a name
+ * @param   launchParms - a name
  *
  * @details Initialise the application, and open any session name passed to it. The session
  *          is a struct that contains an existing MainWindow or null if this is the first one,
  *          and any session name to be opened.
  */
-MainWindow::MainWindow(MainWindow::Session s) : QMainWindow(nullptr),
+MainWindow::MainWindow(MainWindow::LaunchParms launchParms) : QMainWindow(nullptr),
                                                 ui(new(Ui::MainWindow))
 {
     ui->setupUi(this);
@@ -105,7 +105,7 @@ MainWindow::MainWindow(MainWindow::Session s) : QMainWindow(nullptr),
     // Set defaults for Connect options
     ui->actionDisconnect->setDisabled(true);
     
-    terminal = new Terminal(ui->terminalLayout, activeSettings, codePage, keyboard, colourTheme, keyboardTheme, s.session);
+    terminal = new Terminal(ui->terminalLayout, activeSettings, codePage, keyboard, colourTheme, keyboardTheme, launchParms.session);
 
     // Used for dynamically showing font changes when using the font selection dialog
     connect(settings, &PreferencesDialog::tempFontChange, terminal, &Terminal::setCurrentFont);
@@ -119,12 +119,12 @@ MainWindow::MainWindow(MainWindow::Session s) : QMainWindow(nullptr),
 
     // If a session name was passed to the MainWindow, restore the window size/position
     // and open it
-    if (!s.session.isEmpty())
+    if (!launchParms.session.isEmpty())
     {
         //TODO: Decide if Window Geometry is just going to mean that a session always has the same pos etc on screen
         //TODO: Use QWidget.resize and QWidget.move instead. See QSettings doc
-        restoreGeometry(savedSettings.value(s.session + "/WindowGeometry").toByteArray());
-        sm->openSession(terminal, QUrl::fromPercentEncoding(s.session.toLatin1()));
+        restoreGeometry(savedSettings.value(launchParms.session + "/WindowGeometry").toByteArray());
+        sm->openSession(terminal, QUrl::fromPercentEncoding(launchParms.session.toLatin1()));
 
         // Enable Save Session menu item
         ui->actionSave_Session->setEnabled(true);
@@ -139,7 +139,7 @@ MainWindow::MainWindow(MainWindow::Session s) : QMainWindow(nullptr),
     }
 
     // If there's none but this window, it must be initial start
-    if (s.mw == nullptr)
+    if (launchParms.mw == nullptr)
     {
         int autoStart = savedSettings.beginReadArray("AutoStart");
         for(int i = 0; i < autoStart; i++)

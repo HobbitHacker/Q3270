@@ -79,7 +79,7 @@ class MainWindow : public QMainWindow
   
   public:
 
-      struct Session {
+      struct LaunchParms {
           MainWindow *mw;
           QString session;
       };
