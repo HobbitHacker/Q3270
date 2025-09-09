@@ -130,7 +130,7 @@ KeyboardTheme::KeyboardTheme(QWidget *parent) : QDialog(parent), ui(new Ui::Keyb
     ui->keyboardThemes->addItem("Factory");
 
     // Now add those from the config file
-    QSettings s(Q3270_SETTINGS);
+    QSettings s(Q3270_ORG, Q3270_APP);
 
     // Keyboard themes are all stored under the KeyboardThemes group
     s.beginGroup("KeyboardThemes");
@@ -460,7 +460,7 @@ int KeyboardTheme::exec()
 void KeyboardTheme::accept()
 {
     // Save settings
-    QSettings settings(Q3270_SETTINGS);
+    QSettings settings(Q3270_ORG, Q3270_APP);
 
     // Group for Colours
     settings.beginGroup("KeyboardThemes");

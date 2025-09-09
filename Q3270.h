@@ -37,7 +37,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <QObject>
 
-#define Q3270_SETTINGS "andyWare", "Q3270"
+#define Q3270_ORG "andyWare"
+#define Q3270_APP "Q3270"
 
 /* 3270 Write Commands */
 #define IBM3270_W    0xF1  /* Write */

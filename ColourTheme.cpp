@@ -48,7 +48,7 @@ ColourTheme::ColourTheme(QWidget *parent) :
     // Set the default colour theme to Factory
     ui->colourTheme->addItem("Factory");
 
-    QSettings settings(Q3270_SETTINGS);
+    QSettings settings(Q3270_ORG, Q3270_APP);
 
     // Begin Themes main group
     settings.beginGroup("ColourThemes");
@@ -467,7 +467,7 @@ const ColourTheme::Colours ColourTheme::getTheme(QString theme)
 void ColourTheme::accept()
 {
 
-    QSettings settings(Q3270_SETTINGS);
+    QSettings settings(Q3270_ORG, Q3270_APP);
 
     // Group for Colours
     settings.beginGroup("ColourThemes");
