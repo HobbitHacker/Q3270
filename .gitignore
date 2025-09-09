@@ -75,3 +75,14 @@ Thumbs.db
 *.dll
 *.exe
 
+# VSCode files
+.vscode/
+*.code-workspace
+
+# Build directory
+build/
+
+
+# KDevelop files
+.kdev4/
+*.kdev4
