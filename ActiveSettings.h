@@ -48,61 +48,61 @@ class ActiveSettings : public QObject
 
         ActiveSettings();
 
-        QString getHostName()                            { return hostName; }
-        int getHostPort()                                { return hostPort; }
-        QString getHostLU()                              { return hostLU; }
-        QString getHostAddress();
-        void setHostAddress(QString hostName, int port, QString hostLU);
-        void setHostAddress(QString address);
+        QString getHostName() const                      { return hostName; }
+        int getHostPort() const                          { return hostPort; }
+        QString getHostLU() const                        { return hostLU; }
+        QString getHostAddress() const;
+        void setHostAddress(const QString &hostName, int port, const QString &hostLU);
+        void setHostAddress(const QString &address);
 
-        bool getRulerState()                             { return rulerState; }
+        bool getRulerState() const                       { return rulerState; }
         void setRulerState(bool rulerOn);
 
-        Q3270::RulerStyle getRulerStyle()                { return ruler; }
+        Q3270::RulerStyle getRulerStyle() const          { return ruler; }
         void setRulerStyle(Q3270::RulerStyle r);
-        QString getRulerStyleName();
-        void setRulerStyleName(QString s);
+        QString getRulerStyleName() const;
+        void setRulerStyleName(const QString &s);
 
-        bool getCursorBlink()                            { return cursorBlink; }
+        bool getCursorBlink() const                      { return cursorBlink; }
         void setCursorBlink(bool blink);
 
-        int getCursorBlinkSpeed()                        { return cursorBlinkSpeed; }
+        int getCursorBlinkSpeed() const                  { return cursorBlinkSpeed; }
         void setCursorBlinkSpeed(int blinkSpeed);
 
-        bool getCursorColourInherit()                    { return cursorColourInherit; }
+        bool getCursorColourInherit() const              { return cursorColourInherit; }
         void setCursorColourInherit(bool inherit);
 
-        bool getStretchScreen()                          { return stretchScreen; }
+        bool getStretchScreen() const                    { return stretchScreen; }
         void setStretchScreen(bool stretch);
 
-        bool getBackspaceStop()                          { return backspaceStop; }
+        bool getBackspaceStop() const                    { return backspaceStop; }
         void setBackspaceStop(bool backspaceStop);
 
-        bool getSecureMode()                             { return secureMode; }
+        bool getSecureMode() const                       { return secureMode; }
         void setSecureMode(bool secureMode);
 
-        bool getVerifyCerts()                           { return verifyCerts; }
+        bool getVerifyCerts() const                      { return verifyCerts; }
         void setVerifyCerts(bool verifyCerts);
 
-        QFont getFont()                                  { return termFont; }
-        void setFont(QFont font);
+        QFont getFont() const                            { return termFont; }
+        void setFont(const QFont &font);
 
-        int getTerminalX()                               { return termX; }
-        int getTerminalY()                               { return termY; }
-        int getTerminalModel()                           { return termModel; }
-        QString getTerminalModelName();
+        int getTerminalX() const                         { return termX; }
+        int getTerminalY() const                         { return termY; }
+        int getTerminalModel() const                     { return termModel; }
+        QString getTerminalModelName() const;
 
         void setTerminal(int x, int y, int model);
-        void setTerminal(int x, int y, QString modelName);
+        void setTerminal(int x, int y, const QString &modelName);
 
-        QString getCodePage()                            { return codePage; }
-        void setCodePage(QString codePage);
+        QString getCodePage() const                      { return codePage; }
+        void setCodePage(const QString &codePage);
 
-        QString getKeyboardThemeName()                   { return keyboardThemeName; }
-        void setKeyboardTheme(QString keyboardThemeName);
+        QString getKeyboardThemeName() const             { return keyboardThemeName; }
+        void setKeyboardTheme(const QString &keyboardThemeName);
 
-        QString getColourThemeName()                     { return colourThemeName; }
-        void setColourTheme(QString colourThemeName);
+        QString getColourThemeName() const               { return colourThemeName; }
+        void setColourTheme(const QString &colourThemeName);
 
         QString getSessionName() const                   { return sessionName; }
         void setSessionName(const QString &name);

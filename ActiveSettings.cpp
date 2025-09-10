@@ -118,7 +118,7 @@ void ActiveSettings::setRulerStyle(Q3270::RulerStyle newStyle)
  * @details Change the ruler style by name (CrossHair, Horizontal, Vertical). Defaults to CrossHair
  *          if an invalid one is passed.
  */
-void ActiveSettings::setRulerStyleName(QString newStyle)
+void ActiveSettings::setRulerStyleName(const QString &newStyle)
 {
     QMetaEnum metaEnum = QMetaEnum::fromType<Q3270::RulerStyle>();
 
@@ -139,7 +139,7 @@ void ActiveSettings::setRulerStyleName(QString newStyle)
  *
  * @details Return the name of the ruler style (CrossHair, Horizontal, Vertical).
  */
-QString ActiveSettings::getRulerStyleName()
+QString ActiveSettings::getRulerStyleName() const
 {
     QMetaEnum metaEnum = QMetaEnum::fromType<Q3270::RulerStyle>();
 
@@ -201,7 +201,7 @@ void ActiveSettings::setCursorColourInherit(bool cursorInherit)
  * @param   font
  * @details Change the font used for the display.
  */
-void ActiveSettings::setFont(QFont font)
+void ActiveSettings::setFont(const QFont &font)
 {
     if (font != this->termFont)
     {
@@ -276,7 +276,7 @@ void ActiveSettings::setTerminal(int x, int y, int model)
  *
  *          Like setTerminal(), the size parameters are ignored if the model is a standard model.
  */
-void ActiveSettings::setTerminal(int x, int y, QString modelName)
+void ActiveSettings::setTerminal(int x, int y, const QString &modelName)
 {
     if (modelName == "Model2")
     {
@@ -309,7 +309,7 @@ void ActiveSettings::setTerminal(int x, int y, QString modelName)
  * @details This function returns the string format of the model name, which is stored in the config
  *          file.
  */
-QString ActiveSettings::getTerminalModelName()
+QString ActiveSettings::getTerminalModelName() const
 {
     switch(termModel)
     {
@@ -332,7 +332,7 @@ QString ActiveSettings::getTerminalModelName()
  *
  * @details Change the code page to the one specified.
  */
-void ActiveSettings::setCodePage(QString codepage)
+void ActiveSettings::setCodePage(const QString &codepage)
 {
     if (this->codePage != codepage)
     {
@@ -350,7 +350,7 @@ void ActiveSettings::setCodePage(QString codepage)
  * @details This setting holds the name of the keyboard theme. The KeyboardTheme class is needed
  *          because that's actually where the keyboard definitions are stored.
  */
-void ActiveSettings::setKeyboardTheme(QString keyboardThemeName)
+void ActiveSettings::setKeyboardTheme(const QString &keyboardThemeName)
 {
     if (this->keyboardThemeName != keyboardThemeName)
     {
@@ -366,7 +366,7 @@ void ActiveSettings::setKeyboardTheme(QString keyboardThemeName)
  *
  * @details The colour theme is set by name.
  */
-void ActiveSettings::setColourTheme(QString colourthemeName)
+void ActiveSettings::setColourTheme(const QString &colourthemeName)
 {
     if (this->colourThemeName != colourthemeName)
     {
@@ -384,7 +384,7 @@ void ActiveSettings::setColourTheme(QString colourthemeName)
  *
  * @details Set the host address, port and LU name.
  */
-void ActiveSettings::setHostAddress(QString hostName, int hostPort, QString hostLU)
+void ActiveSettings::setHostAddress(const QString &hostName, int hostPort, const QString &hostLU)
 {
     if (hostName != this->hostName || hostPort != this->hostPort || hostLU != this->hostLU)
     {
@@ -407,22 +407,26 @@ void ActiveSettings::setHostAddress(QString hostName, int hostPort, QString host
  *   1.2.3.4:23
  *
  */
-void ActiveSettings::setHostAddress(QString address)
+void ActiveSettings::setHostAddress(const QString &address)
 {
+    QString luPart;
+    QString namePart;
+    int portPart;
+
     // Determine if the supplied address contains an '@' denoting the LU to be used.
     if (address.contains("@"))
     {
-        hostLU = address.section("@", 0, 0);
-        hostName = address.section("@", 1, 1).section(":", 0, 0);
-        hostPort = address.section(":", 1, 1).toInt();
+        luPart = address.section("@", 0, 0);
+        namePart = address.section("@", 1, 1).section(":", 0, 0);
+        portPart = address.section(":", 1, 1).toInt();
     } else
     {
-        hostLU = "";
-        hostName = address.section(":", 0, 0);
-        hostPort = address.section(":", 1, 1).toInt();
+        luPart = "";
+        namePart = address.section(":", 0, 0);
+        portPart = address.section(":", 1, 1).toInt();
     }
 
-    emit hostChanged(hostName, hostPort, hostLU);
+    setHostAddress(namePart, portPart, luPart);
 }
 
 /**
@@ -431,16 +435,16 @@ void ActiveSettings::setHostAddress(QString address)
  *
  * @details The address of the host that Q3270 is connected to. This may include a port and LU.
  */
-QString ActiveSettings::getHostAddress()
+QString ActiveSettings::getHostAddress() const
 {
     QString address;
 
-    if (hostLU != "")
+    if (!hostLU.isEmpty())
     {
-        address.append(hostLU + "@");
+        address.append(hostLU).append('@');
     }
 
-    if (hostName != "")
+    if (!hostName.isEmpty())
     {
         address.append(hostName);
 
@@ -448,7 +452,7 @@ QString ActiveSettings::getHostAddress()
 
     if (hostPort != 0)
     {
-        address.append(":" + QString::number(hostPort));
+        address.append(':').append(QString::number(hostPort));
     }
 
     return address;
