@@ -34,6 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <QMetaEnum>
 
 #include "ActiveSettings.h"
+#include "HostAddressUtils.h"
 
 /**
  * @brief
@@ -66,7 +67,9 @@ ActiveSettings::ActiveSettings()
     codePage = "IBM-037";
     keyboardThemeName = "Factory";
     colourThemeName = "Factory";
+
     sessionName = "";
+    description = "";
 }
 
 /**
@@ -413,19 +416,7 @@ void ActiveSettings::setHostAddress(const QString &address)
     QString namePart;
     int portPart;
 
-    // Determine if the supplied address contains an '@' denoting the LU to be used.
-    if (address.contains("@"))
-    {
-        luPart = address.section("@", 0, 0);
-        namePart = address.section("@", 1, 1).section(":", 0, 0);
-        portPart = address.section(":", 1, 1).toInt();
-    } else
-    {
-        luPart = "";
-        namePart = address.section(":", 0, 0);
-        portPart = address.section(":", 1, 1).toInt();
-    }
-
+    HostAddressUtils::parse(address, namePart, portPart, luPart);
     setHostAddress(namePart, portPart, luPart);
 }
 
@@ -437,25 +428,7 @@ void ActiveSettings::setHostAddress(const QString &address)
  */
 QString ActiveSettings::getHostAddress() const
 {
-    QString address;
-
-    if (!hostLU.isEmpty())
-    {
-        address.append(hostLU).append('@');
-    }
-
-    if (!hostName.isEmpty())
-    {
-        address.append(hostName);
-
-    }
-
-    if (hostPort != 0)
-    {
-        address.append(':').append(QString::number(hostPort));
-    }
-
-    return address;
+    return HostAddressUtils::format(hostName, hostPort, hostLU);
 }
 
 /**
