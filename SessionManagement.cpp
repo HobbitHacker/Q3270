@@ -33,7 +33,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "Q3270.h"
+#include "SessionStore.h"
+
 #include "SessionManagement.h"
+#include "SaveSessionDialog.h"
+#include "OpenSessionDialog.h"
 #include "ui_SaveSession.h"
 #include "ui_OpenSession.h"
 #include "ui_ManageSessions.h"
@@ -79,163 +83,16 @@ SessionManagement::~SessionManagement()
  */
 bool SessionManagement::saveSessionAs()
 {
-    // Build UI
-    QDialog saveDialog;
+    SaveSessionDialog dlg(activeSettings, this);
 
-    save = new Ui::SaveSession;
-
-    save->setupUi(&saveDialog);
-
-    // Signals we are interested in
-    connect(save->sessionName, &QLineEdit::textChanged, this, &SessionManagement::saveSessionNameEdited);
-    connect(save->tableWidget, &QTableWidget::cellClicked, this, &SessionManagement::saveRowClicked);
-
-    // Default to OK button being disabled
-    save->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
-
-    // Clear session name
-    save->sessionName->setText("");
-
-    // Build table
-    populateTable(save->tableWidget);
-
-    // Extract list of session names for comparison
-    QStringList sessionList;
-    for (int i = 0; i < save->tableWidget->rowCount(); i++)
-    {
-        sessionList.append(save->tableWidget->item(i, 0)->text());
+    if (dlg.exec() == QDialog::Accepted) {
+        // Optionally refresh session list or preview
+        return true;
     }
 
-    // Flag to show whether user wishes to save the settings
-    bool saveIt;
 
-    // Infinite loop
-    for(;;)
-    {
-        if (saveDialog.exec() == QDialog::Accepted)
-        {
-            saveIt = true;
-
-            // If the session name already exists, prompt to overwrite, else use the name
-            if (sessionList.contains(save->sessionName->text()))
-            {
-                QMessageBox msgBox;
-                msgBox.setText("Overwrite " + save->sessionName->text() + "?");
-                msgBox.setInformativeText(save->sessionName->text() + " already exists; do you want to overwrite it?");
-                msgBox.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
-
-                // Set flag according to whether user pressed OK
-                saveIt = (msgBox.exec() == QMessageBox::Ok);
-            }
-
-            if (saveIt)
-            {
-                //  User either chose a unique name or confirmed overwrite
-
-                // Store session name and description in case it changed
-                sessionName = save->sessionName->text();
-                sessionDesc = save->lineEdit->text();
-
-                // Save settings
-                saveSettings();
-                delete save;
-                return true;
-            }
-        }
-        else
-        {
-            // User pressed cancel
-            delete save;
-
-            // Return true if this was a named session beforehand
-            if (!sessionName.isNull())
-            {
-                return true;
-            }
-
-            // Not a named session
-            return false;
-        }
-    }
-}
-
-/**
- * @brief   SessionManagement::saveSessionNameEdited - enable/disable OK button
- * @param   name - the session name
- *
- * @details Trigerred when the user edits to the session name to disable the OK button when the
- *          session name is blank.
- */
-void SessionManagement::saveSessionNameEdited(QString name)
-{
-    // If the Session Name is empty, disable the OK button
-    if (name.isEmpty())
-    {
-        save->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
-    }
-    else
-    {
-        save->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(true);
-    }
-}
-
-/**
- * @brief   SessionManagement::saveRowClicked - display details about the session
- * @param   row    - the row clicked
- * @param   column - the column (not used)
- *
- * @details When the user clicks a row in the list of saved sessions, populate text fields
- */
-void SessionManagement::saveRowClicked(int row, [[maybe_unused]] int column)
-{
-    // Populate text fields from table cells
-    save->sessionName->setText(save->tableWidget->item(row, 0)->text());
-    save->lineEdit->setText(save->tableWidget->item(row, 1)->text());
-}
-
-/**
- * @brief   SessionManagement::saveSettings - save a session
- *
- * @details Save the current session, fetching the settings from the current active settings.
- */
-void SessionManagement::saveSettings()
-{
-
-    QSettings s(Q3270_SETTINGS);
-
-    // Sessions are stored under the "Sessions" key, under their key of their name
-    s.beginGroup("Sessions");
-
-    // Each session is stored under the Sessions/<session name> key
-    s.beginGroup(sessionName);
-
-    QMetaEnum metaEnum = QMetaEnum::fromType<Q3270::RulerStyle>();
-
-    s.setValue("Description", sessionDesc);
-    s.setValue("ColourTheme", activeSettings.getColourThemeName());
-    s.setValue("KeyboardTheme", activeSettings.getKeyboardThemeName());
-    s.setValue("Address", activeSettings.getHostAddress());
-    s.setValue("TerminalModel", activeSettings.getTerminalModelName());
-    s.setValue("TerminalX", activeSettings.getTerminalX());
-    s.setValue("TerminalY", activeSettings.getTerminalY());
-    s.setValue("CursorBlink", activeSettings.getCursorBlink());
-    s.setValue("CursorBlinkSpeed", activeSettings.getCursorBlinkSpeed());
-    s.setValue("CursorInheritColour", activeSettings.getCursorColourInherit());
-    s.setValue("Ruler", activeSettings.getRulerState());
-    s.setValue("RulerStyle", QString(metaEnum.valueToKey(activeSettings.getRulerStyle())));
-    s.setValue("Font", activeSettings.getFont().family());
-    s.setValue("FontSize", activeSettings.getFont().pointSize());
-    s.setValue("FontStyle", activeSettings.getFont().styleName());
-    s.setValue("ScreenStretch", activeSettings.getStretchScreen());
-    s.setValue("Codepage",activeSettings.getCodePage());
-    s.setValue("SecureConnection", activeSettings.getSecureMode());
-    s.setValue("VerifyCertificate", activeSettings.getVerifyCerts());
-
-    // End group for session
-    s.endGroup();
-
-    // End group for all sessions
-    s.endGroup();
+    // If the session was previously named, return true to preserve state
+    return !sessionName.isNull();
 }
 
 /**
@@ -252,98 +109,19 @@ void SessionManagement::saveSettings()
  * @details Display a list of sessions for the user to select one to open a saved session. If they
  *          select one, open and connect to it.
  */
-bool SessionManagement::openSession(Terminal *t)
+
+bool SessionManagement::openSession()
 {
-    // Build UI
-    QDialog openDialog;
+    OpenSessionDialog dlg(activeSettings, this);
 
-    load = new Ui::OpenSession;
-
-    load->setupUi(&openDialog);
-
-    // Signals we are interested in
-    connect(load->tableWidget, &QTableWidget::cellClicked, this, &SessionManagement::openRowClicked);
-
-    // Default to OK button being disabled
-    load->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
-
-    // Populate table
-    populateTable(load->tableWidget);
-
-    // Process open request if 'OK' (or double-clicked)
-    if (openDialog.exec() != QDialog::Rejected)
+    if (dlg.exec() == QDialog::Accepted)
     {
-        QSettings settings(Q3270_SETTINGS);
-
-        // Open named session
-        openSession(t, load->tableWidget->item(load->tableWidget->currentRow(), 0)->text());
-
-        // Save session name and description
-        sessionName = load->tableWidget->item(load->tableWidget->currentRow(), 0)->text();
-        sessionDesc = load->tableWidget->item(load->tableWidget->currentRow(), 1)->text();
-
-        delete load;
-
-        return true;
-    }
-
-    delete load;
-
-    // If this was a named session beforehand, return true
-    if (!sessionName.isNull())
-    {
-        return true;
-    }
-
-    // Not a named session
-    return false;
-}
-
-/**
- * @brief   SessionManagement::openSession - open a named session
- * @param   t           - the terminal
- * @param   sessionName - the session name
- *
- * @details Open named sessions, either from the list of saved sessions, or from the most recently used
- *          list.
- */
-void SessionManagement::openSession(Terminal *t, QString sessionName)
-{
-    QSettings s(Q3270_SETTINGS);
-
-    // Position at Sessions group
-    s.beginGroup("Sessions");
-
-    // Position at Session Name sub-group
-    s.beginGroup(sessionName);
-
-    if (!s.childKeys().isEmpty())
-    {
-        t->openConnection(s);
-
-        // Store name and description for later
-        this->sessionName = sessionName;
-        this->sessionDesc = s.value("Description").toString();
-
         // Update MRU entries
-        emit sessionOpened("Session " + sessionName);
-
+        emit sessionOpened();
+        return true;
     }
 
-    s.endGroup();
-    s.endGroup();
-}
-
-/**
- * @brief   SessionManagement::openRowClicked - enable the OK button
- * @param   x - not used
- * @param   y - not used
- *
- * @details Enable the OK button when the user clicks on Ok
- */
-void SessionManagement::openRowClicked([[maybe_unused]] int x, [[maybe_unused]] int y)
-{
-    load->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(true);
+    return false;
 }
 
 
@@ -397,7 +175,7 @@ void SessionManagement::manageSessions()
 void SessionManagement::deleteSession()
 {
 
-    QSettings settings(Q3270_SETTINGS);
+    QSettings settings(Q3270_ORG, Q3270_APP);
 
     // Narrow to Sessions group
     settings.beginGroup("Sessions");
@@ -443,10 +221,10 @@ void SessionManagement::manageRowClicked([[maybe_unused]] int x, [[maybe_unused]
  */
 void SessionManagement::manageAutoStartList()
 {
-    QSettings settings(Q3270_SETTINGS);
+    QSettings settings(Q3270_ORG, Q3270_APP);
 
     // Used to access the session details
-    QSettings sessionSettings(Q3270_SETTINGS);
+    QSettings sessionSettings(Q3270_ORG, Q3270_APP);
 
     // Focus on the sessions
     sessionSettings.beginGroup("Sessions");
@@ -628,7 +406,7 @@ void SessionManagement::deleteAutoStart()
 void SessionManagement::populateTable(QTableWidget *table)
 {
     // Extract current Session names and descriptions, and add to table
-    QSettings settings(Q3270_SETTINGS);
+    QSettings settings(Q3270_ORG, Q3270_APP);
     settings.beginGroup("Sessions");
 
     // Get a list of all existing sessions

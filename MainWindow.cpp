@@ -36,8 +36,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "MainWindow.h"
 #include "ui_About.h"
 #include "ui_CertificateDetails.h"
+#include "HostAddressUtils.h"
 
 #include "Q3270.h"
+#include "Session.h"
 /**
  * @brief   MainWindow::MainWindow - the main application
  * @param   launchParms - a name
@@ -52,7 +54,7 @@ MainWindow::MainWindow(MainWindow::LaunchParms launchParms) : QMainWindow(nullpt
     ui->setupUi(this);
 
     // Read global settings
-    QSettings savedSettings(Q3270_SETTINGS);
+    QSettings savedSettings(Q3270_ORG, Q3270_APP);
 
     // Set Factory keyboard map
     keyboard.setTheme(keyboardTheme.getTheme("Factory"));
@@ -96,8 +98,8 @@ MainWindow::MainWindow(MainWindow::LaunchParms launchParms) : QMainWindow(nullpt
     // Session Management dialog
     sm = new SessionManagement(activeSettings);
 
-    // Update MRU entries if the user opens a session
-    connect(sm, &SessionManagement::sessionOpened, this, &MainWindow::updateMRUlist);
+    // Process an open session request
+    connect(sm, &SessionManagement::sessionOpened, this, &MainWindow::onSessionOpened);
 
     // Change Connect menu entry when connected, or when user fills in hostname field in Settings
     connect(settings, &PreferencesDialog::connectValid, this, &MainWindow::enableConnectMenu);
@@ -124,7 +126,7 @@ MainWindow::MainWindow(MainWindow::LaunchParms launchParms) : QMainWindow(nullpt
         //TODO: Decide if Window Geometry is just going to mean that a session always has the same pos etc on screen
         //TODO: Use QWidget.resize and QWidget.move instead. See QSettings doc
         restoreGeometry(savedSettings.value(launchParms.session + "/WindowGeometry").toByteArray());
-        sm->openSession(terminal, QUrl::fromPercentEncoding(launchParms.session.toLatin1()));
+        //sm->openSession(terminal, QUrl::fromPercentEncoding(launchParms.session.toLatin1()));
 
         // Enable Save Session menu item
         ui->actionSave_Session->setEnabled(true);
@@ -156,7 +158,7 @@ MainWindow::MainWindow(MainWindow::LaunchParms launchParms) : QMainWindow(nullpt
             else
             {
                 //TODO check if we actually need the fromPercentEncoding
-                sm->openSession(terminal, QUrl::fromPercentEncoding(savedSettings.value("Session").toString().toLatin1()));
+                // sm->openSession(terminal, QUrl::fromPercentEncoding(savedSettings.value("Session").toString().toLatin1()));
 
                 // Enable Save Session menu entry as it's a named session
                 ui->actionSave_Session->setEnabled(true);
@@ -188,7 +190,7 @@ void MainWindow::menuNew()
  */
 void MainWindow::menuDuplicate()
 {
-    MainWindow *newWindow = new MainWindow({ this, terminal->getSessionName() });
+    MainWindow *newWindow = new MainWindow({ this, activeSettings.getSessionName() });
     newWindow->show();
 }
 
@@ -199,7 +201,7 @@ void MainWindow::menuDuplicate()
  */
 void MainWindow::menuSaveSession()
 {
-    sm->saveSettings();
+    sessionStore.saveSession(::Session::fromActiveSettings(activeSettings));
 }
 
 /**
@@ -221,7 +223,7 @@ void MainWindow::menuSaveSessionAs()
 void MainWindow::menuOpenSession()
 {
     // Open Session dialog
-    ui->actionSave_Session->setEnabled(sm->openSession(terminal));
+    ui->actionSave_Session->setEnabled(sm->openSession());
 }
 
 /**
@@ -254,11 +256,25 @@ void MainWindow::mruConnect()
     // Split the menu entry into parts: 1. Host 192.168.0.1:23 or 1. Session Fred
     QStringList parts = sender->text().split(" ");
 
+    qDebug() << parts[1];
+    qDebug() << parts[2];
+
     // If this is a Host address, use that to connect to
     if (!parts[1].compare("Host"))
     {
+        // Store the address in the current settings
+        QString namePart;
+        int portPart;
+        QString LUPart;
+
+        HostAddressUtils::parse(parts[2], namePart, portPart, LUPart);
+
+        activeSettings.setHostAddress(namePart, portPart, LUPart);
+
+        qDebug() << "Host: " << activeSettings.getHostAddress();
+
         // Pick up address and connect
-        terminal->openConnection(parts[2]);
+        terminal->connectSession();
 
         // Set Connect menu entries
         ui->actionDisconnect->setEnabled(true);
@@ -268,32 +284,25 @@ void MainWindow::mruConnect()
         ui->actionSave_Session->setDisabled(true);
 
         // Update recently used list
-        updateMRUlist("Host " + parts[2]);
-
-        // Update the address on the Host form
-        activeSettings.setHostAddress(parts[2]);
+        updateMRUList();
     }
     else
     {
         // Will contain either session name or host address
-        QString address;
+        SessionStore store;
+        Session s = store.loadSession(parts.mid(2).join(" "));
+        qDebug() << parts.mid(2).join(" ");
+        s.toActiveSettings(activeSettings);
 
-        // It's a session name, so concatenate the remaining parts of the menu entry
-        // as the session name may have embedded spaces
-        for(int i = 2; i < parts.count(); i++)
-        {
-            address = address.append(parts[i] + " ");
-        }
+        qDebug() << "Session: " << activeSettings.getHostAddress();
 
-        // Remove last trailing space added above
-        address.chop(1);
-
-        // Open the session, which also emits an update to the MRU list
-        sm->openSession(terminal, address);
+        // Connect the session
+        terminal->connectSession();
 
         // It's a named session, so can save it
         ui->actionSave_Session->setEnabled(true);
     }
+
 }
 
 /**
@@ -322,11 +331,18 @@ void MainWindow::menuConnect()
 
     if (!activeSettings.getHostAddress().isEmpty())
     {
-        terminal->openConnection(activeSettings.getHostAddress());
+        onSessionOpened();
 
         ui->actionDisconnect->setEnabled(true);
         ui->actionConnect->setDisabled(true);
     }
+}
+
+void MainWindow::onSessionOpened()
+{
+    terminal->connectSession();
+    updateMRUList();
+
 }
 
 /**
@@ -449,8 +465,10 @@ void MainWindow::disableDisconnectMenu()
  * @details Add an entry to the Most Recently Used list. This may be an existing entry,
  *          in which case, delete it from where it was and add it to the top of the list.
  */
-void MainWindow::updateMRUlist(QString address)
+void MainWindow::updateMRUList()
 {
+    QString address = activeSettings.getSessionName().isEmpty() ? QString("Host ").append(activeSettings.getHostAddress()) : QString("Session ").append(activeSettings.getSessionName());
+
     // Clear existing MRU list
     ui->menuRecentSessions->clear();
 
@@ -478,8 +496,7 @@ void MainWindow::updateMRUlist(QString address)
         ui->menuRecentSessions->addAction(entry + mruList.at(i), this, [this]() { mruConnect(); } );
     }
 
-
-   QSettings applicationSettings(Q3270_SETTINGS);
+   QSettings applicationSettings(Q3270_ORG, Q3270_APP);
 
     applicationSettings.beginWriteArray("RecentlyUsed");
     for(int i = 0; i < mruList.size() && i < maxMruCount; i++)
@@ -508,7 +525,11 @@ void MainWindow::menuQuit()
  */
 void MainWindow::closeEvent(QCloseEvent *event)
 {
-    QSettings applicationSettings(Q3270_SETTINGS);
+
+#if 0
+
+// TODO: Deliberately disabled for later when address process is sorted.
+    QSettings applicationSettings(Q3270_ORG, Q3270_APP);
 
     applicationSettings.setValue("mainwindowgeometry", saveGeometry());
     applicationSettings.setValue("mainwindowstate", saveState());
@@ -536,6 +557,8 @@ void MainWindow::closeEvent(QCloseEvent *event)
     applicationSettings.endArray();
 
     event->accept();
+#endif
+
 }
 
 /**

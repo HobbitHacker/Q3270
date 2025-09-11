@@ -28,12 +28,18 @@ SOURCES += \
     DisplayScreen/DisplayScreen_Cursor.cpp \
     DisplayScreen/DisplayScreen_Status.cpp \
     DisplayScreen/DisplayScreen_Mouse.cpp \
+    OpenSessionDialog.cpp \
+    HostAddressUtils.cpp \
     Keyboard.cpp \
     KeyboardTheme.cpp \
     MainWindow.cpp \
     PreferencesDialog.cpp \
     ProcessDataStream.cpp \
+    SaveSessionDialog.cpp \
+    Session.cpp \
+    SessionDialogBase.cpp \
     SessionManagement.cpp \
+    SessionStore.cpp \
     Terminal.cpp \
     main.cpp \
     SocketConnection.cpp
@@ -45,13 +51,19 @@ HEADERS += \
     CodePage.h \
     ColourTheme.h \
     DisplayScreen.h \
+    OpenSessionDialog.h \
+    HostAddressUtils.h \
     Keyboard.h \
     KeyboardTheme.h \
     MainWindow.h \
     PreferencesDialog.h \
     ProcessDataStream.h \
     Q3270.h \
+    SaveSessionDialog.h \
+    Session.h \
+    SessionDialogBase.h \
     SessionManagement.h \
+    SessionStore.h \
     SocketConnection.h \
     Terminal.h
 
@@ -67,7 +79,8 @@ FORMS += \
     NewTheme.ui \
     OpenSession.ui \
     PreferencesDialog.ui \
-    SaveSession.ui
+    SaveSession.ui \
+    SessionDialog.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

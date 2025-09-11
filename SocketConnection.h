@@ -72,7 +72,7 @@ class SocketConnection : public QObject
         QList<QSslCertificate> getCertDetails();
 
     public slots:
-        void connectMainframe(QString &address, quint16 port, QString luName, ProcessDataStream *d);
+        void connectMainframe(const QString &address, quint16 port, const QString luName, ProcessDataStream *d);
         void disconnectMainframe();
         void opened();
         void closed();

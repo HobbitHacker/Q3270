@@ -47,6 +47,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Terminal.h"
 #include "PreferencesDialog.h"
 #include "ActiveSettings.h"
+#include "SessionStore.h"
 
 namespace Ui {
     class SaveSession;
@@ -66,21 +67,16 @@ class SessionManagement : public QDialog
         ~SessionManagement();
 
         // Dialogs to open and save sessions; return true if session opened/saved
-        bool openSession(Terminal *t);
+//        void openSession(Terminal *t, const QString &sessionName);
+        bool openSession();
         bool saveSessionAs();
-
-        // Save current named session details
-        void saveSettings();
-
-        // Open a named session
-        void openSession(Terminal *t, QString sessionName);
 
         // Manage sessions
         void manageSessions();
 
    signals:
 
-        void sessionOpened(QString session);
+        void sessionOpened();
         void autoStartAddToList(int row);
 
    private:
@@ -97,6 +93,8 @@ class SessionManagement : public QDialog
 
         ActiveSettings &activeSettings;
 
+        SessionStore store;
+
         // Populate QTableWidget with session details
         void populateTable(QTableWidget *table);
 
@@ -104,15 +102,6 @@ class SessionManagement : public QDialog
 
         // Manage Autostart list - button on Manage Sessions dialog
         void manageAutoStartList();
-
-        // Triggered when session name edited; used to enable/disable OK button
-        void saveSessionNameEdited(QString name);
-
-        // Triggered when table row clicked
-        void saveRowClicked(int row, int column);
-
-        // Triggered when Open table row clicked; used to enable OK button
-        void openRowClicked(int row, int column);
 
         // Delete session button
         void deleteSession();

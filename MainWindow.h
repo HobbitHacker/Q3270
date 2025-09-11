@@ -60,6 +60,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "SessionManagement.h"
 #include "ActiveSettings.h"
 #include "CertificateDetails.h"
+#include "SessionStore.h"
 
 QT_BEGIN_NAMESPACE
 
@@ -84,13 +85,13 @@ class MainWindow : public QMainWindow
           QString session;
       };
 
-      MainWindow(MainWindow::Session  = { nullptr, ""} );
+      MainWindow(MainWindow::LaunchParms = { nullptr, ""} );
       ~MainWindow();
 
   public slots:
 
       void closeEvent(QCloseEvent *c);
-      void updateMRUlist(QString address);
+      void onSessionOpened();
       void showEvent(QShowEvent *s);
       void resizeEvent(QResizeEvent *s);
 
@@ -128,6 +129,8 @@ class MainWindow : public QMainWindow
 
   private:
 
+      void updateMRUList();
+
       ActiveSettings activeSettings;
 
       ColourTheme colourTheme;
@@ -138,6 +141,8 @@ class MainWindow : public QMainWindow
       CodePage codePage;
       
       Terminal *terminal;
+
+      SessionStore sessionStore;
 
 
       SessionManagement *sm;

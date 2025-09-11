@@ -53,8 +53,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *          by the user, based on the Terminal Model type selected.
  */
 Terminal::Terminal(QVBoxLayout *layout, ActiveSettings &activeSettings, CodePage &cp, Keyboard &kb, ColourTheme &cs, KeyboardTheme &kt, QString sessionName) :
-    kbd(kb), colourtheme(cs), keyboardtheme(kt), cp(cp), activeSettings(activeSettings), sessionName(sessionName)
+    kbd(kb), colourtheme(cs), keyboardtheme(kt), cp(cp), activeSettings(activeSettings)
 {
+    if (!sessionName.isEmpty()) {
+        activeSettings.setSessionName(sessionName);
+    }
+
     sessionConnected = false;
     stretchScreen = Qt::IgnoreAspectRatio;
 
@@ -248,80 +252,6 @@ void Terminal::rulerStyle(Q3270::RulerStyle rulerStyle)
 }
 
 /**
- * @brief   Terminal::openConnection - open a connection
- * @param   address - target address, may contain an LU name
- *
- * @details Called when the user opens a connection with a address of the form luname@targetaddress:port.
- *          This is parsed and then passed to connectSession.
- */
-void Terminal::openConnection(QString address)
-{
-    if (address.contains("@"))
-    {
-        connectSession(address.section("@", 1, 1).section(":", 0, 0),
-                       address.section(":", 1, 1).toInt(),
-                       address.section("@", 0, 0));
-
-
-    }
-    else
-    {
-        connectSession(address.section(":", 0, 0),
-                       address.section(":", 1, 1).toInt(),
-                       "");
-
-    }
-}
-
-/**
- * @brief   Terminal::openConnection - open a session
- * @param   s - the session to be opened
- *
- * @details Called when a session is opened. The parameter points to the session already identified in the
- *          config file.
- */
-void Terminal::openConnection(QSettings& s)
-{
-    // Set terminal characteristics
-    activeSettings.setTerminal(s.value("TerminalX").toInt(), s.value("TerminalY").toInt(), s.value("TerminalModel").toString());
-    activeSettings.setCodePage(s.value("Codepage").toString());
-
-    activeSettings.setSecureMode(s.value("SecureConnection", false).toBool());
-    activeSettings.setVerifyCerts(s.value("VerifyCertificate", false).toBool());
-
-    openConnection(s.value("Address").toString());
-
-    // Cursor settings
-    activeSettings.setCursorBlink(s.value("CursorBlink").toBool());
-    activeSettings.setCursorBlinkSpeed(s.value("CursorBlinkSpeed").toInt());
-    activeSettings.setCursorColourInherit(s.value("CursorInheritColour").toBool());
-
-    // Ruler
-    activeSettings.setRulerState(s.value("Ruler").toBool());
-    activeSettings.setRulerStyleName(s.value("RulerStyle").toString());
-
-    // Font settings
-    QFont f;
-    f.setFamily(s.value("Font").toString());
-    f.setPointSize(s.value("FontSize").toInt());
-    f.setStyleName(s.value("FontStyle").toString());
-
-    activeSettings.setFont(f);
-
-    activeSettings.setStretchScreen(s.value("ScreenStretch").toBool());
-
-    // Set themes
-    activeSettings.setColourTheme(s.value("ColourTheme").toString());
-    activeSettings.setKeyboardTheme(s.value("KeyboardTheme").toString());
-
-    // Set the name
-    activeSettings.setSessionName(s.group());
-
-    // Update settings with address
-    activeSettings.setHostAddress(s.value("Address").toString());
-}
-
-/**
  * @brief   Terminal::connectSession - connect to a host
  * @param   host   - the host to connect to
  * @param   port   - the port to use
@@ -332,9 +262,9 @@ void Terminal::openConnection(QSettings& s)
  *
  *          Start timers to blink the cursor and any blinking characters on screen.
  */
-void Terminal::connectSession(QString host, int port, QString luName)
+void Terminal::connectSession()
 {
-    setWindowTitle(windowTitle().append(" [").append(host).append("]"));
+    setWindowTitle(QString('[').append(activeSettings.getSessionName()).append(']'));
 
     // Set up primary and alternate scenes
     primary = new QGraphicsScene();
@@ -383,7 +313,7 @@ void Terminal::connectSession(QString host, int port, QString luName)
     // Keyboard inputs
     connect(&kbd, &Keyboard::key_Copy, this, &Terminal::copyText);
 
-    socket->connectMainframe(host, port, luName, datastream);
+    socket->connectMainframe(activeSettings.getHostName(), activeSettings.getHostPort(), activeSettings.getHostLU(), datastream);
 
     sessionConnected = true;
 

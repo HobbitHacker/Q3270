@@ -58,8 +58,7 @@ class Terminal : public QWidget
     Terminal(QVBoxLayout *v, ActiveSettings &activeSettings, CodePage &cp, Keyboard &kb, ColourTheme &cs, KeyboardTheme &kt, QString sessionName);
         ~Terminal();
 
-        void openConnection(QString address);
-        void openConnection(QSettings& s);
+        void connectSession();
 
         int terminalWidth(bool alternate)       { return(!alternate ? primaryScreen->width() : alternateScreen->width()); }
         int terminalHeight(bool alternate)      { return(!alternate ? primaryScreen->height() : alternateScreen->height()); };
@@ -107,7 +106,6 @@ class Terminal : public QWidget
 
     private:
 
-        void connectSession(QString host, int port, QString luName);
         void connectKeyboard(DisplayScreen &s);
         void disconnectKeyboard(DisplayScreen &s);
 

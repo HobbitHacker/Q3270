@@ -161,7 +161,7 @@ void SocketConnection::disconnectMainframe()
  *          and the LU name is stored for later in the negotiation sequence. The ProcessDataStream object
  *          is passed so that the ProcessDataStream can pass data back to the host.
  */
-void SocketConnection::connectMainframe(QString &address, quint16 port, QString luName, ProcessDataStream *d)
+void SocketConnection::connectMainframe(const QString &address, quint16 port, const QString luName, ProcessDataStream *d)
 {
     certErrors = false;
 
