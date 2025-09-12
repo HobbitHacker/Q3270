@@ -19,6 +19,7 @@ class SessionStore {
 
         bool saveSession(const Session &session);
         Session loadSession(const QString &name) const;
+        void deleteSession(const QString &name);
 
     private:
         mutable QSettings settings;

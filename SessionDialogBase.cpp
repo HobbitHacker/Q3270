@@ -1,4 +1,5 @@
 #include <QDialogButtonBox>
+#include <QMessageBox>
 #include <QPushButton>
 #include <QDebug>
 
@@ -54,6 +55,7 @@ void SessionDialogBase::connectSignals()
 {
     connect(ui->buttonBox, &QDialogButtonBox::accepted, this, &SessionDialogBase::onAccept);
     connect(ui->buttonBox, &QDialogButtonBox::rejected, this, &SessionDialogBase::reject);
+    connect(ui->deleteButton, &QPushButton::clicked, this, &SessionDialogBase::requestDeleteSelected);
 }
 
 void SessionDialogBase::enableOKButton(bool enabled)
@@ -104,4 +106,17 @@ void SessionDialogBase::updatePreview(const Session &s)
     ui->previewModel->setText(s.terminalModel);
     ui->previewSecure->setChecked(s.secureConnection);
     ui->previewVerifyCert->setChecked(s.verifyCertificate);
+}
+
+void SessionDialogBase::requestDeleteSelected() {
+
+    const QString currentName = ui->sessionNameEdit->text();
+
+    if (currentName.isEmpty())
+        return;
+
+    if (QMessageBox::question(this, tr("Delete Session"),
+                              tr("Delete session '%1'?").arg(currentName)) == QMessageBox::Yes) {
+        emit deleteRequested(currentName);
+    }
 }

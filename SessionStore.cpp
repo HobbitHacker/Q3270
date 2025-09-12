@@ -151,3 +151,12 @@ QStringList SessionStore::listSessionNames() const
 
     return names;
 }
+
+void SessionStore::deleteSession(const QString &name)
+{
+    settings.beginGroup("Sessions");
+    settings.remove(name); // removes the whole group
+    settings.endGroup();
+
+    settings.sync(); // ensure it’s written to disk
+}

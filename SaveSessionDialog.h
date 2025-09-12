@@ -14,6 +14,7 @@ public:
 private slots:
     void onSaveClicked();
     void saveSessionNameEdited(const QString &name);
+    void doDelete(const QString &name);
 
 private:
     ActiveSettings &activeSettings;

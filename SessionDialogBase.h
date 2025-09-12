@@ -27,6 +27,10 @@ public:
     explicit SessionDialogBase(Mode mode, QWidget *parent = nullptr);
     virtual ~SessionDialogBase();
 
+signals:
+
+    void deleteRequested(const QString &name);
+
 protected:
     Ui::SessionDialog *ui;
     Mode mode;
@@ -43,6 +47,8 @@ protected:
 
     void enableOKButton(bool enabled);
     void setOKButtonText(const QString &text);
+
+    void requestDeleteSelected();
 
     // Subclass hooks
     virtual void onAccept();
