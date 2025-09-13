@@ -77,9 +77,7 @@ FORMS += \
     MainWindow.ui \
     Sessions/ManageSessions.ui \
     NewTheme.ui \
-    Sessions/OpenSession.ui \
     PreferencesDialog.ui \
-    Sessions/SaveSession.ui \
     Sessions/SessionDialog.ui
 
 # Default rules for deployment.

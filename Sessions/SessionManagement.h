@@ -81,8 +81,6 @@ class SessionManagement : public QDialog
 
    private:
 
-        Ui::SaveSession *save;
-        Ui::OpenSession *load;
         Ui::ManageSessions *manage;
         Ui::AutoStart *autostart;
         Ui::AutoStartAdd *add;
