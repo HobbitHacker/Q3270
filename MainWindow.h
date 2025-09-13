@@ -57,10 +57,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Terminal.h"
 #include "ColourTheme.h"
 #include "KeyboardTheme.h"
-#include "SessionManagement.h"
+#include "Sessions/SessionManagement.h"
 #include "ActiveSettings.h"
 #include "CertificateDetails.h"
-#include "SessionStore.h"
+#include "Sessions/SessionStore.h"
 
 QT_BEGIN_NAMESPACE
 

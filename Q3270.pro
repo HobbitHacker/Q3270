@@ -28,18 +28,18 @@ SOURCES += \
     DisplayScreen/DisplayScreen_Cursor.cpp \
     DisplayScreen/DisplayScreen_Status.cpp \
     DisplayScreen/DisplayScreen_Mouse.cpp \
-    OpenSessionDialog.cpp \
+    Sessions/OpenSessionDialog.cpp \
     HostAddressUtils.cpp \
     Keyboard.cpp \
     KeyboardTheme.cpp \
     MainWindow.cpp \
     PreferencesDialog.cpp \
     ProcessDataStream.cpp \
-    SaveSessionDialog.cpp \
+    Sessions/SaveSessionDialog.cpp \
     Session.cpp \
-    SessionDialogBase.cpp \
-    SessionManagement.cpp \
-    SessionStore.cpp \
+    Sessions/SessionDialogBase.cpp \
+    Sessions/SessionManagement.cpp \
+    Sessions/SessionStore.cpp \
     Terminal.cpp \
     main.cpp \
     SocketConnection.cpp
@@ -51,7 +51,7 @@ HEADERS += \
     CodePage.h \
     ColourTheme.h \
     DisplayScreen.h \
-    OpenSessionDialog.h \
+    Sessions/OpenSessionDialog.h \
     HostAddressUtils.h \
     Keyboard.h \
     KeyboardTheme.h \
@@ -59,11 +59,11 @@ HEADERS += \
     PreferencesDialog.h \
     ProcessDataStream.h \
     Q3270.h \
-    SaveSessionDialog.h \
+    Sessions/SaveSessionDialog.h \
     Session.h \
-    SessionDialogBase.h \
-    SessionManagement.h \
-    SessionStore.h \
+    Sessions/SessionDialogBase.h \
+    Sessions/SessionManagement.h \
+    Sessions/SessionStore.h \
     SocketConnection.h \
     Terminal.h
 
@@ -75,12 +75,12 @@ FORMS += \
     ColourTheme.ui \
     KeyboardTheme.ui \
     MainWindow.ui \
-    ManageSessions.ui \
+    Sessions/ManageSessions.ui \
     NewTheme.ui \
-    OpenSession.ui \
+    Sessions/OpenSession.ui \
     PreferencesDialog.ui \
-    SaveSession.ui \
-    SessionDialog.ui
+    Sessions/SaveSession.ui \
+    Sessions/SessionDialog.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
