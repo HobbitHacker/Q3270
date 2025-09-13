@@ -43,6 +43,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ui_ManageSessions.h"
 #include "ui_AutoStart.h"
 #include "ui_AutoStartAdd.h"
+#include "ManageSessionsDialog.h"
 
 /**
  * @brief   SessionManagement::SessionManagement - All aspects of Session management
@@ -139,72 +140,8 @@ bool SessionManagement::openSession()
  */
 void SessionManagement::manageSessions()
 {
-    // Dialog for sessions management
-    QDialog m;
-
-    // Build UI
-    manage = new Ui::ManageSessions;
-
-    manage->setupUi(&m);
-
-    // Populate UI table with session details
-    populateTable(manage->sessionList);
-
-    // Signals we are interested in
-    connect(manage->deleteSession, &QPushButton::clicked, this, &SessionManagement::deleteSession);
-    connect(manage->sessionList, &QTableWidget::cellClicked, this, &SessionManagement::manageRowClicked);
-    connect(manage->buttonManageAutoStart, &QPushButton::clicked, this, &SessionManagement::manageAutoStartList);
-
-    // Signal when a new row is added to the autostart list
-    connect(this, &SessionManagement::autoStartAddToList, this, &SessionManagement::autoStartRowAdded);
-
-    if (m.exec() == QDialog::Accepted)
-    {
-        // TODO: Save sessions when OK pressed; for now, Delete is actioned at point of
-        // pressing the Delete button
-    }
-
-    delete manage;
-}
-
-/**
- * @brief   SessionManagement::deleteSession - delete a session
- *
- * @details Delete a session from the config file
- */
-void SessionManagement::deleteSession()
-{
-
-    QSettings settings(Q3270_ORG, Q3270_APP);
-
-    // Narrow to Sessions group
-    settings.beginGroup("Sessions");
-
-    // Remove selected item
-    settings.remove(manage->sessionList->item(manage->sessionList->currentRow(), 0)->text());
-
-    // Clear group filter
-    settings.endGroup();
-
-    // Re-populate table
-    populateTable(manage->sessionList);
-
-    // Reset delete button
-    manage->deleteSession->setDisabled(true);
-
-}
-
-/**
- * @brief   SessionManagement::manageRowClicked - enable the 'Delete' button
- * @param   y - the row clicked
- *
- * @details When the user clicks on a row in the Manage Sessions dialog, the Delete button
- *          becomes enabled.
- */
-void SessionManagement::manageRowClicked([[maybe_unused]] int x, [[maybe_unused]] int y)
-{
-    // Enable the Delete Session button when a row is clicked
-    manage->deleteSession->setEnabled(true);
+    ManageSessionsDialog dlg(activeSettings, this);
+    dlg.exec();
 }
 
 /**
@@ -351,7 +288,7 @@ void SessionManagement::addAutoStart()
     add->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
 
     // Populate the table
-    populateTable(add->sessionList);
+    //populateTable(add->sessionList);
 
     //  Enable OK button if a cell is selected
     connect(add->sessionList, &QTableWidget::cellClicked, this, &SessionManagement::autoStartAddCellClicked);
@@ -389,48 +326,4 @@ void SessionManagement::deleteAutoStart()
 
     // Disable delete button again, now selected row is gone
     autostart->deleteButton->setDisabled(true);
-}
-
-
-/*
- * Utility Methods
- */
-
-/**
- * @brief   SessionManagement::populateTable - populate a table with a list of sessions
- * @param   table - the widget to be populated
- *
- * @details Several dialogs display a list of sessions. This routine populates a given table with the
- *          list of available sessions.
- */
-void SessionManagement::populateTable(QTableWidget *table)
-{
-    // Extract current Session names and descriptions, and add to table
-    QSettings settings(Q3270_ORG, Q3270_APP);
-    settings.beginGroup("Sessions");
-
-    // Get a list of all existing sessions
-    QStringList sessionList = settings.childGroups();
-
-    // Empty table first
-    table->clearContents();
-
-    // Populate session table
-    for(int i = 0;i < sessionList.count(); i++)
-    {
-        // Extract session description
-        settings.beginGroup(sessionList.at(i));
-
-        // Add session details to table
-        table->insertRow(i);
-        table->setItem(i, 0, new QTableWidgetItem(sessionList.at(i)));
-        table->setItem(i, 1, new QTableWidgetItem(settings.value("Description").toString()));
-        table->setItem(i, 2, new QTableWidgetItem(settings.value("Address").toString()));
-
-        // End group for this session
-        settings.endGroup();
-    }
-
-    // Fit table to window
-    table->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
 }

@@ -67,7 +67,6 @@ class SessionManagement : public QDialog
         ~SessionManagement();
 
         // Dialogs to open and save sessions; return true if session opened/saved
-//        void openSession(Terminal *t, const QString &sessionName);
         bool openSession();
         bool saveSessionAs();
 
@@ -93,19 +92,10 @@ class SessionManagement : public QDialog
 
         SessionStore store;
 
-        // Populate QTableWidget with session details
-        void populateTable(QTableWidget *table);
-
     private slots:
 
         // Manage Autostart list - button on Manage Sessions dialog
         void manageAutoStartList();
-
-        // Delete session button
-        void deleteSession();
-
-        // Triggered when Manage Sessions table row clicked; used to enable Delete button
-        void manageRowClicked(int row, int column);
 
         // Triggered when Autostart list row clicked; used to enable Delete button
         void autoStartCellClicked(int row, int column);

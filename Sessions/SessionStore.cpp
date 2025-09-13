@@ -1,11 +1,9 @@
 #include <QUrl>
 #include <QMetaEnum>
 #include <QSettings>
-#include <QDebug>
 
 #include "Q3270.h"
 #include "SessionStore.h"
-#include <QDebug>
 
 SessionStore::SessionStore()
     : settings(Q3270_ORG, Q3270_APP)  // Or however you initialize it
@@ -20,11 +18,7 @@ Session SessionStore::loadSession(const QString &name) const
 
     settings.beginGroup("Sessions"); // All Sessions
 
-    qDebug() << settings.childGroups();
-
     settings.beginGroup(name);      // This Session
-
-    qDebug() << settings.childKeys();
 
     s.description        = settings.value("Description").toString();
     s.hostName           = settings.value("HostAddress").toString();

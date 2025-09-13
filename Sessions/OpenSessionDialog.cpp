@@ -11,14 +11,13 @@
 
 
 OpenSessionDialog::OpenSessionDialog(ActiveSettings &activeSettings, QWidget *parent)
-    : SessionDialogBase(Open, parent), activeSettings(activeSettings)
+    : SessionDialogBase(parent), activeSettings(activeSettings)
 {
     setWindowTitle("Open Session");
     setOKButtonText("Open");
     enableOKButton(false);
 
     connect(ui->buttonBox->button(QDialogButtonBox::Ok), &QPushButton::clicked, this, &OpenSessionDialog::onOpenClicked);
-    connect(ui->sessionTable, &QTableWidget::cellClicked, this, &OpenSessionDialog::onRowClicked);
 //    connect(ui->sessionNameEdit, &QLineEdit::textChanged, this, &SaveSessionDialog::saveSessionNameEdited);
 }
 

@@ -1,7 +1,6 @@
 #include <QMessageBox>
 #include <QPushButton>
 #include <QTableWidget>
-#include <QDebug>
 
 #include "ActiveSettings.h"
 #include "ui_SessionDialog.h"
@@ -9,16 +8,14 @@
 
 
 SaveSessionDialog::SaveSessionDialog(ActiveSettings &activeSettings, QWidget *parent)
-    : SessionDialogBase(Save, parent), activeSettings(activeSettings)
+    : SessionDialogBase(parent), activeSettings(activeSettings)
 {
     setWindowTitle("Save Session");
     setOKButtonText("Save");
     enableOKButton(false);
 
     connect(ui->buttonBox->button(QDialogButtonBox::Ok), &QPushButton::clicked, this, &SaveSessionDialog::onSaveClicked);
-    connect(ui->sessionTable, &QTableWidget::cellClicked, this, &SaveSessionDialog::onRowClicked);
     connect(ui->sessionNameEdit, &QLineEdit::textChanged, this, &SaveSessionDialog::saveSessionNameEdited);
-    connect(this, &SessionDialogBase::deleteRequested, this,&SaveSessionDialog::doDelete);
 }
 
 void SaveSessionDialog::onSaveClicked()
@@ -61,14 +58,4 @@ void SaveSessionDialog::saveSessionNameEdited(const QString &name)
 {
     bool hasName = name.trimmed().isEmpty();
     ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(!hasName);
-}
-
-void SaveSessionDialog::doDelete(const QString &name)
-{
-//    if (store.autoStartSession() == name)
-//            store.setAutoStart(QString()); // clear AutoStart if needed
-    store.deleteSession(name);
-    sessions = store.listSessions();
-    populateSessionTable();
-
 }

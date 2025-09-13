@@ -18,13 +18,8 @@ class SessionDialogBase : public QDialog
     Q_OBJECT
 
 public:
-    enum Mode {
-        Save,
-        Open,
-        Manage
-    };
 
-    explicit SessionDialogBase(Mode mode, QWidget *parent = nullptr);
+    explicit SessionDialogBase(QWidget *parent = nullptr);
     virtual ~SessionDialogBase();
 
 signals:
@@ -33,7 +28,6 @@ signals:
 
 protected:
     Ui::SessionDialog *ui;
-    Mode mode;
 
     QList<Session> sessions;
     SessionStore store;
@@ -52,6 +46,11 @@ protected:
 
     // Subclass hooks
     virtual void onAccept();
+
+protected slots:
+
+    void doDelete(const QString &name);
+
 
 private:
 

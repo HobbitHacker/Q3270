@@ -28,6 +28,7 @@ SOURCES += \
     DisplayScreen/DisplayScreen_Cursor.cpp \
     DisplayScreen/DisplayScreen_Status.cpp \
     DisplayScreen/DisplayScreen_Mouse.cpp \
+    Sessions/ManageSessionsDialog.cpp \
     Sessions/OpenSessionDialog.cpp \
     HostAddressUtils.cpp \
     Keyboard.cpp \
@@ -51,6 +52,7 @@ HEADERS += \
     CodePage.h \
     ColourTheme.h \
     DisplayScreen.h \
+    Sessions/ManageSessionsDialog.h \
     Sessions/OpenSessionDialog.h \
     HostAddressUtils.h \
     Keyboard.h \

@@ -1,14 +1,13 @@
 #include <QDialogButtonBox>
 #include <QMessageBox>
 #include <QPushButton>
-#include <QDebug>
 
 #include "ui_SessionDialog.h"
 #include "SessionDialogBase.h"
 #include "HostAddressUtils.h"
 
-SessionDialogBase::SessionDialogBase(Mode mode, QWidget *parent)
-    : QDialog(parent), ui(new Ui::SessionDialog), mode(mode), store()
+SessionDialogBase::SessionDialogBase(QWidget *parent)
+    : QDialog(parent), ui(new Ui::SessionDialog), store()
 {
     ui->setupUi(this);
 
@@ -42,6 +41,8 @@ void SessionDialogBase::setupTable()
 
 void SessionDialogBase::populateSessionTable()
 {
+    sessions = store.listSessions();
+
     ui->sessionTable->setRowCount(sessions.size());
 
     for (int i = 0; i < sessions.size(); ++i) {
@@ -56,6 +57,7 @@ void SessionDialogBase::connectSignals()
     connect(ui->buttonBox, &QDialogButtonBox::accepted, this, &SessionDialogBase::onAccept);
     connect(ui->buttonBox, &QDialogButtonBox::rejected, this, &SessionDialogBase::reject);
     connect(ui->deleteButton, &QPushButton::clicked, this, &SessionDialogBase::requestDeleteSelected);
+    connect(ui->sessionTable, &QTableWidget::cellClicked, this, &SessionDialogBase::onRowClicked);
 }
 
 void SessionDialogBase::enableOKButton(bool enabled)
@@ -89,18 +91,12 @@ void SessionDialogBase::onRowClicked(int row)
 
     Session s = store.loadSession(nameItem->text());
 
-    qDebug() << "Clicked:" << nameItem->text();
-
     updatePreview(s);
 }
 
 void SessionDialogBase::updatePreview(const Session &s)
 {
     ui->groupBox->setEnabled(true);
-
-    qDebug() << s.name;
-    qDebug() << s.hostName << s.hostPort << s.hostLU;
-    qDebug() << HostAddressUtils::format(s.hostName, s.hostPort, s.hostLU);
 
     ui->previewAddress->setText(HostAddressUtils::format(s.hostName, s.hostPort,s.hostLU));
     ui->previewModel->setText(s.terminalModel);
@@ -119,4 +115,14 @@ void SessionDialogBase::requestDeleteSelected() {
                               tr("Delete session '%1'?").arg(currentName)) == QMessageBox::Yes) {
         emit deleteRequested(currentName);
     }
+}
+
+
+void SessionDialogBase::doDelete(const QString &name)
+{
+    //    if (store.autoStartSession() == name)
+    //            store.setAutoStart(QString()); // clear AutoStart if needed
+    store.deleteSession(name);
+    populateSessionTable();
+
 }
