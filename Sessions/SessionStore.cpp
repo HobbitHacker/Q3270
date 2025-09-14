@@ -154,3 +154,47 @@ void SessionStore::deleteSession(const QString &name)
 
     settings.sync(); // ensure it’s written to disk
 }
+
+QStringList SessionStore::listAutoStartSessions() const
+{
+    QList<QString> realSessions = listSessionNames();
+
+    QStringList autoStart;
+
+    int autoCount = settings.beginReadArray("AutoStartList");
+
+    for(int i = 0; i < autoCount; i++)
+    {
+        settings.setArrayIndex(i);
+        const QString asName = settings.value("Session").toString();
+        if (realSessions.contains(asName))
+            autoStart.append(settings.value("Session").toString());
+    }
+
+    settings.endArray();
+
+    return autoStart;
+}
+
+bool SessionStore::saveAutoStartSessions(const QStringList &list)
+{
+    QList<QString> realSessions = listSessionNames();
+
+    settings.beginWriteArray("AutoStartList");
+
+    int index = 0;
+
+    for (const QString &asName : list)
+    {
+        if (realSessions.contains(asName))
+        {
+            settings.setArrayIndex(index);
+            settings.setValue("Session", asName);
+            index++;
+        }
+    }
+
+    settings.endArray();
+
+    return true;
+}

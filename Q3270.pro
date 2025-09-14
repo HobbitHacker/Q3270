@@ -28,6 +28,7 @@ SOURCES += \
     DisplayScreen/DisplayScreen_Cursor.cpp \
     DisplayScreen/DisplayScreen_Status.cpp \
     DisplayScreen/DisplayScreen_Mouse.cpp \
+    Sessions/ManageAutoStartDialog.cpp \
     Sessions/ManageSessionsDialog.cpp \
     Sessions/OpenSessionDialog.cpp \
     HostAddressUtils.cpp \
@@ -40,6 +41,7 @@ SOURCES += \
     Session.cpp \
     Sessions/SessionDialogBase.cpp \
     Sessions/SessionManagement.cpp \
+    Sessions/SessionPreviewWidget.cpp \
     Sessions/SessionStore.cpp \
     Terminal.cpp \
     main.cpp \
@@ -52,6 +54,7 @@ HEADERS += \
     CodePage.h \
     ColourTheme.h \
     DisplayScreen.h \
+    Sessions/ManageAutoStartDialog.h \
     Sessions/ManageSessionsDialog.h \
     Sessions/OpenSessionDialog.h \
     HostAddressUtils.h \
@@ -65,6 +68,7 @@ HEADERS += \
     Session.h \
     Sessions/SessionDialogBase.h \
     Sessions/SessionManagement.h \
+    Sessions/SessionPreviewWidget.h \
     Sessions/SessionStore.h \
     SocketConnection.h \
     Terminal.h
@@ -77,10 +81,12 @@ FORMS += \
     ColourTheme.ui \
     KeyboardTheme.ui \
     MainWindow.ui \
+    Sessions/ManageAutoStartDialog.ui \
     Sessions/ManageSessions.ui \
     NewTheme.ui \
     PreferencesDialog.ui \
-    Sessions/SessionDialog.ui
+    Sessions/SessionDialog.ui \
+    Sessions/SessionPreview.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
@@ -91,5 +97,6 @@ RESOURCES += \
     Q3270.qrc
 
 DISTFILES += \
+    BACKLOG.md \
     README.md \
     UserGuide.md

@@ -3,6 +3,7 @@
 #include <QPushButton>
 
 #include "ui_SessionDialog.h"
+#include "ui_SessionPreview.h"
 #include "SessionDialogBase.h"
 #include "HostAddressUtils.h"
 
@@ -15,11 +16,6 @@ SessionDialogBase::SessionDialogBase(QWidget *parent)
 
     setupTable();
     connectSignals();
-
-    ui->groupBox->setEnabled(false);
-
-    ui->previewSecure->setAttribute(Qt::WA_TransparentForMouseEvents, true);
-    ui->previewVerifyCert->setAttribute(Qt::WA_TransparentForMouseEvents, true);
 
     populateSessionTable();
 }
@@ -36,7 +32,16 @@ void SessionDialogBase::setupTable()
     ui->sessionTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
     ui->sessionTable->setSelectionBehavior(QAbstractItemView::SelectRows);
     ui->sessionTable->setSelectionMode(QAbstractItemView::SingleSelection);
+
+    ui->sessionTable->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
     ui->sessionTable->horizontalHeader()->setStretchLastSection(true); // Or use setSectionResizeMode in code
+
+    // Reduce vertical padding (tweak +4 to adjust)
+    ui->sessionTable->verticalHeader()->setDefaultSectionSize(ui->sessionTable->fontMetrics().height() + 4);
+
+    // Optional: disable word wrap so rows don't expand unexpectedly
+    ui->sessionTable->setWordWrap(false);
+
 }
 
 void SessionDialogBase::populateSessionTable()
@@ -91,17 +96,7 @@ void SessionDialogBase::onRowClicked(int row)
 
     Session s = store.loadSession(nameItem->text());
 
-    updatePreview(s);
-}
-
-void SessionDialogBase::updatePreview(const Session &s)
-{
-    ui->groupBox->setEnabled(true);
-
-    ui->previewAddress->setText(HostAddressUtils::format(s.hostName, s.hostPort,s.hostLU));
-    ui->previewModel->setText(s.terminalModel);
-    ui->previewSecure->setChecked(s.secureConnection);
-    ui->previewVerifyCert->setChecked(s.verifyCertificate);
+    ui->previewWidget->setSession(s);
 }
 
 void SessionDialogBase::requestDeleteSelected() {

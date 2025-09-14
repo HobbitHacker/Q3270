@@ -21,6 +21,9 @@ class SessionStore {
         Session loadSession(const QString &name) const;
         void deleteSession(const QString &name);
 
+        QStringList listAutoStartSessions() const;
+        bool saveAutoStartSessions(const QStringList &names);
+
     private:
         mutable QSettings settings;
 

@@ -37,7 +37,6 @@ protected:
     void populateSessionTable();
     void connectSignals();
     void onRowClicked(int row);
-    void updatePreview(const Session &s);
 
     void enableOKButton(bool enabled);
     void setOKButtonText(const QString &text);

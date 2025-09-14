@@ -37,25 +37,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <QDialog>
 #include <QSettings>
-#include <QLineEdit>
-#include <QMessageBox>
-#include <QDialogButtonBox>
-#include <QPushButton>
-#include <QDebug>
-#include <QTableWidget>
 
-#include "Terminal.h"
-#include "PreferencesDialog.h"
 #include "ActiveSettings.h"
 #include "SessionStore.h"
-
-namespace Ui {
-    class SaveSession;
-    class OpenSession;
-    class ManageSessions;
-    class AutoStart;
-    class AutoStartAdd;
-}
 
 class SessionManagement : public QDialog
 {
@@ -76,42 +60,14 @@ class SessionManagement : public QDialog
    signals:
 
         void sessionOpened();
-        void autoStartAddToList(int row);
 
    private:
-
-        Ui::ManageSessions *manage;
-        Ui::AutoStart *autostart;
-        Ui::AutoStartAdd *add;
-
-        // Session name / description once session opened
-        QString sessionName;
-        QString sessionDesc;
 
         ActiveSettings &activeSettings;
 
         SessionStore store;
 
     private slots:
-
-        // Manage Autostart list - button on Manage Sessions dialog
-        void manageAutoStartList();
-
-        // Triggered when Autostart list row clicked; used to enable Delete button
-        void autoStartCellClicked(int row, int column);
-
-        // Autostart Add button
-        void addAutoStart();
-
-        // Autostart Delete button
-        void deleteAutoStart();
-
-        // Triggered when Autostart Add list row clicked; used to enable OK button
-        void autoStartAddCellClicked(int row, int col);
-
-        // Emitted when a row is added to the autostart list
-        void autoStartRowAdded(int row);
-
 };
 
 #endif // SESSIONMANAGEMENT_H

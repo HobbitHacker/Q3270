@@ -3,6 +3,7 @@
 
 
 #include "ManageSessionsDialog.h"
+#include "ManageAutoStartDialog.h"
 #include "SessionStore.h"
 //#include "ManageAutoStartDialog.h"
 #include "ui_SessionDialog.h"
@@ -22,6 +23,6 @@ ManageSessionsDialog::ManageSessionsDialog(ActiveSettings &activeSettings, QWidg
 
 void ManageSessionsDialog::onManageAutoStartClicked()
 {
-//    ManageAutoStartDialog dlg(store(), this);
-//    dlg.exec();
+    ManageAutoStartDialog dlg(store, this);
+    dlg.exec();
 }

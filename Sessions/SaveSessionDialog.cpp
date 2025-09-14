@@ -12,10 +12,19 @@ SaveSessionDialog::SaveSessionDialog(ActiveSettings &activeSettings, QWidget *pa
 {
     setWindowTitle("Save Session");
     setOKButtonText("Save");
-    enableOKButton(false);
+
+    ui->sessionNameEdit->setText(activeSettings.getSessionName());
+    ui->sessionDescEdit->setText(activeSettings.getDescription());
+
+    ui->previewWidget->setSession(Session::fromActiveSettings(activeSettings));
+
+    //enableOKButton(false);
 
     connect(ui->buttonBox->button(QDialogButtonBox::Ok), &QPushButton::clicked, this, &SaveSessionDialog::onSaveClicked);
     connect(ui->sessionNameEdit, &QLineEdit::textChanged, this, &SaveSessionDialog::saveSessionNameEdited);
+
+    ui->sessionNameEdit->setReadOnly(false);
+    ui->sessionDescEdit->setReadOnly(false);
 }
 
 void SaveSessionDialog::onSaveClicked()
