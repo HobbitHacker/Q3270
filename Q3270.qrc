@@ -8,5 +8,11 @@
         <file>Icons/disconnect.svg</file>
         <file>Icons/settings.svg</file>
         <file>Icons/floppy.svg</file>
+        <file>Icons/open.svg</file>
+        <file>Icons/saveas.svg</file>
+        <file>Icons/database-gear.svg</file>
+        <file>Icons/database.svg</file>
+        <file>Icons/keyboard.svg</file>
+        <file>Icons/palette.svg</file>
     </qresource>
 </RCC>

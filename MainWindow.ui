@@ -59,13 +59,11 @@
      </property>
     </widget>
     <addaction name="actionNew"/>
-    <addaction name="actionOpen_Session"/>
-    <addaction name="actionOpen_Duplicate_Session"/>
     <addaction name="actionSave_Session"/>
-    <addaction name="actionSave_SessionAs"/>
     <addaction name="menuRecentSessions"/>
     <addaction name="separator"/>
     <addaction name="actionManage_Sessions"/>
+    <addaction name="actionManage_Auto_Sart_Sessions"/>
     <addaction name="separator"/>
     <addaction name="actionQuit"/>
    </widget>
@@ -94,19 +92,26 @@
    <attribute name="toolBarBreak">
     <bool>false</bool>
    </attribute>
+   <addaction name="actionOpen_Session"/>
    <addaction name="actionSave_Session"/>
+   <addaction name="actionSave_SessionAs"/>
+   <addaction name="actionManage_Sessions"/>
+   <addaction name="actionManage_Auto_Sart_Sessions"/>
    <addaction name="separator"/>
    <addaction name="actionConnect"/>
    <addaction name="actionDisconnect"/>
    <addaction name="separator"/>
    <addaction name="actionSessionPreferences"/>
+   <addaction name="separator"/>
+   <addaction name="actionKeyboardThemes"/>
+   <addaction name="actionColourThemes"/>
   </widget>
   <action name="actionConnect">
    <property name="enabled">
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset theme="connect" resource="Q3270.qrc">
+    <iconset resource="Q3270.qrc">
      <normaloff>:/Icons/connect.svg</normaloff>:/Icons/connect.svg</iconset>
    </property>
    <property name="text">
@@ -118,8 +123,7 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset resource="Q3270.qrc">
-     <normaloff>:/Icons/settings.svg</normaloff>:/Icons/settings.svg</iconset>
+    <iconset theme="preferences-other"/>
    </property>
    <property name="text">
     <string>Preferences</string>
@@ -161,21 +165,37 @@
    </property>
   </action>
   <action name="actionKeyboardThemes">
+   <property name="icon">
+    <iconset resource="Q3270.qrc">
+     <normaloff>:/Icons/keyboard.svg</normaloff>:/Icons/keyboard.svg</iconset>
+   </property>
    <property name="text">
     <string>Keyboard</string>
    </property>
   </action>
   <action name="actionColourThemes">
+   <property name="icon">
+    <iconset resource="Q3270.qrc">
+     <normaloff>:/Icons/palette.svg</normaloff>:/Icons/palette.svg</iconset>
+   </property>
    <property name="text">
     <string>Colours</string>
    </property>
   </action>
   <action name="actionSave_SessionAs">
+   <property name="icon">
+    <iconset resource="Q3270.qrc">
+     <normaloff>:/Icons/saveas.svg</normaloff>:/Icons/saveas.svg</iconset>
+   </property>
    <property name="text">
     <string>Save Session As...</string>
    </property>
   </action>
   <action name="actionOpen_Session">
+   <property name="icon">
+    <iconset resource="Q3270.qrc">
+     <normaloff>:/Icons/open.svg</normaloff>:/Icons/open.svg</iconset>
+   </property>
    <property name="text">
     <string>Open Session...</string>
    </property>
@@ -186,6 +206,10 @@
    </property>
   </action>
   <action name="actionManage_Sessions">
+   <property name="icon">
+    <iconset resource="Q3270.qrc">
+     <normaloff>:/Icons/database.svg</normaloff>:/Icons/database.svg</iconset>
+   </property>
    <property name="text">
     <string>Manage Sessions...</string>
    </property>
@@ -195,9 +219,8 @@
     <bool>false</bool>
    </property>
    <property name="icon">
-    <iconset>
-     <normalon>:/Icons/floppy.svg</normalon>
-    </iconset>
+    <iconset resource="Q3270.qrc">
+     <normaloff>:/Icons/floppy.svg</normaloff>:/Icons/floppy.svg</iconset>
    </property>
    <property name="text">
     <string>Save Session</string>
@@ -209,6 +232,15 @@
    </property>
    <property name="text">
     <string>About Connection...</string>
+   </property>
+  </action>
+  <action name="actionManage_Auto_Sart_Sessions">
+   <property name="icon">
+    <iconset resource="Q3270.qrc">
+     <normaloff>:/Icons/database-gear.svg</normaloff>:/Icons/database-gear.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Manage Auto Start Sessions...</string>
    </property>
   </action>
  </widget>
