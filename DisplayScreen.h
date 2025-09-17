@@ -32,8 +32,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#ifndef DISPLAYDATA_H
-#define DISPLAYDATA_H
+#ifndef DISPLAYSCREEN_H
+#define DISPLAYSCREEN_H
 
 #include <stdlib.h>
 #include <string.h>
@@ -245,4 +245,4 @@ class DisplayScreen : public QObject, public QGraphicsRectItem
 
 };
 
-#endif // DISPLAYDATA_H
+#endif // DISPLAYSCREEN_H

@@ -43,19 +43,24 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <QVector>
 #include <QMap>
 
+#include "Models/KeyboardMap.h"
+
 class Keyboard : public QObject
 {    
 
     Q_OBJECT
 
-    typedef QMap<QString, QStringList> KeyboardMap;
-
     public:
 
         Keyboard();
 
-        void setMap();
         bool processKey();
+
+        static QStringList allFunctionNames();
+
+        // Lookup helper
+        void invoke(const QString &functionName);
+
 
     signals:
         void setLock(QString xsystem);
@@ -90,12 +95,20 @@ class Keyboard : public QObject
         bool eventFilter( QObject *dist, QEvent *event );
 
     private:
+        using Handler = void (Keyboard::*)();
 
-        typedef void (Keyboard::*kbFunction)();
+        struct FunctionBinding {
+            const char *name;
+            Handler method;
+        };
+
+        static const FunctionBinding bindings[];
+        static QMap<QString, Handler> makeFunctionMap();
+        const QMap<QString, Handler> functionMap;
 
         struct kbDets
         {
-                kbFunction kbFunc;
+                Handler kbFunc;
                 QString keySeq;
                 QString keyFunc;
         };
@@ -109,7 +122,7 @@ class Keyboard : public QObject
             QMap<int, kbDets> *map;
             bool isMapped;
             bool mustMap;
-            kbFunction mapped;
+            Handler mapped;
         };
 
         QClipboard *clip;       // Clipboard
@@ -119,8 +132,6 @@ class Keyboard : public QObject
         QMap<int, kbDets> ctrlMap;
         QMap<int, kbDets> shiftMap;
         QMap<int, kbDets> metaMap;
-
-        QMap<QString, kbFunction> functionMap;
 
         keyStruct kbBuffer[1024];
 

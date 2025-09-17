@@ -1,3 +1,6 @@
+#ifndef OPENSESSIONDIALOG_H
+#define OPENSESSIONDIALOG_H
+
 #include "SessionDialogBase.h"
 
 class OpenSessionDialog : public SessionDialogBase
@@ -15,3 +18,5 @@ class OpenSessionDialog : public SessionDialogBase
 
         void onOpenClicked();
 };
+
+#endif

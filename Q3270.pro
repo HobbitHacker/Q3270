@@ -18,6 +18,8 @@ DEFINES += QT_DEPRECATED_WARNINGS \
 # You can also select to disable deprecated APIs only up to a certain version of Qt.
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
+INCLUDEPATH += $$PWD
+
 SOURCES += \
     ActiveSettings.cpp \
     Cell.cpp \
@@ -28,21 +30,25 @@ SOURCES += \
     DisplayScreen/DisplayScreen_Cursor.cpp \
     DisplayScreen/DisplayScreen_Status.cpp \
     DisplayScreen/DisplayScreen_Mouse.cpp \
+    FunctionRegistry.cpp \
+    Models/KeyboardMap.cpp \
+    Preferences/KeyboardMapWidget.cpp \
     Sessions/ManageAutoStartDialog.cpp \
     Sessions/ManageSessionsDialog.cpp \
     Sessions/OpenSessionDialog.cpp \
     HostAddressUtils.cpp \
     Keyboard.cpp \
-    KeyboardTheme.cpp \
+    KeyboardThemeDialog.cpp \
     MainWindow.cpp \
-    PreferencesDialog.cpp \
+    Preferences/PreferencesDialog.cpp \
     ProcessDataStream.cpp \
     Sessions/SaveSessionDialog.cpp \
-    Session.cpp \
+    Models/Session.cpp \
     Sessions/SessionDialogBase.cpp \
     Sessions/SessionManagement.cpp \
     Sessions/SessionPreviewWidget.cpp \
-    Sessions/SessionStore.cpp \
+    Stores/KeyboardStore.cpp \
+    Stores/SessionStore.cpp \
     Terminal.cpp \
     main.cpp \
     SocketConnection.cpp
@@ -54,22 +60,26 @@ HEADERS += \
     CodePage.h \
     ColourTheme.h \
     DisplayScreen.h \
+    FunctionRegistry.h \
+    Preferences/KeyboardMapWidget.h \
     Sessions/ManageAutoStartDialog.h \
     Sessions/ManageSessionsDialog.h \
     Sessions/OpenSessionDialog.h \
     HostAddressUtils.h \
     Keyboard.h \
-    KeyboardTheme.h \
+    KeyboardThemeDialog.h \
     MainWindow.h \
-    PreferencesDialog.h \
+    Preferences/PreferencesDialog.h \
     ProcessDataStream.h \
     Q3270.h \
     Sessions/SaveSessionDialog.h \
-    Session.h \
+    Models/Session.h \
+    Models/KeyboardMap.h \
     Sessions/SessionDialogBase.h \
     Sessions/SessionManagement.h \
     Sessions/SessionPreviewWidget.h \
-    Sessions/SessionStore.h \
+    Stores/KeyboardStore.h \
+    Stores/SessionStore.h \
     SocketConnection.h \
     Terminal.h
 
@@ -81,10 +91,11 @@ FORMS += \
     ColourTheme.ui \
     KeyboardTheme.ui \
     MainWindow.ui \
+    Preferences/KeyboardMapWidget.ui \
     Sessions/ManageAutoStartDialog.ui \
     Sessions/ManageSessions.ui \
     NewTheme.ui \
-    PreferencesDialog.ui \
+    Preferences/PreferencesDialog.ui \
     Sessions/SessionDialog.ui \
     Sessions/SessionPreview.ui
 

@@ -33,7 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "Q3270.h"
-#include "SessionStore.h"
+#include "Stores/SessionStore.h"
 
 #include "SessionManagement.h"
 #include "SaveSessionDialog.h"

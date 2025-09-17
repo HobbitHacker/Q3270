@@ -53,7 +53,83 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *          the target routine (Keyboard::enter, for example). If a key is pressed that doesn't generate
  *          a normal character, the function map is searched for a matching entry, and if found, called.
  */
-Keyboard::Keyboard()
+
+const Keyboard::FunctionBinding Keyboard::bindings[] = {
+    { "Enter",        &Keyboard::enter },
+    { "Reset",        &Keyboard::reset },
+
+    { "Up",           &Keyboard::cursorUp },
+    { "Down",         &Keyboard::cursorDown },
+    { "Left",         &Keyboard::cursorLeft },
+    { "Right",        &Keyboard::cursorRight },
+
+    { "Backspace",    &Keyboard::backspace },
+
+    { "Tab",          &Keyboard::tab },
+    { "Backtab",      &Keyboard::backtab },
+
+    { "NewLine",      &Keyboard::newline },
+    { "Home",         &Keyboard::home },
+    { "EndLine",      &Keyboard::endline },
+
+    { "EraseEOF",     &Keyboard::eraseEOF },
+
+    { "Insert",       &Keyboard::insert },
+    { "Delete",       &Keyboard::deleteKey },
+
+    { "F1",           &Keyboard::fKey1 },
+    { "F2",           &Keyboard::fKey2 },
+    { "F3",           &Keyboard::fKey3 },
+    { "F4",           &Keyboard::fKey4 },
+    { "F5",           &Keyboard::fKey5 },
+    { "F6",           &Keyboard::fKey6 },
+    { "F7",           &Keyboard::fKey7 },
+    { "F8",           &Keyboard::fKey8 },
+    { "F9",           &Keyboard::fKey9 },
+    { "F10",          &Keyboard::fKey10 },
+    { "F11",          &Keyboard::fKey11 },
+    { "F12",          &Keyboard::fKey12 },
+
+    { "F13",          &Keyboard::fKey13 },
+    { "F14",          &Keyboard::fKey14 },
+    { "F15",          &Keyboard::fKey15 },
+    { "F16",          &Keyboard::fKey16 },
+    { "F17",          &Keyboard::fKey17 },
+    { "F18",          &Keyboard::fKey18 },
+    { "F19",          &Keyboard::fKey19 },
+    { "F20",          &Keyboard::fKey20 },
+    { "F21",          &Keyboard::fKey21 },
+    { "F22",          &Keyboard::fKey22 },
+    { "F23",          &Keyboard::fKey23 },
+    { "F24",          &Keyboard::fKey24 },
+
+    { "Attn",         &Keyboard::attn },
+
+    { "PA1",          &Keyboard::paKey1 },
+    { "PA2",          &Keyboard::paKey2 },
+    { "PA3",          &Keyboard::paKey3 },
+
+    { "Clear",        &Keyboard::clear },
+
+    { "ToggleRuler",  &Keyboard::ruler },
+
+    { "Copy",         &Keyboard::copy },
+    { "Paste",        &Keyboard::paste },
+    { "Info",         &Keyboard::info },
+    { "Fields",       &Keyboard::fields },
+
+    { "Blah",         &Keyboard::unlockKeyboard }
+};
+
+QMap<QString, Keyboard::Handler> Keyboard::makeFunctionMap()
+{
+    QMap<QString, Handler> map;
+    for (const auto &b : bindings)
+        map.insert(b.name, b.method);
+    return map;
+}
+
+Keyboard::Keyboard() : functionMap(makeFunctionMap())
 {    
     lock = false;
     insMode = false;
@@ -64,83 +140,18 @@ Keyboard::Keyboard()
     waitRelease = false;
 
     clearBufferEntry();
-    setMap();
+
+    setTheme(KeyboardMap::getFactoryMap());
 }
 
-/**
- * @brief   Keyboard::setMap
- *
- * @details Each function in Q3270 is mapped to a routine in Keyboard. These can be modified by the user using
- *          the KeyboardTheme dialog, and there is a standard internal Factory map.
- *
- *          This routine registers all the Q3270 keyboard functions.
- */
-void Keyboard::setMap()
+QStringList Keyboard::allFunctionNames()
 {
-    functionMap.insert("Enter",&Keyboard::enter);
-    functionMap.insert("Reset",&Keyboard::reset);
+    QStringList list;
 
-    functionMap.insert("Up",&Keyboard::cursorUp);
-    functionMap.insert("Down",&Keyboard::cursorDown);
-    functionMap.insert("Left",&Keyboard::cursorLeft);
-    functionMap.insert("Right",&Keyboard::cursorRight);
+    for (const FunctionBinding &binding : bindings)
+        list.append(QString::fromLatin1(binding.name));
 
-    functionMap.insert("Backspace",&Keyboard::backspace);
-
-    functionMap.insert("Tab",&Keyboard::tab);
-    functionMap.insert("Backtab",&Keyboard::backtab);
-
-    functionMap.insert("NewLine",&Keyboard::newline);
-    functionMap.insert("Home",&Keyboard::home);
-    functionMap.insert("EndLine", &Keyboard::endline);
-
-    functionMap.insert("EraseEOF",&Keyboard::eraseEOF);
-
-    functionMap.insert("Insert",&Keyboard::insert);
-    functionMap.insert("Delete",&Keyboard::deleteKey);
-
-    functionMap.insert("F1",&Keyboard::fKey1);
-    functionMap.insert("F2",&Keyboard::fKey2);
-    functionMap.insert("F3",&Keyboard::fKey3);
-    functionMap.insert("F4",&Keyboard::fKey4);
-    functionMap.insert("F5",&Keyboard::fKey5);
-    functionMap.insert("F6",&Keyboard::fKey6);
-    functionMap.insert("F7",&Keyboard::fKey7);
-    functionMap.insert("F8",&Keyboard::fKey8);
-    functionMap.insert("F9",&Keyboard::fKey9);
-    functionMap.insert("F10",&Keyboard::fKey10);
-    functionMap.insert("F11",&Keyboard::fKey11);
-    functionMap.insert("F12",&Keyboard::fKey12);
-
-    functionMap.insert("F13",&Keyboard::fKey13);
-    functionMap.insert("F14",&Keyboard::fKey14);
-    functionMap.insert("F15",&Keyboard::fKey15);
-    functionMap.insert("F16",&Keyboard::fKey16);
-    functionMap.insert("F17",&Keyboard::fKey17);
-    functionMap.insert("F18",&Keyboard::fKey18);
-    functionMap.insert("F19",&Keyboard::fKey19);
-    functionMap.insert("F20",&Keyboard::fKey20);
-    functionMap.insert("F21",&Keyboard::fKey21);
-    functionMap.insert("F22",&Keyboard::fKey22);
-    functionMap.insert("F23",&Keyboard::fKey23);
-    functionMap.insert("F24",&Keyboard::fKey24);
-
-    functionMap.insert("Attn",&Keyboard::attn);
-
-    functionMap.insert("PA1",&Keyboard::paKey1);
-    functionMap.insert("PA2",&Keyboard::paKey2);
-    functionMap.insert("PA3",&Keyboard::paKey3);
-
-    functionMap.insert("Clear",&Keyboard::clear);
-
-    functionMap.insert("ToggleRuler",&Keyboard::ruler);
-
-    functionMap.insert("Copy",&Keyboard::copy);
-    functionMap.insert("Paste",&Keyboard::paste);
-    functionMap.insert("Info", &Keyboard::info);
-    functionMap.insert("Fields", &Keyboard::fields);
-
-    functionMap.insert("Blah", &Keyboard::unlockKeyboard);
+    return list;
 }
 
 /**
@@ -1161,18 +1172,15 @@ void Keyboard::setTheme(KeyboardMap theme)
     shiftMap.clear();
     metaMap.clear();
 
-    // Keyboard themes are defined as { Q3270 function, { key, key, key } }
-    QMap<QString, QStringList>::const_iterator i = theme.constBegin();
-
-    // Iterate over the keyboard theme, and apply
-    while(i != theme.constEnd())
-    {
-        // Each Q3270 function in the map may have multiple keys defined for it
-        for (const auto &key : i.value()) {
-            setMapping(key, i.key());
+    // Iterate over each Mapping in the theme
+    for (const Mapping &mapping : theme.mappings) {
+        // Each mapping may have multiple keys for the same function
+        for (const QString &key : mapping.keys) {
+            setMapping(key, mapping.functionName);
         }
-        i++;
     }
+
+
 }
 
 /**

@@ -4,7 +4,7 @@
 
 #include "ManageSessionsDialog.h"
 #include "ManageAutoStartDialog.h"
-#include "SessionStore.h"
+#include "Stores/SessionStore.h"
 //#include "ManageAutoStartDialog.h"
 #include "ui_SessionDialog.h"
 

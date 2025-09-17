@@ -32,8 +32,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 
-#ifndef DISPLAYDATASTREAM_H
-#define DISPLAYDATASTREAM_H
+#ifndef PROCESSDATASTREAM_H
+#define PROCESSDATASTREAM_H
 
 #include <qglobal.h>
 #include <QGuiApplication>
@@ -149,4 +149,4 @@ class ProcessDataStream : public QObject
         void processAttributePairs(int mode);
 };
 
-#endif // DISPLAYDATASTREAM_H
+#endif // PROCESSDATASTREAM_H

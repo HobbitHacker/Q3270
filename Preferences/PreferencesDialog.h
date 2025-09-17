@@ -44,7 +44,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <QMap>
 
 #include "ColourTheme.h"
-#include "KeyboardTheme.h"
+#include "KeyboardThemeDialog.h"
 #include "CodePage.h"
 #include "ActiveSettings.h"
 
@@ -62,7 +62,7 @@ class PreferencesDialog : public QDialog
 
     public:
 
-        explicit PreferencesDialog(ColourTheme &colours, KeyboardTheme &keyboards, CodePage &codepages, ActiveSettings &activeSettings, QWidget *parent = nullptr);
+        explicit PreferencesDialog(ColourTheme &colours, CodePage &codepages, ActiveSettings &activeSettings, QWidget *parent = nullptr);
         ~PreferencesDialog();
 
         void showForm();
@@ -98,12 +98,15 @@ class PreferencesDialog : public QDialog
 
     private:
 
+        KeyboardStore keyboards;
+
         Ui::PreferencesDialog *ui;
+
 
         QFontDialog *qfd;
 
         ColourTheme &colours;
-        KeyboardTheme &keyboards;
+
         CodePage &codepages;
         ActiveSettings &activeSettings;
 

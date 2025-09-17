@@ -4,7 +4,7 @@
 #include <QDialog>
 #include <QListWidget>
 
-#include "SessionStore.h"
+#include "Stores/SessionStore.h"
 
 namespace Ui {
 class ManageAutoStartDialog;

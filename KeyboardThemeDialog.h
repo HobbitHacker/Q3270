@@ -32,8 +32,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#ifndef KEYBOARDTHEME_H
-#define KEYBOARDTHEME_H
+#ifndef KEYBOARDTHEMEDIALOG_H
+#define KEYBOARDTHEMEDIALOG_H
 
 #include <QDialog>
 #include <QObject>
@@ -45,29 +45,32 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <QDialogButtonBox>
 #include <QTableWidgetItem>
 
+#include "Models/KeyboardMap.h"
+#include "Stores/KeyboardStore.h"
+
 namespace Ui {
     class KeyboardTheme;
     class NewTheme;
 }
 
-class KeyboardTheme : public QDialog
+class KeyboardThemeDialog : public QDialog
 {
         Q_OBJECT
 
-    typedef QMap<QString, QStringList> KeyboardMap;
-
     public:
 
-        KeyboardTheme(QWidget *parent = nullptr);
-        ~KeyboardTheme();
+        KeyboardThemeDialog(QWidget *parent = nullptr);
+        ~KeyboardThemeDialog();
 
         QStringList getThemes();
         KeyboardMap getTheme(QString keyboardThemeName);
-        void populateTable(QTableWidget *table, QString mapName);
 
         int exec();
 
     private:
+
+        KeyboardMap factory;
+        KeyboardStore store;
 
         Ui::KeyboardTheme *ui;
         Ui::NewTheme *newTheme;
@@ -94,17 +97,23 @@ class KeyboardTheme : public QDialog
 
     private slots:
 
+        void validateThemeName(const QString &name);
+        void saveTheme();
+        void loadTheme(const QString &name);
+        void startNewTheme();
+        void deleteTheme();
+
         void themeChanged(int index);
         void addTheme();
-        void deleteTheme();
+
         void checkDuplicate();
-        void populateKeySequence(QTableWidgetItem *item);
         void setKey();
         void truncateShortcut();
+        void populateKeySequence(int row, const QString &functionName, const QStringList &keyList);
 
         void accept();
         void reject();
 
 };
 
-#endif // KEYBOARDTHEME_H
+#endif // KEYBOARDTHEMEDIALOG_H

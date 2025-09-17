@@ -53,14 +53,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <QWidgetAction>
 #include <QLabel>
 
-#include "PreferencesDialog.h"
+#include "Preferences/PreferencesDialog.h"
 #include "Terminal.h"
 #include "ColourTheme.h"
-#include "KeyboardTheme.h"
+#include "KeyboardThemeDialog.h"
 #include "Sessions/SessionManagement.h"
 #include "ActiveSettings.h"
 #include "CertificateDetails.h"
-#include "Sessions/SessionStore.h"
+#include "Stores/SessionStore.h"
 
 QT_BEGIN_NAMESPACE
 
@@ -134,7 +134,7 @@ class MainWindow : public QMainWindow
       ActiveSettings activeSettings;
 
       ColourTheme colourTheme;
-      KeyboardTheme keyboardTheme;
+      KeyboardThemeDialog keyboardTheme;
 
       Keyboard keyboard;
 

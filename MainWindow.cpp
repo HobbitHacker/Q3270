@@ -39,7 +39,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "HostAddressUtils.h"
 
 #include "Q3270.h"
-#include "Session.h"
+#include "Models/Session.h"
 /**
  * @brief   MainWindow::MainWindow - the main application
  * @param   launchParms - a name
@@ -55,9 +55,6 @@ MainWindow::MainWindow(MainWindow::LaunchParms launchParms) : QMainWindow(nullpt
 
     // Read global settings
     QSettings savedSettings(Q3270_ORG, Q3270_APP);
-
-    // Set Factory keyboard map
-    keyboard.setTheme(keyboardTheme.getTheme("Factory"));
 
     // Most-recently used; default to 10
     maxMruCount = savedSettings.value("MRUMax", 10).toInt();
@@ -93,7 +90,7 @@ MainWindow::MainWindow(MainWindow::LaunchParms launchParms) : QMainWindow(nullpt
     sessionGroup = new QActionGroup(this);
 
     // Preferences dialog
-    settings = new PreferencesDialog(colourTheme, keyboardTheme, codePage, activeSettings);
+    settings = new PreferencesDialog(colourTheme, codePage, activeSettings);
 
     // Session Management dialog
     sm = new SessionManagement(activeSettings);

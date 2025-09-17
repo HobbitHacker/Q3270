@@ -34,8 +34,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "Q3270.h"
 #include "ui_NewTheme.h"
-#include "KeyboardTheme.h"
+#include "KeyboardThemeDialog.h"
 #include "ui_KeyboardTheme.h"
+#include "Keyboard.h"
 
 /**
  * @brief   KeyboardTheme::KeyboardTheme - Keyboard Theme handling
@@ -45,175 +46,53 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *          creates the internal Factory keyboard map, along with any additional themes from the
  *          config file, and then populates the dialog box with the list of themes.
  */
-KeyboardTheme::KeyboardTheme(QWidget *parent) : QDialog(parent), ui(new Ui::KeyboardTheme)
+KeyboardThemeDialog::KeyboardThemeDialog(QWidget *parent)
+    : QDialog(parent), ui(new Ui::KeyboardTheme)
 {
     ui->setupUi(this);
 
-    // Set up factory map
-    theme.clear();
+    store.load();
 
-    theme.insert("Enter",      { "Enter", "RCtrl" });
-    theme.insert("Reset",      { "LCtrl" });
-    theme.insert("Insert",     { "Insert" });
-    theme.insert("Delete",     { "Delete" });
-    theme.insert("Up",         { "Up" });
-    theme.insert("Down",       { "Down" });
-    theme.insert("Left",       { "Left" });
-    theme.insert("Right",      { "Right" });
-
-    theme.insert("Backspace",  { "Backspace" });
-
-    theme.insert("Tab",        { "Tab" });
-    theme.insert("Backtab",    { "Backtab", "Shift+Tab", "Shift+Backtab" });
-
-    theme.insert("Home",       { "Home" });
-    theme.insert("EraseEOF",   { "End" });
-    theme.insert("NewLine",    { "Return" });
-    theme.insert("EndLine",    { "Ctrl+End" });
-
-    theme.insert("F1",         { "F1" });
-    theme.insert("F2",         { "F2" });
-    theme.insert("F3",         { "F3" });
-    theme.insert("F4",         { "F4" });
-    theme.insert("F5",         { "F5" });
-    theme.insert("F6",         { "F6" });
-    theme.insert("F7",         { "F7", "PgUp" });
-    theme.insert("F8",         { "F8", "PgDown" });
-    theme.insert("F9",         { "F9" });
-    theme.insert("F10",        { "F10" });
-    theme.insert("F11",        { "F11" });
-    theme.insert("F12",        { "F12" });
-
-    theme.insert("F13",        { "Shift+F1" });
-    theme.insert("F14",        { "Shift+F2" });
-    theme.insert("F15",        { "Shift+F3" });
-    theme.insert("F16",        { "Shift+F4" });
-    theme.insert("F17",        { "Shift+F5" });
-    theme.insert("F18",        { "Shift+F6" });
-    theme.insert("F19",        { "Shift+F7" } );
-    theme.insert("F20",        { "Shift+F8" });
-    theme.insert("F21",        { "Shift+F9" });
-    theme.insert("F22",        { "Shift+F10" });
-    theme.insert("F23",        { "Shift+F11" });
-    theme.insert("F24",        { "Shift+F12" });
-
-    theme.insert("PA1",        { "Alt+1" });
-    theme.insert("PA2",        { "Alt+2" });
-    theme.insert("PA3",        { "Alt+3" });
-
-    theme.insert("Attn",       { "Escape" });
-
-    theme.insert("ToggleRuler", { "Ctrl+Home" });
-
-    theme.insert("Clear",       { "Pause" });
-
-    theme.insert("Copy",        { "Ctrl+C" });
-    theme.insert("Paste",       { "Ctrl+V" });
-
-    theme.insert("Info",        { "Ctrl+I" });
-    theme.insert("Fields",      { "Ctrl+F" });
-
-
-    // Add factory theme to list of themes
-    themes.insert("Factory", theme);
-
-    // Store all functions: this is the definitive list of Q3270 functions
-    functionList = theme.keys();
-
-    // Ensure that the "Unassigned" function is available to map keys
+    // Populate dropdowns
     ui->KeyboardFunctionList->addItem("Unassigned");
+    ui->KeyboardFunctionList->addItems(Keyboard::allFunctionNames());
+    ui->keyboardThemes->addItems(store.themeNames());
 
-    // Populate function list dropdown with available Q3270 functions
-    ui->KeyboardFunctionList->addItems(functionList);
+    // Wire up signals
+    connect(ui->themeNameEdit, &QLineEdit::textChanged, this, &KeyboardThemeDialog::validateThemeName);
+    connect(ui->keyboardThemes, &QComboBox::currentTextChanged, this, &KeyboardThemeDialog::loadTheme);
+    connect(ui->newThemeButton, &QPushButton::clicked, this, &KeyboardThemeDialog::startNewTheme);
 
-    // Populate theme drop-down list with Factory keyboard layout
-    ui->keyboardThemes->addItem("Factory");
+    connect(ui->buttonBox, &QDialogButtonBox::accepted, this, &KeyboardThemeDialog::saveTheme);
+    connect(ui->buttonBox, &QDialogButtonBox::rejected, this, &QDialog::reject);
 
-    // Now add those from the config file
-    QSettings s(Q3270_ORG, Q3270_APP);
+    connect(ui->deleteThemeButton, &QPushButton::clicked, this, &KeyboardThemeDialog::deleteTheme);
 
-    // Keyboard themes are all stored under the KeyboardThemes group
-    s.beginGroup("KeyboardThemes");
+    // New Theme button
+    connect(ui->newThemeButton, &QPushButton::clicked, this, &KeyboardThemeDialog::addTheme);
 
-    // Get a list of sub-groups
-    QStringList themeList = s.childGroups();
+    // Key sequence edit finished editing
+    connect(ui->keySequenceEdit, &QKeySequenceEdit::editingFinished, this, &KeyboardThemeDialog::truncateShortcut);
 
-    themeList.sort(Qt::CaseSensitive);
+    // Set mapping button
+    connect(ui->setKeyboardMap, &QPushButton::clicked, this, &KeyboardThemeDialog::setKey);
 
-    // Populate themes list and combo boxes from config file
-    for (int sc = 0; sc < themeList.count(); sc++)
-    {
-        // Ignore Factory theme (shouldn't be present, but in case of accidents, or user fudging)
-        if (themeList.at(sc).compare("Factory"))
-        {
-            // Begin theme specific group
-            s.beginGroup(themeList.at(sc));
+    // Hide Reset button
+    ui->buttonBox->button(QDialogButtonBox::Reset)->hide();
 
-            // All keyboard mappings for this theme
-            QStringList keys = s.childKeys();
+    // Save button disabled until an edit is made
+    ui->buttonBox->button(QDialogButtonBox::Save)->setDisabled(true);
 
-            // Clear existing mappings from temporary map
-            theme.clear();
-
-            for (int kb = 0; kb < keys.count(); kb++)
-            {
-                // Keyboard maps stored as Shift+F1=F1; extract Q3270 function into thisKey
-                QString thisKey = s.value(keys.at(kb)).toString();
-
-                // Ensure it's a known function before we store it
-                if (functionList.contains(thisKey))
-                {
-
-                    // Append keyboard mapping to Q3270 function; if it doesn't exist, QMap creates one first
-                    theme[thisKey].append(keys.at(kb));
-                }
-            }
-
-            // Save theme, assuming it had valid mappings
-            if (theme.count() > 0)
-            {
-                themes.insert(themeList.at(sc), theme);
-                ui->keyboardThemes->addItem(themeList.at(sc));
-            }
-
-            // End theme specific group
-            s.endGroup();
-        }
-
-    }
-
-    // End themes main group
-    s.endGroup();
-
-    // Set default theme
-    setTheme("Factory");
-
-    // Initially sort by Q3270 function
-    ui->KeyboardMap->sortByColumn(0, Qt::AscendingOrder);
-
-    // Popup dialog for new themes
-    newTheme = new Ui::NewTheme();
-
-    newTheme->setupUi(&newThemePopUp);
-
-    // Map the controls we're interested in
-    connect(newTheme->newName, &QLineEdit::textChanged, this, &KeyboardTheme::checkDuplicate);
-    connect(newTheme->buttonBox, &QDialogButtonBox::accepted, &newThemePopUp, &QDialog::accept);
-    connect(newTheme->buttonBox, &QDialogButtonBox::rejected, &newThemePopUp, &QDialog::reject);
-
-    // No "last chosen" keyboard row or key sequence; used to determine whether the next sequence
-    // is shown for multiply-mapped functions
     lastRow = -1;
     lastSeq = -1;
 }
-
 /**
  * @brief   KeyboardTheme::~KeyboardTheme - destructor
  * @return  Nothing
  *
  * @details Destructor to remove objects
  */
-KeyboardTheme::~KeyboardTheme()
+KeyboardThemeDialog::~KeyboardThemeDialog()
 {
     delete ui;
     delete newTheme;
@@ -225,7 +104,7 @@ KeyboardTheme::~KeyboardTheme()
  *
  * @details Extract a list of available keyboard themes; the Factory theme is always first.
  */
-QStringList KeyboardTheme::getThemes()
+QStringList KeyboardThemeDialog::getThemes()
 {
     QList<QString> tk = themes.keys();
 
@@ -244,7 +123,7 @@ QStringList KeyboardTheme::getThemes()
  * @details Return the requested Keyboard theme, and if it doesn't exist, return the
  *          factory one instead.
  */
-KeyboardTheme::KeyboardMap KeyboardTheme::getTheme(QString keyboardThemeName)
+KeyboardMap KeyboardThemeDialog::getTheme(QString keyboardThemeName)
 {
     // Return theme, if it exists in the list, else return the Factory theme
     if (themes.contains(keyboardThemeName))
@@ -264,7 +143,7 @@ KeyboardTheme::KeyboardMap KeyboardTheme::getTheme(QString keyboardThemeName)
  * @details Set the theme displayed by the dialog. If the theme doesn't exist, show the Factory
  *          one instead.
  */
-void KeyboardTheme::setTheme(QString newTheme)
+void KeyboardThemeDialog::setTheme(QString newTheme)
 {
     // If we don't know the name of the theme, fall back to Factory. This allows users to delete themes, but
     // still leave them referenced in session configurations.
@@ -281,7 +160,7 @@ void KeyboardTheme::setTheme(QString newTheme)
     ui->keyboardThemes->setCurrentIndex(ui->keyboardThemes->findText(currentTheme));
 
     // Populate dialog table
-    populateTable(ui->KeyboardMap, currentTheme);
+    ui->KeyboardMap->setTheme(getTheme(currentTheme));
 
     // Clear last row displayed
     lastRow = -1;
@@ -293,45 +172,13 @@ void KeyboardTheme::setTheme(QString newTheme)
 }
 
 /**
- * @brief   KeyboardTheme::populateTable - populate the dialog table with the theme
- * @param   table   - the dialog table widget
- * @param   mapName - the keyboard theme
- *
- * @details Populate the dialog table with the requested theme. This is used both in the Preferences
- *          dialog to show the theme, and in the KeyboardTheme editor.
- */
-void KeyboardTheme::populateTable(QTableWidget *table, QString mapName)
-{
-    // Clear keyboard map table in dialog
-    table->setRowCount(0);
-
-    int row = 0;
-
-    KeyboardMap map = getTheme(mapName);
-    KeyboardMap::ConstIterator i = map.constBegin();
-
-    // Iterate over keyboard map and insert into table
-    while(i != map.constEnd())
-    {
-        // Insert new row into table widget, and add details
-        table->insertRow(row);
-        table->setItem(row, 0, new QTableWidgetItem(i.key()));
-        table->setItem(row, 1, new QTableWidgetItem(i.value().join(", ")));
-        i++;
-        row++;
-    }
-
-    table->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
-}
-
-/**
  * @brief   KeyboardTheme::themeChanged - the user selected a different theme
  * @param   index - the index of the theme selected
  *
  * @details This slot is signalled when the user selects a different theme in the drop-down list
  *          in the dialog.
  */
-void KeyboardTheme::themeChanged(int index)
+void KeyboardThemeDialog::themeChanged(int index)
 {
     // Save new index
     currentThemeIndex = index;
@@ -370,7 +217,7 @@ void KeyboardTheme::themeChanged(int index)
  *
  *          The new theme is copied from the currently displayed one.
  */
-void KeyboardTheme::addTheme()
+void KeyboardThemeDialog::addTheme()
 {
     QString newName = "New Theme";
 
@@ -407,7 +254,7 @@ void KeyboardTheme::addTheme()
  * @details This slot is triggered by the user modifying the input field for the new theme name. If the
  *          name doesn't exist in the list of themes, the OK button is enabled, otherwise it's disabled.
  */
-void KeyboardTheme::checkDuplicate()
+void KeyboardThemeDialog::checkDuplicate()
 {
     // Check if new theme name being entered is a unique value
     if (themes.find(newTheme->newName->text()) == themes.end())
@@ -424,24 +271,12 @@ void KeyboardTheme::checkDuplicate()
 }
 
 /**
- * @brief   KeyboardTheme::deleteTheme - remove the theme from the list
- *
- * @details Delete a theme from the list of available themes.
- */
-void KeyboardTheme::deleteTheme()
-{
-    // Remove theme from lists
-    themes.remove(ui->keyboardThemes->currentText());
-    ui->keyboardThemes->removeItem(currentThemeIndex);
-}
-
-/**
  * @brief   KeyboardTheme::exec - display the dialog
  * @return  The button pressed to exit the dialog
  *
  * @details Save the state of the themes and then display the dialog.
  */
-int KeyboardTheme::exec()
+int KeyboardThemeDialog::exec()
 {
     // Save the initial state, to be restored should the user press cancel
     restoreThemeIndex = currentThemeIndex;
@@ -457,58 +292,12 @@ int KeyboardTheme::exec()
  * @details Called when the user presses the OK button to accept the changes they've made.
  *          The KeyboardThemes are all written to the config file.
  */
-void KeyboardTheme::accept()
+void KeyboardThemeDialog::accept()
 {
-    // Save settings
-    QSettings settings(Q3270_ORG, Q3270_APP);
-
-    // Group for Colours
-    settings.beginGroup("KeyboardThemes");
-
-    // Clear any existing settings
-    settings.remove("");
-
-    QMap<QString, KeyboardMap>::const_iterator i = themes.constBegin();
-
-    while(i != themes.constEnd())
-    {
-        // Skip Factory theme
-        if (i.key().compare("Factory"))
-        {
-            // Start new group for each theme
-            settings.beginGroup(i.key());
-
-            // Convenience variable
-            theme = i.value();
-
-            // Pull out each key mapping
-            KeyboardMap::const_iterator j = theme.constBegin();
-
-            while(j != theme.constEnd())
-            {
-                // Pull out each key sequence
-                for(int k = 0; k < j.value().size(); k++)
-                {
-                    settings.setValue(j.value().at(k), j.key());
-                }
-
-                j++;
-            }
-
-            // End Theme group
-            settings.endGroup();
-        }
-
-        // Next theme
-        i++;
-
-    }
-
-    // Finish ColourThemes group
-    settings.endGroup();
+    store.setThemes(themes);
+    store.save();
 
     QDialog::accept();
-
 }
 
 /**
@@ -516,7 +305,7 @@ void KeyboardTheme::accept()
  *
  * @details The user pressed the Cancel button. Restore the previously saved themes.
  */
-void KeyboardTheme::reject()
+void KeyboardThemeDialog::reject()
 {
     // Restore initial state
     themes = restoreThemes;
@@ -538,18 +327,12 @@ void KeyboardTheme::reject()
  *          are in place (F8, PgDown both mapped to F8), this routine will cycle through them
  *          each time the row is clicked.
  */
-void KeyboardTheme::populateKeySequence(QTableWidgetItem *item)
+void KeyboardThemeDialog::populateKeySequence(int row, const QString &functionName, const QStringList &keyList)
 {
     //NOTE: This doesn't handle the custom left-ctrl/right-ctrl stuff
 
-    // Get current row number
-    int thisRow = item->row();
-
-    // Split the sequence by comma, to be able to display a rotating list of mappings
-    QStringList keyList = ui->KeyboardMap->item(thisRow, 1)->text().split(", ");
-
     // If the row clicked is a different row to last time, set the sequence to the first mapping
-    if (thisRow != lastRow)
+    if (row != lastRow)
     {
         lastSeq = 0;
     }
@@ -561,10 +344,10 @@ void KeyboardTheme::populateKeySequence(QTableWidgetItem *item)
     }
 
     // Set the function list field on the form to show the function defined by the row
-    ui->KeyboardFunctionList->setCurrentIndex(ui->KeyboardFunctionList->findText(ui->KeyboardMap->item(thisRow, 0)->text()));
+    ui->KeyboardFunctionList->setCurrentIndex(ui->KeyboardFunctionList->findText(functionName));
 
     // If the key is mapped, display the key sequence, otherwise, blank it out
-    if (keyList.size() != 0)
+    if (!keyList.isEmpty())
     {
         ui->keySequenceEdit->setKeySequence(QKeySequence(keyList[lastSeq]));
     }
@@ -585,8 +368,7 @@ void KeyboardTheme::populateKeySequence(QTableWidgetItem *item)
     }
 
     // Set the last selected row to this one
-    lastRow = thisRow;
-
+    lastRow = row;
 }
 
 /**
@@ -597,41 +379,19 @@ void KeyboardTheme::populateKeySequence(QTableWidgetItem *item)
  *          is removed (it's not possible to map the same key to two different functions). Finally, the
  *          key sequence is stored in the map, and the table is rebuilt.
  */
-void KeyboardTheme::setKey()
+void KeyboardThemeDialog::setKey()
 {
-    // Search through the theme to find out if the key is already mapped
-    QMap<QString, QStringList>::iterator i = theme.begin();
+    theme.setKeyMapping(
+        ui->KeyboardFunctionList->currentText(),
+        ui->keySequenceEdit->keySequence()
+        );
 
-    while(i != theme.end())
-    {
-        // Loop through the mapped keys
-        for (int s = 0; s < i.value().size(); s++)
-        {
-            // If the mapping is found, remove it because we can only have one key sequence mapped to a function
-            if (QKeySequence(i.value()[s]) == ui->keySequenceEdit->keySequence())
-            {
-                // Remove existing entry
-                i.value().removeAt(s);
-            }
-        }
-
-        // If the current key is the matching function, process it
-        if (!i.key().compare(ui->KeyboardFunctionList->currentText()))
-        {
-             // If the selected function was not 'Unassigned' - index 0 - then store the mapping
-             if (ui->KeyboardFunctionList->currentIndex() != 0)
-             {
-                 theme[i.key()].append(ui->keySequenceEdit->keySequence().toString());
-             }
-        }
-        i++;
-    }
-
-    // Update themes
-    themes[currentTheme] = theme;
-
-    // Rebuild the table display (probably an inefficient way to do that)
+    themes[currentTheme] = theme; // or store.updateTheme(...)
     setTheme(currentTheme);
+
+    ui->keyboardThemes->setDisabled(true);
+    ui->buttonBox->button(QDialogButtonBox::Save)->setEnabled(true);
+    ui->buttonBox->button(QDialogButtonBox::Reset)->show();
 }
 
 /**
@@ -640,7 +400,7 @@ void KeyboardTheme::setKey()
  * @details Qt allows multiple key sequences, but Q3270 is only interested in the first.
  *          Truncate the incoming sequence to just the first.
  */
-void KeyboardTheme::truncateShortcut()
+void KeyboardThemeDialog::truncateShortcut()
 {
     // Use only the first key sequence the user pressed
     int value = ui->keySequenceEdit->keySequence()[0];
@@ -648,3 +408,88 @@ void KeyboardTheme::truncateShortcut()
     ui->keySequenceEdit->setKeySequence(shortcut);
 }
 
+
+void KeyboardThemeDialog::validateThemeName(const QString &name)
+{
+    bool duplicate = store.themeNames().contains(name, Qt::CaseSensitive);
+    bool empty = name.trimmed().isEmpty();
+
+    // Example: disable save if invalid
+    ui->buttonBox->button(QDialogButtonBox::Save)->setEnabled(!empty && !duplicate);
+
+    // Optional: visual feedback
+    // TODO: Implement visual feedback across other dialogs for error fields
+    QPalette pal = ui->themeNameEdit->palette();
+    pal.setColor(QPalette::Base, (empty || duplicate) ? QColor(255, 230, 230) : Qt::white);
+    ui->themeNameEdit->setPalette(pal);
+}
+
+void KeyboardThemeDialog::loadTheme(const QString &name)
+{
+    if (!store.themeNames().contains(name))
+        return;
+
+    const KeyboardMap map = store.theme(name);
+
+    ui->themeNameEdit->setText(name);
+    ui->themeDescriptionEdit->clear(); // placeholder until descriptions are stored
+
+    ui->KeyboardMap->setTheme(map);
+
+    // Reset selection state
+    lastRow = -1;
+    lastSeq = -1;
+}
+
+void KeyboardThemeDialog::startNewTheme()
+{
+    ui->themeNameEdit->clear();
+    ui->themeDescriptionEdit->clear();
+
+    ui->themeNameEdit->setFocus();
+    validateThemeName(QString());
+}
+
+void KeyboardThemeDialog::saveTheme()
+{
+    const QString name = ui->themeNameEdit->text().trimmed();
+
+    if (name.isEmpty())
+        return; // Should be prevented by validation
+
+    KeyboardMap map = ui->KeyboardMap->currentMappings();
+    // Optionally set description in map if you add that field later
+
+    store.setTheme(name, map);
+    store.save();
+
+    // Refresh dropdown if new theme
+    if (!(ui->keyboardThemes->findText(name, Qt::MatchExactly) >= 0))
+        ui->keyboardThemes->addItem(name);
+
+    ui->keyboardThemes->setCurrentText(name);
+
+    ui->keyboardThemes->setEnabled(true);
+    ui->buttonBox->button(QDialogButtonBox::Save)->setDisabled(true);
+    ui->buttonBox->button(QDialogButtonBox::Reset)->hide();
+
+
+}
+
+void KeyboardThemeDialog::deleteTheme()
+{
+    const QString name = ui->keyboardThemes->currentText();
+
+    if (name == "Factory")
+        return; // Don't delete factory theme
+
+    store.removeTheme(name);
+    store.save();
+
+    int index = ui->keyboardThemes->findText(name);
+    if (index >= 0)
+        ui->keyboardThemes->removeItem(index);
+
+    // Load factory theme after deletion
+    ui->keyboardThemes->setCurrentText("Factory");
+}

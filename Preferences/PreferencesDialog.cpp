@@ -48,15 +48,18 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * @details Initialise the Preferences dialog.
  */
-PreferencesDialog::PreferencesDialog(ColourTheme &colours, KeyboardTheme &keyboards, CodePage &codepages, ActiveSettings &activeSettings, QWidget *parent) :
+PreferencesDialog::PreferencesDialog(ColourTheme &colours, CodePage &codepages, ActiveSettings &activeSettings, QWidget *parent) :
     QDialog(parent),
     ui(new Ui::PreferencesDialog),
     colours(colours),
-    keyboards(keyboards),
     codepages(codepages),
     activeSettings(activeSettings)
 {
     ui->setupUi(this);
+
+    keyboards.load();
+    ui->keyboardTheme->addItems(keyboards.themeNames());
+
     ui->TabsWidget->setCurrentIndex(0);
 
     // Set up vector to coordinate combox box for crosshair types
@@ -394,7 +397,7 @@ void PreferencesDialog::populateKeyboardThemeNames()
 {
     // Refresh the Keyboard theme names
     ui->keyboardTheme->clear();
-    ui->keyboardTheme->addItems(keyboards.getThemes());
+    ui->keyboardTheme->addItems(keyboards.themeNames());
 }
 
 /**
@@ -407,7 +410,7 @@ void PreferencesDialog::populateKeyboardThemeNames()
 void PreferencesDialog::keyboardThemeDropDownChanged([[maybe_unused]] int index)
 {
     // Populate keyboard map table
-    keyboards.populateTable(ui->KeyboardMap, ui->keyboardTheme->currentText());
+    ui->KeyboardMap->setTheme(keyboards.theme(ui->keyboardTheme->currentText()));
 }
 
 /**
@@ -420,7 +423,7 @@ void PreferencesDialog::keyboardThemeDropDownChanged([[maybe_unused]] int index)
  */
 void PreferencesDialog::manageKeyboardThemes()
 {
-    keyboards.exec();
+//    keyboards.exec();
 
     populateKeyboardThemeNames();
 }

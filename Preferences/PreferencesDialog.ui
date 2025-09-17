@@ -20,20 +20,6 @@
    <string>Dialog</string>
   </property>
   <layout class="QFormLayout" name="formLayout_2">
-   <item row="2" column="1">
-    <layout class="QHBoxLayout" name="ButtonLayout">
-     <property name="spacing">
-      <number>6</number>
-     </property>
-     <item>
-      <widget class="QDialogButtonBox" name="buttonBox">
-       <property name="standardButtons">
-        <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
-       </property>
-      </widget>
-     </item>
-    </layout>
-   </item>
    <item row="0" column="1">
     <widget class="QTabWidget" name="TabsWidget">
      <property name="sizePolicy">
@@ -43,7 +29,7 @@
       </sizepolicy>
      </property>
      <property name="currentIndex">
-      <number>1</number>
+      <number>4</number>
      </property>
      <widget class="QWidget" name="connection">
       <attribute name="title">
@@ -171,7 +157,6 @@
                <widget class="QLabel" name="label_7">
                 <property name="font">
                  <font>
-                  <weight>75</weight>
                   <bold>true</bold>
                  </font>
                 </property>
@@ -216,7 +201,6 @@
                <widget class="QLabel" name="label_5">
                 <property name="font">
                  <font>
-                  <weight>75</weight>
                   <bold>true</bold>
                  </font>
                 </property>
@@ -300,7 +284,6 @@
                <widget class="QLabel" name="label_26">
                 <property name="font">
                  <font>
-                  <weight>75</weight>
                   <bold>true</bold>
                  </font>
                 </property>
@@ -873,55 +856,52 @@
       <attribute name="title">
        <string>Keyboard</string>
       </attribute>
-      <layout class="QGridLayout" name="gridLayout_4">
-       <item row="1" column="0" colspan="2">
-        <widget class="QTableWidget" name="KeyboardMap">
-         <property name="sizeAdjustPolicy">
-          <enum>QAbstractScrollArea::AdjustToContents</enum>
-         </property>
-         <property name="editTriggers">
-          <set>QAbstractItemView::NoEditTriggers</set>
-         </property>
-         <property name="showDropIndicator" stdset="0">
-          <bool>false</bool>
-         </property>
-         <property name="dragDropOverwriteMode">
-          <bool>false</bool>
-         </property>
-         <property name="alternatingRowColors">
-          <bool>true</bool>
-         </property>
-         <property name="selectionBehavior">
-          <enum>QAbstractItemView::SelectRows</enum>
-         </property>
-         <column>
-          <property name="text">
-           <string>Function</string>
-          </property>
-         </column>
-         <column>
-          <property name="text">
-           <string>Mapped To</string>
-          </property>
-         </column>
-        </widget>
+      <layout class="QVBoxLayout" name="verticalLayout_7" stretch="0,1">
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_6">
+         <item>
+          <widget class="QComboBox" name="keyboardTheme"/>
+         </item>
+         <item>
+          <widget class="QPushButton" name="manageKeyboardThemes">
+           <property name="text">
+            <string>Manage Themes</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
        </item>
-       <item row="0" column="0">
-        <widget class="QComboBox" name="keyboardTheme"/>
-       </item>
-       <item row="0" column="1">
-        <widget class="QPushButton" name="manageKeyboardThemes">
-         <property name="text">
-          <string>Manage Themes</string>
-         </property>
-        </widget>
+       <item>
+        <widget class="KeyboardMapWidget" name="KeyboardMap" native="true"/>
        </item>
       </layout>
      </widget>
     </widget>
    </item>
+   <item row="3" column="1">
+    <layout class="QHBoxLayout" name="ButtonLayout">
+     <property name="spacing">
+      <number>6</number>
+     </property>
+     <item>
+      <widget class="QDialogButtonBox" name="buttonBox">
+       <property name="standardButtons">
+        <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>KeyboardMapWidget</class>
+   <extends>QWidget</extends>
+   <header>Preferences/KeyboardMapWidget.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
  <tabstops>
   <tabstop>hostName</tabstop>
   <tabstop>hostPort</tabstop>
@@ -952,10 +932,6 @@
   <tabstop>colourTurq</tabstop>
   <tabstop>colourYellow</tabstop>
   <tabstop>colourWhite</tabstop>
-  <tabstop>keyboardTheme</tabstop>
-  <tabstop>manageKeyboardThemes</tabstop>
-  <tabstop>KeyboardMap</tabstop>
-  <tabstop>TabsWidget</tabstop>
  </tabstops>
  <resources/>
  <connections>

@@ -501,7 +501,12 @@ void ActiveSettings::setVerifyCerts(bool verify)
     this->verifyCerts = verify;
 }
 
-
+/**
+ * @brief   Sets the session name.
+ * @param   name - The new session name.
+ *
+ * @details Updates the session name and emits a signal if it changes.
+ */
 void ActiveSettings::setSessionName(const QString &name)
 {
     if (name != sessionName)
@@ -512,7 +517,12 @@ void ActiveSettings::setSessionName(const QString &name)
 
 }
 
-
+/**
+ * @brief   Sets the session description.
+ * @param   desc - The new description.
+ *
+ * @details Updates the session description and emits a signal if it changes.
+ */
 void ActiveSettings::setDescription(const QString &desc)
 {
     if (desc != description)

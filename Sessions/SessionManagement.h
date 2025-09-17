@@ -39,7 +39,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <QSettings>
 
 #include "ActiveSettings.h"
-#include "SessionStore.h"
+#include "Stores/SessionStore.h"
 
 class SessionManagement : public QDialog
 {

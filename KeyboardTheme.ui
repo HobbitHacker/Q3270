@@ -15,6 +15,38 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
+    <layout class="QFormLayout" name="formLayout">
+     <item row="0" column="0">
+      <widget class="QLabel" name="label_2">
+       <property name="text">
+        <string>Theme</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="1">
+      <widget class="QLineEdit" name="themeNameEdit">
+       <property name="readOnly">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="0">
+      <widget class="QLabel" name="label">
+       <property name="text">
+        <string>Description</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="1">
+      <widget class="QLineEdit" name="themeDescriptionEdit">
+       <property name="readOnly">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
     <layout class="QHBoxLayout" name="horizontalLayout_2">
      <item>
       <widget class="QComboBox" name="keyboardThemes"/>
@@ -26,48 +58,16 @@
        </property>
       </widget>
      </item>
-     <item>
-      <widget class="QPushButton" name="deleteThemeButton">
-       <property name="text">
-        <string>Delete Theme</string>
-       </property>
-      </widget>
-     </item>
     </layout>
    </item>
    <item>
-    <widget class="QTableWidget" name="KeyboardMap">
-     <property name="sizeAdjustPolicy">
-      <enum>QAbstractScrollArea::AdjustToContents</enum>
+    <widget class="KeyboardMapWidget" name="KeyboardMap" native="true">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
      </property>
-     <property name="editTriggers">
-      <set>QAbstractItemView::NoEditTriggers</set>
-     </property>
-     <property name="showDropIndicator" stdset="0">
-      <bool>false</bool>
-     </property>
-     <property name="dragDropOverwriteMode">
-      <bool>false</bool>
-     </property>
-     <property name="alternatingRowColors">
-      <bool>true</bool>
-     </property>
-     <property name="selectionBehavior">
-      <enum>QAbstractItemView::SelectRows</enum>
-     </property>
-     <property name="sortingEnabled">
-      <bool>true</bool>
-     </property>
-     <column>
-      <property name="text">
-       <string>Function</string>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string>Mapped To</string>
-      </property>
-     </column>
     </widget>
    </item>
    <item>
@@ -125,154 +125,43 @@
     </widget>
    </item>
    <item>
-    <widget class="QDialogButtonBox" name="buttonBox">
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
-     </property>
-     <property name="standardButtons">
-      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
-     </property>
-    </widget>
+    <layout class="QHBoxLayout" name="horizontalLayout_3">
+     <item>
+      <widget class="QPushButton" name="deleteThemeButton">
+       <property name="text">
+        <string>Delete Theme</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QDialogButtonBox" name="buttonBox">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="standardButtons">
+        <set>QDialogButtonBox::Close|QDialogButtonBox::Reset|QDialogButtonBox::Save</set>
+       </property>
+      </widget>
+     </item>
+    </layout>
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>KeyboardMapWidget</class>
+   <extends>QWidget</extends>
+   <header>Preferences/KeyboardMapWidget.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
  <resources/>
- <connections>
-  <connection>
-   <sender>buttonBox</sender>
-   <signal>accepted()</signal>
-   <receiver>KeyboardTheme</receiver>
-   <slot>accept()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>224</x>
-     <y>499</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>157</x>
-     <y>274</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>buttonBox</sender>
-   <signal>rejected()</signal>
-   <receiver>KeyboardTheme</receiver>
-   <slot>reject()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>292</x>
-     <y>505</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>286</x>
-     <y>274</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>newThemeButton</sender>
-   <signal>clicked()</signal>
-   <receiver>KeyboardTheme</receiver>
-   <slot>addTheme()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>350</x>
-     <y>19</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>350</x>
-     <y>256</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>deleteThemeButton</sender>
-   <signal>clicked()</signal>
-   <receiver>KeyboardTheme</receiver>
-   <slot>deleteTheme()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>581</x>
-     <y>19</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>350</x>
-     <y>256</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>keyboardThemes</sender>
-   <signal>currentIndexChanged(int)</signal>
-   <receiver>KeyboardTheme</receiver>
-   <slot>themeChanged(int)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>120</x>
-     <y>19</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>350</x>
-     <y>256</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>keySequenceEdit</sender>
-   <signal>editingFinished()</signal>
-   <receiver>KeyboardTheme</receiver>
-   <slot>truncateShortcut()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>489</x>
-     <y>422</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>350</x>
-     <y>256</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>setKeyboardMap</sender>
-   <signal>clicked()</signal>
-   <receiver>KeyboardTheme</receiver>
-   <slot>setKey()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>680</x>
-     <y>422</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>350</x>
-     <y>256</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>KeyboardMap</sender>
-   <signal>itemClicked(QTableWidgetItem*)</signal>
-   <receiver>KeyboardTheme</receiver>
-   <slot>populateKeySequence(QTableWidgetItem*)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>350</x>
-     <y>232</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>350</x>
-     <y>256</y>
-    </hint>
-   </hints>
-  </connection>
- </connections>
+ <connections/>
  <slots>
   <slot>addTheme()</slot>
   <slot>deleteTheme()</slot>
   <slot>themeChanged(int)</slot>
   <slot>truncateShortcut()</slot>
-  <slot>populateKeySequence(QTableWidgetItem*)</slot>
   <slot>setKey()</slot>
  </slots>
 </ui>

@@ -3,7 +3,7 @@
 
 #include <QWidget>
 #include "ui_SessionPreview.h"
-#include "Session.h"
+#include "Models/Session.h"
 
 class SessionPreviewWidget : public QWidget, private Ui::SessionPreviewWidget
 {

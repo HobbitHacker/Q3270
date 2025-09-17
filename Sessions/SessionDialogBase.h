@@ -6,8 +6,8 @@
 #include <QCheckBox>
 
 
-#include "Session.h"
-#include "SessionStore.h"
+#include "Models/Session.h"
+#include "Stores/SessionStore.h"
 
 namespace Ui {
 class SessionDialog;

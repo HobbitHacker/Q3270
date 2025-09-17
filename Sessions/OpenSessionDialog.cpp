@@ -6,8 +6,8 @@
 #include "ActiveSettings.h"
 #include "ui_SessionDialog.h"
 #include "OpenSessionDialog.h"
-#include "SessionStore.h"
-#include "Session.h"
+#include "Stores/SessionStore.h"
+#include "Models/Session.h"
 
 
 OpenSessionDialog::OpenSessionDialog(ActiveSettings &activeSettings, QWidget *parent)

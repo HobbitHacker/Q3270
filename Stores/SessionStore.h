@@ -5,7 +5,7 @@
 //#include <QList>
 #include <QSettings>
 
-#include "Session.h"
+#include "Models/Session.h"
 #include "ActiveSettings.h"
 //#include "Q3270.h"
 
