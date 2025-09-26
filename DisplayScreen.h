@@ -50,6 +50,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "CodePage.h"
 #include "Q3270.h"
 #include "Models/Colours.h"
+#include "DisplayScreen/ClickableSvgItem.h"
 
 class DisplayScreen : public QObject, public QGraphicsRectItem
 {
@@ -227,10 +228,10 @@ class DisplayScreen : public QObject, public QGraphicsRectItem
         QGraphicsSimpleTextItem statusInsert;
 
         // Padlocks
-        QGraphicsSvgItem *statusSecureSVG;
-        QGraphicsSvgItem *locktick;
-        QGraphicsSvgItem *unlock;
-        QGraphicsSvgItem *lock;
+        ClickableSvgItem *statusSecureSVG;
+        ClickableSvgItem *locktick;
+        ClickableSvgItem *unlock;
+        ClickableSvgItem *lock;
 
         QGraphicsRectItem statusSecure;
 

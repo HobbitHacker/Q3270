@@ -160,9 +160,9 @@ DisplayScreen::DisplayScreen(int screen_x, int screen_y, CodePage &cp, const Col
     statusConnect.setFont(statusBarText);
     statusConnect.setBrush(QBrush(QColor(0x80, 0x80, 0xFF)));
 
-    unlock = new QGraphicsSvgItem(":/Icons/unlock.svg");
-    lock = new QGraphicsSvgItem(":/Icons/lock.svg");
-    locktick = new QGraphicsSvgItem(":/Icons/lock-tick.svg");
+    unlock = new ClickableSvgItem(":/Icons/unlock.svg");
+    lock = new ClickableSvgItem(":/Icons/lock.svg");
+    locktick = new ClickableSvgItem(":/Icons/lock-tick.svg");
 
     // Connect status at 10% across
     statusSecure.setPos(gridSize_X * (screen_x * .05), 482);

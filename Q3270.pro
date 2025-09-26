@@ -29,6 +29,7 @@ SOURCES += \
     CertificateDetails.cpp \
     CodePage.cpp \
     ColourTheme.cpp \
+    DisplayScreen/ClickableSvgItem.cpp \
     DisplayScreen/DisplayScreen.cpp \
     DisplayScreen/DisplayScreen_Cursor.cpp \
     DisplayScreen/DisplayScreen_Status.cpp \
@@ -65,6 +66,7 @@ HEADERS += \
     CodePage.h \
     ColourTheme.h \
     DisplayScreen.h \
+    DisplayScreen/ClickableSvgItem.h \
     FunctionRegistry.h \
     Models/Colours.h \
     Preferences/ColourSwatchWidget.h \
