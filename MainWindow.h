@@ -57,15 +57,16 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Terminal.h"
 #include "ColourTheme.h"
 #include "KeyboardThemeDialog.h"
-#include "Sessions/SessionManagement.h"
 #include "ActiveSettings.h"
 #include "CertificateDetails.h"
 #include "Stores/SessionStore.h"
+#include "Stores/KeyboardStore.h"
+#include "Stores/ColourStore.h"
 
 QT_BEGIN_NAMESPACE
 
 namespace Ui {
-    class MainWindow;
+    class MainWindowDialog;
     class CertificateDetails;
 }
 
@@ -91,7 +92,6 @@ class MainWindow : public QMainWindow
   public slots:
 
       void closeEvent(QCloseEvent *c);
-      void onSessionOpened();
       void showEvent(QShowEvent *s);
       void resizeEvent(QResizeEvent *s);
 
@@ -105,6 +105,7 @@ class MainWindow : public QMainWindow
       void menuSaveSession();
       void menuOpenSession();
       void menuManageSessions();
+      void menuManageAutostartSessions();
       void menuQuit();
 
       // Session menu
@@ -127,34 +128,37 @@ class MainWindow : public QMainWindow
       void enableDisconnectMenu();
       void disableDisconnectMenu();
 
+      void keyboardChanged(const QString &name);
+      void coloursChanged(const QString &name);
+      void checkColourThemeChanged(const QString &name);
+
   private:
 
+      void populateMRU();
       void updateMRUList();
 
       ActiveSettings activeSettings;
 
-      ColourTheme colourTheme;
-      KeyboardThemeDialog keyboardTheme;
+      // Persistence Stores
+      SessionStore sessionStore;
+      KeyboardStore keyboardStore;
+      ColourStore colourStore;
 
+      // 3270 'hardware' layers
       Keyboard keyboard;
-
       CodePage codePage;
-      
       Terminal *terminal;
 
-      SessionStore sessionStore;
-
-
-      SessionManagement *sm;
+      // Dialogs
+      KeyboardThemeDialog *keyboardTheme;
       PreferencesDialog *settings;
+      ColourTheme *colourTheme;
 
       int maxMruCount;
 
-      QActionGroup *sessionGroup;
-
       QStringList mruList;
 
-      Ui::MainWindow *ui;
+      Ui::MainWindowDialog *ui;
 
 };
  

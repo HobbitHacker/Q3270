@@ -91,7 +91,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * colours, etc are taken from that cell (if appropriate).
  */
 
-Cell::Cell(int celladdress, qreal x_pos, qreal y_pos, qreal x, qreal y, CodePage &cp, ColourTheme::Colours &palette, QGraphicsItem *parent, QGraphicsScene *scene) : address(celladdress), xsize(x), ysize(y), palette(palette), cp(cp)
+Cell::Cell(int celladdress, qreal x_pos, qreal y_pos, qreal x, qreal y, CodePage &cp, const Colours *palette, QGraphicsItem *parent, QGraphicsScene *scene) : address(celladdress), xsize(x), ysize(y), palette(palette), cp(cp)
 {
     QPen p;
     p.setStyle(Qt::NoPen);
@@ -599,12 +599,7 @@ void Cell::copy(Cell &fromCell)
 
 /**
  * @brief   Cell::setAttrs - set the attributes for a field
- * @param   prot   - protected state
- * @param   mdt    - mdt state
- * @param   num    - numeric state
- * @param   pensel - light pen select state
  * @param   blink  - blink state
- * @param   disp   - display state
  * @param   under  - underscore state
  * @param   rev    - reverse state
  * @param   col    - colour
@@ -640,11 +635,11 @@ void Cell::blinkChar(bool blink)
 {
     if (blink)
     {
-        glyph.setBrush(palette[colNum]);
+        glyph.setBrush(palette->colour(colNum));
     }
     else
     {
-        glyph.setBrush(palette[Q3270::Black]);
+        glyph.setBrush(palette->colour(Q3270::Black));
     }
 }
 
@@ -735,11 +730,11 @@ bool Cell::updateCell()
     {
         if (uscore)
         {
-            underscore.setPen(QPen(QColor(palette[tmpCol]), 0));
+            underscore.setPen(QPen(QColor(palette->colour(tmpCol)), 0));
         }
 
-        glyph.setBrush(reverse ? palette[Q3270::Black] : palette[tmpCol]);
-        this->setBrush(reverse ? palette[tmpCol] : palette[Q3270::Black]);
+        glyph.setBrush(reverse ? palette->colour(Q3270::Black) : palette->colour(tmpCol));
+        this->setBrush(reverse ? palette->colour(tmpCol) : palette->colour(Q3270::Black));
 
         glyph.setVisible(display);
         underscore.setVisible(display && uscore);
@@ -747,8 +742,8 @@ bool Cell::updateCell()
     else
     {
         underscore.setVisible(false);
-        glyph.setBrush(palette[colNum]);
-        this->setBrush(palette[Q3270::Black]);
+        glyph.setBrush(palette->colour(colNum));
+        this->setBrush(palette->colour(Q3270::Black));
     }
 
     return true;

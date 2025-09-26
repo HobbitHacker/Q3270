@@ -15,6 +15,20 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
+    <layout class="QHBoxLayout" name="horizontalLayout_2">
+     <item>
+      <widget class="QComboBox" name="keyboardThemes"/>
+     </item>
+     <item>
+      <widget class="QPushButton" name="newThemeButton">
+       <property name="text">
+        <string>New Theme</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
     <layout class="QFormLayout" name="formLayout">
      <item row="0" column="0">
       <widget class="QLabel" name="label_2">
@@ -41,20 +55,6 @@
       <widget class="QLineEdit" name="themeDescriptionEdit">
        <property name="readOnly">
         <bool>true</bool>
-       </property>
-      </widget>
-     </item>
-    </layout>
-   </item>
-   <item>
-    <layout class="QHBoxLayout" name="horizontalLayout_2">
-     <item>
-      <widget class="QComboBox" name="keyboardThemes"/>
-     </item>
-     <item>
-      <widget class="QPushButton" name="newThemeButton">
-       <property name="text">
-        <string>New Theme</string>
        </property>
       </widget>
      </item>
@@ -139,7 +139,7 @@
         <enum>Qt::Horizontal</enum>
        </property>
        <property name="standardButtons">
-        <set>QDialogButtonBox::Close|QDialogButtonBox::Reset|QDialogButtonBox::Save</set>
+        <set>QDialogButtonBox::Apply|QDialogButtonBox::Close|QDialogButtonBox::Reset|QDialogButtonBox::Save</set>
        </property>
       </widget>
      </item>

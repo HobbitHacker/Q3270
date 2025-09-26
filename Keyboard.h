@@ -89,7 +89,7 @@ class Keyboard : public QObject
         void lockKeyboard();
         void setConnected(bool state);
 
-        void setTheme(KeyboardMap theme);
+        void setMap(const KeyboardMap &kmap);
 
     protected:
         bool eventFilter( QObject *dist, QEvent *event );

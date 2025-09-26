@@ -33,32 +33,36 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "ui_PreferencesDialog.h"
+
 #include "PreferencesDialog.h"
 #include <QDebug>
 #include "PreferencesDialog.h"
 
 #include "Q3270.h"
+#include "Models/Colours.h"
 
 /**
  * @brief   PreferencesDialog::PreferencesDialog - The preferences dialog
  * @param   colours         - the shared ColourTheme object
- * @param   keyboards       - the shared KeyboardTheme object
+ * @param   codepages       - the shared CodePage object
  * @param   activeSettings  - the shared currently active settings object
+ * @param   keyboardStore    - the shared KeyboardStore object
  * @param   parent          - the parent window
  *
  * @details Initialise the Preferences dialog.
  */
-PreferencesDialog::PreferencesDialog(ColourTheme &colours, CodePage &codepages, ActiveSettings &activeSettings, QWidget *parent) :
+PreferencesDialog::PreferencesDialog(CodePage &codepages, ActiveSettings &activeSettings, KeyboardStore &keyboardStore, ColourStore &colourStore, QWidget *parent) :
     QDialog(parent),
+    keyboardStore(keyboardStore),
+    colourStore(colourStore),
     ui(new Ui::PreferencesDialog),
-    colours(colours),
     codepages(codepages),
     activeSettings(activeSettings)
 {
     ui->setupUi(this);
 
-    keyboards.load();
-    ui->keyboardTheme->addItems(keyboards.themeNames());
+    ui->keyboardTheme->addItems(keyboardStore.themeNames());
+    ui->colourTheme->addItems(colourStore.themeNames());
 
     ui->TabsWidget->setCurrentIndex(0);
 
@@ -69,21 +73,6 @@ PreferencesDialog::PreferencesDialog(ColourTheme &colours, CodePage &codepages, 
 
     // Populate combo box from vector keys
     ui->crosshair->addItems(comboRulerStyle.keys());
-
-    // Set up a list of buttons for use in setButtonColours
-    colourButtons[Q3270::UnprotectedNormal]      = ui->baseUnprotected;
-    colourButtons[Q3270::ProtectedNormal]        = ui->baseProtected;
-    colourButtons[Q3270::UnprotectedIntensified] = ui->baseUnprotectedIntensify;
-    colourButtons[Q3270::ProtectedIntensified]   = ui->baseProtectedIntensify;
-
-    colourButtons[Q3270::Black]        = ui->colourBlack;
-    colourButtons[Q3270::Blue]         = ui->colourBlue;
-    colourButtons[Q3270::Red]          = ui->colourRed;
-    colourButtons[Q3270::Magenta]      = ui->colourPink;
-    colourButtons[Q3270::Green]        = ui->colourGreen;
-    colourButtons[Q3270::Cyan]         = ui->colourTurq;
-    colourButtons[Q3270::Yellow]       = ui->colourYellow;
-    colourButtons[Q3270::Neutral]      = ui->colourWhite;
 
     // Populate code page list
     ui->CodePages->addItems(codepages.getCodePageList());
@@ -99,6 +88,10 @@ PreferencesDialog::PreferencesDialog(ColourTheme &colours, CodePage &codepages, 
 //    connect(qfd, &QFontDialog::currentFontChanged, this, &Settings::fontChanged);
 
     ui->verticalLayout_5->addWidget(qfd);
+
+    // Forward theme apply events from any dialog opened by PreferencesDialog
+    // so callers (eg MainWindow) can react to in-memory changes.
+    // Note: connection is created where the dialog is instantiated (MainWindow).
 }
 
 /**
@@ -202,8 +195,8 @@ void PreferencesDialog::showForm()
     ui->colourTheme->setCurrentIndex(ui->colourTheme->findText(activeSettings.getColourThemeName()));
     ui->keyboardTheme->setCurrentIndex(ui->keyboardTheme->findText(activeSettings.getKeyboardThemeName()));
 
-    // Colour the buttons, based on Settings
-    colours.setButtonColours(activeSettings.getColourThemeName());
+    // No editing of colours here
+    ui->colourSwatchWidget->setReadOnly(true);
 
     ui->CodePages->setCurrentIndex(ui->CodePages->findText(activeSettings.getCodePage()));
 
@@ -212,33 +205,6 @@ void PreferencesDialog::showForm()
     ui->verifyCerts->setEnabled(ui->secureConnection->isChecked());
 
     this->exec();
-}
-
-/**
- * @brief   PreferencesDialog::setButtonColours - set the swatches to the colours specified
- * @param   themeName - the name of theme
- *
- * @details setButtonColours is used to change the colours on the swatches of the dialog. This is a
- *          duplicate of the code in ColourTheme.
- */
-void PreferencesDialog::setButtonColours(QString themeName)
-{
-    ColourTheme::Colours thisTheme = colours.getTheme(themeName);
-
-    // Change colour swatches
-    colourButtons[Q3270::UnprotectedNormal]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[Q3270::UnprotectedNormal].name()));
-    colourButtons[Q3270::ProtectedNormal]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[Q3270::ProtectedNormal].name()));
-    colourButtons[Q3270::UnprotectedIntensified]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[Q3270::UnprotectedIntensified].name()));
-    colourButtons[Q3270::ProtectedIntensified]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[Q3270::ProtectedIntensified].name()));
-
-    colourButtons[Q3270::Black]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[Q3270::Black].name()));
-    colourButtons[Q3270::Blue]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[Q3270::Blue].name()));
-    colourButtons[Q3270::Red]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[Q3270::Red].name()));
-    colourButtons[Q3270::Magenta]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[Q3270::Magenta].name()));
-    colourButtons[Q3270::Green]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[Q3270::Green].name()));
-    colourButtons[Q3270::Cyan]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[Q3270::Cyan].name()));
-    colourButtons[Q3270::Yellow]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[Q3270::Yellow].name()));
-    colourButtons[Q3270::Neutral]->setStyleSheet(QString("background-color: %1;").arg(thisTheme[Q3270::Neutral].name()));
 }
 
 /**
@@ -354,7 +320,7 @@ void PreferencesDialog::reject()
  */
 void PreferencesDialog::colourThemeDropDownChanged([[maybe_unused]] int index)
 {
-   setButtonColours(ui->colourTheme->currentText());
+    ui->colourSwatchWidget->setTheme(colourStore.getTheme(ui->colourTheme->currentText()));
 }
 
 /**
@@ -368,7 +334,7 @@ void PreferencesDialog::populateColourThemeNames()
 {
     // Refresh the Colour theme names
     ui->colourTheme->clear();
-    ui->colourTheme->addItems(colours.getThemes());
+    ui->colourTheme->addItems(colourStore.themeNames());
 }
 
 /**
@@ -380,7 +346,17 @@ void PreferencesDialog::populateColourThemeNames()
 void PreferencesDialog::manageColourThemes()
 {
     // Run the Colour Themes dialog
-    colours.exec();
+    // Construct the dialog with the shared KeyboardStore so edits apply to runtime
+    ColourTheme dlg(colourStore, this);
+    // Connect apply signal so the preferences UI can react if needed
+///    connect(&dlg, &ColoKeyboardThemeDialog::themesApplied, this, [this](const QString &name){
+        // Refresh our dropdown in case themes changed
+//        populateKeyboardThemeNames();
+        // Forward to any listeners (eg MainWindow) so runtime can be updated
+  //      emit themesApplied(name);
+  //  });
+
+    dlg.exec();
 
     // Refresh the colour theme names, in case they changed
     populateColourThemeNames();
@@ -397,7 +373,7 @@ void PreferencesDialog::populateKeyboardThemeNames()
 {
     // Refresh the Keyboard theme names
     ui->keyboardTheme->clear();
-    ui->keyboardTheme->addItems(keyboards.themeNames());
+    ui->keyboardTheme->addItems(keyboardStore.themeNames());
 }
 
 /**
@@ -410,7 +386,7 @@ void PreferencesDialog::populateKeyboardThemeNames()
 void PreferencesDialog::keyboardThemeDropDownChanged([[maybe_unused]] int index)
 {
     // Populate keyboard map table
-    ui->KeyboardMap->setTheme(keyboards.theme(ui->keyboardTheme->currentText()));
+    ui->KeyboardMap->setTheme(keyboardStore.theme(ui->keyboardTheme->currentText()));
 }
 
 /**
@@ -423,7 +399,17 @@ void PreferencesDialog::keyboardThemeDropDownChanged([[maybe_unused]] int index)
  */
 void PreferencesDialog::manageKeyboardThemes()
 {
-//    keyboards.exec();
+    // Construct the dialog with the shared KeyboardStore so edits apply to runtime
+    KeyboardThemeDialog dlg(keyboardStore, this);
+    // Connect apply signal so the preferences UI can react if needed
+    connect(&dlg, &KeyboardThemeDialog::themesApplied, this, [this](const QString &name){
+        // Refresh our dropdown in case themes changed
+        populateKeyboardThemeNames();
+        // Forward to any listeners (eg MainWindow) so runtime can be updated
+        emit themesApplied(name);
+    });
+
+    dlg.exec();
 
     populateKeyboardThemeNames();
 }

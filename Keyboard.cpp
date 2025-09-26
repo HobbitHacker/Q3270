@@ -33,7 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "Keyboard.h"
-
+#include "Stores/KeyboardStore.h"
 #include "Q3270.h"
 
 /**
@@ -141,7 +141,7 @@ Keyboard::Keyboard() : functionMap(makeFunctionMap())
 
     clearBufferEntry();
 
-    setTheme(KeyboardMap::getFactoryMap());
+    setMap(KeyboardMap::getFactoryMap());
 }
 
 QStringList Keyboard::allFunctionNames()
@@ -1153,18 +1153,15 @@ void Keyboard::setMapping(QString key, QString function)
 }
 
 /**
- * @brief   Keyboard::setTheme - set a keyboard theme
- * @param   keyboardTheme - the keyboard theme
- * @param   theme         - the theme name
+ * @brief   Keyboard::setMap - set a keyboard map
+ * @param   kmap - the keyboard map
  *
  * @details setTheme takes a keyboard map and sets up the mappings of keys to functions.
  *          Keyboard maps are defined as QMap<QString, QStringList>; each function can have multiple
  *          keys assigned to it (e.g. F8 and PgDown are both defined to call F8 by default).
  */
-void Keyboard::setTheme(KeyboardMap theme)
+void Keyboard::setMap(const KeyboardMap &kmap)
 {
-    // Switch to a new keyboard map based on the theme
-
     // Clear the existing maps
     defaultMap.clear();
     ctrlMap.clear();
@@ -1173,14 +1170,12 @@ void Keyboard::setTheme(KeyboardMap theme)
     metaMap.clear();
 
     // Iterate over each Mapping in the theme
-    for (const Mapping &mapping : theme.mappings) {
+    for (const Mapping &mapping : kmap.mappings) {
         // Each mapping may have multiple keys for the same function
         for (const QString &key : mapping.keys) {
             setMapping(key, mapping.functionName);
         }
     }
-
-
 }
 
 /**

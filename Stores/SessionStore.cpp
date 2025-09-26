@@ -1,3 +1,36 @@
+/*
+
+Copyright Ⓒ 2023 Andy Styles
+All Rights Reserved
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+
+ * Redistributions of source code must retain the above copyright
+     notice, this list of conditions and the following disclaimer.
+ * Redistributions in binary form must reproduce the above copyright
+     notice, this list of conditions and the following disclaimer in
+     the documentation and/or other materials provided with the
+     distribution.
+ * Neither the name of The Qt Company Ltd nor the names of its
+     contributors may be used to endorse or promote products derived
+     from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+*/
+
 #include <QUrl>
 #include <QMetaEnum>
 #include <QSettings>
@@ -6,53 +39,64 @@
 #include "SessionStore.h"
 
 SessionStore::SessionStore()
-    : settings(Q3270_ORG, Q3270_APP)  // Or however you initialize it
+        : settings(Q3270_ORG, Q3270_APP)
 {
 
 }
 
-Session SessionStore::loadSession(const QString &name) const
+void SessionStore::load()
 {
     Session s;
-    s.name = name;
 
     settings.beginGroup("Sessions"); // All Sessions
 
-    settings.beginGroup(name);      // This Session
+    for (QString name : settings.childGroups())
+    {
+        s.name = name;
 
-    s.description        = settings.value("Description").toString();
-    s.hostName           = settings.value("HostAddress").toString();
-    s.hostPort           = settings.value("HostPort").toInt();
-    s.hostLU             = settings.value("HostLU").toString();
-    s.colourTheme        = settings.value("ColourTheme").toString();
-    s.keyboardTheme      = settings.value("KeyboardTheme").toString();
-    s.terminalModel      = settings.value("TerminalModel").toString();
-    s.terminalX          = settings.value("TerminalX").toInt();
-    s.terminalY          = settings.value("TerminalY").toInt();
-    s.cursorBlink        = settings.value("CursorBlink").toBool();
-    s.cursorBlinkSpeed   = settings.value("CursorBlinkSpeed").toInt();
-    s.cursorInheritColour= settings.value("CursorInheritColour").toBool();
-    s.ruler              = settings.value("Ruler").toBool();
+        settings.beginGroup(name);      // This Session
 
-    // Enum deserialization
-    QMetaEnum me = QMetaEnum::fromType<Q3270::RulerStyle>();
-    QByteArray styleKey = settings.value("RulerStyle").toString().toUtf8();
-    s.rulerStyle = static_cast<Q3270::RulerStyle>(me.keyToValue(styleKey));
+        s.description        = settings.value("Description").toString();
+        s.hostName           = settings.value("HostAddress").toString();
+        s.hostPort           = settings.value("HostPort").toInt();
+        s.hostLU             = settings.value("HostLU").toString();
+        s.colourTheme        = settings.value("ColourTheme").toString();
+        s.keyboardTheme      = settings.value("KeyboardTheme").toString();
+        s.terminalModel      = settings.value("TerminalModel").toString();
+        s.terminalX          = settings.value("TerminalX").toInt();
+        s.terminalY          = settings.value("TerminalY").toInt();
+        s.cursorBlink        = settings.value("CursorBlink").toBool();
+        s.cursorBlinkSpeed   = settings.value("CursorBlinkSpeed").toInt();
+        s.cursorInheritColour= settings.value("CursorInheritColour").toBool();
+        s.ruler              = settings.value("Ruler").toBool();
 
-    // Font setup
-    s.font.setFamily   (settings.value("Font").toString());
-    s.font.setPointSize(settings.value("FontSize").toInt());
-    s.font.setStyleName(settings.value("FontStyle").toString());
+        // Enum deserialization
+        QMetaEnum me = QMetaEnum::fromType<Q3270::RulerStyle>();
+        QByteArray styleKey = settings.value("RulerStyle").toString().toUtf8();
+        s.rulerStyle = static_cast<Q3270::RulerStyle>(me.keyToValue(styleKey));
 
-    s.screenStretch     = settings.value("ScreenStretch").toBool();
-    s.codepage          = settings.value("Codepage").toString();
-    s.secureConnection  = settings.value("SecureConnection").toBool();
-    s.verifyCertificate = settings.value("VerifyCertificate").toBool();
+        // Font setup
+        s.font.setFamily   (settings.value("Font").toString());
+        s.font.setPointSize(settings.value("FontSize").toInt());
+        s.font.setStyleName(settings.value("FontStyle").toString());
 
-    settings.endGroup(); // This Session
+        s.screenStretch     = settings.value("ScreenStretch").toBool();
+        s.codepage          = settings.value("Codepage").toString();
+        s.secureConnection  = settings.value("SecureConnection").toBool();
+        s.verifyCertificate = settings.value("VerifyCertificate").toBool();
+
+        settings.endGroup(); // This Session
+
+        sessions.insert(name, s);
+
+    }
+
     settings.endGroup(); // All Sessions
+}
 
-    return s;
+Session SessionStore::getSession(const QString &name) const
+{
+    return sessions.value(name);
 }
 
 
@@ -99,33 +143,10 @@ QList<Session> SessionStore::listSessions() const
 {
     QList<Session> result;
 
-    settings.beginGroup("Sessions");
-
-    const QStringList sessionGroups = settings.childGroups();  // e.g. Turnkey%20MVS%203.8j%2000C0
-
-    for (const QString &encodedName : sessionGroups) {
-
-        // TODO: Do we need fromPercentEncoding here
-        QString decodedName = QUrl::fromPercentEncoding(encodedName.toUtf8());
-
-        settings.beginGroup(encodedName);
-
-        Session s;
-
-        s.name = decodedName;
-
-        s.hostName = settings.value("HostAddress").toString();
-        s.hostPort = settings.value("HostPort").toInt();
-        s.hostLU   = settings.value("HostLU").toString();
-
-        s.description = settings.value("Description").toString();
-        // Add more fields here if needed
-
-        settings.endGroup();  // Leave session subgroup
-        result.append(s);
+    for (auto it = sessions.cbegin(); it != sessions.cend(); ++it)
+    {
+        result.append(it.value());
     }
-
-    settings.endGroup();  // Leave "Sessions" group
 
     return result;
 }

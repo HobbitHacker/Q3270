@@ -41,7 +41,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <QPointer>
 
 #include "Q3270.h"
-#include "ColourTheme.h"
+#include "Models/Colours.h"
 #include "CodePage.h"
 
 
@@ -50,7 +50,7 @@ class Cell : public QObject, public QGraphicsRectItem
     Q_OBJECT
 
 public:
-    Cell(int celladdress, qreal x_pos, qreal y_pos, qreal x, qreal y, CodePage &cp, ColourTheme::Colours &palette, QGraphicsItem *parent, QGraphicsScene *scene);
+    Cell(int celladdress, qreal x_pos, qreal y_pos, qreal x, qreal y, CodePage &cp, const Colours *palette, QGraphicsItem *parent, QGraphicsScene *scene);
 
     //QRectF boundingRect() const;
 
@@ -130,10 +130,10 @@ private:
     qreal xscale;
     qreal yscale;
 
-    ColourTheme::Colours &palette;
+    const Colours *palette;
 
     // Codepage
-    CodePage &cp;
+    const CodePage &cp;
 
     // EBCDIC code for this character
     uchar ebcdic;

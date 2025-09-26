@@ -61,7 +61,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *          
  *          It also manages the rubberband for selecting, copying and pasting sections of the screen. 
  */
-DisplayScreen::DisplayScreen(int screen_x, int screen_y, CodePage &cp, ColourTheme::Colours &palette, QGraphicsScene *scene) : cp(cp), palette(palette), screen_x(screen_x), screen_y(screen_y)
+DisplayScreen::DisplayScreen(int screen_x, int screen_y, CodePage &cp, const Colours *palette, QGraphicsScene *scene) : cp(cp), palette(palette), screen_x(screen_x), screen_y(screen_y)
 {
 
     // 3270 screens are (were) 4:3 ratio, so use a reasonable size that Qt can scale.
@@ -497,7 +497,7 @@ void DisplayScreen::setCharAttr(unsigned char extendedType, unsigned char extend
             }
             else
             {
-                charAttr.colour = palette[(Q3270::Colour)(extendedValue&7)];
+                charAttr.colour = palette->colour(Q3270::Colour(extendedValue&7));
                 charAttr.colNum = (Q3270::Colour)(extendedValue&7);
                 charAttr.colour_default = false;
 //                printf("fg colour %s (extendedValue %02X)", colName[charAttr.colNum], extendedValue);
@@ -511,7 +511,7 @@ void DisplayScreen::setCharAttr(unsigned char extendedType, unsigned char extend
             }
             else
             {
-                charAttr.colour = palette[(Q3270::Colour)(extendedValue&7)];
+                charAttr.colour = palette->colour(Q3270::Colour(extendedValue&7));
                 charAttr.colNum = (Q3270::Colour)(extendedValue&7);
                 charAttr.colour_default = false;
 //                printf("bg colour %s", colName[charAttr.colNum]);

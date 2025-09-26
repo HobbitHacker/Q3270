@@ -50,7 +50,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace Ui {
     class KeyboardTheme;
-    class NewTheme;
 }
 
 class KeyboardThemeDialog : public QDialog
@@ -59,23 +58,18 @@ class KeyboardThemeDialog : public QDialog
 
     public:
 
-        KeyboardThemeDialog(QWidget *parent = nullptr);
+        explicit KeyboardThemeDialog(KeyboardStore &store, QWidget *parent = nullptr);
         ~KeyboardThemeDialog();
 
-        QStringList getThemes();
-        KeyboardMap getTheme(QString keyboardThemeName);
-
         int exec();
+        void loadTheme(const QString &name);
 
     private:
 
         KeyboardMap factory;
-        KeyboardStore store;
+        KeyboardStore &store;
 
         Ui::KeyboardTheme *ui;
-        Ui::NewTheme *newTheme;
-
-        QDialog newThemePopUp;
 
         QMap<QString, KeyboardMap> themes;
 
@@ -95,18 +89,22 @@ class KeyboardThemeDialog : public QDialog
 
         void setTheme(QString theme);
 
-    private slots:
+  signals:
+        void themesApplied(const QString &themeName);
+
+  public:
+        void apply();
+
+  private slots:
 
         void validateThemeName(const QString &name);
         void saveTheme();
-        void loadTheme(const QString &name);
         void startNewTheme();
         void deleteTheme();
 
         void themeChanged(int index);
         void addTheme();
 
-        void checkDuplicate();
         void setKey();
         void truncateShortcut();
         void populateKeySequence(int row, const QString &functionName, const QStringList &keyList);

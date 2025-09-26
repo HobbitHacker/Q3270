@@ -67,11 +67,11 @@ void DisplayScreen::setCursor(int x, int y)
     {
         if (cell.at(cursor_pos)->isReverse())
         {
-            cursor.setBrush(palette[Q3270::Black]);
+            cursor.setBrush(palette->colour(Q3270::Black));
         }
         else
         {
-            cursor.setBrush(palette[cell.at(cursor_pos)->getColour()]);
+            cursor.setBrush(palette->colour(cell.at(cursor_pos)->getColour()));
         }
 
     }
@@ -249,7 +249,7 @@ void DisplayScreen::setCursorColour(bool inherit)
     cursorColour = inherit;
     if (inherit)
     {
-        cursor.setBrush(palette[cell.at(cursor.data(0).toInt())->getColour()]);
+        cursor.setBrush(palette->colour(cell.at(cursor.data(0).toInt())->getColour()));
     }
     else
     {

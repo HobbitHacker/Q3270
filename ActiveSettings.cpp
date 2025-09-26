@@ -347,7 +347,6 @@ void ActiveSettings::setCodePage(const QString &codepage)
 
 /**
  * @brief   ActiveSettings::setKeyboardTheme
- * @param   keyboards         - The KeyboardTheme class
  * @param   keyboardThemeName - the name of the keyboard theme
  *
  * @details This setting holds the name of the keyboard theme. The KeyboardTheme class is needed
@@ -405,10 +404,11 @@ void ActiveSettings::setHostAddress(const QString &hostName, int hostPort, const
  *
  * @details Set the host address. Host addresses can be of the form:
  *
+ * @code
  *   0700@localhost:3270
  *   console@1.2.3.4:23
  *   1.2.3.4:23
- *
+ * @endcode
  */
 void ActiveSettings::setHostAddress(const QString &address)
 {
@@ -471,7 +471,7 @@ void ActiveSettings::setStretchScreen(bool stretch)
 
 /**
  * @brief   ActiveSettings::setSecureMode
- * @param   stretch - true to use SSL, TLS
+ * @param   secureMode - true to use SSL, TLS
  *
  * @details Switches to SSL mode
  */
@@ -487,7 +487,7 @@ void ActiveSettings::setSecureMode(bool secureMode)
 
 /**
  * @brief   ActiveSettings::setVerifyCerts
- * @param   stretch - true to verify certificates of hosts
+ * @param   verify - true to verify certificates of hosts
  *
  * @details Allows for self-signed certificates
  */

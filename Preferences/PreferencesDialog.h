@@ -43,10 +43,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <QTableWidgetItem>
 #include <QMap>
 
-#include "ColourTheme.h"
-#include "KeyboardThemeDialog.h"
 #include "CodePage.h"
 #include "ActiveSettings.h"
+
+#include "Stores/KeyboardStore.h"
+#include "Stores/ColourStore.h"
+
+#include "KeyboardThemeDialog.h"
+#include "ColourTheme.h"
 
 namespace Ui {
     class PreferencesDialog;
@@ -62,7 +66,7 @@ class PreferencesDialog : public QDialog
 
     public:
 
-        explicit PreferencesDialog(ColourTheme &colours, CodePage &codepages, ActiveSettings &activeSettings, QWidget *parent = nullptr);
+    explicit PreferencesDialog(CodePage &codepages, ActiveSettings &activeSettings, KeyboardStore &keyboardStore, ColourStore &colourStore, QWidget *parent = nullptr);
         ~PreferencesDialog();
 
         void showForm();
@@ -70,6 +74,9 @@ class PreferencesDialog : public QDialog
     signals:
 
         void tempFontChange(QFont f);
+
+    // Forwarded when keyboard themes are applied from the KeyboardThemeDialog
+    void themesApplied(const QString &name);
 
         // Emitted when hostname field is not blank
         // TODO: Is this the right place for this?
@@ -98,37 +105,29 @@ class PreferencesDialog : public QDialog
 
     private:
 
-        KeyboardStore keyboards;
+        KeyboardStore &keyboardStore;
+        ColourStore &colourStore;
 
         Ui::PreferencesDialog *ui;
 
-
         QFontDialog *qfd;
-
-        ColourTheme &colours;
 
         CodePage &codepages;
         ActiveSettings &activeSettings;
 
         QString colourThemeName;
-        ColourTheme::Colours colourTheme;
+        Colours colourTheme;
 
         QString keyboardThemeName;
         KeyboardMap keyboardTheme;
 
-
         QFont qfdFont;
-
-        QHash<Q3270::Colour, QPushButton *> colourButtons;
 
         // Used to populate the combobox with nice names
         QMap<QString, Q3270::RulerStyle> comboRulerStyle;
 
         void accept();
         void reject();
-
-        void setButtonColours(QString themeName);
-
 };
 
 #endif // PREFERENCESDIALOG_H

@@ -38,8 +38,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ProcessDataStream.h"
 #include "SocketConnection.h"
 #include "Keyboard.h"
-#include "ColourTheme.h"
-#include "KeyboardThemeDialog.h"
 #include "CodePage.h"
 #include "ActiveSettings.h"
 
@@ -55,7 +53,7 @@ class Terminal : public QWidget
 
     public:
 
-    Terminal(QVBoxLayout *v, ActiveSettings &activeSettings, CodePage &cp, Keyboard &kb, ColourTheme &cs, KeyboardThemeDialog &kt, QString sessionName);
+        Terminal(QVBoxLayout *v, ActiveSettings &activeSettings, CodePage &cp, Keyboard &kb, const Colours &cs);
         ~Terminal();
 
         void connectSession();
@@ -69,8 +67,6 @@ class Terminal : public QWidget
         void setBlinkSpeed(int speed);
 
         void setScreenStretch(bool scale);
-
-        void setKeyboardTheme(QString themeName);
 
         DisplayScreen *setAlternateScreen(bool alt);
 
@@ -97,7 +93,7 @@ class Terminal : public QWidget
         void setFont(QFont font);
 
         // Set themes by name
-        void setColourTheme(QString themeName);
+        void setColourTheme(const Colours &colours);
 
         void copyText()                         { current->copyText(); };
 
@@ -113,11 +109,9 @@ class Terminal : public QWidget
         void stopTimers();
 
         Keyboard &kbd;
-        ColourTheme &colourtheme;
-        KeyboardThemeDialog &keyboardtheme;
         CodePage &cp;
 
-        ColourTheme::Colours palette;
+        Colours palette;
 
         ActiveSettings &activeSettings;
 

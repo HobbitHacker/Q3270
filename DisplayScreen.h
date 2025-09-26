@@ -46,9 +46,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <QObject>
 
 #include "Cell.h"
-#include "ColourTheme.h"
 #include "CodePage.h"
 #include "Q3270.h"
+#include "Models/Colours.h"
 
 class DisplayScreen : public QObject, public QGraphicsRectItem
 {
@@ -56,7 +56,7 @@ class DisplayScreen : public QObject, public QGraphicsRectItem
 
     public:
 
-    explicit DisplayScreen(int screen_x, int screen_y, CodePage &cp, ColourTheme::Colours &palette, QGraphicsScene *scene);
+    explicit DisplayScreen(int screen_x, int screen_y, CodePage &cp, const Colours *palette, QGraphicsScene *scene);
         ~DisplayScreen();
 
         void mousePressEvent(QGraphicsSceneMouseEvent *mEvent) override;
@@ -169,7 +169,7 @@ class DisplayScreen : public QObject, public QGraphicsRectItem
         };
 
         CodePage &cp;
-        ColourTheme::Colours &palette;
+        const Colours *palette;
 
         int screen_x;                /* Max Columns */
         int screen_y;                /* Max Rows */

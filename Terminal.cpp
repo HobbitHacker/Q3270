@@ -41,7 +41,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * @param   cp              - shared CodePage object
  * @param   kb              - shared Keyboard object
  * @param   cs              - shared ColourTheme object
- * @param   kt              - shared KeyboardTheme object
  * @param   sessionName     - the session name
  *
  * @details This is the controlling widget for the terminal. It comprises a QGraphicsView which is used to
@@ -52,13 +51,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *          There are two displays built; the primary one is always 24x80, and the alternate is defined
  *          by the user, based on the Terminal Model type selected.
  */
-Terminal::Terminal(QVBoxLayout *layout, ActiveSettings &activeSettings, CodePage &cp, Keyboard &kb, ColourTheme &cs, KeyboardThemeDialog &kt, QString sessionName) :
-    kbd(kb), colourtheme(cs), keyboardtheme(kt), cp(cp), activeSettings(activeSettings)
+Terminal::Terminal(QVBoxLayout *layout, ActiveSettings &activeSettings, CodePage &cp, Keyboard &kb, const Colours &cs) :
+    kbd(kb), cp(cp), palette(cs), activeSettings(activeSettings)
 {
-    if (!sessionName.isEmpty()) {
-        activeSettings.setSessionName(sessionName);
-    }
-
     sessionConnected = false;
     stretchScreen = Qt::IgnoreAspectRatio;
 
@@ -84,8 +79,7 @@ Terminal::Terminal(QVBoxLayout *layout, ActiveSettings &activeSettings, CodePage
     connect(&activeSettings, &ActiveSettings::codePageChanged, this, &Terminal::changeCodePage);
     connect(&activeSettings, &ActiveSettings::stretchScreenChanged, this, &Terminal::setScreenStretch);
 
-    connect(&activeSettings, &ActiveSettings::keyboardThemeChanged, this, &Terminal::setKeyboardTheme);
-    connect(&activeSettings, &ActiveSettings::colourThemeChanged, this, &Terminal::setColourTheme);
+//    connect(&activeSettings, &ActiveSettings::colourThemeChanged, this, &Terminal::setColourTheme);
 
     // Build "Not Connected" display
     notConnectedScene = new QGraphicsScene();
@@ -129,8 +123,6 @@ Terminal::Terminal(QVBoxLayout *layout, ActiveSettings &activeSettings, CodePage
 
     blink      = activeSettings.getCursorBlink();
     blinkSpeed = activeSettings.getCursorBlinkSpeed();
-
-    palette = colourtheme.getTheme(activeSettings.getColourThemeName());
 }
 
 /**
@@ -195,28 +187,29 @@ void Terminal::setScreenStretch(bool stretch)
  *
  * @details Called when the user changes the ColourTheme used.
  */
-void Terminal::setColourTheme(QString themeName)
+void Terminal::setColourTheme(const Colours &colours)
 {
-    palette = colourtheme.getTheme(themeName);
+    palette = colours;
 
     //FIXME: Might not be needed because of passing palette by reference to DisplayScreen
+
+    if (sessionConnected)
+    {
+        current->resetColours();
+    }
+// This from Copilot, is all that is needed:
+
+//void DisplayScreen::resetColours()
+//{
+//    update(); // marks the whole DisplayScreen (and children) dirty
+//}
+
     // Set colour theme by name; pass obtained theme to setColours()
     if (sessionConnected)
     {
-        primaryScreen->resetColours();
-        alternateScreen->resetColours();
+        primary->update();
+        alternate->update();
     }
-}
-
-/**
- * @brief   Terminal::setKeyboardTheme - switch the keyboard theme
- * @param   themeName - the new theme
- *
- * @details Called when the user changes the KeyboardTheme used.
- */
-void Terminal::setKeyboardTheme(QString themeName)
-{
-    kbd.setTheme(keyboardtheme.getTheme(themeName));
 }
 
 /**
@@ -270,8 +263,8 @@ void Terminal::connectSession()
     primary = new QGraphicsScene();
     alternate = new QGraphicsScene();
 
-    primaryScreen = new DisplayScreen(80, 24, cp, palette, primary);
-    alternateScreen = new DisplayScreen(activeSettings.getTerminalX(), activeSettings.getTerminalY(), cp, palette, alternate);
+    primaryScreen = new DisplayScreen(80, 24, cp, &palette, primary);
+    alternateScreen = new DisplayScreen(activeSettings.getTerminalX(), activeSettings.getTerminalY(), cp, &palette, alternate);
 
     current = primaryScreen;
     view->setScene(primary);

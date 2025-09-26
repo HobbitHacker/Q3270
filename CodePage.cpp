@@ -60,7 +60,7 @@ CodePage::CodePage()
  *
  * @details getUnicodeChar returns the Unicode equivalent of the EBCDIC character passed.
  */
-QString CodePage::getUnicodeChar(uchar ebcdic)
+QString CodePage::getUnicodeChar(uchar ebcdic) const
 {
     return cpList[currentCodePage].fromEBCDIC[ebcdic];
 }
@@ -73,7 +73,7 @@ QString CodePage::getUnicodeChar(uchar ebcdic)
  * @details getUnicodeGraphicChar returns the Unicode character for the EBCIDC "Graphic Escape"
  *          character passed. This is simply the standard EBCDIC character, but from the 310 codepage.
  */
-QString CodePage::getUnicodeGraphicChar(uchar ebcdic)
+QString CodePage::getUnicodeGraphicChar(uchar ebcdic) const
 {
     // GE characters are from the first code page regardless of other codepages; hard code the return source
     return cpList[0].fromEBCDIC[ebcdic];
@@ -86,7 +86,7 @@ QString CodePage::getUnicodeGraphicChar(uchar ebcdic)
  *
  * @details Return the EBCDIC character for the ASCII one passed.
  */
-uchar CodePage::getEBCDIC(uchar ascii)
+uchar CodePage::getEBCDIC(uchar ascii) const
 {
     return cpList[currentCodePage].toEBCDIC[ascii];
 }
@@ -120,7 +120,7 @@ void CodePage::setCodePage(QString codepage)
  *          Codepages can be hidden from the user's view by setting the 'selectable' flag in the
  *          structure to false.
  */
-QStringList CodePage::getCodePageList()
+const QStringList CodePage::getCodePageList() const
 {
     QStringList cl;
 

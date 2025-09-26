@@ -52,14 +52,14 @@ class CodePage
 {
 public:
     CodePage();
-    QString getUnicodeChar(uchar ebcdic);
-    QString getUnicodeGraphicChar(uchar ebcdic);
-    uchar getEBCDIC(uchar acscii);
+    QString getUnicodeChar(uchar ebcdic) const;
+    QString getUnicodeGraphicChar(uchar ebcdic) const;
+    uchar getEBCDIC(uchar acscii) const;
 
     void setCodePage(QString codepage);
-    QString getCodePage();
+    const QString getCodePage() const;
 
-    QStringList getCodePageList();
+    const QStringList getCodePageList() const;
 
 private:
 

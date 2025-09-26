@@ -48,10 +48,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <QMap>
 
 #include "Q3270.h"
+#include "Stores/ColourStore.h"
 
 namespace Ui {
     class ColourTheme;
-    class NewTheme;
 }
 
 class ColourTheme : public QDialog
@@ -60,56 +60,52 @@ class ColourTheme : public QDialog
 
     public:
 
-        typedef QMap<Q3270::Colour, QColor> Colours;
-
-        explicit ColourTheme(QWidget *parent = nullptr);
+        explicit ColourTheme(ColourStore &store, QWidget *parent = nullptr);
         ~ColourTheme();
 
-        const Colours getTheme(QString theme);
 //        void setButtonColours(Colours theme, QString themeName);
-        void setButtonColours(QString themeName);
-        QList<QString> getThemes();
+//        void setButtonColours(QString themeName);
+//        QList<QString> getThemes();
 
-        int exec();
+        int exec() override;
+
+        void setTheme(const QString &themeName);
 
     private:
 
+        ColourStore &store;
+
         Ui::ColourTheme *ui;
-        Ui::NewTheme *newTheme;
 
-        QDialog newThemePopUp;
-
-        QHash<Q3270::Colour, QPushButton *> colourButtons;
-        QList<QPushButton *> extendedButtons;
-
-        QMap<QString, Colours> themes;
-
-        Colours colours;
-
-        Colours currentTheme;
-        QString currentThemeName;
-        int currentThemeIndex;
+        QMap<QString, Colours>themes;
+        Colours *currentTheme;
 
         // Variables used to restore state, should the user presss cancel
-        QMap<QString, Colours> restoreThemes;
+        QMap<QString, Colours>restoreThemes;
         QString restoreThemeName;
-        int restoreThemeIndex;
 
-        void setTheme(QString themeName);
+        bool dirty;
+        bool unapplied;
+
+        void updateUiState();
+
+    signals:
+
+        void themesApplied(const QString &name);
 
     private slots:
 
-        void setColour();
-        void themeChanged(int index);
-        void addTheme();
-        void deleteTheme();
-        void checkDuplicate();
+        void handleThemeChanged(const QString &name);
+        void handleColourModified(Q3270::Colour, QColor);
 
-        void colourDialog(QColor &c, QPushButton *b);
+        void checkThemeName(const QString &name);
 
-        void accept();
-        void reject();
+        void createNewTheme();
+        void saveTheme();
+        void removeTheme();
 
+        void revertTheme();
+        void applyTheme();
 };
 
 #endif // COLOURTHEME_H

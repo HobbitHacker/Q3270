@@ -13,6 +13,9 @@ VERSION = 0.1.1
 DEFINES += QT_DEPRECATED_WARNINGS \
            Q3270_VERSION=\"\\\"$${VERSION}\\\"\"
 
+QMAKE_CXXFLAGS += -Wall -Wextra -Wunused-function \
+                  -fdiagnostics-show-option -fno-diagnostics-color
+
 # You can also make your code fail to compile if it uses deprecated APIs.
 # In order to do so, uncomment the following line.
 # You can also select to disable deprecated APIs only up to a certain version of Qt.
@@ -31,7 +34,9 @@ SOURCES += \
     DisplayScreen/DisplayScreen_Status.cpp \
     DisplayScreen/DisplayScreen_Mouse.cpp \
     FunctionRegistry.cpp \
+    Models/Colours.cpp \
     Models/KeyboardMap.cpp \
+    Preferences/ColourSwatchWidget.cpp \
     Preferences/KeyboardMapWidget.cpp \
     Sessions/ManageAutoStartDialog.cpp \
     Sessions/ManageSessionsDialog.cpp \
@@ -45,8 +50,8 @@ SOURCES += \
     Sessions/SaveSessionDialog.cpp \
     Models/Session.cpp \
     Sessions/SessionDialogBase.cpp \
-    Sessions/SessionManagement.cpp \
     Sessions/SessionPreviewWidget.cpp \
+    Stores/ColourStore.cpp \
     Stores/KeyboardStore.cpp \
     Stores/SessionStore.cpp \
     Terminal.cpp \
@@ -61,6 +66,8 @@ HEADERS += \
     ColourTheme.h \
     DisplayScreen.h \
     FunctionRegistry.h \
+    Models/Colours.h \
+    Preferences/ColourSwatchWidget.h \
     Preferences/KeyboardMapWidget.h \
     Sessions/ManageAutoStartDialog.h \
     Sessions/ManageSessionsDialog.h \
@@ -76,8 +83,8 @@ HEADERS += \
     Models/Session.h \
     Models/KeyboardMap.h \
     Sessions/SessionDialogBase.h \
-    Sessions/SessionManagement.h \
     Sessions/SessionPreviewWidget.h \
+    Stores/ColourStore.h \
     Stores/KeyboardStore.h \
     Stores/SessionStore.h \
     SocketConnection.h \
@@ -90,7 +97,8 @@ FORMS += \
     CertificateDetails.ui \
     ColourTheme.ui \
     KeyboardTheme.ui \
-    MainWindow.ui \
+    MainWindowDialog.ui \
+    Preferences/ColourSwatchWidget.ui \
     Preferences/KeyboardMapWidget.ui \
     Sessions/ManageAutoStartDialog.ui \
     Sessions/ManageSessions.ui \

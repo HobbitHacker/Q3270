@@ -31,12 +31,17 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
-
-#include "ui_MainWindow.h"
 #include "MainWindow.h"
+
+#include "ui_MainWindowDialog.h"
 #include "ui_About.h"
 #include "ui_CertificateDetails.h"
 #include "HostAddressUtils.h"
+#include "Sessions/ManageAutoStartDialog.h"
+
+#include "Sessions/SaveSessionDialog.h"
+#include "Sessions/OpenSessionDialog.h"
+#include "Sessions/ManageSessionsDialog.h"
 
 #include "Q3270.h"
 #include "Models/Session.h"
@@ -49,65 +54,63 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *          and any session name to be opened.
  */
 MainWindow::MainWindow(MainWindow::LaunchParms launchParms) : QMainWindow(nullptr),
-                                                ui(new(Ui::MainWindow))
+    sessionStore(),
+    keyboardStore(),
+    keyboardTheme(nullptr),
+    settings(nullptr),
+    colourTheme(nullptr)
 {
+    ui = new Ui::MainWindowDialog;
+
     ui->setupUi(this);
 
-    // Read global settings
-    QSettings savedSettings(Q3270_ORG, Q3270_APP);
+    connect(ui->actionSessionPreferences, &QAction::triggered, this, &MainWindow::menuSessionPreferences);
+    connect(ui->actionConnect, &QAction::triggered, this, &MainWindow::menuConnect);
+    connect(ui->actionQuit, &QAction::triggered, this, &MainWindow::menuQuit);
+    connect(ui->actionDisconnect, &QAction::triggered, this, &MainWindow::menuDisconnect);
+    connect(ui->actionNew, &QAction::triggered, this, &MainWindow::menuNew);
+    connect(ui->actionAbout_Q3270, &QAction::triggered, this, &MainWindow::menuAbout);
+    connect(ui->actionColourThemes, &QAction::triggered, this, &MainWindow::menuColourTheme);
+    connect(ui->actionSave_SessionAs, &QAction::triggered,this, &MainWindow::menuSaveSessionAs);
+    connect(ui->actionOpen_Session, &QAction::triggered, this, &MainWindow::menuOpenSession);
+    connect(ui->actionKeyboardThemes, &QAction::triggered, this, &MainWindow::menuKeyboardTheme);
+    connect(ui->actionOpen_Duplicate_Session, &QAction::triggered, this, &MainWindow::menuDuplicate);
+    connect(ui->actionManage_Sessions, &QAction::triggered, this, &MainWindow::menuManageSessions);
+    connect(ui->actionManage_Auto_Sart_Sessions, &QAction::triggered, this, &MainWindow::menuManageAutostartSessions);
+    connect(ui->actionSave_Session, &QAction::triggered, this, &MainWindow::menuSaveSession);
+    connect(ui->actionConnection_Information, &QAction::triggered, this, &MainWindow::menuAboutConnection);
 
-    // Most-recently used; default to 10
-    maxMruCount = savedSettings.value("MRUMax", 10).toInt();
+    connect(&activeSettings, &ActiveSettings::keyboardThemeChanged, this, &MainWindow::keyboardChanged);
+    connect(&activeSettings, &ActiveSettings::colourThemeChanged, this, &MainWindow::coloursChanged);
 
-    // Most-recently used list; might be addresses or sessions
-    int mruCount = savedSettings.beginReadArray("RecentlyUsed");
+    // Load keyboard and sessions from settings
+    keyboardStore.load();
+    sessionStore.load();
 
-    for(int i = 0; i < mruCount; i++)
-    {
-        savedSettings.setArrayIndex(i);
-
-        // Pick up each Recently Used entry
-        QString thisEntry = savedSettings.value("Entry").toString();
-
-        // Store the entry
-        mruList.append(thisEntry);
-
-        // Insert an entry MRU menu list with a number
-        // If it starts with Session, use as is, otherwise, it's an address, so add 'Host' to the menu entry
-        if (thisEntry.startsWith("Session"))
-        {
-            thisEntry = QString::number(i + 1) + ". " + thisEntry;
-        }
-        else
-        {
-            thisEntry = QString::number(i + 1) + ". Host " + thisEntry;
-        }
-        ui->menuRecentSessions->addAction(thisEntry, this, &MainWindow::mruConnect);
-    }
-
-    savedSettings.endArray();
-
-    sessionGroup = new QActionGroup(this);
+    populateMRU();
 
     // Preferences dialog
-    settings = new PreferencesDialog(colourTheme, codePage, activeSettings);
+    settings = new PreferencesDialog(codePage, activeSettings, keyboardStore, colourStore);
 
-    // Session Management dialog
-    sm = new SessionManagement(activeSettings);
-
-    // Process an open session request
-    connect(sm, &SessionManagement::sessionOpened, this, &MainWindow::onSessionOpened);
+    // When keyboard themes are changed via the Preferences dialog, update the runtime keyboard
+//    connect(settings, &PreferencesDialog::themesApplied, this, &MainWindow::keyboardChanged);
+//    connect(settings, &PreferencesDialogActiveSettings::keyboardThemeChanged, this, &MainWindow::keyboardChanged);
 
     // Change Connect menu entry when connected, or when user fills in hostname field in Settings
     connect(settings, &PreferencesDialog::connectValid, this, &MainWindow::enableConnectMenu);
 
-    // Set defaults for Connect options
-    ui->actionDisconnect->setDisabled(true);
-    
-    terminal = new Terminal(ui->terminalLayout, activeSettings, codePage, keyboard, colourTheme, keyboardTheme, launchParms.session);
+    // Construct the keyboard and colour mapping dialogs
+    keyboardTheme = new KeyboardThemeDialog(keyboardStore);
+    colourTheme = new ColourTheme(colourStore);
+
+    // Construct the 3270 Terminal
+    terminal = new Terminal(ui->terminalLayout, activeSettings, codePage, keyboard, Colours::getFactoryTheme());
 
     // Used for dynamically showing font changes when using the font selection dialog
     connect(settings, &PreferencesDialog::tempFontChange, terminal, &Terminal::setCurrentFont);
+
+    // Check if the user modified the active colour theme through the colour themes dialog
+    connect(colourTheme, &ColourTheme::themesApplied, this, &MainWindow::checkColourThemeChanged);
 
     // Enable/Disable menu entries if connected/disconnected
     connect(terminal, &Terminal::disconnected, this, &MainWindow::disableDisconnectMenu);
@@ -116,6 +119,10 @@ MainWindow::MainWindow(MainWindow::LaunchParms launchParms) : QMainWindow(nullpt
     connect(terminal, &Terminal::connectionEstablished, this, &MainWindow::enableDisconnectMenu);
     connect(terminal, &Terminal::connectionEstablished, settings, &PreferencesDialog::connected);
 
+    // Set defaults for Connect options
+    ui->actionDisconnect->setDisabled(true);
+
+/*
     // If a session name was passed to the MainWindow, restore the window size/position
     // and open it
     if (!launchParms.session.isEmpty())
@@ -166,7 +173,7 @@ MainWindow::MainWindow(MainWindow::LaunchParms launchParms) : QMainWindow(nullpt
         }
 
         savedSettings.endArray();
-    }
+    } */
 }
 
 /**
@@ -208,8 +215,14 @@ void MainWindow::menuSaveSession()
  */
 void MainWindow::menuSaveSessionAs()
 {
-    // Save Session dialog, setting the Save Session menu entry dis/enabled
-    ui->actionSave_Session->setEnabled(sm->saveSessionAs());
+    // Save Session dialog
+    SaveSessionDialog dlg(sessionStore, activeSettings, this);
+
+    bool saved = dlg.exec();
+
+    // If the 'Save Session' option was disabled and a session is now saved, enable the menu option
+    if (!ui->actionSave_Session->isEnabled())
+        ui->actionSave_Session->setEnabled(saved);
 }
 
 /**
@@ -220,7 +233,15 @@ void MainWindow::menuSaveSessionAs()
 void MainWindow::menuOpenSession()
 {
     // Open Session dialog
-    ui->actionSave_Session->setEnabled(sm->openSession());
+    OpenSessionDialog dlg(sessionStore, activeSettings, this);
+
+    bool opened(dlg.exec());
+
+    if (opened == QDialog::Accepted)
+    {
+        terminal->connectSession();
+        updateMRUList();
+    }
 }
 
 /**
@@ -230,8 +251,22 @@ void MainWindow::menuOpenSession()
  */
 void MainWindow::menuManageSessions()
 {
+    ManageSessionsDialog dlg(sessionStore, this);
+    dlg.exec();
+}
+
+/**
+ * @brief   MainWindow::menuManageSessions - Open the manage session dialog
+ *
+ * @details Open the manage sessions dialog to allow the user to add/delete sessions.
+ */
+void MainWindow::menuManageAutostartSessions()
+{
     // Manage Sessions Dialog
-    sm->manageSessions();
+
+    SessionStore s;
+    ManageAutoStartDialog dlg(s);
+    dlg.exec();
 }
 
 /**
@@ -268,8 +303,6 @@ void MainWindow::mruConnect()
 
         activeSettings.setHostAddress(namePart, portPart, LUPart);
 
-        qDebug() << "Host: " << activeSettings.getHostAddress();
-
         // Pick up address and connect
         terminal->connectSession();
 
@@ -286,12 +319,9 @@ void MainWindow::mruConnect()
     else
     {
         // Will contain either session name or host address
-        SessionStore store;
-        Session s = store.loadSession(parts.mid(2).join(" "));
-        qDebug() << parts.mid(2).join(" ");
-        s.toActiveSettings(activeSettings);
+        Session s = sessionStore.getSession(parts.mid(2).join(" "));
 
-        qDebug() << "Session: " << activeSettings.getHostAddress();
+        s.toActiveSettings(activeSettings);
 
         // Connect the session
         terminal->connectSession();
@@ -309,6 +339,8 @@ void MainWindow::mruConnect()
  */
 MainWindow::~MainWindow()
 {
+    // Cleanup
+    delete keyboardTheme;
     //FIXME: delete of other objects obtained with 'new'
     delete ui;
 }
@@ -328,19 +360,14 @@ void MainWindow::menuConnect()
 
     if (!activeSettings.getHostAddress().isEmpty())
     {
-        onSessionOpened();
-
+        // TODO: DRY - these two lines are duplicated from menuOpenSession()
+        terminal->connectSession();
+        updateMRUList();
         ui->actionDisconnect->setEnabled(true);
         ui->actionConnect->setDisabled(true);
     }
 }
 
-void MainWindow::onSessionOpened()
-{
-    terminal->connectSession();
-    updateMRUList();
-
-}
 
 /**
  * @brief   MainWindow::menuDisconnect - disconnect from a host
@@ -373,7 +400,7 @@ void MainWindow::menuSessionPreferences()
  */
 void MainWindow::menuColourTheme()
 {
-    colourTheme.exec();
+    colourTheme->exec();
 }
 
 /**
@@ -384,7 +411,14 @@ void MainWindow::menuColourTheme()
  */
 void MainWindow::menuKeyboardTheme()
 {
-    keyboardTheme.exec();
+    if (keyboardTheme)
+    {
+        const QString kbTheme = activeSettings.getKeyboardThemeName();
+        if (!kbTheme.isEmpty())
+            keyboardTheme->loadTheme(kbTheme);
+
+        keyboardTheme->exec();
+    }
 }
 
 /**
@@ -454,6 +488,44 @@ void MainWindow::disableDisconnectMenu()
     ui->actionConnect->setEnabled(true);
     ui->actionConnection_Information->setEnabled(true);
 }
+
+void MainWindow::populateMRU()
+{
+    // Read global settings
+    QSettings savedSettings(Q3270_ORG, Q3270_APP);
+
+    // Most-recently used; default to 10
+    maxMruCount = savedSettings.value("MRUMax", 10).toInt();
+
+    // Most-recently used list; might be addresses or sessions
+    int mruCount = savedSettings.beginReadArray("RecentlyUsed");
+
+    for(int i = 0; i < mruCount; i++)
+    {
+        savedSettings.setArrayIndex(i);
+
+        // Pick up each Recently Used entry
+        QString thisEntry = savedSettings.value("Entry").toString();
+
+        // Store the entry
+        mruList.append(thisEntry);
+
+        // Insert an entry MRU menu list with a number
+        // If it starts with Session, use as is, otherwise, it's an address, so add 'Host' to the menu entry
+        if (thisEntry.startsWith("Session"))
+        {
+            thisEntry = QString::number(i + 1) + ". " + thisEntry;
+        }
+        else
+        {
+            thisEntry = QString::number(i + 1) + ". Host " + thisEntry;
+        }
+        ui->menuRecentSessions->addAction(thisEntry, this, &MainWindow::mruConnect);
+    }
+
+    savedSettings.endArray();
+}
+
 
 /**
  * @brief   MainWindow::updateMRUlist - add an entry to the most recently used list
@@ -581,6 +653,30 @@ void MainWindow::resizeEvent(QResizeEvent *event)
 {
     terminal->fit();
 }
+
+void MainWindow::keyboardChanged(const QString &name)
+{
+    // Update the keyboard
+    KeyboardMap km = keyboardStore.theme(name);
+
+    keyboard.setMap(km);
+}
+
+void MainWindow::coloursChanged(const QString &name)
+{
+    // Update the keyboard
+    Colours cs = colourStore.getTheme(name);
+
+    terminal->setColourTheme(cs);
+}
+
+void MainWindow::checkColourThemeChanged(const QString &name)
+{
+    if (activeSettings.getColourThemeName() == name)
+        terminal->setColourTheme(colourStore.getTheme(name));
+}
+
+
 
 /*
 void MainWindow::subWindowClosed(QObject *closedWindow)

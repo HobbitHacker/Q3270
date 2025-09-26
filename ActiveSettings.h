@@ -126,7 +126,7 @@ class ActiveSettings : public QObject
 
         void codePageChanged(QString codepage);
 
-        void keyboardThemeChanged(QString keyboardThemeName);
+        void keyboardThemeChanged(const QString &keyboardThemeName);
         void colourThemeChanged(QString colourThemeName);
 
         void hostChanged(QString hostName, int hostPport, QString hostLu);
