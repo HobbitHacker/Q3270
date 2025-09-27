@@ -63,7 +63,6 @@ class KeyboardThemeDialog : public QDialog
         ~KeyboardThemeDialog();
 
         int exec();
-        void loadTheme(const QString &name);
 
     private:
 
@@ -77,42 +76,44 @@ class KeyboardThemeDialog : public QDialog
         QStringList functionList;
 
         KeyboardMap theme;
-        QString currentTheme;
-        int currentThemeIndex;
+        KeyboardMap *currentTheme;
 
         int lastRow;
         int lastSeq;
 
+        bool dirty;
+        bool unapplied;
+
         // Variables used to store state, to be restored should the user press cancel
-        QString restoreTheme;
+        QString restoreThemeName;
         QMap<QString, KeyboardMap> restoreThemes;
         int restoreThemeIndex;
 
-        void setTheme(QString theme);
+        void setTheme(const QString &themeName);
+        void updateUiState();
 
   signals:
         void themesApplied(const QString &themeName);
 
-  public:
-        void apply();
-
   private slots:
 
-        void validateThemeName(const QString &name);
-        void saveTheme();
-        void startNewTheme();
-        void deleteTheme();
+        void handleThemeChanged(const QString &name);
 
-        void themeChanged(int index);
-        void addTheme();
+        void validateThemeName(const QString &name);
+
+        void createNewTheme();
+        void saveTheme();
+        void removeTheme();
+
+//        void themeChanged(int index);
+//        void addTheme();
 
         void setKey();
         void truncateShortcut();
         void populateKeySequence(int row, const QString &functionName, const QStringList &keyList);
 
-        void accept();
-        void reject();
-
+        void revertTheme();
+        void applyTheme();
 };
 
 #endif // KEYBOARDTHEMEDIALOG_H

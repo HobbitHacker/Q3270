@@ -33,8 +33,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#include <QSettings>
-
 #include "Q3270.h"
 #include "KeyboardStore.h"
 /**
@@ -53,6 +51,7 @@ KeyboardStore::KeyboardStore() : settings(Q3270_ORG, Q3270_APP)
  * @brief   KeyboardStore::load - Initialise the KeyboardStore
  *
  * @details Clear the existing store, redefine the Factory map, and load any others from the config file.
+ *          If Factory is present in the config file, it's ignored.
  */
 void KeyboardStore::load()
 {
@@ -67,7 +66,7 @@ void KeyboardStore::load()
     const QStringList functionList = themes.value("Factory").getFunctions();
 
     for (const QString &themeName : themeList) {
-        if (themeName.compare("Factory") == 0)
+        if (themeName == "Factory")
             continue;
 
         settings.beginGroup(themeName);
@@ -85,11 +84,16 @@ void KeyboardStore::load()
         if (!map.mappings.isEmpty())
             themes.insert(themeName, map);
 
-        settings.endGroup();
+        settings.endGroup();  // This theme
     }
-    settings.endGroup();
+    settings.endGroup(); // KeyboardThemes
 }
 
+/**
+ * @brief   KeyboardStore::loadFactoryTheme - load the Factory theme into the store
+ *
+ * @details Populate the themes store with the Factory theme.
+ */
 void KeyboardStore::loadFactoryTheme()
 {
     themes.insert("Factory", KeyboardMap::getFactoryMap());
@@ -177,22 +181,28 @@ void KeyboardStore::removeTheme(const QString &theme)
 
 /**
  * @brief   KeyboardStore::themeNames - return a list of all KeyboardMap names
- * @return  A list of KeyboardMap names
+ * @return  A list of KeyboardMap names, "Factory" always first.
  */
 const QStringList KeyboardStore::themeNames() const
 {
-    return themes.keys();
+    QStringList names;
+
+    names = themes.keys();
+    names.removeAll("Factory");
+    names.prepend("Factory");
+
+    return names;
 }
 
 /**
- * @brief   KeyboardStore::theme - return a named KeyboardMap
+ * @brief   KeyboardStore::getTheme - return a named KeyboardMap
  * @param   theme - the name of the KeyboardMap
  * @return  The specified KeyboardMap
  *
  * @details Returns the named keyboard map from the store.
  *          TODO: No handling of a non-match
  */
-KeyboardMap KeyboardStore::theme(const QString &theme) const
+KeyboardMap KeyboardStore::getTheme(const QString &theme) const
 {
     return themes.value(theme);
 }

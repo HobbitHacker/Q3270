@@ -387,7 +387,7 @@ void PreferencesDialog::populateKeyboardThemeNames()
 void PreferencesDialog::keyboardThemeDropDownChanged([[maybe_unused]] int index)
 {
     // Populate keyboard map table
-    ui->KeyboardMap->setTheme(keyboardStore.theme(ui->keyboardTheme->currentText()));
+    ui->KeyboardMap->setTheme(keyboardStore.getTheme(ui->keyboardTheme->currentText()));
 }
 
 /**

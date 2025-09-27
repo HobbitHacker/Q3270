@@ -45,27 +45,28 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 class KeyboardStore
 {
     public:
+
         KeyboardStore();
 
-        void load();
-
         const QStringList themeNames() const;
-        KeyboardMap theme(const QString &name) const;
-        KeyboardMap factoryTheme() const;
+
+        KeyboardMap getTheme(const QString &name) const;
+
+        void removeTheme(const QString &name);
 
         void setTheme(const QString &name, const KeyboardMap &map);
         void setThemes(const QMap<QString, KeyboardMap> &newThemes);
 
-        void removeTheme(const QString &name);
         void saveAllThemes() const;
 
     private:
-        void loadFactoryTheme();
-        void loadFromSettings();
-
 
         QMap<QString, KeyboardMap> themes;
+
         mutable QSettings settings;
+
+        void load();
+        void loadFactoryTheme();
 };
 
 #endif // KEYBOARDSTORE_H

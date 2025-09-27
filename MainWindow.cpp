@@ -66,27 +66,26 @@ MainWindow::MainWindow(MainWindow::LaunchParms launchParms) : QMainWindow(nullpt
 
     ui->setupUi(this);
 
-    connect(ui->actionSessionPreferences, &QAction::triggered, this, &MainWindow::menuSessionPreferences);
-    connect(ui->actionConnect, &QAction::triggered, this, &MainWindow::menuConnect);
-    connect(ui->actionQuit, &QAction::triggered, this, &MainWindow::menuQuit);
-    connect(ui->actionDisconnect, &QAction::triggered, this, &MainWindow::menuDisconnect);
-    connect(ui->actionNew, &QAction::triggered, this, &MainWindow::menuNew);
-    connect(ui->actionAbout_Q3270, &QAction::triggered, this, &MainWindow::menuAbout);
-    connect(ui->actionColourThemes, &QAction::triggered, this, &MainWindow::menuColourTheme);
-    connect(ui->actionSave_SessionAs, &QAction::triggered,this, &MainWindow::menuSaveSessionAs);
-    connect(ui->actionOpen_Session, &QAction::triggered, this, &MainWindow::menuOpenSession);
-    connect(ui->actionKeyboardThemes, &QAction::triggered, this, &MainWindow::menuKeyboardTheme);
-    connect(ui->actionOpen_Duplicate_Session, &QAction::triggered, this, &MainWindow::menuDuplicate);
-    connect(ui->actionManage_Sessions, &QAction::triggered, this, &MainWindow::menuManageSessions);
+    connect(ui->actionSessionPreferences,        &QAction::triggered, this, &MainWindow::menuSessionPreferences);
+    connect(ui->actionConnect,                   &QAction::triggered, this, &MainWindow::menuConnect);
+    connect(ui->actionQuit,                      &QAction::triggered, this, &MainWindow::menuQuit);
+    connect(ui->actionDisconnect,                &QAction::triggered, this, &MainWindow::menuDisconnect);
+    connect(ui->actionNew,                       &QAction::triggered, this, &MainWindow::menuNew);
+    connect(ui->actionAbout_Q3270,               &QAction::triggered, this, &MainWindow::menuAbout);
+    connect(ui->actionColourThemes,              &QAction::triggered, this, &MainWindow::menuColourTheme);
+    connect(ui->actionSave_SessionAs,            &QAction::triggered, this, &MainWindow::menuSaveSessionAs);
+    connect(ui->actionOpen_Session,              &QAction::triggered, this, &MainWindow::menuOpenSession);
+    connect(ui->actionKeyboardThemes,            &QAction::triggered, this, &MainWindow::menuKeyboardTheme);
+    connect(ui->actionOpen_Duplicate_Session,    &QAction::triggered, this, &MainWindow::menuDuplicate);
+    connect(ui->actionManage_Sessions,           &QAction::triggered, this, &MainWindow::menuManageSessions);
     connect(ui->actionManage_Auto_Sart_Sessions, &QAction::triggered, this, &MainWindow::menuManageAutostartSessions);
-    connect(ui->actionSave_Session, &QAction::triggered, this, &MainWindow::menuSaveSession);
-    connect(ui->actionConnection_Information, &QAction::triggered, this, &MainWindow::menuAboutConnection);
+    connect(ui->actionSave_Session,              &QAction::triggered, this, &MainWindow::menuSaveSession);
+    connect(ui->actionConnection_Information,    &QAction::triggered, this, &MainWindow::menuAboutConnection);
 
     connect(&activeSettings, &ActiveSettings::keyboardThemeChanged, this, &MainWindow::keyboardChanged);
-    connect(&activeSettings, &ActiveSettings::colourThemeChanged, this, &MainWindow::coloursChanged);
+    connect(&activeSettings, &ActiveSettings::colourThemeChanged,   this, &MainWindow::coloursChanged);
 
-    // Load keyboard and sessions from settings
-    keyboardStore.load();
+    // Get Sessions from settings
     sessionStore.load();
 
     populateMRU();
@@ -413,14 +412,14 @@ void MainWindow::menuColourTheme()
  */
 void MainWindow::menuKeyboardTheme()
 {
-    if (keyboardTheme)
+/*    if (keyboardTheme)
     {
         const QString kbTheme = activeSettings.getKeyboardThemeName();
         if (!kbTheme.isEmpty())
-            keyboardTheme->loadTheme(kbTheme);
-
-        keyboardTheme->exec();
-    }
+            keyboardTheme->getTheme(kbTheme);
+*/
+    keyboardTheme->exec();
+  //  }
 }
 
 /**
@@ -659,7 +658,7 @@ void MainWindow::resizeEvent(QResizeEvent *event)
 void MainWindow::keyboardChanged(const QString &name)
 {
     // Update the keyboard
-    KeyboardMap km = keyboardStore.theme(name);
+    KeyboardMap km = keyboardStore.getTheme(name);
 
     keyboard.setMap(km);
 }

@@ -56,13 +56,13 @@ KeyboardThemeDialog::KeyboardThemeDialog(KeyboardStore &storeRef, QWidget *paren
     // Copy store themes into local in-memory themes so the dialog edits a working copy
     themes.clear();
     for (const QString &tname : store.themeNames()) {
-        themes.insert(tname, store.theme(tname));
+        themes.insert(tname, store.getTheme(tname));
     }
 
     // Populate dropdowns
     ui->KeyboardFunctionList->addItem("Unassigned");
     ui->KeyboardFunctionList->addItems(Keyboard::allFunctionNames());
-    ui->keyboardThemes->addItems(themes.keys());
+    ui->keyboardThemes->addItems(store.themeNames());
 
     // Initialize selection to Factory (or first available) and populate the table
     if (ui->keyboardThemes->count() > 0) {
@@ -73,24 +73,17 @@ KeyboardThemeDialog::KeyboardThemeDialog(KeyboardStore &storeRef, QWidget *paren
 
     // Wire up signals
     connect(ui->themeNameEdit, &QLineEdit::textChanged, this, &KeyboardThemeDialog::validateThemeName);
-    connect(ui->keyboardThemes, &QComboBox::currentTextChanged, this, &KeyboardThemeDialog::loadTheme);
-    connect(ui->newThemeButton, &QPushButton::clicked, this, &KeyboardThemeDialog::startNewTheme);
+    connect(ui->keyboardThemes, &QComboBox::currentTextChanged, this, &KeyboardThemeDialog::handleThemeChanged);
+    connect(ui->newThemeButton, &QPushButton::clicked, this, &KeyboardThemeDialog::createNewTheme);
 
-    connect(ui->buttonBox, &QDialogButtonBox::accepted, this, &KeyboardThemeDialog::saveTheme);
+    connect(ui->KeyboardMap, &KeyboardMapWidget::mappingClicked, this, &KeyboardThemeDialog::populateKeySequence);
 
-    // Explicitly wire Save/Apply/Close buttons
-    QPushButton *saveBtn = ui->buttonBox->button(QDialogButtonBox::Save);
-    if (saveBtn) connect(saveBtn, &QPushButton::clicked, this, &KeyboardThemeDialog::saveTheme);
+    connect(ui->buttonBox->button(QDialogButtonBox::Close),  &QPushButton::clicked, this, &QDialog::close);
+    connect(ui->buttonBox->button(QDialogButtonBox::Save),  &QPushButton::clicked, this, &KeyboardThemeDialog::saveTheme);
+    connect(ui->buttonBox->button(QDialogButtonBox::Apply), &QPushButton::clicked, this, &KeyboardThemeDialog::applyTheme);
+    connect(ui->buttonBox->button(QDialogButtonBox::Reset), &QPushButton::clicked, this, &KeyboardThemeDialog::revertTheme);
 
-    QPushButton *applyBtn = ui->buttonBox->button(QDialogButtonBox::Apply);
-    if (applyBtn) connect(applyBtn, &QPushButton::clicked, this, &KeyboardThemeDialog::apply);
-
-    connect(ui->buttonBox, &QDialogButtonBox::rejected, this, &QDialog::reject);
-
-    connect(ui->deleteThemeButton, &QPushButton::clicked, this, &KeyboardThemeDialog::deleteTheme);
-
-    // New Theme button
-    connect(ui->newThemeButton, &QPushButton::clicked, this, &KeyboardThemeDialog::addTheme);
+    connect(ui->deleteThemeButton, &QPushButton::clicked, this, &KeyboardThemeDialog::removeTheme);
 
     // Key sequence edit finished editing
     connect(ui->keySequenceEdit, &QKeySequenceEdit::editingFinished, this, &KeyboardThemeDialog::truncateShortcut);
@@ -98,12 +91,13 @@ KeyboardThemeDialog::KeyboardThemeDialog(KeyboardStore &storeRef, QWidget *paren
     // Set mapping button
     connect(ui->setKeyboardMap, &QPushButton::clicked, this, &KeyboardThemeDialog::setKey);
 
-    // Hide Reset button
-    ui->buttonBox->button(QDialogButtonBox::Reset)->hide();
-
-    // Save and Apply buttons disabled until an edit is made
+    // Save, Apply and Reset buttons disabled until an edit is made
+    ui->buttonBox->button(QDialogButtonBox::Reset)->setDisabled(true);
     ui->buttonBox->button(QDialogButtonBox::Save)->setDisabled(true);
     ui->buttonBox->button(QDialogButtonBox::Apply)->setDisabled(true);
+
+    dirty = false;
+    unapplied = false;
 
     lastRow = -1;
     lastSeq = -1;
@@ -120,33 +114,48 @@ KeyboardThemeDialog::~KeyboardThemeDialog()
 }
 
 /**
+ * @brief   KeyboardTheme::exec - display the dialog
+ * @return  The button pressed to exit the dialog
+ *
+ * @details Save the state of the themes and then display the dialog.
+ */
+int KeyboardThemeDialog::exec()
+{
+    // Save the initial state, to be restored should the user press cancel
+    restoreThemes = themes;
+
+    updateUiState();
+
+    return QDialog::exec();
+}
+
+/**
  * @brief   KeyboardTheme::setTheme - set the currently displayed theme
  * @param   newTheme - the theme name
  *
  * @details Set the theme displayed by the dialog. If the theme doesn't exist, show the Factory
  *          one instead.
  */
-void KeyboardThemeDialog::setTheme(QString newTheme)
+void KeyboardThemeDialog::setTheme(const QString &themeName)
 {
     // If we don't know the name of the theme, fall back to Factory. This allows users to delete themes, but
     // still leave them referenced in session configurations.
-    if (!themes.contains(newTheme))
-    {
-        currentTheme = "Factory";
-    }
-    else
-    {
-        currentTheme = newTheme;
-    }
+
+    auto it = themes.find(themeName);
+
+    if (it == themes.end())
+        it = themes.find("Factory");
+
+    currentTheme = &it.value();
 
     // Select it from the theme list
-    ui->keyboardThemes->setCurrentIndex(ui->keyboardThemes->findText(currentTheme));
+    ui->keyboardThemes->setCurrentIndex(ui->keyboardThemes->findText(currentTheme->name));
 
     // Populate dialog table
-    ui->KeyboardMap->setTheme(themes[currentTheme]);
+    ui->KeyboardMap->setTheme(*currentTheme);
 
     // Populate theme name
-    ui->themeNameEdit->setText(themes[currentTheme].name);
+    ui->themeNameEdit->setText(currentTheme->name);
 
     // Clear last row displayed
     lastRow = -1;
@@ -158,38 +167,37 @@ void KeyboardThemeDialog::setTheme(QString newTheme)
 }
 
 /**
- * @brief   KeyboardTheme::themeChanged - the user selected a different theme
- * @param   index - the index of the theme selected
+ * @brief   KeyboardThemeDialog::handleThemeChanged - handle a change of Keyboard Theme from the combobox
+ * @param   name - the selected theme name
  *
- * @details This slot is signalled when the user selects a different theme in the drop-down list
- *          in the dialog.
+ * @details Signalled when the user selects a different theme from the combobox.
  */
-void KeyboardThemeDialog::themeChanged(int index)
+void KeyboardThemeDialog::handleThemeChanged(const QString &name)
 {
-    // Save new index
-    currentThemeIndex = index;
+    setTheme(name);
 
-    // Save the new name
-    currentTheme = ui->keyboardThemes->itemText(index);
+    updateUiState();
 
-    // Update the keyboard map when the combobox changes
-    setTheme(currentTheme);
+    return;
 
-    // Disable delete, set, keysequence and function dropdown for Factory theme
-    if (currentThemeIndex == 0)
-    {
-        ui->deleteThemeButton->setDisabled(true);
-        ui->KeyboardFunctionList->setDisabled(true);
-        ui->keySequenceEdit->setDisabled(true);
-        ui->setKeyboardMap->setDisabled(true);
-    }
-    else
-    {
-        ui->deleteThemeButton->setEnabled(true);
-        ui->KeyboardFunctionList->setEnabled(true);
-        ui->keySequenceEdit->setEnabled(true);
-        ui->setKeyboardMap->setEnabled(true);
-    }
+    // Not sure how this would be invoked
+    if (!store.themeNames().contains(name))
+        return;
+
+    const KeyboardMap map = store.getTheme(name);
+
+    ui->themeNameEdit->setText(name);
+    ui->themeDescriptionEdit->clear(); // placeholder until descriptions are stored
+
+    // Update combobox
+    ui->keyboardThemes->setCurrentIndex(ui->keyboardThemes->findText(name));
+
+    // Build the keyboard map table
+    ui->KeyboardMap->setTheme(map);
+
+    // Reset selection state
+    lastRow = -1;
+    lastSeq = -1;
 }
 
 /**
@@ -203,7 +211,7 @@ void KeyboardThemeDialog::themeChanged(int index)
  *
  *          The new theme is copied from the currently displayed one.
  */
-void KeyboardThemeDialog::addTheme()
+void KeyboardThemeDialog::createNewTheme()
 {
     QString newName = "New Theme";
 
@@ -217,57 +225,154 @@ void KeyboardThemeDialog::addTheme()
         }
         newName = "New Theme " + QString::number(i);
     }
+
+    ui->themeDescriptionEdit->clear();
+    ui->themeNameEdit->setFocus();
+    ui->themeNameEdit->setText(newName);
+
+    KeyboardMap newMap;
+    newMap.name = newName;
+    newMap.mappings = currentTheme->mappings;
+
+    themes.insert(newMap.name, newMap);
+
+    ui->keyboardThemes->addItem(newName);
+    ui->keyboardThemes->setCurrentIndex(ui->keyboardThemes->findText(newName));
+
+    dirty = true;
+    unapplied = true;
+
+    updateUiState();
 }
 
 /**
- * @brief   KeyboardTheme::exec - display the dialog
- * @return  The button pressed to exit the dialog
+ * @brief   KeyboardThemeDialog::validateThemeName - validate the modified theme name
+ * @param   name - the new name
  *
- * @details Save the state of the themes and then display the dialog.
+ * @details Signalled when the user modifies the theme name in the input box. The Save and Apply
+ *          buttons are disabled when a duplicate is detected, or the input is empty.
  */
-int KeyboardThemeDialog::exec()
+void KeyboardThemeDialog::validateThemeName(const QString &name)
 {
-    // Save the initial state, to be restored should the user press cancel
-    restoreThemeIndex = currentThemeIndex;
-    restoreTheme = currentTheme;
-    restoreThemes = themes;
+    bool duplicate = store.themeNames().contains(name, Qt::CaseSensitive);
+    bool empty = name.trimmed().isEmpty();
 
-    return QDialog::exec();
+    ui->buttonBox->button(QDialogButtonBox::Save)->setEnabled(!empty && !duplicate);
+    ui->buttonBox->button(QDialogButtonBox::Apply)->setEnabled(!empty && !duplicate);
+
+    // TODO: Implement visual feedback across other dialogs for error fields
+
+    /*
+    QPalette pal = ui->themeNameEdit->palette();
+    pal.setColor(QPalette::Base, (empty || duplicate) ? QColor(255, 230, 230) : Qt::white);
+    ui->themeNameEdit->setPalette(pal);
+    */
 }
 
 /**
- * @brief   KeyboardTheme::accept - OK button processing
+ * @brief   KeyboardThemeDialog::saveTheme - save the themes to disk
  *
- * @details Called when the user presses the OK button to accept the changes they've made.
- *          The KeyboardThemes are all written to the config file.
+ * @details Invoked when the user clicks 'Save' in the dialog box. All themes are written to disk.
  */
-void KeyboardThemeDialog::accept()
+void KeyboardThemeDialog::saveTheme()
 {
-    // Apply to shared store and persist
-    store.setThemes(themes);
+    const QString name = ui->themeNameEdit->text().trimmed();
+
+    if (name.isEmpty())
+        return; // Should be prevented by validation
+
+    // Update the shared store in-memory and persist the change
+    KeyboardMap map = ui->KeyboardMap->currentMappings();
+
+    map.name = name;
+    themes[name] = map;
+    store.setTheme(name, map);
     store.saveAllThemes();
 
-    emit themesApplied(currentTheme);
+    // Refresh dropdown if new theme
+    if (!(ui->keyboardThemes->findText(name, Qt::MatchExactly) >= 0))
+        ui->keyboardThemes->addItem(name);
 
-    QDialog::accept();
+    ui->keyboardThemes->setCurrentText(name);
+
+    if (unapplied)
+        emit themesApplied(name);
+
+    dirty = false;
+    unapplied = false;
+
+    updateUiState();
 }
 
 /**
- * @brief   KeyboardTheme::reject - Cancel button processing
+ * @brief   KeyboardThemeDialog::applyTheme - apply the theme to the in-memory store.
  *
- * @details The user pressed the Cancel button. Restore the previously saved themes.
+ * @details Called when the user clicks the 'Apply' button. Stores any modified theme in the in-memory store,
+ *          and emits a signal in case the modified theme in the active one.
  */
-void KeyboardThemeDialog::reject()
+void KeyboardThemeDialog::applyTheme()
 {
-    // Restore initial state
+    // Update the shared store in-memory without persisting to disk
+    store.setThemes(themes);
+    restoreThemes = themes;
+
+    emit themesApplied(currentTheme->name);
+
+    unapplied = false;
+
+    updateUiState();
+}
+
+/**
+ * @brief   KeyboardThemeDialog::revertTheme - revert to the previously applied theme
+ *
+ * @details Called when the user clicks the 'Revert' button. Reverts any modifications to the previously
+ *          applied version of the theme.
+ */
+void KeyboardThemeDialog::revertTheme()
+{
     themes = restoreThemes;
+    restoreThemeName = currentTheme ? currentTheme->name : QStringLiteral("Factory");
 
-    ui->keyboardThemes->clear();
-    ui->keyboardThemes->addItems(themes.keys());
+    setTheme(restoreThemeName);
 
-    setTheme(restoreTheme);
+    unapplied = false;
+    dirty = false;
 
-    QDialog::reject();
+    updateUiState();
+}
+
+/**
+ * @brief   KeyboardThemeDialog::removeTheme - remove a theme from the in-memory store
+ *
+ * @details Called when the user clicks the 'Delete' button. The theme is removed from the in-memory store,
+ *          and another theme displayed.
+ */
+void KeyboardThemeDialog::removeTheme()
+{
+    const QString toDelete = ui->keyboardThemes->currentText();
+    const int toDeleteIx = ui->keyboardThemes->currentIndex();
+
+    themes.remove(toDelete);
+    store.removeTheme(toDelete);
+
+    ui->keyboardThemes->removeItem(toDeleteIx);
+
+    const int currentThemeIx = ui->keyboardThemes->currentIndex();
+
+    if (currentThemeIx >=0)
+    {
+        setTheme(ui->keyboardThemes->currentText());
+    }
+    else
+    {
+        currentTheme = nullptr;
+    }
+
+    dirty = true;
+    unapplied = false;
+
+    updateUiState();
 }
 
 /**
@@ -333,18 +438,20 @@ void KeyboardThemeDialog::populateKeySequence(int row, const QString &functionNa
  */
 void KeyboardThemeDialog::setKey()
 {
-    theme.setKeyMapping(
+    if (currentTheme->name == "Factory")
+        return;
+
+    currentTheme->setKeyMapping(
         ui->KeyboardFunctionList->currentText(),
         ui->keySequenceEdit->keySequence()
         );
 
-    themes[currentTheme] = theme; // or store.updateTheme(...)
-    setTheme(currentTheme);
+    ui->KeyboardMap->setTheme(*currentTheme);
 
-    ui->keyboardThemes->setDisabled(true);
-    ui->buttonBox->button(QDialogButtonBox::Save)->setEnabled(true);
-    ui->buttonBox->button(QDialogButtonBox::Apply)->setEnabled(true);
-    ui->buttonBox->button(QDialogButtonBox::Reset)->show();
+    dirty = true;
+    unapplied = true;
+
+    updateUiState();
 }
 
 /**
@@ -361,102 +468,23 @@ void KeyboardThemeDialog::truncateShortcut()
     ui->keySequenceEdit->setKeySequence(shortcut);
 }
 
-
-void KeyboardThemeDialog::validateThemeName(const QString &name)
+void KeyboardThemeDialog::updateUiState()
 {
-    bool duplicate = store.themeNames().contains(name, Qt::CaseSensitive);
-    bool empty = name.trimmed().isEmpty();
+    // Dirty means there are unsaved modifications
+    ui->buttonBox->button(QDialogButtonBox::Apply)->setEnabled(unapplied);
+    ui->buttonBox->button(QDialogButtonBox::Save)->setEnabled(dirty);
+    ui->buttonBox->button(QDialogButtonBox::Reset)->setEnabled(unapplied);
 
-    // Example: disable save if invalid
-    ui->buttonBox->button(QDialogButtonBox::Save)->setEnabled(!empty && !duplicate);
+    // While dirty, prevent switching themes or creating new ones until changes are resolved
+    ui->keyboardThemes->setDisabled(unapplied);
+    ui->newThemeButton->setDisabled(unapplied);
 
-    // Optional: visual feedback
-    // TODO: Implement visual feedback across other dialogs for error fields
+    // Disable editing for Factory theme
+    bool isFactory = (currentTheme->name == "Factory");
 
-    /*
-    QPalette pal = ui->themeNameEdit->palette();
-    pal.setColor(QPalette::Base, (empty || duplicate) ? QColor(255, 230, 230) : Qt::white);
-    ui->themeNameEdit->setPalette(pal);
-    */
-}
+    ui->deleteThemeButton->setDisabled(isFactory);
+    ui->themeNameEdit->setDisabled(isFactory);
+    ui->themeDescriptionEdit->setDisabled(isFactory);
+//    ui->KeyboardMap->setReadOnly(isFactory);
 
-void KeyboardThemeDialog::loadTheme(const QString &name)
-{
-    if (!store.themeNames().contains(name))
-        return;
-
-    const KeyboardMap map = store.theme(name);
-
-    ui->themeNameEdit->setText(name);
-    ui->themeDescriptionEdit->clear(); // placeholder until descriptions are stored
-
-    // Update combobox
-    ui->keyboardThemes->setCurrentIndex(ui->keyboardThemes->findText(name));
-
-    // Build the keyboard map table
-    ui->KeyboardMap->setTheme(map);
-
-    // Reset selection state
-    lastRow = -1;
-    lastSeq = -1;
-}
-
-void KeyboardThemeDialog::startNewTheme()
-{
-    ui->themeNameEdit->clear();
-    ui->themeDescriptionEdit->clear();
-
-    ui->themeNameEdit->setFocus();
-    validateThemeName(QString());
-}
-
-void KeyboardThemeDialog::saveTheme()
-{
-    const QString name = ui->themeNameEdit->text().trimmed();
-
-    if (name.isEmpty())
-        return; // Should be prevented by validation
-
-    KeyboardMap map = ui->KeyboardMap->currentMappings();
-    // Optionally set description in map if you add that field later
-
-    // Update the shared store in-memory and persist the change
-    store.setTheme(name, map);
-    store.saveAllThemes();
-
-    // Refresh dropdown if new theme
-    if (!(ui->keyboardThemes->findText(name, Qt::MatchExactly) >= 0))
-        ui->keyboardThemes->addItem(name);
-
-    ui->keyboardThemes->setCurrentText(name);
-
-    ui->keyboardThemes->setEnabled(true);
-    ui->buttonBox->button(QDialogButtonBox::Save)->setDisabled(true);
-    ui->buttonBox->button(QDialogButtonBox::Reset)->hide();
-
-
-}
-
-void KeyboardThemeDialog::apply()
-{
-    // Update the shared store in-memory without persisting to disk
-    store.setThemes(themes);
-    emit themesApplied(currentTheme);
-}
-
-void KeyboardThemeDialog::deleteTheme()
-{
-    const QString name = ui->keyboardThemes->currentText();
-
-    if (name == "Factory")
-        return; // Don't delete factory theme
-
-    store.removeTheme(name);
-
-    int index = ui->keyboardThemes->findText(name);
-    if (index >= 0)
-        ui->keyboardThemes->removeItem(index);
-
-    // Load factory theme after deletion
-    ui->keyboardThemes->setCurrentText("Factory");
 }

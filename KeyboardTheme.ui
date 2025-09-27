@@ -157,11 +157,4 @@
  </customwidgets>
  <resources/>
  <connections/>
- <slots>
-  <slot>addTheme()</slot>
-  <slot>deleteTheme()</slot>
-  <slot>themeChanged(int)</slot>
-  <slot>truncateShortcut()</slot>
-  <slot>setKey()</slot>
- </slots>
 </ui>
