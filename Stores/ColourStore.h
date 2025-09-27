@@ -39,10 +39,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <QMap>
 #include <QStringList>
 #include <QSettings>
+
 #include "Models/Colours.h"
 
-class ColourStore {
+class ColourStore
+{
     public:
+
         ColourStore();
 
         const QStringList themeNames() const;
@@ -51,23 +54,24 @@ class ColourStore {
 
         void saveTheme(const Colours &theme);
         void removeTheme(const QString &name);
-        bool exists(const QString &name) const;
-        void addTheme(const Colours &theme);
-        void saveAllThemes();
+
         void setTheme(const QString &name, const Colours &theme);
         void setThemes(const QMap<QString, Colours> &themes);
 
-    private:
+        void saveAllThemes() const;
 
-        void load();
-        void loadFactoryTheme();
-        void saveColours(const Colours &theme);
+        bool exists(const QString &name) const;
+
+    private:
 
         QMap<QString, Colours> themes;
 
         mutable QSettings settings;
+
+        void load();
+        void loadFactoryTheme();
+
+        void saveColours(const Colours &theme) const;
 };
-
-
 
 #endif // COLOURSTORE_H

@@ -109,7 +109,7 @@ void ColourStore::saveTheme(const Colours &theme)
     settings.endGroup(); // ColourThemes
 }
 
-void ColourStore::saveAllThemes()
+void ColourStore::saveAllThemes() const
 {
     settings.beginGroup("ColourThemes");
     settings.remove("");
@@ -123,7 +123,7 @@ void ColourStore::saveAllThemes()
 
 }
 
-void ColourStore::saveColours(const Colours &theme)
+void ColourStore::saveColours(const Colours &theme) const
 {
     if (theme.name == "Factory")
         return;

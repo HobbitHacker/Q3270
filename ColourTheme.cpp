@@ -71,11 +71,10 @@ ColourTheme::ColourTheme(ColourStore &store, QWidget *parent) :
     setTheme("Factory");
 
     // Wire up signals
-    connect(ui->themeName, &QLineEdit::textChanged, this, &ColourTheme::checkThemeName);
+    connect(ui->themeName,   &QLineEdit::textChanged,        this, &ColourTheme::checkThemeName);
     connect(ui->colourTheme, &QComboBox::currentTextChanged, this, &ColourTheme::handleThemeChanged);
-    connect(ui->colourNew, &QPushButton::clicked, this, &ColourTheme::createNewTheme);
+    connect(ui->colourNew,   &QPushButton::clicked,          this, &ColourTheme::createNewTheme);
 
-//    connect(ui->buttonBox->button(QDialogButtonBox::Save), &QPushButton::clicked, this, &ColourTheme::saveTheme);
     connect(ui->buttonBox->button(QDialogButtonBox::Close), &QPushButton::clicked, this, &QDialog::close);
     connect(ui->buttonBox->button(QDialogButtonBox::Save),  &QPushButton::clicked, this, &ColourTheme::saveTheme);
     connect(ui->buttonBox->button(QDialogButtonBox::Apply), &QPushButton::clicked, this, &ColourTheme::applyTheme);
@@ -202,9 +201,22 @@ void ColourTheme::createNewTheme()
     }
 
     ui->themeDescription->clear();
+    ui->themeName->setText(newName);
     ui->themeName->setFocus();
 
-    checkThemeName(QString());
+    Colours newTheme;
+    newTheme.name = newName;
+    newTheme.map = currentTheme->map;
+
+    themes.insert(newTheme.name, newTheme);
+
+    ui->colourTheme->addItem(newName);
+    ui->colourTheme->setCurrentIndex(ui->colourTheme->findText(newName));
+
+    dirty = true;
+    unapplied = false;
+
+    updateUiState();
 }
 
 /**
@@ -221,6 +233,7 @@ void ColourTheme::checkThemeName(const QString &name)
     bool empty = name.trimmed().isEmpty();
 
     ui->buttonBox->button(QDialogButtonBox::Save)->setEnabled(!empty && !duplicate);
+    ui->buttonBox->button(QDialogButtonBox::Apply)->setEnabled(!empty && !duplicate);
     //    newTheme->message->setText(unique ? QString() : QStringLiteral("Duplicate theme name"));
 }
 
@@ -260,14 +273,14 @@ void ColourTheme::applyTheme()
 {
     // Update the shared store in-memory without persisting to disk
 
-    unapplied = false;
-
-    updateUiState();
-
     store.setThemes(themes);
     restoreThemes = themes;
 
     emit themesApplied(currentTheme->name);
+
+    unapplied = false;
+
+    updateUiState();
 }
 
 void ColourTheme::revertTheme()
@@ -279,6 +292,8 @@ void ColourTheme::revertTheme()
 
     unapplied = false;
     dirty = false;
+
+    updateUiState();
 }
 
 /**
@@ -324,8 +339,9 @@ void ColourTheme::updateUiState()
     ui->buttonBox->button(QDialogButtonBox::Save)->setEnabled(dirty);
     ui->buttonBox->button(QDialogButtonBox::Reset)->setEnabled(unapplied);
 
-    // While dirty, prevent switching themes until changes are resolved
+    // While dirty, prevent switching themes or creating new ones until changes are resolved
     ui->colourTheme->setDisabled(unapplied);
+    ui->colourNew->setDisabled(unapplied);
 
     // Disable editing for Factory theme
     bool isFactory = (currentTheme->name == "Factory");
