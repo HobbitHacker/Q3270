@@ -244,13 +244,12 @@ void ColourTheme::saveTheme()
     if (name.isEmpty())
         return; // Should be prevented by validation
 
-    Colours thisTheme = ui->colourSwatchWidget->currentTheme();
-    thisTheme.name = name;
-
-    // Optionally set description in map if you add that field later
-
     // Update the shared store in-memory and persist the change
+    Colours thisTheme = ui->colourSwatchWidget->currentTheme();
+
+    thisTheme.name = name;
     themes[name] = thisTheme;
+
     store.setTheme(name, thisTheme);
     store.saveAllThemes();
 

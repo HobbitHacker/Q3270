@@ -121,10 +121,4 @@
  </customwidgets>
  <resources/>
  <connections/>
- <slots>
-  <slot>themeChanged(int)</slot>
-  <slot>addTheme()</slot>
-  <slot>deleteTheme()</slot>
-  <slot>themeRenamed(QString)</slot>
- </slots>
 </ui>
