@@ -93,6 +93,11 @@ class Terminal : public QWidget
         void changeCodePage(QString codepage);
         void setFont(QFont font);
 
+        void resetStatusXSystem();
+        void setStatusInsert(const bool insert);
+        void setTWait();
+        void clearTWait();
+
         // Set themes by name
         void setColourTheme(const Colours &colours);
 
@@ -105,6 +110,7 @@ class Terminal : public QWidget
 
         void connectKeyboard(DisplayScreen &s);
         void disconnectKeyboard(DisplayScreen &s);
+        void updateLockState();
 
         void startTimers();
         void stopTimers();
@@ -135,12 +141,16 @@ class Terminal : public QWidget
 
         Qt::AspectRatioMode stretchScreen;
 
-        QLabel *cursorAddress;
-        QLabel *syslock;
-        QLabel *insMode;
+//        QLabel *cursorAddress;
+//        QLabel *syslock;
+//        QLabel *insMode;
 
         int blinkSpeed;
         bool blink;
+
+        // Lock conditions
+        bool xClock;
+        bool xSystem;
 
         // Whether the timer for a blink operation is short (blink timers when the
         // thing being blinked is hidden are short so the 'off' phase is brief)

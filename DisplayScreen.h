@@ -97,7 +97,7 @@ class DisplayScreen : public QObject, public QGraphicsRectItem
 
         void eraseUnprotected(int start, int end);
 
-        void setCursor(int x, int y);
+        void setCursor(const int x, const int y);
         void setCursor(int pos);
         void showCursor();
         void cascadeAttrs(int startpos);
@@ -112,12 +112,16 @@ class DisplayScreen : public QObject, public QGraphicsRectItem
         void toggleRuler();
         void setRuler();
         void rulerMode(bool on);
+
         void setRulerStyle(Q3270::RulerStyle rulerStyle);
+        void setStatusLock(Q3270::Indicators status);
 
         void getScreen(QByteArray &buffer);
         void readBuffer();
 
         void addPosToBuffer(QByteArray &buffer, int pos);
+
+        void setStatusInsert(Q3270::Indicators insert);
 
         void refresh();
 
@@ -133,9 +137,8 @@ class DisplayScreen : public QObject, public QGraphicsRectItem
 
         void blink();
         void cursorBlink();
-        void setStatusXSystem(QString text);
 //        void showStatusCursorPosition(int x, int y);
-        void setStatusInsert(bool ins);
+
         void setCursorColour(bool inherit);
         void setCodePage();
         void copyText();
@@ -226,6 +229,12 @@ class DisplayScreen : public QObject, public QGraphicsRectItem
         QGraphicsSimpleTextItem statusXSystem;
         QGraphicsSimpleTextItem statusCursor;
         QGraphicsSimpleTextItem statusInsert;
+
+        // X <clock>
+        QGraphicsSvgItem *statusXClockIcon;
+
+        QGraphicsItemGroup *statusXClock;
+
 
         // Padlocks
         ClickableSvgItem *statusSecureSVG;

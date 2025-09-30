@@ -119,7 +119,7 @@ const Keyboard::FunctionBinding Keyboard::bindings[] = {
     { "Info",         &Keyboard::info },
     { "Fields",       &Keyboard::fields },
 
-    { "Blah",         &Keyboard::unlockKeyboard }
+    { "Blah",         &Keyboard::info }
 };
 
 QMap<QString, Keyboard::Handler> Keyboard::makeFunctionMap()
@@ -131,8 +131,8 @@ QMap<QString, Keyboard::Handler> Keyboard::makeFunctionMap()
 }
 
 Keyboard::Keyboard() : functionMap(makeFunctionMap())
-{    
-    lock = false;
+{
+    systemLock = false;
     insMode = false;
 
     bufferPos = 0;
@@ -176,10 +176,8 @@ void Keyboard::clearBufferEntry()
  */
 void Keyboard::lockKeyboard()
 {
-    lock = true;
-    printf("Keyboard        : Keyboard locked\n");
-    fflush(stdout);
-    emit setLock("X System");
+    systemLock = true;
+    emit setEnterInhibit();
 }
 
 /**
@@ -188,14 +186,11 @@ void Keyboard::lockKeyboard()
  * @details Remove XSystem and renable the keyboard, allowing keys to be processed. As this routine has unlocked
  *          the keyboard, immediately process any keys in the buffer.
  */
-void Keyboard::unlockKeyboard()
-{
-    lock = false;
-    printf("Keyboard        : Keyboard unlocked\n");
-    fflush(stdout);
-    emit setLock("");
-    nextKey();
-}
+//void Keyboard::unlockKeyboard()
+//{
+//    systemLock = false;
+//    nextKey();
+//}
 
 /**
  * @brief   Keyboard::eventFilter - process keyboard events
@@ -329,7 +324,7 @@ bool Keyboard::processKey()
         {
             reset();
         }
-        else if (!lock)
+        else if (!systemLock)
         {
            if (kbBuffer[bufferEnd].mustMap && kbBuffer[bufferEnd].isMapped)
            {
@@ -493,7 +488,7 @@ void Keyboard::nextKey()
             {
                 bufferPos = 0;
             }
-            if (!lock && keyCount > 0)
+            if (!systemLock && keyCount > 0)
             {
                 printf("Keyboard        : processing next key (more stored)\n");
                 fflush(stdout);
@@ -973,12 +968,13 @@ void Keyboard::newline()
  */
 void Keyboard::reset()
 {
-    //TODO: Proper PWAIT/TWAIT handling
+    if (systemLock)
+        return;
+
     insMode = false;
-    lock = false;
-    printf("Keyboard        : Keyboard unlocked\n");
-    fflush(stdout);
-    emit setLock("");
+    systemLock = false;
+
+    emit key_Reset();
     emit setInsert(false);
 }
 
@@ -1189,4 +1185,11 @@ void Keyboard::setMap(const KeyboardMap &kmap)
 void Keyboard::setConnected(bool state)
 {
     connectedState = state;
+}
+
+void Keyboard::setLocked(const bool lock)
+{
+    systemLock = lock;
+    if (!systemLock)
+        nextKey();
 }

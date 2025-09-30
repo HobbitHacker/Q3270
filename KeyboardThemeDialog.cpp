@@ -40,12 +40,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Keyboard.h"
 
 /**
- * @brief   KeyboardTheme::KeyboardTheme - Keyboard Theme handling
+ * @brief   KeyboardThemeDialog::KeyboardThemeDialog - Keyboard Theme Dialog
+ * @param   storeRef - KeyboardStore, common across Q370
  * @param   parent - parent widget
  *
- * @details KeyboardTheme handles the processing of Keyboard themes. The constructor
- *          creates the internal Factory keyboard map, along with any additional themes from the
- *          config file, and then populates the dialog box with the list of themes.
+ * @details KeyboardTheme presents the dialog for managing the Keyboard Themes.
+ *          Keyboard layouts can be created, modified and deleted; changes can be
+ *          applied to the running session and saved to disk.
  */
 KeyboardThemeDialog::KeyboardThemeDialog(KeyboardStore &storeRef, QWidget *parent)
     : QDialog(parent), store(storeRef), ui(new Ui::KeyboardTheme)
@@ -64,12 +65,8 @@ KeyboardThemeDialog::KeyboardThemeDialog(KeyboardStore &storeRef, QWidget *paren
     ui->KeyboardFunctionList->addItems(Keyboard::allFunctionNames());
     ui->keyboardThemes->addItems(store.themeNames());
 
-    // Initialize selection to Factory (or first available) and populate the table
-    if (ui->keyboardThemes->count() > 0) {
-        const QString init = themes.contains("Factory") ? "Factory" : themes.cbegin().key();
-        ui->keyboardThemes->setCurrentIndex(ui->keyboardThemes->findText(init));
-        setTheme(init);
-    }
+    // Initialize selection to Factory
+    setTheme("Factory");
 
     // Wire up signals
     connect(ui->themeNameEdit, &QLineEdit::textChanged, this, &KeyboardThemeDialog::validateThemeName);
@@ -104,7 +101,6 @@ KeyboardThemeDialog::KeyboardThemeDialog(KeyboardStore &storeRef, QWidget *paren
 }
 /**
  * @brief   KeyboardTheme::~KeyboardTheme - destructor
- * @return  Nothing
  *
  * @details Destructor to remove objects
  */

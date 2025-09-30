@@ -40,7 +40,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /**
  * @brief   ColourTheme::ColourTheme - Dialog for choosing the colours for 3270
- * @param   parent
+ * @param   store - ColourStore, common across Q3270
+ * @param   parent - parent Qt Widget
  *
  * @details ColourTheme is used to display the swatches for the different colours used by
  *          the 3270 display.

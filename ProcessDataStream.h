@@ -73,7 +73,8 @@ class ProcessDataStream : public QObject
     signals:
 
         void bufferReady(QByteArray &b);
-        void keyboardUnlocked();
+        void processingComplete();
+        void unlockKeyboard();
         void blink();
         void disconnected();
 

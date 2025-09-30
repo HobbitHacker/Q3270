@@ -44,10 +44,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /**
  * @brief   PreferencesDialog::PreferencesDialog - The preferences dialog
- * @param   colours         - the shared ColourTheme object
  * @param   codepages       - the shared CodePage object
- * @param   activeSettings  - the shared currently active settings object
- * @param   keyboardStore    - the shared KeyboardStore object
+ * @param   activeSettings  - the shared currently active settings
+ * @param   keyboardStore   - the shared KeyboardStore persistence layer
+ * @param   colourStore     - the shared ColourStore persistence layer
  * @param   parent          - the parent window
  *
  * @details Initialise the Preferences dialog.

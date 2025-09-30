@@ -122,7 +122,7 @@ void ProcessDataStream::processStream(QByteArray &b, bool tn3270e)
         }
     }
 
-    // Process the incoming WRITE command
+    // Process the incoming command
     switch((uchar) *buffer)
     {
         case IBM3270_EW:
@@ -179,6 +179,8 @@ void ProcessDataStream::processStream(QByteArray &b, bool tn3270e)
 //    b.clear();
 //    b->setProcessing(false);
 
+    emit processingComplete();
+
     if (resetMDT)
     {
 
@@ -186,7 +188,7 @@ void ProcessDataStream::processStream(QByteArray &b, bool tn3270e)
     if (restoreKeyboard)
     {
         printf("[restore keyboard]");
-        emit keyboardUnlocked();
+        emit unlockKeyboard();
     }
 //    screen->dumpFields();
 //    screen->dumpDisplay();

@@ -119,5 +119,19 @@ RESOURCES += \
 
 DISTFILES += \
     BACKLOG.md \
+    Icons/clock.svg \
+    Icons/connect.svg \
+    Icons/database-gear.svg \
+    Icons/database.svg \
+    Icons/disconnect.svg \
+    Icons/floppy.svg \
+    Icons/keyboard.svg \
+    Icons/lock-tick.svg \
+    Icons/lock.svg \
+    Icons/open.svg \
+    Icons/palette.svg \
+    Icons/saveas.svg \
+    Icons/settings.svg \
+    Icons/unlock.svg \
     README.md \
     UserGuide.md

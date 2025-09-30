@@ -161,10 +161,15 @@ DisplayScreen::DisplayScreen(int screen_x, int screen_y, CodePage &cp, const Col
     statusConnect.setBrush(QBrush(QColor(0x80, 0x80, 0xFF)));
 
     unlock = new ClickableSvgItem(":/Icons/unlock.svg");
-    lock = new ClickableSvgItem(":/Icons/lock.svg");
-    locktick = new ClickableSvgItem(":/Icons/lock-tick.svg");
+    unlock->setToolTip("Unsecured Connection");
 
-    // Connect status at 10% across
+    lock = new ClickableSvgItem(":/Icons/lock.svg");
+    lock->setToolTip("Secured Connection, but certificate chain is not secure");
+
+    locktick = new ClickableSvgItem(":/Icons/lock-tick.svg");
+    locktick->setToolTip("Secured Connection");
+
+    // Connect status at 5% across
     statusSecure.setPos(gridSize_X * (screen_x * .05), 482);
     statusSecure.setRect(0, 0, 9, 9);
 
@@ -182,10 +187,19 @@ DisplayScreen::DisplayScreen(int screen_x, int screen_y, CodePage &cp, const Col
     locktick->hide();
 
     // XSystem 20% across status bar
-    statusXSystem.setText("");
+    statusXSystem.setText("X System");
     statusXSystem.setPos(gridSize_X * (screen_x * .20), 481);
     statusXSystem.setFont(statusBarText);
-    statusXSystem.setBrush(QBrush(QColor(0x80, 0x80, 0xFF)));
+    statusXSystem.setBrush(QBrush(QColor(0xFF, 0xFF, 0xFF)));
+
+    // X clock 20% across status bar
+    QGraphicsSimpleTextItem  *statusXClockText = new QGraphicsSimpleTextItem("X");
+    statusXClockText->setPos(gridSize_X * (screen_x * .20), 481);
+    statusXClockText->setFont(statusBarText);
+    statusXClockText->setBrush(QBrush(QColor(0xFF, 0xFF, 0xFF)));
+
+    statusXClockIcon = new QGraphicsSvgItem(":/Icons/clock.svg");
+    statusXClockIcon->setPos(gridSize_X * (screen_x * .22), 481);
 
     // Insert 50% across status bar
     statusInsert.setText("");
@@ -198,6 +212,7 @@ DisplayScreen::DisplayScreen(int screen_x, int screen_y, CodePage &cp, const Col
     statusCursor.setPos(gridSize_X * (screen_x * .75), 481);
     statusCursor.setFont(statusBarText);
     statusCursor.setBrush(QBrush(QColor(0x80, 0x80, 0xFF)));
+    statusCursor.setToolTip("Cursor position (y,x)");
 
     scene->addItem(&statusBar);
     scene->addItem(&statusSecure);
@@ -205,6 +220,13 @@ DisplayScreen::DisplayScreen(int screen_x, int screen_y, CodePage &cp, const Col
     scene->addItem(&statusXSystem);
     scene->addItem(&statusCursor);
     scene->addItem(&statusInsert);
+    scene->addItem(statusXClockText);
+    scene->addItem(statusXClockIcon);
+
+    statusXClock = scene->createItemGroup({statusXClockText, statusXClockIcon});
+    statusXClock->hide();
+
+    statusXSystem.hide();
 
     scene->addItem(this);
 }
@@ -714,6 +736,8 @@ void DisplayScreen::setExtendedColour(int pos, bool foreground, unsigned char c)
     cell.at(pos)->setColour((Q3270::Colour)(c&7));
 }
 
+//FIXME: Cell() should do the co-ordination of underscore/blink/reverse, resulting in 2 fewer calls for each
+
 /**
  * @brief   DisplayScreen::setExtendedBlink - switch blink on
  * @param   pos - screen position
@@ -774,7 +798,6 @@ void DisplayScreen::resetMDTs()
 
 /**
  * @brief   DisplayScreen::insertChar - Inserts or overwrites the character at the specified position
- * @param   pos        - position at which to insert character
  * @param   c          - character to be inserted
  * @param   insertMode - true for insert, false for overtype
  *
@@ -802,7 +825,7 @@ bool DisplayScreen::insertChar(unsigned char c, bool insertMode)
         /** TODO:
          *
          *  Insert only works when there is a null character in the field. If the field
-         *  contains spaces, they don't count. The code below searches for the first null
+         *  contains spaces, they don't count as nulls. The code below searches for the first null
          *  in the field, allowing the insert to happen only if it finds one.
          *
          *  There is some initial code here to check the last character of a field to see

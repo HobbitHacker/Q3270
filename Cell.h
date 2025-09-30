@@ -55,52 +55,51 @@ public:
 
     //QRectF boundingRect() const;
 
-    void setChar(uchar);
-    void setCharFromKB(uchar);
+    void setChar(const uchar ebcdic);
+    void setCharFromKB(const uchar c);
 
     // Getters, inline for speed
-    inline uchar getEBCDIC()                        { return ebcdic; };
-    inline QChar getChar()                          { return glyph.text().at(0); }
+    inline uchar getEBCDIC() const                  { return ebcdic; };
+    inline QChar getChar() const                    { return glyph.text().at(0); }
 
-    inline Q3270::Colour getColour()                { return colNum; };
+    inline Q3270::Colour getColour() const          { return colNum; };
 
-    inline bool isFieldStart()                      { return fieldStart; };
-    inline bool isAutoSkip()                        { return prot & num; };
-    inline bool isNumeric()                         { return num; };
-    inline bool isGraphic()                         { return graphic; };
-    inline bool isMdtOn()                           { return mdt; };
-    bool isProtected();
-    inline bool isDisplay()                         { return display; };
-    inline bool isPenSelect()                       { return pen; };
-    inline bool isIntensify()                       { return intensify; };
-    inline bool isExtended()                        { return extended; };
-    bool isUScore();
-    inline bool isReverse()                         { return reverse; };
-    inline bool isBlink()                           { return blink; };
+    inline bool isFieldStart() const                { return fieldStart; };
+    inline bool isAutoSkip() const                  { return prot & num; };
+    inline bool isNumeric() const                   { return num; };
+    inline bool isGraphic() const                   { return graphic; };
+    inline bool isMdtOn() const                     { return mdt; };
+    bool isProtected() const;
+    inline bool isDisplay() const                   { return display; };
+    inline bool isPenSelect() const                 { return pen; };
+    inline bool isIntensify() const                 { return intensify; };
+    inline bool isExtended() const                  { return extended; };
+    bool isUScore() const;
+    inline bool isReverse() const                   { return reverse; };
+    inline bool isBlink() const                     { return blink; };
 
-    int getField();
+    int getField() const;
 
-    void setField(Cell *);
-    void setField(QPointer <Cell>);
-
-    bool hasCharAttrs(Q3270::CharAttr);
+    bool hasCharAttrs(const Q3270::CharAttr) const;
 
     // Setters
-    void setColour(Q3270::Colour);
+    void setField(Cell *c);
+
+    void setColour(const Q3270::Colour col);
     void setColourFromField()                       { setColour(field->getColour()); };
 
-    void setFieldStart(bool);
-    void setNumeric(bool);
-    void setGraphic(bool);
-    void setMDT(bool);
-    void setProtected(bool);
-    void setDisplay(bool);
-    void setPenSelect(bool);
-    void setIntensify(bool);
-    void setExtended(bool);
-    void setUnderscore(bool);
-    void setReverse(bool);
-    void setBlink(bool);
+    void setFieldStart(const bool fs);
+    void setNumeric(const bool num);
+    void setGraphic(const bool ge);
+    void setMDT(const bool mdt);
+    void setProtected(const bool prot);
+    void setDisplay(const bool display);
+    void setPenSelect(const bool pensel);
+    void setIntensify(const bool intens);
+    void setExtended(const bool extend);
+    void setUnderscore(const bool uscore);
+    void setReverse(const bool reverse);
+    void setBlink(const bool blink);
 
     void setFont(QFont);
 

@@ -270,6 +270,7 @@ namespace Q3270 {
     Q_ENUM_NS(RulerStyle)
     Q_ENUM_NS(Colour)
     Q_ENUM_NS(CharAttr)
+    Q_ENUM_NS(Indicators)
 };
 
 Q_DECLARE_METATYPE(Q3270::RulerStyle)

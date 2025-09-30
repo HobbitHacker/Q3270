@@ -14,5 +14,6 @@
         <file>Icons/database.svg</file>
         <file>Icons/keyboard.svg</file>
         <file>Icons/palette.svg</file>
+        <file>Icons/clock.svg</file>
     </qresource>
 </RCC>

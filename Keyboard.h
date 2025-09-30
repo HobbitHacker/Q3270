@@ -44,6 +44,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <QVector>
 #include <QMap>
 
+#include "Q3270.h"
 #include "Models/KeyboardMap.h"
 
 class Keyboard : public QObject
@@ -61,10 +62,11 @@ class Keyboard : public QObject
 
         // Lookup helper
         void invoke(const QString &functionName);
+        void setLocked(const bool locked);
 
 
     signals:
-        void setLock(QString xsystem);
+        void setEnterInhibit();
         void setInsert(bool ins);
 
         void key_Copy();
@@ -81,13 +83,13 @@ class Keyboard : public QObject
         void key_End();
         void key_toggleRuler();
         void key_Character(unsigned char keycode, bool insMode);
+        void key_Reset();
 
         void key_showInfo();
         void key_showFields();
 
     public slots:
-        void unlockKeyboard();
-        void lockKeyboard();
+//        void unlockKeyboard();
         void setConnected(bool state);
 
         void setMap(const KeyboardMap &kmap);
@@ -140,10 +142,13 @@ class Keyboard : public QObject
         int bufferEnd;
         int keyCount;
 
-        bool lock;
+        bool systemLock;
+
         bool insMode;
         bool waitRelease;
         bool connectedState;        // Whether the session is connected or not
+
+        void lockKeyboard();
 
         void cursorUp();
         void cursorDown();

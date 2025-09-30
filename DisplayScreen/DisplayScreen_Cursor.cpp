@@ -58,7 +58,7 @@ void DisplayScreen::setCursor(int cursorPos)
  * @details setCursor is used when the cursor is moved either by the user or by the incoming 3270
  *          data stream.
  */
-void DisplayScreen::setCursor(int x, int y)
+void DisplayScreen::setCursor(const int x, const int y)
 {
     cursor.setVisible(false);
 
@@ -66,15 +66,10 @@ void DisplayScreen::setCursor(int x, int y)
 
     if (cursorColour)
     {
-        if (cell.at(cursor_pos)->isReverse())
-        {
-            cursor.setBrush(palette->colour(Q3270::Black));
-        }
-        else
-        {
-            cursor.setBrush(palette->colour(cell.at(cursor_pos)->getColour()));
-        }
+        const Cell *c = cell.at(cursor_pos);
+        const Q3270::Colour colour = c->isReverse() ? Q3270::Black : c->getColour();
 
+        cursor.setBrush(palette->colour(colour));
     }
 
     cursor.setPos(gridSize_X * (qreal) x, gridSize_Y * (qreal) y);
@@ -281,7 +276,6 @@ void DisplayScreen::toggleRuler()
  */
 void DisplayScreen::rulerMode(bool on)
 {
-
     rulerOn = on;
     setRuler();
 }

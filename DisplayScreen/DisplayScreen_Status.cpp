@@ -37,31 +37,37 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /**
  * @brief   DisplayScreen::setStatusXSystem - set XSystem text
- * @param   text - text to be shown
+ * @param   status - Q3270::Unlocked, Q3270::SystemLock or Q3270::TerminalWait
  *
- * @details Called when XSystem is to be shown or removed.
+ * @details Called when XSystem / X<clock> is to be shown or removed.
  */
-void DisplayScreen::setStatusXSystem(QString text)
+void DisplayScreen::setStatusLock(Q3270::Indicators status)
 {
-    statusXSystem.setText(text);
+    switch(status)
+    {
+        case Q3270::TerminalWait:
+            statusXClock->show();
+            statusXSystem.hide();
+            break;
+        case Q3270::SystemLock:
+            statusXSystem.show();
+            statusXClock->hide();
+            break;
+        case Q3270::Unlocked:
+            statusXClock->hide();
+            statusXSystem.hide();
+    }
 }
 
 /**
  * @brief   DisplayScreen::setStatusInsert - the Insert mode text
- * @param   ins - true for insert mode, false for overwrite
+ * @param   ins - Q3270::InsertMode or Q3270::OvertypeMode
  *
  * @details Called to show the Insert status on the status line.
  */
-void DisplayScreen::setStatusInsert(bool ins)
+void DisplayScreen::setStatusInsert(Q3270::Indicators insert)
 {
-    if (ins)
-    {
-        statusInsert.setText("\uFF3E");
-    }
-    else
-    {
-        statusInsert.setText("");
-    }
+    statusInsert.setText(insert == Q3270::InsertMode ? QString("\uFF3E") : QString(""));
 }
 
 /**

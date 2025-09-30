@@ -297,7 +297,13 @@ void Terminal::connectSession()
     alternateScreen->setRulerStyle(activeSettings.getRulerStyle());
 
     // Status bar updates
-    connect(datastream, &ProcessDataStream::keyboardUnlocked, &kbd, &Keyboard::unlockKeyboard);
+    connect(datastream, &ProcessDataStream::processingComplete, this, &Terminal::clearTWait);
+    connect(datastream, &ProcessDataStream::unlockKeyboard, this, &Terminal::resetStatusXSystem);
+
+    connect(&kbd, &Keyboard::key_Reset, this, &Terminal::resetStatusXSystem);
+    connect(&kbd, &Keyboard::setEnterInhibit, this, &Terminal::setTWait);
+    connect(&kbd, &Keyboard::setInsert, this, &Terminal::setStatusInsert);
+
 
 //    connect(&activeSettings, &ActiveSettings::cursorInheritChanged, &screen, &DisplayScreen::setCursorColour);
 //    connect(datastream, &ProcessDataStream::cursorMoved, &screen, &DisplayScreen::showStatusCursorPosition);
@@ -331,6 +337,7 @@ void Terminal::connectSession()
 void Terminal::closeConnection(QString message)
 {
     disconnect(socket, &SocketConnection::dataStreamComplete, datastream, &ProcessDataStream::processStream);
+
     disconnect(socket, &SocketConnection::connectionEnded, this, &Terminal::closeConnection);
 
     disconnect(datastream, &ProcessDataStream::bufferReady, socket, &SocketConnection::sendResponse);
@@ -342,8 +349,8 @@ void Terminal::closeConnection(QString message)
     disconnectKeyboard(*alternateScreen);
 
     // Status bar updates
-    disconnect(datastream, &ProcessDataStream::keyboardUnlocked, &kbd, &Keyboard::unlockKeyboard);
-
+    disconnect(datastream, &ProcessDataStream::unlockKeyboard, this, &Terminal::clearTWait);
+    disconnect(&kbd, &Keyboard::key_Reset, this, &Terminal::resetStatusXSystem);
     disconnect(&kbd, &Keyboard::key_Copy, this, &Terminal::copyText);
 
     socket->disconnectMainframe();
@@ -399,9 +406,6 @@ void Terminal::closeConnection(QString message)
  */
 void Terminal::connectKeyboard(DisplayScreen &screen)
 {
-    connect(&kbd, &Keyboard::setLock, &screen, &DisplayScreen::setStatusXSystem);
-    connect(&kbd, &Keyboard::setInsert, &screen, &DisplayScreen::setStatusInsert);
-
     connect(&kbd, &Keyboard::key_Character, &screen, &DisplayScreen::insertChar);
 
     connect(&kbd, &Keyboard::key_Home, &screen, &DisplayScreen::home);
@@ -428,9 +432,6 @@ void Terminal::connectKeyboard(DisplayScreen &screen)
  */
 void Terminal::disconnectKeyboard(DisplayScreen &screen)
 {
-    disconnect(&kbd, &Keyboard::setLock, &screen, &DisplayScreen::setStatusXSystem);
-    disconnect(&kbd, &Keyboard::setInsert, &screen, &DisplayScreen::setStatusInsert);
-
     disconnect(&kbd, &Keyboard::key_Character, &screen, &DisplayScreen::insertChar);
 
     disconnect(&kbd, &Keyboard::key_Home, &screen, &DisplayScreen::home);
@@ -634,6 +635,71 @@ DisplayScreen *Terminal::setAlternateScreen(bool alt)
 
     return current;
 }
+
+void Terminal::setTWait()
+{
+    if (!sessionConnected)
+        return;
+
+    xClock = true;
+    xSystem = true;
+
+    updateLockState();
+
+    qDebug() << "TWAIT set";
+}
+
+void Terminal::clearTWait()
+{
+    if (!sessionConnected)
+        return;
+
+    xClock = false;
+
+    updateLockState();
+
+    qDebug() << "TWAIT cleared";
+}
+
+void Terminal::setStatusInsert(const bool insert)
+{
+    if (!sessionConnected)
+        return;
+
+    current->setStatusInsert(insert ? Q3270::InsertMode : Q3270::OvertypeMode);
+}
+
+void Terminal::resetStatusXSystem()
+{
+    if (!sessionConnected)
+        return;
+
+    if (xClock)
+        return;
+
+    xSystem = false;
+
+    updateLockState();
+
+    qDebug() << "System Lock cleared";
+}
+
+void Terminal::updateLockState()
+{
+    if (xClock) {
+        current->setStatusLock(Q3270::TerminalWait);
+        kbd.setLocked(true);
+    }
+    else if (xSystem) {
+        current->setStatusLock(Q3270::SystemLock);
+        kbd.setLocked(true);
+    }
+    else {
+        current->setStatusLock(Q3270::Unlocked);
+        kbd.setLocked(false);
+    }
+}
+
 
 /**
  * @brief   Terminal::fit - fit the window content according to user preference

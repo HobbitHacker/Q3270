@@ -139,7 +139,7 @@ Cell::Cell(int celladdress, qreal x_pos, qreal y_pos, qreal x, qreal y, CodePage
  *          do the swtiching on or off, it only sets the flag. updateCell() performs the
  *          Qt operation to show/hide the graphic.
  */
-void Cell::setUnderscore(bool onoff)
+void Cell::setUnderscore(const bool onoff)
 {
     uscore = onoff;
     changed = true;
@@ -154,7 +154,7 @@ void Cell::setUnderscore(bool onoff)
  *          underlying character is still stored. If the 'graphic escape' flag is set, the character
  *          is taken from the code page 0310, which is used for things like dialog box borders in ISPF.
  */
-void Cell::setChar(uchar ebcdic)
+void Cell::setChar(const uchar ebcdic)
 {
     // Characters that are nulls are set to blank on screen, as are non-display characters.
     // Obviously the underlying character value is stored still.
@@ -198,7 +198,7 @@ void Cell::refreshCodePage()
  * @note    ASCII is used in this context, but in reality it could be any valid character generated from
  *          the keyboard in whatever codepage the keyboard is using.
  */
-void Cell::setCharFromKB(uchar ascii)
+void Cell::setCharFromKB(const uchar ascii)
 {
     setChar(cp.getEBCDIC(ascii));
 }
@@ -211,7 +211,7 @@ void Cell::setCharFromKB(uchar ascii)
  *          do the heavy lifting of calling Qt yet, as potentially any data stream may incur multiple
  *          calls to set the colour of same cell. The Qt part is done in updateCell().
  */
-void Cell::setColour(Q3270::Colour c)
+void Cell::setColour(const Q3270::Colour c)
 {
     colNum = c;
     changed = true;
@@ -228,7 +228,7 @@ void Cell::setColour(Q3270::Colour c)
  *          If the FieldStart is set, this cell's field pointer is set to null (otherwise the cell would
  *          point to itself).
  */
-void Cell::setFieldStart(bool fs)
+void Cell::setFieldStart(const bool fs)
 {
     fieldStart = fs;
 
@@ -270,7 +270,7 @@ void Cell::setFieldStart(bool fs)
  *
  * @warning Q3270 doesn't support numeric fields currently (ie, you can enter anything into a numeric field).
  */
-void Cell::setNumeric(bool n)
+void Cell::setNumeric(const bool n)
 {
     num = n;
 }
@@ -282,7 +282,7 @@ void Cell::setNumeric(bool n)
  * @details setGraphic() is used to switch on (or off) the selection of the character from the internal 0310
  *          codepage, used for things like ISPF dialog box borders.
  */
-void Cell::setGraphic(bool ge)
+void Cell::setGraphic(const bool ge)
 {
     graphic = ge;
 }
@@ -294,7 +294,7 @@ void Cell::setGraphic(bool ge)
  * @details The MDT flag is used to indicate whether the user has modified a particular field. If this
  *          cell is not a field start, the value is taken from the field cell instead.
  */
-void Cell::setMDT(bool m)
+void Cell::setMDT(const bool m)
 {
     if (field)
     {
@@ -314,7 +314,7 @@ void Cell::setMDT(bool m)
  * @details Protected cells cannot be modified by the user. They are intended for text on the screen that
  *          is meant to guide the user (field prompts, menu items and so on).
  */
-void Cell::setProtected(bool p)
+void Cell::setProtected(const bool p)
 {
     prot = p;
 }
@@ -328,7 +328,7 @@ void Cell::setProtected(bool p)
  *
  *          This routine does not change the Qt side; updateCell() does that.
  */
-void Cell::setDisplay(bool d)
+void Cell::setDisplay(const bool d)
 {
     display = d;
     changed = true;
@@ -344,7 +344,7 @@ void Cell::setDisplay(bool d)
  *
  * @warning Q3270 doesn't support light pen selectable fields currently.
  */
-void Cell::setPenSelect(bool p)
+void Cell::setPenSelect(const bool p)
 {
     if (fieldStart)
     {
@@ -359,7 +359,7 @@ void Cell::setPenSelect(bool p)
  * @details In basic four colour mode, high-intensity fields are displayed in red (unprotected) or white (protected);
  *          low-intensity fields are displayed in blue (protected) or green (unprotected).
  */
-void Cell::setIntensify(bool i)
+void Cell::setIntensify(const bool i)
 {
     intensify = i;
     changed = true;
@@ -372,7 +372,7 @@ void Cell::setIntensify(bool i)
  * @details Extended fields can contain more colours than basic fields, and can contain additional
  *          hlighlighting like underscore, reverse or blinking.
  */
-void Cell::setExtended(bool e)
+void Cell::setExtended(const bool e)
 {
     extended = e;
 }
@@ -386,7 +386,7 @@ void Cell::setExtended(bool e)
  *
  *          This routine does not change the Qt colours; that's done by updateCell().
  */
-void Cell::setReverse(bool r)
+void Cell::setReverse(const bool r)
 {
     reverse = r;
     changed = true;
@@ -399,7 +399,7 @@ void Cell::setReverse(bool r)
  * @details Blink is an extended field attribute or a character attribute. Cells can be
  *          either reversed, underscored or blinking. The co-ordindation of that is done by DisplayScreen.
  */
-void Cell::setBlink(bool b)
+void Cell::setBlink(const bool b)
 {
     blink = b;
 }
@@ -439,7 +439,7 @@ void Cell::setField(Cell *field)
  *          the field address is required to pick up the field attributes - if this field is a field start, then return
  *          this address, otherwise return the address of the field that owns this cell if there is one.
  */
-int Cell::getField()
+int Cell::getField() const
 {
     if (field)
     {
@@ -460,7 +460,7 @@ int Cell::getField()
  * @details Return the protected status of this cell. If this is a field start, then it's always
  *          protected.
  */
-bool Cell::isProtected()
+bool Cell::isProtected() const
 {
     if (fieldStart)
     {
@@ -483,7 +483,7 @@ bool Cell::isProtected()
  * @details Returns the state of the underscore, based on the field start or this cell's underscore
  *          state if this is a field start.
  */
-bool Cell::isUScore()
+bool Cell::isUScore() const
 {
     if (fieldStart)
     {
@@ -507,7 +507,7 @@ bool Cell::isUScore()
  *
  * @warning Q3270 does not handle any other character attribute than extended.
  */
-void Cell::setCharAttrs(Q3270::CharAttr ca, bool c)
+void Cell::setCharAttrs(const Q3270::CharAttr ca, const bool c)
 {
     switch(ca)
     {
@@ -532,7 +532,7 @@ void Cell::setCharAttrs(Q3270::CharAttr ca, bool c)
  *
  * @details This routine returns the state of the specified character attrbute for this Cell.
  */
-bool Cell::hasCharAttrs(Q3270::CharAttr ca)
+bool Cell::hasCharAttrs(const Q3270::CharAttr ca) const
 {
     switch(ca)
     {
