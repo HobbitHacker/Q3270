@@ -14,11 +14,6 @@ things like MVS 3.8j under Hercules.
 
 I've used it for MVS 3.8j and VM/370, and for IBM's zXplore at 204.90.115.200:623.
 
-# Q3270
-
-Q3270 is a Qt-based 3270 terminal emulator with themeable UI, SVG icons, and audit‑grade protocol fidelity.  
-It is designed for clarity, reproducibility, and maintainability, with explicit tracing of state transitions and a focus on canonical solutions.
-
 ---
 
 ## Features
