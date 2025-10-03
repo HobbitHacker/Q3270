@@ -187,19 +187,29 @@ DisplayScreen::DisplayScreen(int screen_x, int screen_y, CodePage &cp, const Col
     locktick->hide();
 
     // XSystem 20% across status bar
-    statusXSystem.setText("X System");
-    statusXSystem.setPos(gridSize_X * (screen_x * .20), 481);
-    statusXSystem.setFont(statusBarText);
-    statusXSystem.setBrush(QBrush(QColor(0xFF, 0xFF, 0xFF)));
+    statusX = new LockIndicator();
+    statusX->setPos(gridSize_X * (screen_x * .20), 481);
+
+//    statusXSystem.setText("X System");
+//    statusXSystem.setPos(gridSize_X * (screen_x * .20), 481);
+//    statusXSystem.setFont(statusBarText);
+//    statusXSystem.setBrush(QBrush(QColor(0xFF, 0xFF, 0xFF)));
 
     // X clock 20% across status bar
-    QGraphicsSimpleTextItem  *statusXClockText = new QGraphicsSimpleTextItem("X");
-    statusXClockText->setPos(gridSize_X * (screen_x * .20), 481);
-    statusXClockText->setFont(statusBarText);
-    statusXClockText->setBrush(QBrush(QColor(0xFF, 0xFF, 0xFF)));
+//    QGraphicsSimpleTextItem  *statusXClockText = new QGraphicsSimpleTextItem("X");
+//    statusXClockText->setPos(gridSize_X * (screen_x * .35), 481);
+//    statusXClockText->setFont(statusBarText);
+//    statusXClockText->setBrush(QBrush(QColor(0xFF, 0xFF, 0xFF)));
 
-    statusXClockIcon = new QGraphicsSvgItem(":/Icons/clock.svg");
-    statusXClockIcon->setPos(gridSize_X * (screen_x * .22), 481);
+//    statusXClockIcon = new QGraphicsSvgItem(":/Icons/clock.svg");
+    //    auto effect = new QGraphicsColorizeEffect;
+    //    effect->setColor(Qt::white);
+    //    statusXClockIcon->setGraphicsEffect(effect);
+
+    //    r = statusXClockIcon->boundingRect();
+    //    statusXClockIcon->setScale(7 / r.height());
+
+//    statusXClockIcon->setPos(gridSize_X * (screen_x * .37), 483);
 
     // Insert 50% across status bar
     statusInsert.setText("");
@@ -217,16 +227,15 @@ DisplayScreen::DisplayScreen(int screen_x, int screen_y, CodePage &cp, const Col
     scene->addItem(&statusBar);
     scene->addItem(&statusSecure);
     scene->addItem(&statusConnect);
-    scene->addItem(&statusXSystem);
+//    scene->addItem(&statusXSystem);
+    scene->addItem(statusX);
     scene->addItem(&statusCursor);
     scene->addItem(&statusInsert);
-    scene->addItem(statusXClockText);
-    scene->addItem(statusXClockIcon);
 
-    statusXClock = scene->createItemGroup({statusXClockText, statusXClockIcon});
-    statusXClock->hide();
+//    statusXClock = scene->createItemGroup({statusXClockText, statusXClockIcon});
+//    statusXClock->hide();
 
-    statusXSystem.hide();
+//    statusXSystem.hide();
 
     scene->addItem(this);
 }
@@ -1385,26 +1394,28 @@ void DisplayScreen::dumpFields()
  */
 void DisplayScreen::dumpDisplay()
 {
-    printf("---- SCREEN ----\n");
+    qDebug() << "---- SCREEN ----";
 
     QString ascii;
+    QString hexline;
 
     for (int i = 0; i < screenPos_max; i++)
     {
         if (i % screen_x == 0 && i > 0)
         {
 
-            printf("| %s |\n", ascii.toLatin1().data());
+            qDebug() << hexline << "|" << ascii.toLatin1().data() << "|";
+            hexline = "";
             ascii = "";
         }
         ascii.append(cell.at(i)->getChar());
-        printf("%2.2X ", cell.at(i)->getEBCDIC());
+        hexline.append(QString::asprintf("%02X ", cell.at(i)->getEBCDIC()));
     }
 
-    printf("| %s |\n", ascii.toLatin1().data());
+    if (!hexline.isEmpty())
+        qDebug() << hexline << "|" << ascii.toLatin1().data() << "|";
 
-    printf("\n---- SCREEN ----\n");
-    fflush(stdout);
+    qDebug() << "---- SCREEN ----";
 }
 
 /**
@@ -1416,25 +1427,26 @@ void DisplayScreen::dumpInfo()
 {
     int y = cursor_pos / screen_x;
     int x = cursor_pos - y * screen_x;
-    printf("\nCell at %d (%d, %d)\n", cursor_pos, x, y);
-    printf("    Character: \"%c\" (hex %2.2X EBCDIC %2.2X)\n", cell.at(cursor_pos)->getChar().toLatin1(),cell.at(cursor_pos)->getChar().toLatin1(),cell.at(cursor_pos)->getEBCDIC());
 
-    printf("    Field Attribute: %d\n", cell.at(cursor_pos)->isFieldStart());
-    printf("        MDT:       %d\n        Protected: %d\n        Numeric:   %d\n        Autoskip:  %d\n        Display:   %d\n",
+    qDebug() << QString::asprintf("Cell at %d (%d, %d)", cursor_pos, x, y);
+    qDebug() << QString::asprintf("    Character: \"%c\" (hex %2.2X EBCDIC %2.2X)", cell.at(cursor_pos)->getChar().toLatin1(),cell.at(cursor_pos)->getChar().toLatin1(),cell.at(cursor_pos)->getEBCDIC());
+
+    qDebug() << QString::asprintf("    Field Attribute: %d", cell.at(cursor_pos)->isFieldStart());
+    qDebug() << QString::asprintf("        MDT:       %d\n        Protected: %d\n        Numeric:   %d\n        Autoskip:  %d\n        Display:   %d",
             cell.at(cursor_pos)->isMdtOn(),
             cell.at(cursor_pos)->isProtected(),
             cell.at(cursor_pos)->isNumeric(),
             cell.at(cursor_pos)->isAutoSkip(),
             cell.at(cursor_pos)->isDisplay());
 
-    printf("    Extended: %d\n", cell.at(cursor_pos)->isExtended());
-    printf("        Intensify: %d\n        UScore:    %d\n        Reverse:   %d\n        Blink:     %d\n",
+    qDebug() << QString::asprintf("    Extended: %d\n", cell.at(cursor_pos)->isExtended());
+    printf("        Intensify: %d\n        UScore:    %d\n        Reverse:   %d\n        Blink:     %d",
            cell.at(cursor_pos)->isIntensify(),
            cell.at(cursor_pos)->isUScore(),
            cell.at(cursor_pos)->isReverse(),
            cell.at(cursor_pos)->isBlink());
 
-    printf("    Character Attributes:\n        Extended: %d\n        CharSet:  %d\n        Colour:   %d\n    Colour: %d\n    Graphic: %d\n",
+    qDebug() << QString::asprintf("    Character Attributes:\n        Extended: %d\n        CharSet:  %d\n        Colour:   %d\n    Colour: %d\n    Graphic: %d",
                 cell.at(cursor_pos)->hasCharAttrs(Q3270::ExtendedAttr),
                 cell.at(cursor_pos)->hasCharAttrs(Q3270::CharsetAttr),
                 cell.at(cursor_pos)->hasCharAttrs(Q3270::ColourAttr),
@@ -1442,12 +1454,9 @@ void DisplayScreen::dumpInfo()
                 cell.at(cursor_pos)->isGraphic());
 
     int fieldStart = cell.at(cursor_pos)->getField();
-    printf("    Field Position: %d (%d, %d)\n", fieldStart, (int) (fieldStart / screen_x), (int) (fieldStart - (int) (fieldStart / screen_x) * screen_x));
+    qDebug() << QString::asprintf("    Field Position: %d (%d, %d)", fieldStart, (int) (fieldStart / screen_x), (int) (fieldStart - (int) (fieldStart / screen_x) * screen_x));
 
     dumpFields();
-
-    fflush(stdout);
-
 }
 
 /**

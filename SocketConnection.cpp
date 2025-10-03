@@ -398,6 +398,7 @@ void SocketConnection::onReadyRead()
                             qDebug() << byteNotes;
                             byteNotes = "";
                             dump(incomingData,"Incoming Data");
+                            qDebug() << QDateTime::currentMSecsSinceEpoch() << "SocketConnection: dataStreamComplete";
                             emit dataStreamComplete(incomingData, tn3270e_Mode);
                             incomingData.clear();
 							break;

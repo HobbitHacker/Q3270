@@ -94,8 +94,10 @@ void ProcessDataStream::processStream(QByteArray &b, bool tn3270e)
 */
 //    b->dump();
 
-    qApp->processEvents();
+//    qApp->processEvents();
     wsfProcessing = false;
+    lastwasWrite = false;
+    reply.clear();
 
     //TODO: Multiple structured field WRITE commands
     // Process Command codes
@@ -179,7 +181,10 @@ void ProcessDataStream::processStream(QByteArray &b, bool tn3270e)
 //    b.clear();
 //    b->setProcessing(false);
 
-    emit processingComplete();
+    qDebug() << QDateTime::currentMSecsSinceEpoch() << "ProcessDataStream: processingComplete";
+
+    if (lastwasWrite)
+        emit processingComplete();
 
     if (resetMDT)
     {
@@ -187,7 +192,7 @@ void ProcessDataStream::processStream(QByteArray &b, bool tn3270e)
     }
     if (restoreKeyboard)
     {
-        printf("[restore keyboard]");
+        qDebug() << QDateTime::currentMSecsSinceEpoch() << "ProcessDataStream: unlockKeyboard";
         emit unlockKeyboard();
     }
 //    screen->dumpFields();
@@ -195,6 +200,12 @@ void ProcessDataStream::processStream(QByteArray &b, bool tn3270e)
 //    fflush(stdout);
 
     screen->refresh();
+
+    if (!reply.isEmpty())
+    {
+        qDebug() << QDateTime::currentMSecsSinceEpoch() << "ProcessDataStream: Sending Query reply";
+        emit bufferReady(reply);
+    }
 
 }
 
@@ -322,6 +333,7 @@ void ProcessDataStream::processWCC()
     screen->resetCharAttr();
 
     lastWasCmd = true;
+    lastwasWrite = true;
 }
 
 /**
@@ -384,11 +396,7 @@ void ProcessDataStream::processRB()
 {
     printf("[ReadBuffer]");
 
-    QByteArray screenContents = QByteArray();
-
-    screen->getScreen(screenContents);
-
-    emit bufferReady(screenContents);
+    screen->getScreen(reply);
 }
 
 /**
@@ -873,13 +881,9 @@ void ProcessDataStream::WSFreadPartition()
 
     printf("ReadPartition %d - type %2.2X\n", partition, type);
 
-    QByteArray queryReply;
+    reply.append((uchar) IBM3270_AID_SF);
 
-    queryReply.append((uchar) IBM3270_AID_SF);
-
-    replySummary(queryReply);
-
-    emit bufferReady(queryReply);
+    replySummary();
 }
 
 /**
@@ -894,7 +898,7 @@ void ProcessDataStream::WSFreadPartition()
  *
  *           It is this function that allows the host the utilise the dynamic screen sizes.
  */
-void ProcessDataStream::replySummary(QByteArray &queryReply)
+void ProcessDataStream::replySummary()
 {
 
     /* 62 x 160
@@ -1213,12 +1217,12 @@ void ProcessDataStream::replySummary(QByteArray &queryReply)
     qusablearea[24] = ((qusablearea[5] * qusablearea[7]) & 0xFF);
 
 
-    addBytes(queryReply, qrt, 9);
-    addBytes(queryReply, qrcolour, 22);
-    addBytes(queryReply, qpart, 17);
-    addBytes(queryReply, qhighlight, 13);
-    addBytes(queryReply, qusablearea, 25);
-    addBytes(queryReply, qcharsets, 27);
+    addBytes(qrt, 9);
+    addBytes(qrcolour, 22);
+    addBytes(qpart, 17);
+    addBytes(qhighlight, 13);
+    addBytes(qusablearea, 25);
+    addBytes(qcharsets, 27);
 //    buffer->addBlock(qalphaparts, 8);
 }
 
@@ -1231,16 +1235,16 @@ void ProcessDataStream::replySummary(QByteArray &queryReply)
  * @details addBytes is used to add bytes to a buffer that will be sent to the host. Any 0xFF characters
  *          are doubled up.
  */
-void ProcessDataStream::addBytes(QByteArray &b, uchar *s, int l)
+void ProcessDataStream::addBytes(uchar *s, int l)
 {
     for (int i = 0; i < l; i++)
     {
-        b.append(s[i]);
+        reply.append(s[i]);
 
         //Double up 0xFF bytes
         if (s[i] == 0xFF)
         {
-            b.append(0xFF);
+            reply.append(0xFF);
         }
     }
 }

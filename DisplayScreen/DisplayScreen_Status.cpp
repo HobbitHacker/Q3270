@@ -34,6 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "DisplayScreen.h"
+#include <QDateTime>
 
 /**
  * @brief   DisplayScreen::setStatusXSystem - set XSystem text
@@ -43,19 +44,25 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 void DisplayScreen::setStatusLock(Q3270::Indicators status)
 {
+    // Hide both first
+//    statusXClock->hide();
+//    statusXSystem.hide();
+
     switch(status)
     {
         case Q3270::TerminalWait:
-            statusXClock->show();
-            statusXSystem.hide();
+            qDebug() << QDateTime::currentMSecsSinceEpoch() << "DisplayScreen   : TerminalWait - X <clock>";
+//            statusXClock->show();
+            statusX->setMode(LockIndicator::Clock);
             break;
         case Q3270::SystemLock:
-            statusXSystem.show();
-            statusXClock->hide();
+            qDebug() << QDateTime::currentMSecsSinceEpoch() << "DisplayScreen   : TerminalWait - X System";
+            statusX->setMode(LockIndicator::System);
+//            statusXSystem.show();
             break;
         case Q3270::Unlocked:
-            statusXClock->hide();
-            statusXSystem.hide();
+            statusX->setMode(LockIndicator::None);
+            qDebug() << QDateTime::currentMSecsSinceEpoch() << "DisplayScreen   : Unlocked";
     }
 }
 

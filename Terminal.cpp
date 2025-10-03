@@ -34,6 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "Terminal.h"
+#include <QDateTime>
 
 /**
  * @brief   Terminal::Terminal - the terminal in the Qt window
@@ -349,9 +350,11 @@ void Terminal::closeConnection(QString message)
     disconnectKeyboard(*alternateScreen);
 
     // Status bar updates
-    disconnect(datastream, &ProcessDataStream::unlockKeyboard, this, &Terminal::clearTWait);
+    disconnect(datastream, &ProcessDataStream::unlockKeyboard, this, &Terminal::resetStatusXSystem);
     disconnect(&kbd, &Keyboard::key_Reset, this, &Terminal::resetStatusXSystem);
     disconnect(&kbd, &Keyboard::key_Copy, this, &Terminal::copyText);
+    disconnect(&kbd, &Keyboard::setEnterInhibit, this, &Terminal::setTWait);
+    disconnect(&kbd, &Keyboard::setInsert, this, &Terminal::setStatusInsert);
 
     socket->disconnectMainframe();
 
@@ -636,6 +639,14 @@ DisplayScreen *Terminal::setAlternateScreen(bool alt)
     return current;
 }
 
+void Terminal::setStatusInsert(const bool insert)
+{
+    if (!sessionConnected)
+        return;
+
+    current->setStatusInsert(insert ? Q3270::InsertMode : Q3270::OvertypeMode);
+}
+
 void Terminal::setTWait()
 {
     if (!sessionConnected)
@@ -644,9 +655,9 @@ void Terminal::setTWait()
     xClock = true;
     xSystem = true;
 
-    updateLockState();
+    qDebug() << QDateTime::currentMSecsSinceEpoch() << "Terminal        : TWAIT set (xClock and xSystem set)";
 
-    qDebug() << "TWAIT set";
+    updateLockState();
 }
 
 void Terminal::clearTWait()
@@ -656,17 +667,9 @@ void Terminal::clearTWait()
 
     xClock = false;
 
+    qDebug() << QDateTime::currentMSecsSinceEpoch() << "Terminal        : TWAIT cleared (xClock cleared)";
+
     updateLockState();
-
-    qDebug() << "TWAIT cleared";
-}
-
-void Terminal::setStatusInsert(const bool insert)
-{
-    if (!sessionConnected)
-        return;
-
-    current->setStatusInsert(insert ? Q3270::InsertMode : Q3270::OvertypeMode);
 }
 
 void Terminal::resetStatusXSystem()
@@ -679,9 +682,9 @@ void Terminal::resetStatusXSystem()
 
     xSystem = false;
 
-    updateLockState();
+    qDebug() << QDateTime::currentMSecsSinceEpoch() << "Terminal        : System Lock cleared (xSystem cleared)";
 
-    qDebug() << "System Lock cleared";
+    updateLockState();
 }
 
 void Terminal::updateLockState()
@@ -698,6 +701,8 @@ void Terminal::updateLockState()
         current->setStatusLock(Q3270::Unlocked);
         kbd.setLocked(false);
     }
+
+    qDebug() << QDateTime::currentMSecsSinceEpoch() << "after setStatusLock: xSystem:" << xSystem << "xClock:" << xClock;
 }
 
 

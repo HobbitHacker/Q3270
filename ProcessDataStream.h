@@ -86,6 +86,9 @@ class ProcessDataStream : public QObject
 
         QByteArray::Iterator buffer;
 
+        // Used to build replies to incoming commands (eg, RMx and inbound 3270 data streams)
+        QByteArray reply;
+
         /* Which screen size we're currently using */
         bool alternate_size;
 
@@ -107,6 +110,9 @@ class ProcessDataStream : public QObject
 
         // True if the previous byte/byte sequence was a command; used for PT processing
         bool lastWasCmd;
+
+        // True if the last command was a WRITE type command
+        bool lastwasWrite;
 
         // True if the last Program Tab operation hit the end of the display
         bool lastPTwrapped;
@@ -146,8 +152,8 @@ class ProcessDataStream : public QObject
         void WSFreadPartition();
         void WSFoutbound3270DS();
 
-        void replySummary(QByteArray &buffer);
-        void addBytes(QByteArray &buffer, uchar *bytes, int len);
+        void replySummary();
+        void addBytes(uchar *bytes, int len);
         void processAttributePairs(int mode);
 };
 

@@ -51,6 +51,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Q3270.h"
 #include "Models/Colours.h"
 #include "DisplayScreen/ClickableSvgItem.h"
+#include "DisplayScreen/LockIndicator.h"
 
 class DisplayScreen : public QObject, public QGraphicsRectItem
 {
@@ -226,14 +227,15 @@ class DisplayScreen : public QObject, public QGraphicsRectItem
         QGraphicsLineItem statusBar;
 
         QGraphicsSimpleTextItem statusConnect;
-        QGraphicsSimpleTextItem statusXSystem;
+//        QGraphicsSimpleTextItem statusXSystem;
         QGraphicsSimpleTextItem statusCursor;
         QGraphicsSimpleTextItem statusInsert;
 
         // X <clock>
-        QGraphicsSvgItem *statusXClockIcon;
+//        QGraphicsSvgItem *statusXClockIcon;
 
-        QGraphicsItemGroup *statusXClock;
+//        QGraphicsItemGroup *statusXClock;
+        LockIndicator *statusX;
 
 
         // Padlocks

@@ -32,18 +32,6 @@
      </property>
     </widget>
    </item>
-   <item row="0" column="1">
-    <widget class="QLabel" name="label_3">
-     <property name="font">
-      <font>
-       <pointsize>50</pointsize>
-      </font>
-     </property>
-     <property name="text">
-      <string>Q3270</string>
-     </property>
-    </widget>
-   </item>
    <item row="2" column="0" colspan="2">
     <widget class="QLabel" name="VersionNumber">
      <property name="text">
@@ -55,7 +43,7 @@
     <widget class="QLabel" name="label_2">
      <property name="text">
       <string>A 3270-datastream terminal emulator
-Copyright © 2020 - 2023, Andy Styles</string>
+Copyright © 2020 - 2025, Andy Styles</string>
      </property>
     </widget>
    </item>
@@ -69,6 +57,21 @@ Copyright © 2020 - 2023, Andy Styles</string>
      </property>
      <property name="centerButtons">
       <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="1">
+    <widget class="QLabel" name="label_3">
+     <property name="font">
+      <font>
+       <pointsize>50</pointsize>
+      </font>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+     <property name="pixmap">
+      <pixmap resource="Q3270.qrc">:/Icons/q3270.svg</pixmap>
      </property>
     </widget>
    </item>
