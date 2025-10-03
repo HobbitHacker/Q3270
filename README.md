@@ -1,4 +1,6 @@
-# A Qt-based 3270 Emulator
+# Q3270 - A Qt-based 3270 Emulator
+
+Q3270 is a Qt-based 3270 terminal emulator with colour themes and keyboard mapping dialogs built in. 
 
 "Emulator" is an interesting term. Some refer to these kinds of programs as Simulators, some as
 TN3270 Clients, and others use the term Emulator. I use the term Emulator.
@@ -11,3 +13,57 @@ It's not (yet) as feature rich as other emulators, but it is (in my limited case
 things like MVS 3.8j under Hercules. 
 
 I've used it for MVS 3.8j and VM/370, and for IBM's zXplore at 204.90.115.200:623.
+
+# Q3270
+
+Q3270 is a Qt-based 3270 terminal emulator with themeable UI, SVG icons, and audit‑grade protocol fidelity.  
+It is designed for clarity, reproducibility, and maintainability, with explicit tracing of state transitions and a focus on canonical solutions.
+
+---
+
+## Features
+- Keyboard mapping dialog
+- Colour mapping dialog
+- Session management (save, load, auto‑start lists)
+- SSL support (not heavily tested)
+
+---
+
+## Getting Started
+
+### Prerequisites
+- **Qt**: 5.15 (baseline, known‑good)  
+  Qt 6.x may work, but is currently experimental.  
+- **C++17** compiler (g++, clang, or MSVC)  
+- **qmake** (3.1 used most recently)
+- **QtSvg** module (required for SVG rendering)
+
+### Linux Dependencies
+
+On Linux, install Qt development libraries and build tools via your package manager.  
+For example:
+
+- Ubuntu/Debian:
+  `sudo apt install build-essential qtbase5-dev qttools5-dev-tools libqt5svg5-dev`
+
+- Fedora:
+  `sudo dnf install qt5-qtbase-devel qt5-qtsvg-devel`
+
+- openSUSE:
+  `sudo zypper install libqt5-qtbase-devel libqt5-qtsvg-devel`
+
+- Arch Linux:
+  `sudo pacman -S base-devel qt5-base qt5-svg`
+
+### Building
+`git clone https://github.com/HobbitHacker/Q3270.git`
+
+`cd Q3270`
+
+`qmake`
+
+`make`
+
+This will build a Q3270 executable, which you can then run with:
+
+`./Q3270`
