@@ -134,5 +134,6 @@ DISTFILES += \
     Icons/saveas.svg \
     Icons/settings.svg \
     Icons/unlock.svg \
+    LICENSE \
     README.md \
     UserGuide.md
