@@ -34,6 +34,7 @@ SOURCES += \
     DisplayScreen/DisplayScreen_Cursor.cpp \
     DisplayScreen/DisplayScreen_Status.cpp \
     DisplayScreen/DisplayScreen_Mouse.cpp \
+    DisplayScreen/LockIndicator.cpp \
     FunctionRegistry.cpp \
     Models/Colours.cpp \
     Models/KeyboardMap.cpp \
