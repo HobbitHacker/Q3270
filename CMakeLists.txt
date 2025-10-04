@@ -29,7 +29,7 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
 endif()
 
 # Find Qt (Qt5 or Qt6)
-find_package(Qt6 QUIET COMPONENTS Core Gui Widgets Network Svg)
+find_package(Qt6 QUIET COMPONENTS Core Gui Widgets Network Svg Svgwidgets)
 if(NOT Qt6_FOUND)
   find_package(Qt5 REQUIRED COMPONENTS Core Gui Widgets Network Svg)
 endif()
@@ -143,7 +143,7 @@ if(Qt6_FOUND)
         ${FORMS}
         ${RESOURCES}
     )
-    target_link_libraries(Q3270 PRIVATE Qt6::Core Qt6::Gui Qt6::Widgets Qt6::Network Qt6::Svg)
+    target_link_libraries(Q3270 PRIVATE Qt6::Core Qt6::Gui Qt6::Widgets Qt6::Network Qt6::Svg Qt6::Svgwidgets)
 else()
     qt5_wrap_ui(UI_HEADERS ${FORMS})
     qt5_add_resources(RCC_SOURCES ${RESOURCES})
