@@ -29,7 +29,7 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
 endif()
 
 # Find Qt (Qt5 or Qt6)
-find_package(Qt6 QUIET COMPONENTS Core Gui Widgets Network Svg Svgwidgets)
+find_package(Qt6 QUIET COMPONENTS Core Gui Widgets Network Svg SvgWidgets)
 if(NOT Qt6_FOUND)
   find_package(Qt5 REQUIRED COMPONENTS Core Gui Widgets Network Svg)
 endif()
@@ -38,7 +38,7 @@ add_compile_options(-Wall -Wextra -Wunused-function -fdiagnostics-show-option -f
 
 add_definitions(
     -DQT_DEPRECATED_WARNINGS
-    -DQ3270_VERSION=\"${PROJECT_VERSION}\"
+    -DQ3270_VERSION=\"${Q3270_VERSION_FULL}\"
 )
 
 set(SOURCES
