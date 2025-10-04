@@ -11,6 +11,7 @@
 #include "LockIndicator.h"
 #include <QtSvg>
 #include <QDateTime>
+#include <QGraphicsColorizeEffect>
 
 LockIndicator::LockIndicator(QGraphicsItem* parent) : QGraphicsItemGroup(parent)
 {
