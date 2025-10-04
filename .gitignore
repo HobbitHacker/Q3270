@@ -41,6 +41,7 @@ Thumbs.db
 
 # qtcreator generated files
 *.pro.user*
+CMakeLists.txt.user*
 
 # xemacs temporary files
 *.flc
@@ -86,3 +87,15 @@ build/
 # KDevelop files
 .kdev4/
 *.kdev4
+
+# CMake generated files
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+CTestTestfile.cmake
+_DartConfiguration.tcl
+
+# Ignore all build directories
+/build*/
