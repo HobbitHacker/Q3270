@@ -71,7 +71,7 @@
        <item row="2" column="1">
         <widget class="QLabel" name="OSName">
          <property name="text">
-          <string>TextLabel</string>
+          <string>Unknown</string>
          </property>
         </widget>
        </item>
