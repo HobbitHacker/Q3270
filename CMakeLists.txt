@@ -143,7 +143,7 @@ if(Qt6_FOUND)
         ${FORMS}
         ${RESOURCES}
     )
-    target_link_libraries(Q3270 PRIVATE Qt6::Core Qt6::Gui Qt6::Widgets Qt6::Network Qt6::Svg Qt6::Svgwidgets)
+    target_link_libraries(Q3270 PRIVATE Qt6::Core Qt6::Gui Qt6::Widgets Qt6::Network Qt6::Svg Qt6::SvgWidgets)
 else()
     qt5_wrap_ui(UI_HEADERS ${FORMS})
     qt5_add_resources(RCC_SOURCES ${RESOURCES})
