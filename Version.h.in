@@ -1,0 +1,23 @@
+/*
+ * Q3270 Terminal Emulator
+ *
+ * Copyright (c) 2020–2025 Andy Styles
+ * SPDX-License-Identifier: BSD-3-Clause
+ *
+ * This file is part of Q3270.
+ * See the LICENSE file in the project root for full license information.
+ */
+
+#ifndef Q3270_VERSION_H
+#define Q3270_VERSION_H
+
+// Semantic version from CMake project()
+#define Q3270_VERSION        "@PROJECT_VERSION@"
+#define Q3270_VERSION_MAJOR  @PROJECT_VERSION_MAJOR@
+#define Q3270_VERSION_MINOR  @PROJECT_VERSION_MINOR@
+#define Q3270_VERSION_PATCH  @PROJECT_VERSION_PATCH@
+
+// Optional: include Git hash if you configure it in CMake
+#define Q3270_VERSION_FULL   "@Q3270_VERSION_FULL@"
+
+#endif // Q3270_VERSION_H

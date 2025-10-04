@@ -21,6 +21,7 @@ I've used it for MVS 3.8j and VM/370, and for IBM's zXplore at 204.90.115.200:62
 - Colour mapping dialog
 - Session management (save, load, auto‑start lists)
 - SSL support (not heavily tested)
+- Dynamic font scaling according to window size
 
 ---
 

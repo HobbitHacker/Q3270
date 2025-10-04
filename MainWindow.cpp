@@ -20,6 +20,7 @@
 #include "Sessions/OpenSessionDialog.h"
 #include "Sessions/ManageSessionsDialog.h"
 
+#include "Version.h"
 #include "Q3270.h"
 #include "Models/Session.h"
 /**
@@ -36,7 +37,9 @@ MainWindow::MainWindow(MainWindow::LaunchParms launchParms) : QMainWindow(nullpt
     keyboardTheme(nullptr),
     settings(nullptr),
     colourTheme(nullptr)
-{
+{   
+    QCoreApplication::setApplicationVersion(Q3270_VERSION_FULL);
+
     ui = new Ui::MainWindowDialog;
 
     ui->setupUi(this);
@@ -408,8 +411,25 @@ void MainWindow::menuAbout()
     Ui::About *ab = new Ui::About;
     ab->setupUi(about);
 
-    QString v = QString("Version ").append(Q3270_VERSION);
-    ab->VersionNumber->setText(v);
+    ab->logo->load(QStringLiteral(":/Icons/q3270.svg"));
+
+    ab->versionQ3270->setText(QString("Version ").append(Q3270_VERSION));
+    ab->versionQt->setText(QStringLiteral(QT_VERSION_STR));
+
+    QString distro;
+
+    QFile f("/etc/os-release");
+    if (f.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        QTextStream in(&f);
+        while (!in.atEnd()) {
+            QString line = in.readLine();
+            if (line.startsWith("PRETTY_NAME=")) {
+                distro = line.section('=', 1).remove('"').trimmed();
+                break;
+            }
+        }
+        ab->OSName->setText(distro);
+    }
 
     about->exec();
 

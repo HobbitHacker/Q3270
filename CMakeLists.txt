@@ -1,8 +1,26 @@
 cmake_minimum_required(VERSION 3.16)
-project(Q3270 VERSION 0.1.1 LANGUAGES CXX)
+
+project(Q3270 VERSION 0.2.0 LANGUAGES CXX)
+
+# append Git hash to build to track commits
+execute_process(
+    COMMAND git rev-parse --short HEAD
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    OUTPUT_VARIABLE GIT_HASH
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+set(Q3270_VERSION_FULL "${PROJECT_VERSION}+g${GIT_HASH}")
+
+configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/Version.h.in
+    ${CMAKE_CURRENT_BINARY_DIR}/Version.h
+    @ONLY
+)
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+set(CMAKE_AUTOMOC ON)
 
 # Default to Release if nothing specified
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
@@ -93,6 +111,7 @@ set(HEADERS
     Stores/SessionStore.h
     SocketConnection.h
     Terminal.h
+    Version.h
 )
 
 set(FORMS
@@ -135,7 +154,15 @@ else()
         ${RCC_SOURCES}
     )
     target_link_libraries(Q3270 PRIVATE Qt5::Core Qt5::Gui Qt5::Widgets Qt5::Network Qt5::Svg)
+    # Ensure the build dir with ui_*.h is visible
+    target_include_directories(Q3270 PRIVATE
+        ${CMAKE_CURRENT_BINARY_DIR}
+    )
 endif()
+
+target_include_directories(Q3270 PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}
+)
 
 install(TARGETS Q3270 RUNTIME DESTINATION bin)
 install(FILES LICENSE README.md UserGuide.md DESTINATION share/q3270)

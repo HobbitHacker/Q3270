@@ -120,6 +120,7 @@ RESOURCES += \
 
 DISTFILES += \
     BACKLOG.md \
+    CMakeLists.txt \
     Icons/clock.svg \
     Icons/connect.svg \
     Icons/database-gear.svg \
