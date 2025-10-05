@@ -115,7 +115,7 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset resource="Q3270.qrc">
+    <iconset resource="../resources/Q3270.qrc">
      <normaloff>:/Icons/connect.svg</normaloff>:/Icons/connect.svg</iconset>
    </property>
    <property name="text">
@@ -127,8 +127,8 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset>
-     <normaloff>Icons/settings.svg</normaloff>Icons/settings.svg</iconset>
+    <iconset resource="../resources/Q3270.qrc">
+     <normaloff>:/Icons/settings.svg</normaloff>:/Icons/settings.svg</iconset>
    </property>
    <property name="text">
     <string>Preferences</string>
@@ -139,7 +139,7 @@
     <bool>false</bool>
    </property>
    <property name="icon">
-    <iconset resource="Q3270.qrc">
+    <iconset resource="../resources/Q3270.qrc">
      <normaloff>:/Icons/disconnect.svg</normaloff>:/Icons/disconnect.svg</iconset>
    </property>
    <property name="text">
@@ -171,7 +171,7 @@
   </action>
   <action name="actionKeyboardThemes">
    <property name="icon">
-    <iconset resource="Q3270.qrc">
+    <iconset resource="../resources/Q3270.qrc">
      <normaloff>:/Icons/keyboard.svg</normaloff>:/Icons/keyboard.svg</iconset>
    </property>
    <property name="text">
@@ -180,7 +180,7 @@
   </action>
   <action name="actionColourThemes">
    <property name="icon">
-    <iconset resource="Q3270.qrc">
+    <iconset resource="../resources/Q3270.qrc">
      <normaloff>:/Icons/palette.svg</normaloff>:/Icons/palette.svg</iconset>
    </property>
    <property name="text">
@@ -188,17 +188,13 @@
    </property>
   </action>
   <action name="actionSave_SessionAs">
-   <property name="icon">
-    <iconset>
-     <normaloff>:/Icons/saveas.svg</normaloff>:/Icons/saveas.svg</iconset>
-   </property>
    <property name="text">
     <string>Save Session As...</string>
    </property>
   </action>
   <action name="actionOpen_Session">
    <property name="icon">
-    <iconset resource="Q3270.qrc">
+    <iconset resource="../resources/Q3270.qrc">
      <normaloff>:/Icons/open.svg</normaloff>:/Icons/open.svg</iconset>
    </property>
    <property name="text">
@@ -212,7 +208,7 @@
   </action>
   <action name="actionManage_Sessions">
    <property name="icon">
-    <iconset resource="Q3270.qrc">
+    <iconset resource="../resources/Q3270.qrc">
      <normaloff>:/Icons/database.svg</normaloff>:/Icons/database.svg</iconset>
    </property>
    <property name="text">
@@ -224,7 +220,7 @@
     <bool>false</bool>
    </property>
    <property name="icon">
-    <iconset resource="Q3270.qrc">
+    <iconset resource="../resources/Q3270.qrc">
      <normaloff>:/Icons/floppy.svg</normaloff>:/Icons/floppy.svg</iconset>
    </property>
    <property name="text">
@@ -241,7 +237,7 @@
   </action>
   <action name="actionManage_Auto_Sart_Sessions">
    <property name="icon">
-    <iconset resource="Q3270.qrc">
+    <iconset resource="../resources/Q3270.qrc">
      <normaloff>:/Icons/database-gear.svg</normaloff>:/Icons/database-gear.svg</iconset>
    </property>
    <property name="text">
@@ -250,7 +246,7 @@
   </action>
  </widget>
  <resources>
-  <include location="Q3270.qrc"/>
+  <include location="../resources/Q3270.qrc"/>
  </resources>
  <connections/>
  <slots>
