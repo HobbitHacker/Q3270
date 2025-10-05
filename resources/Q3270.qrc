@@ -1,6 +1,5 @@
 <RCC>
     <qresource prefix="/">
-        <file>Q3270.png</file>
         <file>Icons/lock-tick.svg</file>
         <file>Icons/lock.svg</file>
         <file>Icons/unlock.svg</file>
@@ -9,7 +8,6 @@
         <file>Icons/settings.svg</file>
         <file>Icons/floppy.svg</file>
         <file>Icons/open.svg</file>
-        <file>Icons/saveas.svg</file>
         <file>Icons/database-gear.svg</file>
         <file>Icons/database.svg</file>
         <file>Icons/keyboard.svg</file>
