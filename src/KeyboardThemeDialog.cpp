@@ -9,7 +9,6 @@
  */
 
 #include "Q3270.h"
-#include "ui_NewTheme.h"
 #include "KeyboardThemeDialog.h"
 #include "ui_KeyboardTheme.h"
 #include "Keyboard.h"

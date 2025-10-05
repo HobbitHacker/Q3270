@@ -11,7 +11,6 @@
 #include "Q3270.h"
 #include "ColourTheme.h"
 #include "ui_ColourTheme.h"
-#include "ui_NewTheme.h"
 
 /**
  * @brief   ColourTheme::ColourTheme - Dialog for choosing the colours for 3270
