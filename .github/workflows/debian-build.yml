@@ -1,0 +1,33 @@
+name: Debian package build for Q3270
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-deb:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Install packaging tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential devscripts debhelper fakeroot
+          sudo apt-get install -y qtbase5-dev qttools5-dev qttools5-dev-tools libqt5svg5-dev
+
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get build-dep -y . || true
+
+      - name: Build package
+        run: |
+          dpkg-buildpackage -us -uc -b
+          mv ../*.deb .
+
+      - name: Upload .deb artefacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: debian-packages
+          path: "*.deb"

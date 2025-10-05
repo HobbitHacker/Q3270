@@ -45,5 +45,15 @@ add_definitions(-DQT_DEPRECATED_WARNINGS)
 # build logic for code in src/
 add_subdirectory(src)
 
-# Install docs and license
-install(FILES LICENSE README.md DESTINATION share/q3270)
+# Install the main executable into bin/
+install(TARGETS Q3270
+    RUNTIME DESTINATION bin
+)
+
+option(DEBIAN_INSTALL "Install paths for Debian packaging" OFF)
+
+if(DEBIAN_INSTALL)
+    install(FILES LICENSE README.md DESTINATION share/q3270)
+else()
+    install(FILES LICENSE README.md DESTINATION share/Q3270)
+endif()
