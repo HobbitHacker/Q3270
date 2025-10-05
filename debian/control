@@ -1,0 +1,21 @@
+Source: q3270
+Section: unknown
+Priority: optional
+Maintainer: Andy Styles <linuxajs@gmail.com>
+Rules-Requires-Root: no
+Build-Depends:
+ debhelper-compat (= 13),
+ cmake,
+Standards-Version: 4.6.2
+Homepage: https://github.com/HobbitHacker/Q3270
+#Vcs-Browser: https://salsa.debian.org/debian/q3270
+#Vcs-Git: https://salsa.debian.org/debian/q3270.git
+
+Package: q3270
+Architecture: amd64
+Multi-Arch: foreign
+Depends:
+ ${shlibs:Depends},
+ ${misc:Depends},
+Description: Qt-based 3270 Terminal Emulator
+ Q3270 is a Qt-based 3270 terminal emulator to connect to IBM mainframe systems.

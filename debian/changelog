@@ -1,0 +1,5 @@
+q3270 (0.2.0-1) UNRELEASED; urgency=medium
+
+  * Initial release of Q3270 packaged for Debian.
+
+ -- Andy Styles <linuxajs@gmail.com>  Sun, 05 Oct 2025 08:52:31 +0100
