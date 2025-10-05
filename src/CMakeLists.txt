@@ -73,8 +73,6 @@ set(HEADERS
 
 set(FORMS
     About.ui
-    AutoStart.ui
-    AutoStartAdd.ui
     CertificateDetails.ui
     ColourTheme.ui
     KeyboardTheme.ui
@@ -83,7 +81,6 @@ set(FORMS
     Preferences/KeyboardMapWidget.ui
     Sessions/ManageAutoStartDialog.ui
     Sessions/ManageSessions.ui
-    NewTheme.ui
     Preferences/PreferencesDialog.ui
     Sessions/SessionDialog.ui
     Sessions/SessionPreview.ui
