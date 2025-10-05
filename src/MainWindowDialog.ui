@@ -58,6 +58,7 @@
     <addaction name="actionNew"/>
     <addaction name="menuRecentSessions"/>
     <addaction name="actionSave_Session"/>
+    <addaction name="actionSave_SessionAs"/>
     <addaction name="separator"/>
     <addaction name="separator"/>
     <addaction name="actionQuit"/>
@@ -98,7 +99,6 @@
    </attribute>
    <addaction name="actionOpen_Session"/>
    <addaction name="actionSave_Session"/>
-   <addaction name="actionSave_SessionAs"/>
    <addaction name="separator"/>
    <addaction name="actionConnect"/>
    <addaction name="actionDisconnect"/>
@@ -127,8 +127,8 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset theme="preferences-other">
-     <normaloff>.</normaloff>.</iconset>
+    <iconset>
+     <normaloff>Icons/settings.svg</normaloff>Icons/settings.svg</iconset>
    </property>
    <property name="text">
     <string>Preferences</string>
@@ -189,7 +189,7 @@
   </action>
   <action name="actionSave_SessionAs">
    <property name="icon">
-    <iconset resource="Q3270.qrc">
+    <iconset>
      <normaloff>:/Icons/saveas.svg</normaloff>:/Icons/saveas.svg</iconset>
    </property>
    <property name="text">

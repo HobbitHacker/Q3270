@@ -60,8 +60,8 @@ MainWindow::MainWindow(MainWindow::LaunchParms launchParms) : QMainWindow(nullpt
     connect(ui->actionSave_Session,              &QAction::triggered, this, &MainWindow::menuSaveSession);
     connect(ui->actionConnection_Information,    &QAction::triggered, this, &MainWindow::menuAboutConnection);
 
-    connect(&activeSettings, &ActiveSettings::keyboardThemeChanged, this, &MainWindow::keyboardChanged);
-    connect(&activeSettings, &ActiveSettings::colourThemeChanged,   this, &MainWindow::coloursChanged);
+    connect(&activeSettings, &ActiveSettings::keyboardThemeChanged, this, &MainWindow::activeKeyboardNameChanged);
+    connect(&activeSettings, &ActiveSettings::colourThemeChanged,   this, &MainWindow::activeColoursNameChanged);
 
     // Get Sessions from settings
     sessionStore.load();
@@ -70,10 +70,6 @@ MainWindow::MainWindow(MainWindow::LaunchParms launchParms) : QMainWindow(nullpt
 
     // Preferences dialog
     settings = new PreferencesDialog(codePage, activeSettings, keyboardStore, colourStore);
-
-    // When keyboard themes are changed via the Preferences dialog, update the runtime keyboard
-//    connect(settings, &PreferencesDialog::themesApplied, this, &MainWindow::keyboardChanged);
-//    connect(settings, &PreferencesDialogActiveSettings::keyboardThemeChanged, this, &MainWindow::keyboardChanged);
 
     // Change Connect menu entry when connected, or when user fills in hostname field in Settings
     connect(settings, &PreferencesDialog::connectValid, this, &MainWindow::enableConnectMenu);
@@ -88,8 +84,9 @@ MainWindow::MainWindow(MainWindow::LaunchParms launchParms) : QMainWindow(nullpt
     // Used for dynamically showing font changes when using the font selection dialog
     connect(settings, &PreferencesDialog::tempFontChange, terminal, &Terminal::setCurrentFont);
 
-    // Check if the user modified the active colour theme through the colour themes dialog
-    connect(colourTheme, &ColourTheme::themesApplied, this, &MainWindow::checkColourThemeChanged);
+    // Check if the user modified the active colour & keyboard themes through the theme dialogs
+    connect(keyboardTheme, &KeyboardThemeDialog::themesApplied, this, &MainWindow::checkKeyboardThemeModified);
+    connect(colourTheme, &ColourTheme::themesApplied, this, &MainWindow::checkColourThemeModified);
 
     // Enable/Disable menu entries if connected/disconnected
     connect(terminal, &Terminal::disconnected, this, &MainWindow::disableDisconnectMenu);
@@ -650,28 +647,33 @@ void MainWindow::resizeEvent(QResizeEvent *event)
     terminal->fit();
 }
 
-void MainWindow::keyboardChanged(const QString &name)
+void MainWindow::checkKeyboardThemeModified(const QString &name)
+{
+    // Update the keyboard map when the user changes the active one
+    if (activeSettings.getKeyboardThemeName() == name)
+        activeKeyboardNameChanged(name);
+}
+
+void MainWindow::activeKeyboardNameChanged(const QString &name)
 {
     // Update the keyboard
     KeyboardMap km = keyboardStore.getTheme(name);
-
     keyboard.setMap(km);
 }
 
-void MainWindow::coloursChanged(const QString &name)
+void MainWindow::checkColourThemeModified(const QString &name)
 {
-    // Update the keyboard
-    Colours cs = colourStore.getTheme(name);
+    // Update the colours when the user changes the active one
+    if (activeSettings.getColourThemeName() == name)
+        activeColoursNameChanged(name);
+}
 
+void MainWindow::activeColoursNameChanged(const QString &name)
+{
+    // Update the colours
+    Colours cs = colourStore.getTheme(name);
     terminal->setColourTheme(cs);
 }
-
-void MainWindow::checkColourThemeChanged(const QString &name)
-{
-    if (activeSettings.getColourThemeName() == name)
-        terminal->setColourTheme(colourStore.getTheme(name));
-}
-
 
 
 /*

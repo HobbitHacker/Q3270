@@ -104,9 +104,13 @@ class MainWindow : public QMainWindow
       void enableDisconnectMenu();
       void disableDisconnectMenu();
 
-      void keyboardChanged(const QString &name);
-      void coloursChanged(const QString &name);
-      void checkColourThemeChanged(const QString &name);
+      // Triggered when a new keyboard or colour theme is chosen
+      void activeKeyboardNameChanged(const QString &name);
+      void activeColoursNameChanged(const QString &name);
+
+      // Triggered when the user modifies a keyboard or colour theme
+      void checkKeyboardThemeModified(const QString &name);
+      void checkColourThemeModified(const QString &name);
 
   private:
 
