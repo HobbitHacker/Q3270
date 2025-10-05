@@ -99,3 +99,16 @@ _DartConfiguration.tcl
 
 # Ignore all build directories
 /build*/
+
+# Ignore Debian packaging
+debian/files
+debian/*.debhelper.log
+debian/*.substvars
+debian/q3270/
+debian/.debhelper/
+debian/tmp/
+*.deb
+*.dsc
+*.build
+*.buildinfo
+*.changes
