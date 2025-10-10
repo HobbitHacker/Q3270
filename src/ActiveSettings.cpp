@@ -35,7 +35,7 @@ ActiveSettings::ActiveSettings()
     stretchScreen = true;
     backspaceStop = true;
 
-    termFont = QFont("ibm3270", 8);
+    termFont = QFont("Courier", 8);
     
     termModel = Q3270_TERMINAL_MODEL2;
     termX = 80;
@@ -47,6 +47,10 @@ ActiveSettings::ActiveSettings()
 
     sessionName = "";
     description = "";
+
+    hostName = "";
+    hostLU   = "";
+    hostPort = 23;
 }
 
 /**

@@ -12,12 +12,18 @@
 
 QString HostAddressUtils::format(const QString &hostName, int hostPort, const QString &hostLU) {
     QString address;
+
     if (!hostLU.isEmpty())
         address.append(hostLU).append('@');
+
     if (!hostName.isEmpty())
         address.append(hostName);
+    else
+        return "";
+
     if (hostPort != 0)
         address.append(':').append(QString::number(hostPort));
+
     return address;
 }
 
