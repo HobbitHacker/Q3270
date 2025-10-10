@@ -116,6 +116,7 @@ class MainWindow : public QMainWindow
 
       void populateMRU();
       void updateMRUList();
+      void storeGeometry();
 
       ActiveSettings activeSettings;
 

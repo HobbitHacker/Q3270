@@ -98,6 +98,10 @@ MainWindow::MainWindow(MainWindow::LaunchParms launchParms) : QMainWindow(nullpt
     // Set defaults for Connect options
     ui->actionDisconnect->setDisabled(true);
 
+    QSettings savedSettings(Q3270_ORG, Q3270_APP);
+
+    restoreGeometry(savedSettings.value("MainWindowGeometry").toByteArray());
+
 /*
     // If a session name was passed to the MainWindow, restore the window size/position
     // and open it
@@ -576,6 +580,7 @@ void MainWindow::updateMRUList()
  */
 void MainWindow::menuQuit()
 {
+    storeGeometry();
     QApplication::quit();
 }
 
@@ -587,20 +592,10 @@ void MainWindow::menuQuit()
  */
 void MainWindow::closeEvent(QCloseEvent *event)
 {
+    storeGeometry();
 
 #if 0
-
-// TODO: Deliberately disabled for later when address process is sorted.
-    QSettings applicationSettings(Q3270_ORG, Q3270_APP);
-
-    applicationSettings.setValue("mainwindowgeometry", saveGeometry());
-    applicationSettings.setValue("mainwindowstate", saveState());
-
     applicationSettings.setValue("restoresessions", true);
-
-    applicationSettings.beginGroup("sessions");
-    applicationSettings.remove("");
-    applicationSettings.endGroup();
 
     applicationSettings.beginWriteArray("sessions");
 
@@ -620,7 +615,19 @@ void MainWindow::closeEvent(QCloseEvent *event)
 
     event->accept();
 #endif
+}
 
+/**
+ * @brief    MainWindow::storeGeometry - store the window size and location
+ *
+ * @details  Called when the application is closed to store the window size and position
+ */
+void MainWindow::storeGeometry()
+{
+    QSettings applicationSettings(Q3270_ORG, Q3270_APP);
+
+    applicationSettings.setValue("MainWindowGeometry", saveGeometry());
+    applicationSettings.setValue("MainwindowState", saveState());
 }
 
 /**
