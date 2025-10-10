@@ -7,6 +7,7 @@
 - Reinstate auto-start sessions
 - Reinstate duplicate window start
 - Remaining 3270 orders
+- Per-session window geometry option
 
 ### Medium-term ###
 

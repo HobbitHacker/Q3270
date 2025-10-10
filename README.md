@@ -14,9 +14,13 @@ things like MVS 3.8j under Hercules.
 
 I've used it for MVS 3.8j and VM/370, and for IBM's zXplore at 204.90.115.200:623.
 
+Documentation is unfortunately sparse presently. 
+
 ---
 
 ## Features
+- Standard 3270 model sizes
+- IBM-DYNAMIC user-selectable screen size
 - Keyboard mapping dialog
 - Colour mapping dialog
 - Session management (save, load, auto‑start lists)
@@ -29,12 +33,12 @@ I've used it for MVS 3.8j and VM/370, and for IBM's zXplore at 204.90.115.200:62
 
 ### Prerequisites
 - **Qt**: 5.15 (baseline, known‑good)  
-  Qt 6.x may work, but is currently experimental.  
-- **C++17** compiler (g++, clang, or MSVC)  
-- **qmake** (3.1 used most recently)
+- Qt 6.x may work, but is currently experimental.  
+- **g++** C++ compiler
+- **CMake**
 - **QtSvg** module (required for SVG rendering)
 
-### Linux Dependencies
+### Dependencies
 
 On Linux, install Qt development libraries and build tools via your package manager.  
 For example:
@@ -56,10 +60,22 @@ For example:
 
 `cd Q3270`
 
-`qmake`
+`cmake .`
 
 `make`
 
 This will build a Q3270 executable, which you can then run with:
 
 `./Q3270`
+
+## Packages
+
+Unstable testing packages may be found under
+
+https://github.com/HobbitHacker/Q3270/actions
+
+for a given distribution. 
+
+## Backlog
+
+See BACKLOG.md for a list of things still to be done.
