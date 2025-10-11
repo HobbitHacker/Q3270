@@ -79,9 +79,16 @@
     <addaction name="actionKeyboardThemes"/>
     <addaction name="actionColourThemes"/>
    </widget>
+   <widget class="QMenu" name="menuView">
+    <property name="title">
+     <string>View</string>
+    </property>
+    <addaction name="actionToolbar"/>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuConnect"/>
    <addaction name="menuManage"/>
+   <addaction name="menuView"/>
    <addaction name="menuHelp"/>
   </widget>
   <widget class="QToolBar" name="toolBar">
@@ -242,6 +249,17 @@
    </property>
    <property name="text">
     <string>Auto Start Sessions...</string>
+   </property>
+  </action>
+  <action name="actionToolbar">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Show Toolbar</string>
+   </property>
+   <property name="toolTip">
+    <string>Toolbar visibility</string>
    </property>
   </action>
  </widget>

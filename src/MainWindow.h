@@ -93,6 +93,9 @@ class MainWindow : public QMainWindow
       void menuKeyboardTheme();
       void menuColourTheme();
 
+      // View menu
+      void menuToolBar(const bool visible);
+
       // The Help menu
       void menuAbout();
       void menuAboutConnection();
@@ -118,7 +121,7 @@ class MainWindow : public QMainWindow
 
       void populateMRU();
       void updateMRUList();
-      void storeGeometry();
+      void storeAppWideSettings();
 
       ActiveSettings activeSettings;
 

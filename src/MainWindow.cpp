@@ -59,6 +59,7 @@ MainWindow::MainWindow(MainWindow::LaunchParms launchParms) : QMainWindow(nullpt
     connect(ui->actionManage_Auto_Sart_Sessions, &QAction::triggered, this, &MainWindow::menuManageAutostartSessions);
     connect(ui->actionSave_Session,              &QAction::triggered, this, &MainWindow::menuSaveSession);
     connect(ui->actionConnection_Information,    &QAction::triggered, this, &MainWindow::menuAboutConnection);
+    connect(ui->actionToolbar,                   &QAction::triggered, this, &MainWindow::menuToolBar);
 
     connect(&activeSettings, &ActiveSettings::keyboardThemeChanged, this, &MainWindow::activeKeyboardNameChanged);
     connect(&activeSettings, &ActiveSettings::colourThemeChanged,   this, &MainWindow::activeColoursNameChanged);
@@ -101,6 +102,9 @@ MainWindow::MainWindow(MainWindow::LaunchParms launchParms) : QMainWindow(nullpt
     QSettings savedSettings(Q3270_ORG, Q3270_APP);
 
     restoreGeometry(savedSettings.value("MainWindowGeometry").toByteArray());
+    menuToolBar(savedSettings.value("ShowToolbar", true).toBool());
+
+
 
 /*
     // If a session name was passed to the MainWindow, restore the window size/position
@@ -567,7 +571,7 @@ void MainWindow::updateMRUList()
  */
 void MainWindow::menuQuit()
 {
-    storeGeometry();
+    storeAppWideSettings();
     QApplication::quit();
 }
 
@@ -579,7 +583,7 @@ void MainWindow::menuQuit()
  */
 void MainWindow::closeEvent(QCloseEvent *event)
 {
-    storeGeometry();
+    storeAppWideSettings();
 
 #if 0
     applicationSettings.setValue("restoresessions", true);
@@ -605,16 +609,18 @@ void MainWindow::closeEvent(QCloseEvent *event)
 }
 
 /**
- * @brief    MainWindow::storeGeometry - store the window size and location
+ * @brief    MainWindow::storeAppWideSettings - store settings that are application wide
  *
- * @details  Called when the application is closed to store the window size and position
+ * @details  Called when the application is closed to store settings that are common across every
+ *           session.
  */
-void MainWindow::storeGeometry()
+void MainWindow::storeAppWideSettings()
 {
     QSettings applicationSettings(Q3270_ORG, Q3270_APP);
 
     applicationSettings.setValue("MainWindowGeometry", saveGeometry());
     applicationSettings.setValue("MainwindowState", saveState());
+    applicationSettings.setValue("ShowToolbar", ui->toolBar->isVisible());
 }
 
 /**
@@ -687,6 +693,16 @@ void MainWindow::checkHostNameChange(const QString &hostName, const int hostPort
     ui->actionSave_SessionAs->setDisabled(valid);
 
     activeSettings.setSessionName("");
+}
+
+/**
+ * @brief   MainWindow::menuToolBar - called when the user selects View->Show(Hide) Toolbar
+ * @param   visible - whether the tool bar is visible
+ */
+void MainWindow::menuToolBar(const bool visible)
+{
+    ui->toolBar->setVisible(visible);
+    ui->actionToolbar->setChecked(visible);
 }
 
 /*
