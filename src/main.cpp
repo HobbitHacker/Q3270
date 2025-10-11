@@ -11,12 +11,23 @@
 #include "MainWindow.h"
 
 #include <QApplication>
+#include <QCoreApplication>
 
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
     a.setWindowIcon(QIcon(":/Icons/q3270.svg"));
-    MainWindow w;
+
+    QStringList parms = QCoreApplication::arguments();
+
+    MainWindow::LaunchParms lp;
+    lp.session = "";
+
+    if (parms.size() > 1)
+        lp.session = parms.at(1);
+
+    MainWindow w(lp);
+
     w.show();
     return a.exec();
 }

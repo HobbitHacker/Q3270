@@ -105,29 +105,27 @@ MainWindow::MainWindow(MainWindow::LaunchParms launchParms) : QMainWindow(nullpt
     menuToolBar(savedSettings.value("ShowToolbar", true).toBool());
 
 
-
-/*
-    // If a session name was passed to the MainWindow, restore the window size/position
-    // and open it
+    // If a something was passed to the MainWindow, try to open it
     if (!launchParms.session.isEmpty())
     {
-        //TODO: Decide if Window Geometry is just going to mean that a session always has the same pos etc on screen
-        //TODO: Use QWidget.resize and QWidget.move instead. See QSettings doc
-        restoreGeometry(savedSettings.value(launchParms.session + "/WindowGeometry").toByteArray());
-        //sm->openSession(terminal, QUrl::fromPercentEncoding(launchParms.session.toLatin1()));
-
-        // Enable Save Session menu item
-        ui->actionSave_Session->setEnabled(true);
-
-        // Disable/Enable Reconnect etc menu entries
-        ui->actionDisconnect->setEnabled(true);
+        if (sessionStore.listSessionNames().contains(launchParms.session))
+        {
+            Session s = sessionStore.getSession(launchParms.session);
+            s.toActiveSettings(activeSettings);
+        }
+        else
+        {
+            QString hn;
+            int     p;
+            QString lu;
+            HostAddressUtils::parse(launchParms.session, hn, p, lu);
+            activeSettings.applyUserHostChange(hn, p, lu);
+        }
+        terminal->connectSession();
+        updateMRUList();
     }
-    else
-    {
-        // This is not a named session, so disable Save Session menu item
-        ui->actionSave_Session->setDisabled(true);
-    }
 
+    /*
     // If there's none but this window, it must be initial start
     if (launchParms.mw == nullptr)
     {
