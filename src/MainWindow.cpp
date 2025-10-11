@@ -71,8 +71,8 @@ MainWindow::MainWindow(MainWindow::LaunchParms launchParms) : QMainWindow(nullpt
     // Preferences dialog
     settings = new PreferencesDialog(codePage, activeSettings, keyboardStore, colourStore);
 
-    // Change Connect menu entry when connected, or when user fills in hostname field in Settings
-    connect(settings, &PreferencesDialog::connectValid, this, &MainWindow::enableConnectMenu);
+    // Enable/Disable Save Session menu entry if a session was loaded and then modified
+    connect(&activeSettings, &ActiveSettings::hostChanged, this, &MainWindow::checkHostNameChange);
 
     // Construct the keyboard and colour mapping dialogs
     keyboardTheme = new KeyboardThemeDialog(keyboardStore);
@@ -292,9 +292,6 @@ void MainWindow::mruConnect()
 
         // Not a named session, so can't save it as one (use Save Session As.. instead)
         ui->actionSave_Session->setDisabled(true);
-
-        // Update recently used list
-        updateMRUList();
     }
     else
     {
@@ -309,6 +306,10 @@ void MainWindow::mruConnect()
         // It's a named session, so can save it
         ui->actionSave_Session->setEnabled(true);
     }
+
+    // Update recently used list
+    updateMRUList();
+
 
 }
 
@@ -449,7 +450,6 @@ void MainWindow::menuAboutConnection()
     certDetails.exec();
 }
 
-
 /**
  * @brief   MainWindow::enableConnectMenu - enable/disable the Connect menu
  * @param   state - true to enable, false to disable
@@ -507,16 +507,8 @@ void MainWindow::populateMRU()
         // Store the entry
         mruList.append(thisEntry);
 
-        // Insert an entry MRU menu list with a number
-        // If it starts with Session, use as is, otherwise, it's an address, so add 'Host' to the menu entry
-        if (thisEntry.startsWith("Session"))
-        {
-            thisEntry = QString::number(i + 1) + ". " + thisEntry;
-        }
-        else
-        {
-            thisEntry = QString::number(i + 1) + ". Host " + thisEntry;
-        }
+        thisEntry = QString::number(i + 1) + ". " + thisEntry;
+
         ui->menuRecentSessions->addAction(thisEntry, this, &MainWindow::mruConnect);
     }
 
@@ -554,11 +546,6 @@ void MainWindow::updateMRUList()
     for(int i = 0; i < mruList.size() && i < maxMruCount; i++)
     {
         QString entry = QString::number(i + 1) + ". ";
-        // If it's not a session entry, add 'Host' to the entry
-        if (!mruList.at(i).startsWith("Session "))
-        {
-            entry += "Host ";
-        }
         ui->menuRecentSessions->addAction(entry + mruList.at(i), this, [this]() { mruConnect(); } );
     }
 
@@ -682,6 +669,25 @@ void MainWindow::activeColoursNameChanged(const QString &name)
     terminal->setColourTheme(cs);
 }
 
+/**
+ * @brief   MainWindow::checkHostNameChange - enable/disable save session if the host name is valid
+ * @param   hostName - the new user-specified host name
+ * @param   hostPort - the new user-specified port
+ * @param   hostLU   - the new user-specified LU name
+ *
+ * @details Called when the user modifies the host address manually. This prevents loading a session and
+ *          changing the host address, and then inadvertently overwriting the saved session. The saved
+ *          session can be overwritten by explicitly using 'Save as' if required.
+ */
+void MainWindow::checkHostNameChange(const QString &hostName, const int hostPort, const QString &hostLu)
+{
+    bool valid = hostName.isEmpty();
+
+    ui->actionSave_Session->setEnabled(false);
+    ui->actionSave_SessionAs->setDisabled(valid);
+
+    activeSettings.setSessionName("");
+}
 
 /*
 void MainWindow::subWindowClosed(QObject *closedWindow)

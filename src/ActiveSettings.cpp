@@ -365,18 +365,28 @@ void ActiveSettings::setColourTheme(const QString &colourthemeName)
  * @param   hostPort
  * @param   hostLU
  *
- * @details Set the host address, port and LU name.
+ * @details Set the host address, port and LU name. Called when a session is loaded, and
+ *          when the user sets the host address manually, via
  */
 void ActiveSettings::setHostAddress(const QString &hostName, int hostPort, const QString &hostLU)
 {
-    if (hostName != this->hostName || hostPort != this->hostPort || hostLU != this->hostLU)
-    {
-        emit hostChanged(hostName, hostPort, hostLU);
-    }
-
     this->hostName = hostName;
     this->hostPort = hostPort;
     this->hostLU = hostLU;
+}
+
+/**
+ * @brief   ActiveSettings::applyUserHostChange
+ * @param   hostName - new host name from Preferences dialog
+ * @param   hostPort - new port from Preferences Dialog
+ * @param   hostLU - new LU name from Preferences Dialog
+ */
+void ActiveSettings::applyUserHostChange(const QString &hostName, int hostPort, const QString &hostLU)
+{
+    if (hostName != this->hostName || hostPort != this->hostPort || hostLU != this->hostLU) {
+        emit hostChanged(hostName, hostPort, hostLU);
+    }
+    setHostAddress(hostName, hostPort, hostLU);
 }
 
 /**

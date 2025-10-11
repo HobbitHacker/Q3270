@@ -262,7 +262,7 @@ void PreferencesDialog::accept()
     activeSettings.setCodePage(ui->CodePages->currentText());
     activeSettings.setKeyboardTheme(ui->keyboardTheme->currentText());
     activeSettings.setColourTheme(ui->colourTheme->currentText());
-    activeSettings.setHostAddress(ui->hostName->text(), ui->hostPort->text().toInt(), ui->hostLU->text());
+    activeSettings.applyUserHostChange(ui->hostName->text(), ui->hostPort->text().toInt(), ui->hostLU->text());
     activeSettings.setStretchScreen(ui->stretch->QAbstractButton::isChecked());
     activeSettings.setSecureMode(ui->secureConnection->isChecked());
     activeSettings.setVerifyCerts(ui->verifyCerts->isChecked());

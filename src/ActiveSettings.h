@@ -30,6 +30,7 @@ class ActiveSettings : public QObject
         QString getHostAddress() const;
         void setHostAddress(const QString &hostName, int port, const QString &hostLU);
         void setHostAddress(const QString &address);
+        void applyUserHostChange(const QString &hostName, int port, const QString &hostLU);
 
         bool getRulerState() const                       { return rulerState; }
         void setRulerState(bool rulerOn);
@@ -105,7 +106,7 @@ class ActiveSettings : public QObject
         void keyboardThemeChanged(const QString &keyboardThemeName);
         void colourThemeChanged(QString colourThemeName);
 
-        void hostChanged(QString hostName, int hostPport, QString hostLu);
+        void hostChanged(const QString &hostName, const int hostPort, const QString &hostLu);
 
         void stretchScreenChanged(bool stretchScreen);
         void backspacesStopChanged(bool backspaceStop);

@@ -97,7 +97,7 @@ class MainWindow : public QMainWindow
       void menuAbout();
       void menuAboutConnection();
 
-      // Triggered by Terminal on connection state, and Settings if Hostname is empty
+      // Triggered by Terminal on connection state
       void enableConnectMenu(bool state);
 
       // Triggered by Terminal on connection/disconnection
@@ -111,6 +111,8 @@ class MainWindow : public QMainWindow
       // Triggered when the user modifies a keyboard or colour theme
       void checkKeyboardThemeModified(const QString &name);
       void checkColourThemeModified(const QString &name);
+
+      void checkHostNameChange(const QString &hostName, const int port, const QString &hostLU);
 
   private:
 
