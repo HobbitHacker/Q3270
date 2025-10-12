@@ -102,6 +102,8 @@ MainWindow::MainWindow(MainWindow::LaunchParms launchParms) : QMainWindow(nullpt
     QSettings savedSettings(Q3270_ORG, Q3270_APP);
 
     restoreGeometry(savedSettings.value("MainWindowGeometry").toByteArray());
+    restoreState(savedSettings.value("MainWindowState").toByteArray());
+
     menuToolBar(savedSettings.value("ShowToolbar", true).toBool());
 
 
@@ -617,7 +619,7 @@ void MainWindow::storeAppWideSettings()
     QSettings applicationSettings(Q3270_ORG, Q3270_APP);
 
     applicationSettings.setValue("MainWindowGeometry", saveGeometry());
-    applicationSettings.setValue("MainwindowState", saveState());
+    applicationSettings.setValue("MainWindowState", saveState());
     applicationSettings.setValue("ShowToolbar", ui->toolBar->isVisible());
 }
 

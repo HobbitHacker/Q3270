@@ -28,6 +28,9 @@ SessionDialogBase::SessionDialogBase(SessionStore &store, QWidget *parent)
     connectSignals();
 
     populateSessionTable();
+
+    ui->sessionTable->clearSelection();
+    ui->sessionTable->setCurrentIndex(QModelIndex());
 }
 
 SessionDialogBase::~SessionDialogBase()

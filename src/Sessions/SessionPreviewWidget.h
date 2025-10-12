@@ -14,6 +14,7 @@
 #include <QWidget>
 #include "ui_SessionPreview.h"
 #include "Models/Session.h"
+#include <QIcon>
 
 class SessionPreviewWidget : public QWidget, private Ui::SessionPreviewWidget
 {
@@ -22,5 +23,13 @@ public:
     explicit SessionPreviewWidget(QWidget *parent = nullptr);
     void setSession(const Session &session);
     void clear();
+
+private:
+
+    QIcon check;
+    QIcon uncheck;
+
+    QPixmap checked;
+    QPixmap unchecked;
 };
 #endif // SESSIONPREVIEWWIDGET_H

@@ -23,12 +23,13 @@ SaveSessionDialog::SaveSessionDialog(SessionStore &store, ActiveSettings &active
     setWindowTitle("Save Session");
     setOKButtonText("Save");
 
+    // Delete not available from 'Save Session as'
+    ui->deleteButton->setVisible(false);
+
     ui->sessionNameEdit->setText(activeSettings.getSessionName());
     ui->sessionDescEdit->setText(activeSettings.getDescription());
 
     ui->previewWidget->setSession(Session::fromActiveSettings(activeSettings));
-
-    //enableOKButton(false);
 
     connect(ui->buttonBox->button(QDialogButtonBox::Ok), &QPushButton::clicked, this, &SaveSessionDialog::onSaveClicked);
     connect(ui->sessionNameEdit, &QLineEdit::textChanged, this, &SaveSessionDialog::saveSessionNameEdited);
@@ -45,6 +46,7 @@ void SaveSessionDialog::onSaveClicked()
     s.name = ui->sessionNameEdit->text().trimmed();
     s.description = ui->sessionDescEdit->text().trimmed();
 
+    // should be covered by the checks on editing the name
     if (s.name.isEmpty()) {
         QMessageBox::warning(this, "Missing Name", "Please enter a session name.");
         return;

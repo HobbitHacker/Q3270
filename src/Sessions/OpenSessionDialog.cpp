@@ -25,10 +25,13 @@ OpenSessionDialog::OpenSessionDialog(SessionStore &store, ActiveSettings &active
 {
     setWindowTitle("Open Session");
     setOKButtonText("Open");
+
     enableOKButton(false);
 
+    // Delete is not available from 'Open Session'
+    ui->deleteButton->setVisible(false);
+
     connect(ui->buttonBox->button(QDialogButtonBox::Ok), &QPushButton::clicked, this, &OpenSessionDialog::onOpenClicked);
-//    connect(ui->sessionNameEdit, &QLineEdit::textChanged, this, &SaveSessionDialog::saveSessionNameEdited);
 }
 
 void OpenSessionDialog::onOpenClicked()
@@ -39,14 +42,5 @@ void OpenSessionDialog::onOpenClicked()
 
     s.toActiveSettings(activeSettings);
 
-    // Name and Description come from the dialog box
-    // s.name = ui->sessionNameEdit->text().trimmed();
-    // s.description = ui->sessionDescEdit->text().trimmed();
-
-//    if (!store.loadSession(nameItem->text())) {
-//        QMessageBox::critical(this, "Opwn Failed", "Could not open the session.");
- //       return;
- //   }
-
-    accept(); // Close dialog with success
+    accept();
 }

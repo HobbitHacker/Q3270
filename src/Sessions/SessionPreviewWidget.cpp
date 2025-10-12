@@ -10,15 +10,25 @@
 
 #include "SessionPreviewWidget.h"
 #include "HostAddressUtils.h"
+#include <QStyleOptionButton>
 
 SessionPreviewWidget::SessionPreviewWidget(QWidget *parent)
-    : QWidget(parent)
+    : QWidget(parent), check(":/Icons/check-square.svg"), uncheck(":/Icons/x-square.svg")
 {
     setupUi(this);
     clear();
 
-    previewSecure->setAttribute(Qt::WA_TransparentForMouseEvents, true);
-    previewVerifyCert->setAttribute(Qt::WA_TransparentForMouseEvents, true);
+    QStyleOptionButton opt;
+    QSize indicatorSize = QApplication::style()->subElementRect(QStyle::SE_CheckBoxIndicator, &opt).size();
+
+    checked = check.pixmap(indicatorSize);
+    unchecked = uncheck.pixmap(indicatorSize);
+
+    previewSecure->setPixmap(unchecked);
+    previewVerifyCert->setPixmap(unchecked);
+
+    previewSecure->setFixedSize(indicatorSize);
+    previewVerifyCert->setFixedSize(indicatorSize);
 }
 
 void SessionPreviewWidget::setSession(const Session &session)
@@ -27,8 +37,8 @@ void SessionPreviewWidget::setSession(const Session &session)
 
     previewAddress->setText(HostAddressUtils::format(session.hostName, session.hostPort, session.hostLU));
     previewModel->setText(session.terminalModel);
-    previewSecure->setChecked(session.secureConnection);
-    previewVerifyCert->setChecked(session.verifyCertificate);
+    previewSecure->setPixmap(session.secureConnection ? checked : unchecked);
+    previewVerifyCert->setPixmap(session.verifyCertificate ? checked : unchecked);
 }
 
 void SessionPreviewWidget::clear()
@@ -37,6 +47,6 @@ void SessionPreviewWidget::clear()
 
     previewAddress->clear();
     previewModel->clear();
-    previewSecure->setChecked(false);
-    previewVerifyCert->setChecked(false);
+    previewSecure->setPixmap(unchecked);
+    previewVerifyCert->setPixmap(unchecked);
 }

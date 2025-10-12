@@ -57,6 +57,7 @@
     </widget>
     <addaction name="actionNew"/>
     <addaction name="menuRecentSessions"/>
+    <addaction name="actionOpen_Session"/>
     <addaction name="actionSave_Session"/>
     <addaction name="actionSave_SessionAs"/>
     <addaction name="separator"/>
