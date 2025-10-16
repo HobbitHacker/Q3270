@@ -11,8 +11,6 @@
 #ifndef DISPLAYSCREEN_H
 #define DISPLAYSCREEN_H
 
-#include <stdlib.h>
-#include <string.h>
 #include <QGraphicsView>
 #include <QGraphicsSceneMouseEvent>
 #include <QString>
