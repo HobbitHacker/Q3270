@@ -31,7 +31,7 @@
  *          is a struct that contains an existing MainWindow or null if this is the first one,
  *          and any session name to be opened.
  */
-MainWindow::MainWindow(MainWindow::LaunchParms launchParms) : QMainWindow(nullptr),
+MainWindow::MainWindow(LaunchParms launchParms) : QMainWindow(launchParms.parent),
     sessionStore(),
     keyboardStore(),
     keyboardTheme(nullptr),
@@ -126,12 +126,10 @@ MainWindow::MainWindow(MainWindow::LaunchParms launchParms) : QMainWindow(nullpt
         terminal->connectSession();
         updateMRUList();
     }
-
-    /*
-    // If there's none but this window, it must be initial start
-    if (launchParms.mw == nullptr)
+    else if (launchParms.parent == nullptr)
     {
-        int autoStart = savedSettings.beginReadArray("AutoStart");
+        // If there's none but this window, it must be initial start
+        int autoStart = savedSettings.beginReadArray("AutoStartList");
         for(int i = 0; i < autoStart; i++)
         {
             savedSettings.setArrayIndex(i);
@@ -140,24 +138,18 @@ MainWindow::MainWindow(MainWindow::LaunchParms launchParms) : QMainWindow(nullpt
             // open the named session.
             if (i > 0)
             {
-                MainWindow *newWindow = new MainWindow({ this, savedSettings.value("Session").toString() } );
+                MainWindow *newWindow = new MainWindow(LaunchParms { this, savedSettings.value("Session").toString() });
                 newWindow->show();
             }
             else
             {
-                //TODO check if we actually need the fromPercentEncoding
-                // sm->openSession(terminal, QUrl::fromPercentEncoding(savedSettings.value("Session").toString().toLatin1()));
-
-                // Enable Save Session menu entry as it's a named session
-                ui->actionSave_Session->setEnabled(true);
-
-                // Disable/Enable Reconnect etc menu entries
-                ui->actionDisconnect->setEnabled(true);
+                Session s = sessionStore.getSession(savedSettings.value("Session").toString());
+                s.toActiveSettings(activeSettings);
+                terminal->connectSession();
             }
         }
-
         savedSettings.endArray();
-    } */
+    }
 }
 
 /**
@@ -167,7 +159,7 @@ MainWindow::MainWindow(MainWindow::LaunchParms launchParms) : QMainWindow(nullpt
  */
 void MainWindow::menuNew()
 {
-    MainWindow *newWindow = new MainWindow( { this, "" });
+    MainWindow *newWindow = new MainWindow();
     newWindow->show();
 }
 
@@ -178,7 +170,7 @@ void MainWindow::menuNew()
  */
 void MainWindow::menuDuplicate()
 {
-    MainWindow *newWindow = new MainWindow({ this, activeSettings.getSessionName() });
+    MainWindow *newWindow = new MainWindow(LaunchParms { this, activeSettings.getSessionName() });
     newWindow->show();
 }
 
@@ -247,9 +239,7 @@ void MainWindow::menuManageSessions()
 void MainWindow::menuManageAutostartSessions()
 {
     // Manage Sessions Dialog
-
-    SessionStore s;
-    ManageAutoStartDialog dlg(s);
+    ManageAutoStartDialog dlg(sessionStore);
     dlg.exec();
 }
 

@@ -90,6 +90,9 @@ set(RESOURCES
     ${CMAKE_SOURCE_DIR}/resources/Q3270.qrc
 )
 
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 if(Qt6_FOUND)
     qt_add_executable(Q3270
         ${SOURCES}

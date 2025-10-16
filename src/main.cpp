@@ -20,7 +20,7 @@ int main(int argc, char *argv[])
 
     QStringList parms = QCoreApplication::arguments();
 
-    MainWindow::LaunchParms lp;
+    LaunchParms lp;
     lp.session = "";
 
     if (parms.size() > 1)

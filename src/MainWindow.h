@@ -28,6 +28,7 @@
 #include <QSettings>
 #include <QWidgetAction>
 #include <QLabel>
+#include <QString>
 
 #include "Preferences/PreferencesDialog.h"
 #include "Terminal.h"
@@ -50,6 +51,12 @@ QT_END_NAMESPACE
 
 #define MRU_COUNT 10
 
+struct LaunchParms
+{
+        QWidget *parent = nullptr;
+        QString session = {} ;
+};
+
 class MainWindow : public QMainWindow
 {
 
@@ -57,12 +64,7 @@ class MainWindow : public QMainWindow
   
   public:
 
-      struct LaunchParms {
-          MainWindow *mw;
-          QString session;
-      };
-
-      MainWindow(MainWindow::LaunchParms = { nullptr, ""} );
+      explicit MainWindow(LaunchParms lp = {});
       ~MainWindow();
 
   public slots:
