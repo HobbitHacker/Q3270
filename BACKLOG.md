@@ -1,10 +1,9 @@
-# 3270 Emulator Backlog
+# Q3270 Emulator Backlog
 
 --- 
 
 ### Short-term ###
 
-- Reinstate auto-start sessions
 - Reinstate duplicate window start
 - Remaining 3270 orders
 - Per-session window geometry option
@@ -25,3 +24,7 @@
 - Hardware partitions
 - Graphics (eg GDDM)
 - Triple-plane character sets
+
+### Completed ###
+
+- Reinstate auto-start sessions

@@ -33,7 +33,7 @@ Documentation is unfortunately sparse presently.
 
 ### Prerequisites
 - **Qt**: 5.15 (baseline, known‑good)  
-- Qt 6.x may work, but is currently experimental.  
+- Qt 6.x should work, but is currently experimental.  
 - **g++** C++ compiler
 - **CMake**
 - **QtSvg** module (required for SVG rendering)
@@ -41,7 +41,7 @@ Documentation is unfortunately sparse presently.
 ### Dependencies
 
 On Linux, install Qt development libraries and build tools via your package manager.  
-For example:
+For example (these package names may be incorrect, check your distro) - :
 
 - Ubuntu/Debian:
   `sudo apt install build-essential qtbase5-dev qttools5-dev-tools libqt5svg5-dev`
