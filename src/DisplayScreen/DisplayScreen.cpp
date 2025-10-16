@@ -10,6 +10,7 @@
 
 #include <QGuiApplication>
 #include <QClipboard>
+#include <QGraphicsRectItem>
 
 #include <arpa/telnet.h>
 
