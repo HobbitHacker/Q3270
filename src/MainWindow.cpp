@@ -80,7 +80,7 @@ MainWindow::MainWindow(LaunchParms launchParms) : QMainWindow(launchParms.parent
     colourTheme = new ColourTheme(colourStore);
 
     // Construct the 3270 Terminal
-    terminal = new Terminal(ui->terminalLayout, activeSettings, codePage, keyboard, Colours::getFactoryTheme());
+    terminal = new Terminal(ui->screenView, activeSettings, codePage, keyboard, Colours::getFactoryTheme());
 
     // Used for dynamically showing font changes when using the font selection dialog
     connect(settings, &PreferencesDialog::tempFontChange, terminal, &Terminal::setCurrentFont);

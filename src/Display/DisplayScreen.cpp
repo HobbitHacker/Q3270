@@ -11,6 +11,7 @@
 #include <QGuiApplication>
 #include <QClipboard>
 #include <QGraphicsRectItem>
+#include <QRegion>
 
 #include <arpa/telnet.h>
 
@@ -23,30 +24,26 @@
  * @param   screen_y - the height of the screen
  * @param   cp       - the codepage being used
  * @param   palette  - the colour theme being used
- * @param   scene    - the parent scene to which this belongs to
  * 
  * @details DisplayScreen manages the 3270 display matrix. It is responsible for placing characters on
  *          the screen and for managing fields, graphic escape, attributes and so on. 
  *          
- *          The screen is defined as a 640x480 QGraphicsRectItem, inside of which is each character, screen_x
- *          by screen_y dimensions. 640x480 was chosen as a reasonable size (3270 screens had a ratio of 4:3)
- *          and which could be automatically scaled by Qt as required. The size of each cell is calculated
- *          as a part of the 640x480 size. 
+ *          The screen is defined as a width x height area. Each cell within that area is CELL_WIDTH by
+ *          CELL_HEIGHT. This is a 4:3 ration akin to the original 3270 screens; scaled by Qt as required.
  *          
- *          DisplayScreen handles the crosshairs (the ruler, which tracks where the cursor is), the
- *          status bar, which shows the cursor position and the insert mode, along with X System.
- *          
- *          It also manages the rubberband for selecting, copying and pasting sections of the screen. 
+ *          DisplayScreen also handles the crosshairs (the ruler, which tracks where the cursor is), and
+ *          the rubberband for selecting, copying and pasting sections of the screen.
  */
-DisplayScreen::DisplayScreen(int screen_x, int screen_y, CodePage &cp, const Colours *palette, QGraphicsScene *scene) : cp(cp), palette(palette), screen_x(screen_x), screen_y(screen_y)
+DisplayScreen::DisplayScreen(int screen_x, int screen_y, CodePage &cp, const Colours *palette)
+    : cp(cp)
+    ,  palette(palette)
+    ,  screen_x(screen_x)
+    ,  screen_y(screen_y)
 {
-
-    // 3270 screens are (were) 4:3 ratio, so use a reasonable size that Qt can scale.
-    this->setRect(0, 0, 640, 480);
     this->setPos(0, 0);
 
-    gridSize_X = (qreal) 640 / (qreal) screen_x;
-    gridSize_Y = (qreal) 480 / (qreal) screen_y;
+    gridSize_X = CELL_WIDTH;
+    gridSize_Y = CELL_HEIGHT;
 
     screenPos_max = screen_x * screen_y;
 
@@ -72,21 +69,7 @@ DisplayScreen::DisplayScreen(int screen_x, int screen_y, CodePage &cp, const Col
 
     // Build 3270 display matrix
 
-    cell.resize(screenPos_max);
-
-    for(int y = 0; y < screen_y; y++)
-    {
-        qreal y_pos = (qreal) y * gridSize_Y;
-
-        for(int x = 0; x < screen_x; x++)
-        {
-            int pos = x + (y * screen_x);
-
-            qreal x_pos = (qreal) x * gridSize_X;
-
-            cell.replace(pos, new Cell(pos, x_pos, y_pos, gridSize_X, gridSize_Y, cp, palette, this, scene));
-        }
-    }
+    cells.resize(screenPos_max);
 
     // Set default attributes for initial power-on
     clear();
@@ -94,15 +77,13 @@ DisplayScreen::DisplayScreen(int screen_x, int screen_y, CodePage &cp, const Col
     setFont(QFont("ibm3270", 14));
 
     // Set up cursor
-    cursor.setRect(cell.at(0)->rect());
+    cursor.setRect(0, 0, gridSize_X, gridSize_Y);
     cursor.setPos(0, 0);
     cursor.setBrush(Qt::lightGray);
     cursor.setOpacity(0.5);
     cursor.setPen(Qt::NoPen);
     cursor.setParentItem(this);
     cursor.setZValue(4);
-
-    scene->addItem(&cursor);
 
     // Set up crosshairs
     crosshair_X.setLine(0, 0, 0, screen_y * gridSize_Y);
@@ -119,101 +100,6 @@ DisplayScreen::DisplayScreen(int screen_x, int screen_y, CodePage &cp, const Col
 
     crosshair_X.hide();
     crosshair_Y.hide();
-
-    // Build status bar
-    statusBar.setLine(0, 0, screen_x * gridSize_X, 0);
-    statusBar.setPos(0, 481);
-    statusBar.setPen(QPen(QColor(0x80, 0x80, 0xFF), 0));
-
-    QFont statusBarText = QFont("ibm3270");
-    statusBarText.setPixelSize(8);
-
-    QFontMetrics fm = QFontMetrics(statusBarText);
-
-    // Connect status at 0% across
-    statusConnect.setText("4-A");
-    statusConnect.setPos(0, 481);
-    statusConnect.setFont(statusBarText);
-    statusConnect.setBrush(QBrush(QColor(0x80, 0x80, 0xFF)));
-
-    unlock = new ClickableSvgItem(":/Icons/unlock.svg");
-    unlock->setToolTip("Unsecured Connection");
-
-    lock = new ClickableSvgItem(":/Icons/lock.svg");
-    lock->setToolTip("Secured Connection, but certificate chain is not secure");
-
-    locktick = new ClickableSvgItem(":/Icons/lock-tick.svg");
-    locktick->setToolTip("Secured Connection");
-
-    // Connect status at 5% across
-    statusSecure.setPos(gridSize_X * (screen_x * .05), 482);
-    statusSecure.setRect(0, 0, 9, 9);
-
-    QRectF r = lock->boundingRect();
-
-    lock->setScale(8 / r.height());
-    unlock->setScale(8 / r.height());
-    locktick->setScale(8 / r.height());
-
-    unlock->setParentItem(&statusSecure);
-    lock->setParentItem(&statusSecure);
-    locktick->setParentItem(&statusSecure);
-
-    lock->hide();
-    locktick->hide();
-
-    // XSystem 20% across status bar
-    statusX = new LockIndicator();
-    statusX->setPos(gridSize_X * (screen_x * .20), 481);
-
-//    statusXSystem.setText("X System");
-//    statusXSystem.setPos(gridSize_X * (screen_x * .20), 481);
-//    statusXSystem.setFont(statusBarText);
-//    statusXSystem.setBrush(QBrush(QColor(0xFF, 0xFF, 0xFF)));
-
-    // X clock 20% across status bar
-//    QGraphicsSimpleTextItem  *statusXClockText = new QGraphicsSimpleTextItem("X");
-//    statusXClockText->setPos(gridSize_X * (screen_x * .35), 481);
-//    statusXClockText->setFont(statusBarText);
-//    statusXClockText->setBrush(QBrush(QColor(0xFF, 0xFF, 0xFF)));
-
-//    statusXClockIcon = new QGraphicsSvgItem(":/Icons/clock.svg");
-    //    auto effect = new QGraphicsColorizeEffect;
-    //    effect->setColor(Qt::white);
-    //    statusXClockIcon->setGraphicsEffect(effect);
-
-    //    r = statusXClockIcon->boundingRect();
-    //    statusXClockIcon->setScale(7 / r.height());
-
-//    statusXClockIcon->setPos(gridSize_X * (screen_x * .37), 483);
-
-    // Insert 50% across status bar
-    statusInsert.setText("");
-    statusInsert.setPos(gridSize_X * (screen_x * .50), 481);
-    statusInsert.setFont(statusBarText);
-    statusInsert.setBrush(QBrush(QColor(0x80, 0x80, 0xFF)));
-
-    // Cursor 75% across status bar
-    statusCursor.setText("");
-    statusCursor.setPos(gridSize_X * (screen_x * .75), 481);
-    statusCursor.setFont(statusBarText);
-    statusCursor.setBrush(QBrush(QColor(0x80, 0x80, 0xFF)));
-    statusCursor.setToolTip("Cursor position (y,x)");
-
-    scene->addItem(&statusBar);
-    scene->addItem(&statusSecure);
-    scene->addItem(&statusConnect);
-//    scene->addItem(&statusXSystem);
-    scene->addItem(statusX);
-    scene->addItem(&statusCursor);
-    scene->addItem(&statusInsert);
-
-//    statusXClock = scene->createItemGroup({statusXClockText, statusXClockIcon});
-//    statusXClock->hide();
-
-//    statusXSystem.hide();
-
-    scene->addItem(this);
 }
 
 /**
@@ -224,6 +110,12 @@ DisplayScreen::DisplayScreen(int screen_x, int screen_y, CodePage &cp, const Col
 DisplayScreen::~DisplayScreen()
 {
 }
+
+QRectF DisplayScreen::boundingRect() const
+{
+    return QRectF(0, 0, screen_x * CELL_WIDTH, screen_y * CELL_HEIGHT);
+}
+
 
 /**
  * @brief   DisplayScreen::width - return the width of the screen
@@ -288,26 +180,9 @@ qreal DisplayScreen::gridHeight() const
  * @details setFont is called when the user has changed the font that is used to display the
  *          characters on the screen. Each cell is updated with the new font. 
  */
-void DisplayScreen::setFont(QFont font)
+void DisplayScreen::setFont(const QFont &font)
 {
-    for (int i = 0; i < screenPos_max; i++)
-    {
-        cell.at(i)->setFont(QFont(font));
-    }
-}
-
-/**
- * @brief   DisplayScreen::setCodePage - change the codepage used to show the characters on screen
- * 
- * @details The codepage is shared across Q3270, so when it is changed, each cell just needs to be
- *          updated with the new codepage. 
- */
-void DisplayScreen::setCodePage()
-{
-    for (int i = 0; i < screenPos_max; i++)
-    {
-        cell.at(i)->refreshCodePage();
-    }
+    this->font = font;
 }
 
 /**
@@ -318,12 +193,7 @@ void DisplayScreen::setCodePage()
  */
 void DisplayScreen::resetColours()
 {
-    for (int i = 0; i < screenPos_max; i++)
-    {
-        cell.at(i)->setColour(cell.at(i)->getColour());
-    }
-
-    refresh();
+    update();
 }
 
 
@@ -339,24 +209,24 @@ void DisplayScreen::clear()
 {
     for(int i = 0; i < screenPos_max; i++)
     {
-        cell.at(i)->setFieldStart(false);
+        cells[i].setFieldStart(false);
 
-        cell.at(i)->setNumeric(false);
-        cell.at(i)->setMDT(false);
-        cell.at(i)->setProtected(false);
-        cell.at(i)->setDisplay(true);
-        cell.at(i)->setPenSelect(false);
-        cell.at(i)->setIntensify(false);
+        cells[i].setNumeric(false);
+        cells[i].setMDT(false);
+        cells[i].setProtected(false);
+        cells[i].setDisplay(true);
+        cells[i].setPenSelect(false);
+        cells[i].setIntensify(false);
 
-        cell.at(i)->setExtended(false);
-        cell.at(i)->setUnderscore(false);
-        cell.at(i)->setReverse(false);
-        cell.at(i)->setBlink(false);
+        cells[i].setExtended(false);
+        cells[i].setUnderscore(false);
+        cells[i].setReverse(false);
+        cells[i].setBlink(false);
 
-        cell.at(i)->setColour(Q3270::Green);
+        cells[i].setColour(Q3270::Green);
 
-        cell.at(i)->setChar(0x00);
-        cell.at(i)->setField(nullptr);
+        cells[i].setChar(IBM3270_CHAR_NULL);
+        cells[i].setField(nullptr);
     }
     resetCharAttr();
 
@@ -381,54 +251,91 @@ void DisplayScreen::clear()
 void DisplayScreen::setChar(int pos, uchar c, bool fromKB)
 {
 
+    Cell &thisCell = cells[pos];
+
     // If we're overlaying a Field Start, the subsequent positions on the screen now have a different
     // field start, so update them accordingly.
-    if (cell.at(pos)->isFieldStart())
+    if (thisCell.isFieldStart())
     {
-        cell.at(pos)->setFieldStart(false);
+        thisCell.setFieldStart(false);
 
-        int lastField;
+        Cell *lastField;
 
         // If this is the first position on the screen, we need the last screen position's field
-        lastField = cell.at(pos == 0 ? screenPos_max - 1 : pos - 1)->getField();
+        lastField = cells[pos == 0 ? screenPos_max - 1 : pos - 1].getField();
 
         int tmpPos = pos;
 
-        while(!cell.at(tmpPos % screenPos_max)->isFieldStart() && tmpPos < pos + screenPos_max)
+        while(!cells[tmpPos % screenPos_max].isFieldStart() && tmpPos < pos + screenPos_max)
         {
             int i1 = tmpPos++ % screenPos_max;
 //          qDebug() << "Field at" << pos << "was FieldStart. Updating" << i1 << "as" << lastField;
-            cell.at(i1)->setField(cell.at(lastField));
+            cells[i1].setField(lastField);
         }
     }
 
-    int fieldAttr = cell.at(pos)->getField();
+    Cell *fieldAttr = thisCell.getField();
 
     // If the field attribute is not set, use the current position
-    if (fieldAttr == -1)
-        fieldAttr = pos;
+    if (fieldAttr == nullptr)
+        fieldAttr = &cells[pos];
 
     // Set character attribute flags if applicable
     if (useCharAttr)
-        applyCharAttributes(pos, fieldAttr);
+       applyCharAttributes(pos, fieldAttr);
 
     // Choose a graphic character if needed
-    cell.at(pos)->setGraphic(geActive);
+    thisCell.setGraphic(geActive);
 
     if (!fromKB)
     {
-        cell.at(pos)->setChar(c);
+        thisCell.setChar(c);
     }
     else
     {
-        cell.at(pos)->setCharFromKB(c);
+        thisCell.setChar(cp.getEBCDIC(c));
     }
 
     geActive = false;
 
+    // Colour
+    if (thisCell.hasCharAttrs(Q3270::CharAttr::ColourAttr) && !charAttr.colour_default)
+        thisCell.setColour(charAttr.colNum);
+    else
+        thisCell.setColour(fieldAttr->getColour());
+
+    // Extended attributes
+    if (thisCell.hasCharAttrs(Q3270::CharAttr::ExtendedAttr))
+    {
+        thisCell.setReverse(charAttr.reverse_default   ? fieldAttr->isReverse() : charAttr.reverse);
+        thisCell.setUnderscore(charAttr.uscore_default ? fieldAttr->isUScore()  : charAttr.uscore);
+        thisCell.setBlink(charAttr.blink_default       ? fieldAttr->isBlink()   : charAttr.blink);
+    }
+    else
+    {
+        thisCell.setReverse(fieldAttr->isReverse());
+        thisCell.setUnderscore(fieldAttr->isUScore());
+        thisCell.setBlink(fieldAttr->isBlink());
+    }
+
+    // Maintain blink cells rectangles for blink()
+    int row = pos / screen_x;
+    int col = pos % screen_x;
+
+    QRect cellRect(col * gridSize_X, row * gridSize_Y, gridSize_X, gridSize_Y);
+
+    if (thisCell.isBlink())
+    {
+        blinkCells += cellRect;
+    }
+    else
+    {
+        blinkCells -= cellRect;
+    }
+
     // If character colour attributes are present, use them instead
-    if (cell.at(pos)->hasCharAttrs(Q3270::ColourAttr) || cell.at(pos)->hasCharAttrs(Q3270::ExtendedAttr))
-        applyCharAttrsOverrides(pos, fieldAttr);
+//    if (cells[pos].hasCharAttrs(Q3270::ColourAttr) || cells[pos].hasCharAttrs(Q3270::ExtendedAttr))
+//        applyCharAttrsOverrides(pos, fieldAttr);
 }
 
 /**
@@ -600,19 +507,19 @@ void DisplayScreen::setField(int pos, unsigned char c, bool sfe)
     bool intens = ((c >> 2) & 3) == 2;
     bool mdt    = c & 1;
 
-    cell.at(pos)->setProtected(prot);
-    cell.at(pos)->setNumeric(num);
-    cell.at(pos)->setDisplay(disp);
-    cell.at(pos)->setPenSelect(pensel);
-    cell.at(pos)->setIntensify(intens);
-    cell.at(pos)->setMDT(mdt);
+    cells[pos].setProtected(prot);
+    cells[pos].setNumeric(num);
+    cells[pos].setDisplay(disp);
+    cells[pos].setPenSelect(pensel);
+    cells[pos].setIntensify(intens);
+    cells[pos].setMDT(mdt);
 
-    cell.at(pos)->setExtended(sfe);
+    cells[pos].setExtended(sfe);
 
-    cell.at(pos)->setFieldStart(true);
+    cells[pos].setFieldStart(true);
 
     // Fields are set to 0x00
-    cell.at(pos)->setChar(IBM3270_CHAR_NULL);
+    cells[pos].setChar(IBM3270_CHAR_NULL);
 
 /*  if (pos == screenPos_max - 1)
     {
@@ -635,34 +542,11 @@ void DisplayScreen::cascadeAttrs(int pos)
         int endPos = pos + screenPos_max;
 
         int i = pos + 1;
-        while(i < endPos && !(cell.at(i % screenPos_max)->isFieldStart()))
+        while(i < endPos && !(cells[i % screenPos_max].isFieldStart()))
         {
             int offset = i++ % screenPos_max;
-            cell.at(offset)->setField(cell.at(pos));
+            cells[offset].setField(&cells[pos]);
         }
-}
-
-/**
- * @brief   DisplayScreen::refresh - process any changes to cells
- *
- * @details When characters are sent to the screen, they may modify colour, underscore, or reverse
- *          settings. These require Qt calls which, when issued repeatedly for the same cell, are
- *          expensive in processing time.
- *
- *          This occurs because a Start Field modifies all following characters until the next
- *          Field Start; the very first field on a screen, therefore, modifies the rest of the screen.
- *          The next field modifies some of those cells again, and so on.
- *
- *          Performing the Qt operations multiple times for the same cell has a negative performance
- *          impact, so the Qt operations are performed just once when the data stream is complete.
- */
-void DisplayScreen::refresh()
-{
-        for (int i = 0; i < screenPos_max; i++)
-        {
-            cell.at(i)->updateCell();
-        }
-        resetCharAttr();
 }
 
 /**
@@ -677,12 +561,12 @@ void DisplayScreen::resetExtended(int pos)
 {
     resetExtendedHilite(pos);
 
-    cell.at(pos)->setColour(Q3270::Blue);
+    cells[pos].setColour(Q3270::Blue);
 
-    cell.at(pos)->setDisplay(true);
-    cell.at(pos)->setNumeric(false);
-    cell.at(pos)->setMDT(false);
-    cell.at(pos)->setPenSelect(false);
+    cells[pos].setDisplay(true);
+    cells[pos].setNumeric(false);
+    cells[pos].setMDT(false);
+    cells[pos].setPenSelect(false);
     // FIXME: is this right that setProtected is commented out? Protecton comes from the field attr
     // cell.at(pos)->setProtected(false);
 }
@@ -696,9 +580,9 @@ void DisplayScreen::resetExtended(int pos)
  */
 void DisplayScreen::resetExtendedHilite(int pos)
 {
-    cell.at(pos)->setUnderscore(false);
-    cell.at(pos)->setBlink(false);
-    cell.at(pos)->setReverse(false);
+    cells[pos].setUnderscore(false);
+    cells[pos].setBlink(false);
+    cells[pos].setReverse(false);
 }
 
 /**
@@ -718,7 +602,7 @@ void DisplayScreen::setExtendedColour(int pos, bool foreground, unsigned char c)
         return;
         c = IBM3270_EXT_DEFAULT_COLOR;
     }
-    cell.at(pos)->setColour((Q3270::Colour)(c&7));
+    cells[pos].setColour((Q3270::Colour)(c&7));
 }
 
 //FIXME: Cell() should do the co-ordination of underscore/blink/reverse, resulting in 2 fewer calls for each
@@ -731,9 +615,9 @@ void DisplayScreen::setExtendedColour(int pos, bool foreground, unsigned char c)
  */
 void DisplayScreen::setExtendedBlink(int pos)
 {
-    cell.at(pos)->setUnderscore(false);
-    cell.at(pos)->setReverse(false);
-    cell.at(pos)->setBlink(true);
+    cells[pos].setUnderscore(false);
+    cells[pos].setReverse(false);
+    cells[pos].setBlink(true);
 }
 
 /**
@@ -744,9 +628,9 @@ void DisplayScreen::setExtendedBlink(int pos)
  */
 void DisplayScreen::setExtendedReverse(int pos)
 {
-    cell.at(pos)->setUnderscore(false);
-    cell.at(pos)->setBlink(false);
-    cell.at(pos)->setReverse(true);
+    cells[pos].setUnderscore(false);
+    cells[pos].setBlink(false);
+    cells[pos].setReverse(true);
 }
 
 /**
@@ -757,9 +641,9 @@ void DisplayScreen::setExtendedReverse(int pos)
  */
 void DisplayScreen::setExtendedUscore(int pos)
 {
-    cell.at(pos)->setBlink(false);
-    cell.at(pos)->setReverse(false);
-    cell.at(pos)->setUnderscore(true);
+    cells[pos].setBlink(false);
+    cells[pos].setReverse(false);
+    cells[pos].setUnderscore(true);
 }
 
 /**
@@ -772,10 +656,10 @@ void DisplayScreen::resetMDTs()
 {
     for (int i = 0; i < screenPos_max; i++)
     {
-        if (cell.at(i)->isFieldStart() && cell.at(i)->isMdtOn())
+        if (cells[i].isFieldStart() && cells[i].isMdtOn())
         {
   /*        qDebug() << "Resetting MDT at" << i;*/
-            cell.at(i)->setMDT(false);
+            cells[i].setMDT(false);
         }
 
     }
@@ -796,7 +680,7 @@ void DisplayScreen::resetMDTs()
  */
 bool DisplayScreen::insertChar(unsigned char c, bool insertMode)
 {
-    if (cell.at(cursor_pos)->isProtected() || cell.at(cursor_pos)->isFieldStart())
+    if (cells[cursor_pos].isProtected() || cells[cursor_pos].isFieldStart())
     {
         printf("Protected!\n");
         fflush(stdout);
@@ -830,7 +714,7 @@ bool DisplayScreen::insertChar(unsigned char c, bool insertMode)
          **/
         int nextField = findNextField(cursor_pos);
 //        printf("This Field at: %d,%d, next field at %d,%d - last byte of this field %02X\n", (int)(thisField/screen_x), (int)(thisField-((int)(thisField/screen_x)*screen_x)), (int)(nextField/screen_x), (int)(nextField-((int)(nextField/screen_x)*screen_x)), cell.at(nextField - 1)->getEBCDIC() );
-        uchar lastChar = cell.at(nextField - 1)->getEBCDIC();
+        uchar lastChar = cells[nextField - 1].getEBCDIC();
         if (lastChar != IBM3270_CHAR_NULL && lastChar != IBM3270_CHAR_SPACE)
         {
             // Insert not okay
@@ -839,11 +723,11 @@ bool DisplayScreen::insertChar(unsigned char c, bool insertMode)
         for(int i = cursor_pos; i < (cursor_pos + screenPos_max); i++)
         {
             int offset = i % screenPos_max;
-            if (cell.at(offset)->isProtected() || cell.at(offset)->isFieldStart())
+            if (cells[offset].isProtected() || cells[offset].isFieldStart())
             {
                 break;
             }
-            if (cell.at(offset)->getEBCDIC() == IBM3270_CHAR_NULL)
+            if (cells[offset].getEBCDIC() == IBM3270_CHAR_NULL)
             {
                 endPos = i;
                 break;
@@ -861,15 +745,15 @@ bool DisplayScreen::insertChar(unsigned char c, bool insertMode)
             int offset = fld % screenPos_max;
             int offsetPrev = (fld - 1) % screenPos_max;
 
-            cell.at(offset)->copy(*(cell.at(offsetPrev)));
+            cells[offset].copy(cells[offsetPrev]);
         }
     }
 
-    cell.at(cursor_pos)->setMDT(true);
+    cells[cursor_pos].setMDT(true);
 
     setChar(cursor_pos, c, true);
 
-    cell.at(cursor_pos)->updateCell();
+//    cells[cursor_pos].updateCell();
 
     setCursor((cursor_pos + 1) % screenPos_max);
 
@@ -877,6 +761,8 @@ bool DisplayScreen::insertChar(unsigned char c, bool insertMode)
     {
         tab(0);
     }
+
+    update();
 
     return true;
 }
@@ -891,7 +777,7 @@ bool DisplayScreen::insertChar(unsigned char c, bool insertMode)
  */
 bool DisplayScreen::isAskip(int pos) const
 {
-    return cell.at(pos)->isAutoSkip();
+    return cells[pos].isAutoSkip();
 }
 
 /**
@@ -903,7 +789,7 @@ bool DisplayScreen::isAskip(int pos) const
  */
 bool DisplayScreen::isProtected(int pos) const
 {
-    return cell.at(pos)->isProtected();
+    return cells[pos].isProtected();
 }
 
 /**
@@ -915,7 +801,7 @@ bool DisplayScreen::isProtected(int pos) const
  */
 bool DisplayScreen::isFieldStart(int pos) const
 {
-    return cell.at(pos)->isFieldStart();
+    return cells[pos].isFieldStart();
 }
 
 /**
@@ -928,7 +814,7 @@ bool DisplayScreen::isFieldStart(int pos) const
  */
 void DisplayScreen::deleteChar()
 {
-    if (cell.at(cursor_pos)->isProtected())
+    if (cells[cursor_pos].isProtected())
     {
         printf("Protected!\n");
         fflush(stdout);
@@ -942,16 +828,18 @@ void DisplayScreen::deleteChar()
         endPos += screenPos_max;
     }
 
-    for(int fld = cursor_pos; fld < endPos - 1 && cell.at(fld % screenPos_max)->getEBCDIC() != IBM3270_CHAR_NULL; fld++)
+    for(int fld = cursor_pos; fld < endPos - 1 && cells[fld % screenPos_max].getEBCDIC() != IBM3270_CHAR_NULL; fld++)
     {        
         int offset = fld % screenPos_max;
         int offsetNext = (fld + 1) % screenPos_max;
 
-        cell.at(offset)->copy(*(cell.at(offsetNext)));
+        cells[offset].copy(cells[offsetNext]);
     }
 
-    cell.at((endPos - 1) % screenPos_max)->setChar(IBM3270_CHAR_NULL);
-    cell.at(cursor_pos)->setMDT(true);
+    cells[(endPos - 1) % screenPos_max].setChar(IBM3270_CHAR_NULL);
+    cells[cursor_pos].setMDT(true);
+
+    update();
 }
 
 /**
@@ -973,10 +861,12 @@ void DisplayScreen::eraseEOF()
     /* Blank field */
     for(int i = cursor_pos; i < nextField; i++)
     {
-        cell.at(i % screenPos_max)->setChar(0x00);
+        cells[i % screenPos_max].setChar(0x00);
     }
 
-    cell.at(cursor_pos)->setMDT(true);
+    cells[cursor_pos].setMDT(true);
+
+    update();
 }
 
 
@@ -996,20 +886,20 @@ void DisplayScreen::eraseUnprotected(int start, int end)
         end += screenPos_max;
     }
 
-    if (cell.at(start)->isProtected())
+    if (cells[start].isProtected())
     {
         start = findNextUnprotectedField(start);
     }
 
     for(int i = start; i < end; i++)
     {
-        if(cell.at(i)->isProtected() || cell.at(i)->isFieldStart())
+        if(cells[i].isProtected() || cells[i].isFieldStart())
         {
             i = findNextUnprotectedField(i);
         }
         else
         {
-                cell.at(i)->setChar(IBM3270_CHAR_SPACE);
+                cells[i].setChar(IBM3270_CHAR_SPACE);
         }
     }
 }
@@ -1067,16 +957,11 @@ void DisplayScreen::interruptProcess()
  */
 void DisplayScreen::blink()
 {
-    for (int i = 0; i < screenPos_max; i++)
-    {
-        if (cell.at(i)->isBlink())
-        {
-            // blinkChar is true for hiding the character
-            cell.at(i)->blinkChar(!blinkShow);
-        }
-    }
-
     blinkShow = !blinkShow;
+    for(QRectF r : blinkCells)
+    {
+        update(r);
+    }
 }
 
 /**
@@ -1115,7 +1000,7 @@ int DisplayScreen::findField(int pos)
 
     for (int i = pos; i > endPos ; i--)
     {
-        if (cell.at(offset)->isFieldStart())
+        if (cells[offset].isFieldStart())
         {
             return offset;
         }
@@ -1140,7 +1025,7 @@ int DisplayScreen::findNextField(int pos)
 {
     int tmpPos;
 
-    if(cell.at(pos)->isFieldStart())
+    if(cells[pos].isFieldStart())
     {
         pos++;
     }
@@ -1148,7 +1033,7 @@ int DisplayScreen::findNextField(int pos)
     for(int i = pos; i < (pos + screenPos_max); i++)
     {
         tmpPos = i % screenPos_max;
-        if (cell.at(tmpPos)->isFieldStart())
+        if (cells[tmpPos].isFieldStart())
         {
             return tmpPos;
         }
@@ -1175,7 +1060,7 @@ int DisplayScreen::findNextUnprotectedField(int pos)
         // fieldStart - an unprotected field cannot start where two fieldStarts are adajacent
         tmpPos = i % screenPos_max;
         tmpNxt = (i + 1) % screenPos_max;
-        if (cell.at(tmpPos)->isFieldStart() && !cell.at(tmpPos)->isProtected() && !cell.at(tmpNxt)->isFieldStart())
+        if (cells[tmpPos].isFieldStart() && !cells[tmpPos].isProtected() && !cells[tmpNxt].isFieldStart())
         {
             return tmpPos;
         }
@@ -1212,7 +1097,7 @@ int DisplayScreen::findPrevUnprotectedField(int pos)
         // fieldStart - an unprotected field cannot start where two fieldStarts are adajacent
         // As we're searching backwards, providing the next position isn't a fieldStart, we're good.
         tmpNxt = (tmpPos + 1) % screenPos_max;
-        if (cell.at(tmpPos)->isFieldStart() && !cell.at(tmpPos)->isProtected() && !cell.at(tmpNxt)->isFieldStart())
+        if (cells[tmpPos].isFieldStart() && !cells[tmpPos].isProtected() && !cells[tmpNxt].isFieldStart())
         {
             return tmpPos;
         }
@@ -1235,13 +1120,13 @@ void DisplayScreen::getModifiedFields(QByteArray &buffer)
     {
         if (!unformatted)
         {
-            if (!cell.at(i)->isProtected())
+            if (!cells[i].isProtected())
             {
-                if (cell.at(i)->isFieldStart())
+                if (cells[i].isFieldStart())
                 {
-                    qDebug() << "Input field found at " << i << "MDT is" << cell.at(i)->isMdtOn();
+                    qDebug() << "Input field found at " << i << "MDT is" << cells[i].isMdtOn();
                     // This assumes that where two fields are adajcent to each other, the first cannot have MDT set
-                    if (cell.at(i)->isMdtOn())
+                    if (cells[i].isMdtOn())
                     {
                         buffer.append(IBM3270_SBA);
 
@@ -1251,7 +1136,7 @@ void DisplayScreen::getModifiedFields(QByteArray &buffer)
 
                         do
                         {
-                            uchar b = cell.at(nextPos++)->getEBCDIC();
+                            uchar b = cells[nextPos++].getEBCDIC();
                             if (b != IBM3270_CHAR_NULL)
                             {
                                 buffer.append(b);
@@ -1265,14 +1150,14 @@ void DisplayScreen::getModifiedFields(QByteArray &buffer)
                                 return;
                             }
                         }
-                        while(!cell.at(nextPos)->isFieldStart());
+                        while(!cells[nextPos].isFieldStart());
                     }
                 }
             }
         }
         else
         {
-            uchar b = cell.at(i)->getEBCDIC();
+            uchar b = cells[i].getEBCDIC();
             if (b != IBM3270_CHAR_NULL)
             {
                 buffer.append(b);
@@ -1349,12 +1234,12 @@ void DisplayScreen::dumpFields()
         {
             int tmppos = i * screen_x + j;
 
-            if (cell.at(tmppos)->isFieldStart())
-                if (cell.at(tmppos)->isMdtOn())
+            if (cells[tmppos].isFieldStart())
+                if (cells[tmppos].isMdtOn())
                     line.append("F");
                 else
                     line.append("f");
-            else if (cell.at(cell.at(tmppos)->getField())->isFieldStart())
+            else if (cells[tmppos].getField()->isFieldStart())
                 line.append(".");
             else
                 line.append("X");
@@ -1370,7 +1255,7 @@ void DisplayScreen::dumpFields()
  */
 void DisplayScreen::dumpDisplay()
 {
-    qDebug() << "---- SCREEN ----";
+    qDebug().noquote() << "---- SCREEN ----";
 
     QString ascii;
     QString hexline;
@@ -1379,19 +1264,18 @@ void DisplayScreen::dumpDisplay()
     {
         if (i % screen_x == 0 && i > 0)
         {
-
-            qDebug() << hexline << "|" << ascii.toLatin1().data() << "|";
+            qDebug().noquote() << hexline << "|" << ascii.toLatin1().data() << "|";
             hexline = "";
             ascii = "";
         }
-        ascii.append(cell.at(i)->getChar());
-        hexline.append(QString::asprintf("%02X ", cell.at(i)->getEBCDIC()));
+        ascii.append(cp.getUnicodeChar(cells[i].getEBCDIC()));
+        hexline.append(QString::asprintf("%02X ", cells[i].getEBCDIC()));
     }
 
     if (!hexline.isEmpty())
-        qDebug() << hexline << "|" << ascii.toLatin1().data() << "|";
+        qDebug().noquote() << hexline << "|" << ascii.toLatin1().data() << "|";
 
-    qDebug() << "---- SCREEN ----";
+    qDebug().noquote() << "---- SCREEN ----";
 }
 
 /**
@@ -1404,35 +1288,33 @@ void DisplayScreen::dumpInfo()
     int y = cursor_pos / screen_x;
     int x = cursor_pos - y * screen_x;
 
-    qDebug() << QString::asprintf("Cell at %d (%d, %d)", cursor_pos, x, y);
-    qDebug() << QString::asprintf("    Character: \"%c\" (hex %2.2X EBCDIC %2.2X)", cell.at(cursor_pos)->getChar().toLatin1(),cell.at(cursor_pos)->getChar().toLatin1(),cell.at(cursor_pos)->getEBCDIC());
+    qDebug().noquote() << QString::asprintf("Cell at %d (%d, %d)", cursor_pos, x, y);
+    qDebug().noquote() << "    Character: \"" << cp.getUnicodeChar(cells[cursor_pos].getEBCDIC()) << "\""
+                       << " (hex EBCDIC " << Qt::hex << (int) cells[cursor_pos].getEBCDIC()
+                       << "ASCII " << Qt::hex << (int) (cp.getUnicodeChar(cells[cursor_pos].getEBCDIC()).length() > 0 ? cp.getUnicodeChar(cells[cursor_pos].getEBCDIC()).at(0).unicode() : 0) << ")";
 
-    qDebug() << QString::asprintf("    Field Attribute: %d", cell.at(cursor_pos)->isFieldStart());
-    qDebug() << QString::asprintf("        MDT:       %d\n        Protected: %d\n        Numeric:   %d\n        Autoskip:  %d\n        Display:   %d",
-            cell.at(cursor_pos)->isMdtOn(),
-            cell.at(cursor_pos)->isProtected(),
-            cell.at(cursor_pos)->isNumeric(),
-            cell.at(cursor_pos)->isAutoSkip(),
-            cell.at(cursor_pos)->isDisplay());
+    qDebug().noquote() << "    Field Attribute: " << cells[cursor_pos].isFieldStart();
+    qDebug().noquote() << "        MDT:       " << cells[cursor_pos].isMdtOn();
+    qDebug().noquote() << "        Protected: " << cells[cursor_pos].isProtected();
+    qDebug().noquote() << "        Numeric:   " << cells[cursor_pos].isNumeric();
+    qDebug().noquote() << "        Display:   " << cells[cursor_pos].isDisplay();
 
-    qDebug() << QString::asprintf("    Extended: %d\n", cell.at(cursor_pos)->isExtended());
-    printf("        Intensify: %d\n        UScore:    %d\n        Reverse:   %d\n        Blink:     %d",
-           cell.at(cursor_pos)->isIntensify(),
-           cell.at(cursor_pos)->isUScore(),
-           cell.at(cursor_pos)->isReverse(),
-           cell.at(cursor_pos)->isBlink());
+    qDebug().noquote() << "    Extended: " << cells[cursor_pos].isExtended();
+    qDebug().noquote() << "        Intensify: " << cells[cursor_pos].isIntensify();
+    qDebug().noquote() << "        UScore:    " << cells[cursor_pos].isUScore();
+    qDebug().noquote() << "        Reverse:   " << cells[cursor_pos].isReverse();
+    qDebug().noquote() << "        Blink:     " << cells[cursor_pos].isBlink();
 
-    qDebug() << QString::asprintf("    Character Attributes:\n        Extended: %d\n        CharSet:  %d\n        Colour:   %d\n    Colour: %d\n    Graphic: %d",
-                cell.at(cursor_pos)->hasCharAttrs(Q3270::ExtendedAttr),
-                cell.at(cursor_pos)->hasCharAttrs(Q3270::CharsetAttr),
-                cell.at(cursor_pos)->hasCharAttrs(Q3270::ColourAttr),
-                cell.at(cursor_pos)->getColour(),
-                cell.at(cursor_pos)->isGraphic());
+    qDebug().noquote() << "    Character Attributes:";
+    qDebug().noquote() << "        Extended: " << cells[cursor_pos].hasCharAttrs(Q3270::ExtendedAttr);
+    qDebug().noquote() << "        CharSet:  " << cells[cursor_pos].hasCharAttrs(Q3270::CharsetAttr);
+    qDebug().noquote() << "        Colour:   " << cells[cursor_pos].hasCharAttrs(Q3270::ColourAttr);
 
-    int fieldStart = cell.at(cursor_pos)->getField();
-    qDebug() << QString::asprintf("    Field Position: %d (%d, %d)", fieldStart, (int) (fieldStart / screen_x), (int) (fieldStart - (int) (fieldStart / screen_x) * screen_x));
+    qDebug().noquote() << "    Colour:   " << cells[cursor_pos].getColour();
+    qDebug().noquote() << "    Graphic:  " << cells[cursor_pos].isGraphic();
 
-    dumpFields();
+    int fieldStart = cells[cursor_pos].getField() - cells.data();
+    qDebug().noquote() << "    Field Position: " << fieldStart << "(" << fieldStart / screen_x << "," << (fieldStart - (int) (fieldStart / screen_x) * screen_x) << ")";
 }
 
 /**
@@ -1452,19 +1334,19 @@ void DisplayScreen::getScreen(QByteArray &buffer)
 
     for (int i = 0; i < screenPos_max; i++)
     {
-        if (cell.at(i)->isFieldStart())
+        if (cells[i].isFieldStart())
         {
             buffer.append(IBM3270_SF);
             uchar attr;
-            if (cell.at(i)->isDisplay() && !cell.at(i)->isPenSelect())
+            if (cells[i].isDisplay() && !cells[i].isPenSelect())
             {
                 attr = 0x00;
             }
-            else if (cell.at(i)->isDisplay() && cell.at(i)->isPenSelect())
+            else if (cells[i].isDisplay() && cells[i].isPenSelect())
             {
                 attr = 0x01;
             }
-            else if(cell.at(i)->isIntensify())
+            else if(cells[i].isIntensify())
             {
                 attr = 0x10;
             }
@@ -1473,7 +1355,7 @@ void DisplayScreen::getScreen(QByteArray &buffer)
                 attr = 0x11;
             }
 
-            int byte = twelveBitBufferAddress[cell.at(i)->isMdtOn() | attr << 3 | cell.at(i)->isNumeric() << 4 | cell.at(i)->isProtected() << 5];
+            int byte = twelveBitBufferAddress[cells[i].isMdtOn() | attr << 3 | cells[i].isNumeric() << 4 | cells[i].isProtected() << 5];
 
             buffer.append(byte);
 
@@ -1485,7 +1367,7 @@ void DisplayScreen::getScreen(QByteArray &buffer)
         }
         else
         {
-            buffer.append(cell.at(i)->getEBCDIC());
+            buffer.append(cells[i].getEBCDIC());
         }
     }
 }
@@ -1498,60 +1380,96 @@ void DisplayScreen::getScreen(QByteArray &buffer)
  * @details Apply the character attributes to the cell at pos. This is used when the datastream
  *          selected a different colour for the specified cell.
  */
-void DisplayScreen::applyCharAttributes(int pos, int fieldAttr)
+void DisplayScreen::applyCharAttributes(int pos, Cell *field)
 {
     if (!charAttr.colour_default)
-        cell.at(pos)->setCharAttrs(Q3270::ColourAttr, true);
+        cells[pos].setCharAttrs(Q3270::ColourAttr, true);
     else
-        cell.at(pos)->setColour(cell.at(fieldAttr)->getColour());
+        cells[pos].setColour(field->getColour());
 
     if (!charAttr.blink_default)
-        cell.at(pos)->setCharAttrs(Q3270::ExtendedAttr, true);
+        cells[pos].setCharAttrs(Q3270::ExtendedAttr, true);
     else
-        cell.at(pos)->setBlink(cell.at(fieldAttr)->isBlink());
+        cells[pos].setBlink(field->isBlink());
 
     if (!charAttr.reverse_default)
-        cell.at(pos)->setCharAttrs(Q3270::ExtendedAttr, true);
+        cells[pos].setCharAttrs(Q3270::ExtendedAttr, true);
     else
-        cell.at(pos)->setReverse(cell.at(fieldAttr)->isReverse());
+        cells[pos].setReverse(field->isReverse());
 
     if (!charAttr.uscore_default)
-        cell.at(pos)->setCharAttrs(Q3270::ExtendedAttr, true);
+        cells[pos].setCharAttrs(Q3270::ExtendedAttr, true);
     else
-        cell.at(pos)->setUnderscore(cell.at(fieldAttr)->isUScore());
+        cells[pos].setUnderscore(field->isUScore());
 }
 
-/**
- * @brief   DisplayScreen::applyCharAttrsOverrides - apply the character attributes to the cell
- * @param   pos       - screen position
- * @param   fieldAttr - field attribute
- *
- * @details Apply the character attributes to the cell at pos. This is used when the datastream
- *          selected a different colour for the specified cell.
- */
-void DisplayScreen::applyCharAttrsOverrides(int pos, int fieldAttr)
+void DisplayScreen::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget *)
 {
-    // Colour
-    if (!charAttr.colour_default)
-        cell.at(pos)->setColour(charAttr.colNum);
-    else
-        cell.at(pos)->setColour(cell.at(fieldAttr)->getColour());
+    p->fillRect(boundingRect(), QColor(Qt::black));
 
-    // Reverse
-    if (!charAttr.reverse_default)
-        cell.at(pos)->setReverse(charAttr.reverse);
-    else
-        cell.at(pos)->setReverse(cell.at(fieldAttr)->isReverse());
+    p->setFont(font);
 
-    // Underscore
-    if (!charAttr.uscore_default)
-        cell.at(pos)->setUnderscore(charAttr.uscore);
-    else
-        cell.at(pos)->setUnderscore(cell.at(fieldAttr)->isUScore());
+    QPen us;
 
-    // Blink
-    if (!charAttr.blink_default)
-        cell.at(pos)->setBlink(charAttr.blink);
-    else
-        cell.at(pos)->setBlink(cell.at(fieldAttr)->isBlink());
+    us.setWidth(0);
+    us.setCosmetic(true);
+
+    for (int r = 0; r < screen_y; ++r)
+    {
+        for (int c = 0; c < screen_x; ++c)
+        {
+            const Cell &cs = cells[r * screen_x + c];
+
+            QRectF rect(c * gridSize_X, r * gridSize_Y, gridSize_X, gridSize_Y);
+
+            QColor fg = palette->colour(cs.getColour());
+            QColor bg = QColor(Qt::black);
+
+            // reverse
+            if (cs.isReverse())
+            {
+                std::swap(fg, bg);
+                p->fillRect(rect, bg);
+            }
+
+            // blink
+            if (!(cs.isBlink() && !blinkShow))
+            {
+
+                // glyph
+                if (!(cs.getEBCDIC() == IBM3270_CHAR_NULL) && cs.isDisplay() && !cs.isFieldStart())
+                {
+                    p->setPen(fg);
+                    if (!cs.isGraphic())
+                    {
+                        p->drawText(rect, Qt::AlignCenter, cp.getUnicodeChar(cs.getEBCDIC()));
+                    }
+                    else
+                    {
+                        p->drawText(rect, Qt::AlignCenter, cp.getUnicodeGraphicChar(cs.getEBCDIC()));
+                    }
+                }
+            }
+
+            // underscore
+            if (cs.isUScore() && !cs.isFieldStart() && cs.isDisplay())
+            {
+                p->setPen(fg);
+                p->drawLine(QPoint(rect.left(), rect.bottom() - 1), QPoint(rect.right(), rect.bottom() - 1));
+            }
+        }
+    }
+/*
+    QPen pen(QColor(128,128,128,64));
+    pen.setWidth(0);
+    p->setPen(pen);
+
+    for (int c = 0; c <= screen_x; ++c) {
+        qreal x = c * gridSize_X + 0.5;
+        p->drawLine(x, 0, x, screen_y * gridSize_Y);
+    }
+    for (int r = 0; r <= screen_y; ++r) {
+        qreal y = r * gridSize_Y + 0.5;
+        p->drawLine(0, y, screen_x * gridSize_X, y);
+    }*/
 }

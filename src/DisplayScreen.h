@@ -23,21 +23,29 @@
 #include "CodePage.h"
 #include "Q3270.h"
 #include "Models/Colours.h"
-#include "DisplayScreen/ClickableSvgItem.h"
-#include "DisplayScreen/LockIndicator.h"
+#include "Display/ClickableSvgItem.h"
+#include "Display/LockIndicator.h"
 
-class DisplayScreen : public QObject, public QGraphicsRectItem
+#define CELL_WIDTH 12
+#define CELL_HEIGHT 22
+
+class DisplayScreen : public QGraphicsObject
 {
     Q_OBJECT
 
     public:
 
-    explicit DisplayScreen(int screen_x, int screen_y, CodePage &cp, const Colours *palette, QGraphicsScene *scene);
+    explicit DisplayScreen(int screen_x, int screen_y, CodePage &cp, const Colours *palette);
         ~DisplayScreen();
 
         void mousePressEvent(QGraphicsSceneMouseEvent *mEvent) override;
         void mouseMoveEvent(QGraphicsSceneMouseEvent *mEvent) override;
         void mouseReleaseEvent(QGraphicsSceneMouseEvent *mEvent) override;
+
+        QRectF boundingRect() const override;
+
+        void paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget *) override;
+
 
         int width() const;
         int height() const;
@@ -81,23 +89,18 @@ class DisplayScreen : public QObject, public QGraphicsRectItem
         bool isFieldStart(int pos) const;
 
         void clear();
-        void setFont(QFont font);
+        void setFont(const QFont &font);
 
         void toggleRuler();
         void setRuler();
         void rulerMode(bool on);
 
         void setRulerStyle(Q3270::RulerStyle rulerStyle);
-        void setStatusLock(Q3270::Indicators status);
 
         void getScreen(QByteArray &buffer);
         void readBuffer();
 
         void addPosToBuffer(QByteArray &buffer, int pos);
-
-        void setStatusInsert(Q3270::Indicators insert);
-
-        void refresh();
 
         void dumpFields();
         void dumpDisplay();
@@ -106,15 +109,14 @@ class DisplayScreen : public QObject, public QGraphicsRectItem
     signals:
 
         void bufferReady(QByteArray &buffer);
+        void cursorMoved(int x, int y);
 
     public slots:
 
         void blink();
         void cursorBlink();
-//        void showStatusCursorPosition(int x, int y);
 
         void setCursorColour(bool inherit);
-        void setCodePage();
         void copyText();
 
         void moveCursor(int x, int y);
@@ -130,11 +132,7 @@ class DisplayScreen : public QObject, public QGraphicsRectItem
         void processAID(int aid, bool shortread);
         void interruptProcess();
 
-        void setEncrypted(Q3270::Encryption e);
-
     private:
-        void applyCharAttributes(int pos, int fieldAttr);
-        void applyCharAttrsOverrides(int pos, int fieldAttr);
 
         const unsigned char twelveBitBufferAddress[64] = {
             0x40, 0xC1, 0xC2, 0xC3, 0xC4, 0xC5, 0xC6, 0xC7,  /* 00 0000 to 00 0011 */
@@ -147,7 +145,7 @@ class DisplayScreen : public QObject, public QGraphicsRectItem
             0xF8, 0xF9, 0x7A, 0x7B, 0x7C, 0x7D, 0x7E, 0x7F,  /* 11 0100 to 11 1111 */
         };
 
-        CodePage &cp;
+        const CodePage &cp;
         const Colours *palette;
 
         int screen_x;                /* Max Columns */
@@ -156,9 +154,7 @@ class DisplayScreen : public QObject, public QGraphicsRectItem
 
         int cursor_pos;              /* Cursor position */
 
-//        QVector<Glyph *> glyph;               /* Character on screen */
-        QVector<Cell *> cell;    /* Screen slot */
-//        QVector<QGraphicsLineItem *> uscore;  /* Underscores */
+        QVector<Cell> cells;    /* Screen slot */
 
         bool blinkShow;             /* Whether the character is shown/hidden for a given blink event */
         bool cursorShow;            /* Whether the cursor is shown/hidden for a given blink event */
@@ -196,39 +192,18 @@ class DisplayScreen : public QObject, public QGraphicsRectItem
         QGraphicsLineItem crosshair_X;
         QGraphicsLineItem crosshair_Y;
 
-        // Status bar
-        QGraphicsLineItem statusBar;
-
-        QGraphicsSimpleTextItem statusConnect;
-//        QGraphicsSimpleTextItem statusXSystem;
-        QGraphicsSimpleTextItem statusCursor;
-        QGraphicsSimpleTextItem statusInsert;
-
-        // X <clock>
-//        QGraphicsSvgItem *statusXClockIcon;
-
-//        QGraphicsItemGroup *statusXClock;
-        LockIndicator *statusX;
-
-
-        // Padlocks
-        ClickableSvgItem *statusSecureSVG;
-        ClickableSvgItem *locktick;
-        ClickableSvgItem *unlock;
-        ClickableSvgItem *lock;
-
-        QGraphicsRectItem statusSecure;
-
-
         qreal gridSize_X;
         qreal gridSize_Y;
 
+        QRegion blinkCells;
         QGraphicsRectItem *myRb;
         QPointF mouseStart;
 
+        QFont font;
+
         int findField(int pos);
         int findNextField(int pos);
-
+        void applyCharAttributes(int pos, Cell *field);
 };
 
 #endif // DISPLAYSCREEN_H

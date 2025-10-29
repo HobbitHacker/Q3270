@@ -11,16 +11,13 @@
 #ifndef PROCESSDATASTREAM_H
 #define PROCESSDATASTREAM_H
 
-#include <qglobal.h>
 #include <QGuiApplication>
 #include <QScreen>
 
-#include <stdlib.h>
 #include <QObject>
 #include <QDebug>
 
 #include <arpa/telnet.h>
-#include <map>
 
 #include "DisplayScreen.h"
 

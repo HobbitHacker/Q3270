@@ -11,17 +11,18 @@
 #ifndef TERMINAL_H
 #define TERMINAL_H
 
+#include <QSettings>
+#include <QHostInfo>
+#include <QGraphicsSimpleTextItem>
+#include <QMenuBar>
+
 #include "ProcessDataStream.h"
 #include "SocketConnection.h"
 #include "Keyboard.h"
 #include "CodePage.h"
 #include "ActiveSettings.h"
+#include "Display/StatusBar.h"
 
-#include <QSettings>
-#include <QHostInfo>
-#include <QGraphicsSimpleTextItem>
-#include <QVBoxLayout>
-#include <QMenuBar>
 
 class Terminal : public QWidget
 {
@@ -29,7 +30,7 @@ class Terminal : public QWidget
 
     public:
 
-        Terminal(QVBoxLayout *v, ActiveSettings &activeSettings, CodePage &cp, Keyboard &kb, const Colours &cs);
+        Terminal(QGraphicsView *screen, ActiveSettings &activeSettings, CodePage &cp, Keyboard &kb, const Colours &cs);
         ~Terminal();
 
         void connectSession();
@@ -97,17 +98,16 @@ class Terminal : public QWidget
 
         ActiveSettings &activeSettings;
 
-        QGraphicsView *view;
+        QGraphicsView *screen;
 
-        QGraphicsScene *notConnectedScene;
-        QGraphicsScene *primary;
-        QGraphicsScene *alternate;
-
+        QGraphicsRectItem *notConnected;
         QGraphicsSimpleTextItem *ncReason;
 
         DisplayScreen *primaryScreen;
         DisplayScreen *alternateScreen;
         DisplayScreen *current;
+
+        StatusBar *statusBar;
 
         ProcessDataStream *datastream;
         SocketConnection *socket;
@@ -115,10 +115,6 @@ class Terminal : public QWidget
         bool sessionConnected;
 
         Qt::AspectRatioMode stretchScreen;
-
-//        QLabel *cursorAddress;
-//        QLabel *syslock;
-//        QLabel *insMode;
 
         int blinkSpeed;
         bool blink;

@@ -134,7 +134,6 @@ void ProcessDataStream::processStream(QByteArray &b, bool tn3270e)
             break;
         default:
             printf("\n\n[** Unrecognised WRITE command: %02X - Block Ignored **]\n\n", (uchar) *buffer);
-//            b->dump();
             processing = false;
             return;
     }
@@ -150,13 +149,10 @@ void ProcessDataStream::processStream(QByteArray &b, bool tn3270e)
             processOrders();
         }
         buffer++;
-//        QCoreApplication::processEvents();
     }
 
-//    b.clear();
-//    b->setProcessing(false);
 
-    qDebug() << QDateTime::currentMSecsSinceEpoch() << "ProcessDataStream: processingComplete";
+//    qDebug() << QDateTime::currentMSecsSinceEpoch() << "ProcessDataStream: processingComplete";
 
     if (lastwasWrite)
         emit processingComplete();
@@ -165,20 +161,20 @@ void ProcessDataStream::processStream(QByteArray &b, bool tn3270e)
     {
 
     }
+
     if (restoreKeyboard)
     {
-        qDebug() << QDateTime::currentMSecsSinceEpoch() << "ProcessDataStream: unlockKeyboard";
+//        qDebug() << QDateTime::currentMSecsSinceEpoch() << "ProcessDataStream: unlockKeyboard";
         emit unlockKeyboard();
     }
-//    screen->dumpFields();
-//    screen->dumpDisplay();
-//    fflush(stdout);
 
-    screen->refresh();
+    // Reset character attributes
+    screen->resetCharAttr();
 
+    // If a response was built, send it
     if (!reply.isEmpty())
     {
-        qDebug() << QDateTime::currentMSecsSinceEpoch() << "ProcessDataStream: Sending Query reply";
+//        qDebug() << QDateTime::currentMSecsSinceEpoch() << "ProcessDataStream: Sending Query reply";
         emit bufferReady(reply);
     }
 

@@ -77,6 +77,7 @@ KeyboardMap KeyboardMap::getFactoryMap()
 
     km.set("Info",        { "Ctrl+I" });
     km.set("Fields",      { "Ctrl+F" });
+    km.set("DumpScreen",  { "Ctrl-D" });
 
     km.name = "Factory";
 

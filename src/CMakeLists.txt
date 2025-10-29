@@ -4,12 +4,12 @@ set(SOURCES
     CertificateDetails.cpp
     CodePage.cpp
     ColourTheme.cpp
-    DisplayScreen/ClickableSvgItem.cpp
-    DisplayScreen/DisplayScreen.cpp
-    DisplayScreen/DisplayScreen_Cursor.cpp
-    DisplayScreen/DisplayScreen_Status.cpp
-    DisplayScreen/DisplayScreen_Mouse.cpp
-    DisplayScreen/LockIndicator.cpp
+    Display/ClickableSvgItem.cpp
+    Display/DisplayScreen.cpp
+    Display/DisplayScreen_Cursor.cpp
+    Display/StatusBar.cpp
+    Display/DisplayScreen_Mouse.cpp
+
     FunctionRegistry.cpp
     Models/Colours.cpp
     Models/KeyboardMap.cpp
@@ -43,7 +43,8 @@ set(HEADERS
     CodePage.h
     ColourTheme.h
     DisplayScreen.h
-    DisplayScreen/ClickableSvgItem.h
+    Display/ClickableSvgItem.h
+    Display/StatusBar.h
     FunctionRegistry.h
     Models/Colours.h
     Preferences/ColourSwatchWidget.h

@@ -75,6 +75,7 @@ static QList<FunctionInfo> build()
         { "Paste",        UsageContext::Keyboard | UsageContext::Menu | UsageContext::Toolbar, "Paste from clipboard" },
         { "Info",         UsageContext::Keyboard | UsageContext::Menu, "Show information" },
         { "Fields",       UsageContext::Keyboard | UsageContext::Menu, "Show field list" },
+        { "DumpScreen",   UsageContext::Keyboard | UsageContext::Menu, "Dump the screen"},
 
         { "Blah",         UsageContext::Keyboard, "Unlock the keyboard" }
     };

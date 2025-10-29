@@ -96,6 +96,7 @@ const Keyboard::FunctionBinding Keyboard::bindings[] = {
     { "Paste",        &Keyboard::paste },
     { "Info",         &Keyboard::info },
     { "Fields",       &Keyboard::fields },
+    { "DumpScreen",   &Keyboard::dumpscreen },
 
     { "Blah",         &Keyboard::info }
 };
@@ -1026,6 +1027,11 @@ void Keyboard::info()
 void Keyboard::fields()
 {
     emit key_showFields();
+}
+
+void Keyboard::dumpscreen()
+{
+    emit key_dumpScreen();
 }
 
 /**

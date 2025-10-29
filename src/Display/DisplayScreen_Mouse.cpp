@@ -156,7 +156,7 @@ void DisplayScreen::copyText()
         for(int x = left; x <= right; x++)
         {
             int thisPos = screen_x * y + x;
-            cbText = cbText + cell.at(thisPos)->getChar();
+            cbText = cbText + cp.getUnicodeChar(cells[thisPos].getEBCDIC());
         }
     }
 

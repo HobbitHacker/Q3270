@@ -41,8 +41,8 @@ void DisplayScreen::setCursor(const int x, const int y)
 
     if (cursorColour)
     {
-        const Cell *c = cell.at(cursor_pos);
-        const Q3270::Colour colour = c->isReverse() ? Q3270::Black : c->getColour();
+        const Cell c = cells[cursor_pos];
+        const Q3270::Colour colour = c.isReverse() ? Q3270::Black : c.getColour();
 
         cursor.setBrush(palette->colour(colour));
     }
@@ -52,7 +52,7 @@ void DisplayScreen::setCursor(const int x, const int y)
 
     cursor.setVisible(true);
 
-    statusCursor.setText(QString("%1,%2").arg(x + 1, 3).arg(y + 1, -3));
+    emit cursorMoved(x + 1, y + 1);
 
     setRuler();
 }
@@ -151,7 +151,7 @@ void DisplayScreen::endline()
 
     while(i < endPos && !isProtected(offset) && !isFieldStart(offset))
     {
-        uchar thisChar = cell.at(offset)->getChar().toLatin1();
+        uchar thisChar = cp.getEBCDIC(cells[offset].getEBCDIC());
         if (letter && (thisChar == 0x00 || thisChar == ' '))
         {
             endField = offset;
@@ -220,7 +220,7 @@ void DisplayScreen::setCursorColour(bool inherit)
     cursorColour = inherit;
     if (inherit)
     {
-        cursor.setBrush(palette->colour(cell.at(cursor.data(0).toInt())->getColour()));
+        cursor.setBrush(palette->colour(cells[cursor.data(0).toInt()].getColour()));
     }
     else
     {

@@ -61,7 +61,7 @@ PreferencesDialog::PreferencesDialog(CodePage &codepages, ActiveSettings &active
     qfd->setOption(QFontDialog::NoButtons);
     qfd->setOption(QFontDialog::DontUseNativeDialog);
 
-//    connect(qfd, &QFontDialog::currentFontChanged, this, &Settings::fontChanged);
+    connect(qfd, &QFontDialog::currentFontChanged, this, &PreferencesDialog::changeFont);
 
     ui->verticalLayout_5->addWidget(qfd);
 

@@ -62,6 +62,7 @@ class Keyboard : public QObject
 
         void key_showInfo();
         void key_showFields();
+        void key_dumpScreen();
 
     public slots:
 //        void unlockKeyboard();
@@ -180,6 +181,7 @@ class Keyboard : public QObject
         void paste();
         void info();
         void fields();
+        void dumpscreen();
 
         void nextKey();
         bool needtoWait(QKeyEvent *q);

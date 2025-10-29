@@ -11,6 +11,8 @@
 #include "Terminal.h"
 #include <QDateTime>
 
+#include "Display/StatusBar.h"
+
 /**
  * @brief   Terminal::Terminal - the terminal in the Qt window
  * @param   layout          - the central widget in which the QGraphicsView which shows the terminal
@@ -28,23 +30,30 @@
  *          There are two displays built; the primary one is always 24x80, and the alternate is defined
  *          by the user, based on the Terminal Model type selected.
  */
-Terminal::Terminal(QVBoxLayout *layout, ActiveSettings &activeSettings, CodePage &cp, Keyboard &kb, const Colours &cs) :
-    kbd(kb), cp(cp), palette(cs), activeSettings(activeSettings)
+Terminal::Terminal(QGraphicsView *screen, ActiveSettings &activeSettings, CodePage &cp, Keyboard &kb, const Colours &cs)
+    : kbd(kb)
+    , cp(cp)
+    , palette(cs)
+    , activeSettings(activeSettings)
+    , screen(screen)
 {
+    QGraphicsScene *screenScene = new QGraphicsScene(this);
+
+    screen->setScene(screenScene);
+
     sessionConnected = false;
     stretchScreen = Qt::IgnoreAspectRatio;
 
-    // Create terminal display
-    view = new QGraphicsView();
-
-    view->setBackgroundBrush(QBrush(Qt::black));
-    view->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    view->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    view->setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContents);
-    view->setInteractive(false);
+    screen->setBackgroundBrush(QBrush(Qt::black));
+    screen->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    screen->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    screen->setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContents);
+    screen->setInteractive(false);
+    screen->setAlignment(Qt::AlignLeft | Qt::AlignTop);
+    screen->setTransformationAnchor(QGraphicsView::AnchorViewCenter);
 
     // Plug the keyboard in
-    view->installEventFilter(&kbd);
+    screen->installEventFilter(&kbd);
 
     // Connect signals for changes to settings so they can be reflected here
     connect(&activeSettings, &ActiveSettings::rulerStyleChanged, this, &Terminal::rulerStyle);
@@ -59,16 +68,13 @@ Terminal::Terminal(QVBoxLayout *layout, ActiveSettings &activeSettings, CodePage
 //    connect(&activeSettings, &ActiveSettings::colourThemeChanged, this, &Terminal::setColourTheme);
 
     // Build "Not Connected" display
-    notConnectedScene = new QGraphicsScene();
+    notConnected = new QGraphicsRectItem(0, 0, 640, 480);
+    notConnected->setBrush(QColor(Qt::black));
+    notConnected->setPen(QColor(Qt::black));
 
-    QGraphicsRectItem *mRect = new QGraphicsRectItem(0, 0, 640, 480);
-    mRect->setBrush(QColor(Qt::black));
-    mRect->setPen(QColor(Qt::black));
 
-    notConnectedScene->addItem(mRect);
-
-    QGraphicsSimpleTextItem *ncMessage = new QGraphicsSimpleTextItem("Not Connected", mRect);
-    ncReason = new QGraphicsSimpleTextItem("", mRect);
+    QGraphicsSimpleTextItem *ncMessage = new QGraphicsSimpleTextItem("Not Connected", notConnected);
+    ncReason = new QGraphicsSimpleTextItem("", notConnected);
 
     ncMessage->setBrush(QColor(Qt::white));
     ncReason->setBrush(QColor(Qt::red));
@@ -76,7 +82,7 @@ Terminal::Terminal(QVBoxLayout *layout, ActiveSettings &activeSettings, CodePage
     ncMessage->setPen(QColor(Qt::white));
     ncReason->setPen(QColor(Qt::red));
 
-    QFont font("mono", 24);
+    QFont font("Courier", 12);
     ncMessage->setFont(font);
 
     // Centre "Not Connected" based on font size. 640x480 halved, less the size of the font
@@ -86,13 +92,12 @@ Terminal::Terminal(QVBoxLayout *layout, ActiveSettings &activeSettings, CodePage
     ncMessage->setPos(xPos, yPos);
 
     // Set "Not Connected" as the initially displayed scene
-    view->setScene(notConnectedScene);
-    // view->setStretch(settings->getStretch());
+    screen->scene()->addItem(notConnected);
+    screen->show();
 
-    // Add it to the display and finally show it
-    layout->addWidget(view);
+    fit();
 
-    view->show();
+    statusBar = new StatusBar(80 * CELL_WIDTH, CELL_HEIGHT * .5);
 
     // Blink timers
     blinker = new QTimer(this);
@@ -109,8 +114,6 @@ Terminal::Terminal(QVBoxLayout *layout, ActiveSettings &activeSettings, CodePage
  */
 Terminal::~Terminal()
 {
-    delete notConnectedScene;
-    delete view;
 }
 
 /**
@@ -133,15 +136,14 @@ void Terminal::setFont(QFont font)
  * @param   f - the chosen font
  *
  * @details Called to dynamically change the font on the currently displayed screen. Used during the
- *          Preferences dialog display to show the different fonts as they are selected by the user.
- *
- * @note    This processing is currently disabled.
+ *          Preferences dialog display to show the different fonts as they are selected by the user.* 
  */
 void Terminal::setCurrentFont(QFont f)
 {
     if (sessionConnected)
     {
         current->setFont(f);
+        current->update();
     }
 }
 
@@ -167,25 +169,9 @@ void Terminal::setScreenStretch(bool stretch)
 void Terminal::setColourTheme(const Colours &colours)
 {
     palette = colours;
-
-    //FIXME: Might not be needed because of passing palette by reference to DisplayScreen
-
     if (sessionConnected)
     {
-        current->resetColours();
-    }
-// This from Copilot, is all that is needed:
-
-//void DisplayScreen::resetColours()
-//{
-//    update(); // marks the whole DisplayScreen (and children) dirty
-//}
-
-    // Set colour theme by name; pass obtained theme to setColours()
-    if (sessionConnected)
-    {
-        primary->update();
-        alternate->update();
+        screen->scene()->update();
     }
 }
 
@@ -236,15 +222,15 @@ void Terminal::connectSession()
 {
     setWindowTitle(QString('[').append(activeSettings.getSessionName()).append(']'));
 
-    // Set up primary and alternate scenes
-    primary = new QGraphicsScene();
-    alternate = new QGraphicsScene();
-
-    primaryScreen = new DisplayScreen(80, 24, cp, &palette, primary);
-    alternateScreen = new DisplayScreen(activeSettings.getTerminalX(), activeSettings.getTerminalY(), cp, &palette, alternate);
+    primaryScreen = new DisplayScreen(80, 24, cp, &palette);
+    alternateScreen = new DisplayScreen(activeSettings.getTerminalX(), activeSettings.getTerminalY(), cp, &palette);
 
     current = primaryScreen;
-    view->setScene(primary);
+    screen->scene()->removeItem(notConnected);
+    screen->scene()->addItem(primaryScreen);
+    screen->scene()->addItem(statusBar);
+
+    statusBar->setPos(0, current->boundingRect().height());
 
     datastream = new ProcessDataStream(this);
     socket = new SocketConnection(activeSettings.getTerminalModel());
@@ -259,8 +245,7 @@ void Terminal::connectSession()
 
     connect(socket, &SocketConnection::dataStreamComplete, datastream, &ProcessDataStream::processStream);
 
-    connect(socket, &SocketConnection::encryptedConnection, primaryScreen, &DisplayScreen::setEncrypted);
-    connect(socket, &SocketConnection::encryptedConnection, alternateScreen, &DisplayScreen::setEncrypted);
+    connect(socket, &SocketConnection::encryptedConnection, statusBar, &StatusBar::setEncrypted);
 
     connect(socket, &SocketConnection::connectionEnded, this, &Terminal::closeConnection);
 
@@ -280,12 +265,6 @@ void Terminal::connectSession()
     connect(&kbd, &Keyboard::setEnterInhibit, this, &Terminal::setTWait);
     connect(&kbd, &Keyboard::setInsert, this, &Terminal::setStatusInsert);
 
-
-//    connect(&activeSettings, &ActiveSettings::cursorInheritChanged, &screen, &DisplayScreen::setCursorColour);
-//    connect(datastream, &ProcessDataStream::cursorMoved, &screen, &DisplayScreen::showStatusCursorPosition);
-
-//    connectKeyboard(*current);
-
     // Keyboard inputs
     connect(&kbd, &Keyboard::key_Copy, this, &Terminal::copyText);
 
@@ -298,7 +277,7 @@ void Terminal::connectSession()
 
     kbd.setConnected(true);
 
-    view->setInteractive(true);
+    screen->setInteractive(true);
 
     fit();
 }
@@ -312,6 +291,8 @@ void Terminal::connectSession()
  */
 void Terminal::closeConnection(QString message)
 {
+    sessionConnected = false;
+
     disconnect(socket, &SocketConnection::dataStreamComplete, datastream, &ProcessDataStream::processStream);
 
     disconnect(socket, &SocketConnection::connectionEnded, this, &Terminal::closeConnection);
@@ -351,28 +332,26 @@ void Terminal::closeConnection(QString message)
         ncReason->setText("");
     }
 
-    view->setScene(notConnectedScene);
+    screen->scene()->removeItem(current);
+    screen->scene()->removeItem(statusBar);
+    screen->scene()->addItem(notConnected);
 
-    disconnect(socket, &SocketConnection::encryptedConnection, primaryScreen, &DisplayScreen::setEncrypted);
-    disconnect(socket, &SocketConnection::encryptedConnection, alternateScreen, &DisplayScreen::setEncrypted);
+    fit();
+
+    disconnect(socket, &SocketConnection::encryptedConnection, statusBar, &StatusBar::setEncrypted);
 
     delete primaryScreen;
     delete alternateScreen;
 
-    delete primary;
-    delete alternate;
-
     delete datastream;
     socket->deleteLater();
-
-    sessionConnected = false;
 
     // Menu "Connect" entry disable
     emit disconnected();
 
     kbd.setConnected(false);
 
-    view->setInteractive(false);
+    screen->setInteractive(false);
 }
 
 /**
@@ -398,8 +377,10 @@ void Terminal::connectKeyboard(DisplayScreen &screen)
     connect(&kbd, &Keyboard::key_toggleRuler, &screen, &DisplayScreen::toggleRuler);
     connect(&kbd, &Keyboard::key_showInfo, &screen, &DisplayScreen::dumpInfo);
     connect(&kbd, &Keyboard::key_showFields, &screen, &DisplayScreen::dumpFields);
+    connect(&kbd, &Keyboard::key_dumpScreen, &screen, &DisplayScreen::dumpDisplay);
     connect(&kbd, &Keyboard::key_Attn, &screen, &DisplayScreen::interruptProcess);
     connect(&kbd, &Keyboard::key_AID, &screen, &DisplayScreen::processAID);
+    connect(&screen, &DisplayScreen::cursorMoved, statusBar, &StatusBar::cursorMoved);
 }
 
 /**
@@ -424,10 +405,11 @@ void Terminal::disconnectKeyboard(DisplayScreen &screen)
     disconnect(&kbd, &Keyboard::key_toggleRuler, &screen, &DisplayScreen::toggleRuler);
     disconnect(&kbd, &Keyboard::key_showInfo, &screen, &DisplayScreen::dumpInfo);
     disconnect(&kbd, &Keyboard::key_showFields, &screen, &DisplayScreen::dumpFields);
+    disconnect(&kbd, &Keyboard::key_dumpScreen, &screen, &DisplayScreen::dumpDisplay);
     disconnect(&kbd, &Keyboard::key_Attn, &screen, &DisplayScreen::interruptProcess);
     disconnect(&kbd, &Keyboard::key_AID, &screen, &DisplayScreen::processAID);
+    disconnect(&screen, &DisplayScreen::cursorMoved, statusBar, &StatusBar::cursorMoved);
 }
-
 
 /**
  * @brief   Terminal::closeEvent - close the window
@@ -493,9 +475,6 @@ void Terminal::setBlinkSpeed(int speed)
 void Terminal::changeCodePage(QString codepage)
 {
     cp.setCodePage(codepage);
-
-    if (sessionConnected)
-        current->setCodePage();
 }
 
 /**
@@ -592,20 +571,23 @@ DisplayScreen *Terminal::setAlternateScreen(bool alt)
     shortCursorBlink = false;
     shortCharacterBlink = false;
 
-    if (!alt)
-    {
-        disconnectKeyboard(*alternateScreen);
-        connectKeyboard(*primaryScreen);
-        view->setScene(primary);
-        current = primaryScreen;
-    }
-    else
-    {
-        disconnectKeyboard(*primaryScreen);
-        connectKeyboard(*alternateScreen);
-        view->setScene(alternate);
-        current = alternateScreen;
-    }
+    screen->scene()->removeItem(current);
+    screen->scene()->removeItem(statusBar);
+
+    current = !alt ? primaryScreen : alternateScreen;
+
+    disconnectKeyboard(*alternateScreen);
+    disconnectKeyboard(*primaryScreen);
+
+    connectKeyboard(*current);
+
+    screen->scene()->addItem(current);
+    screen->scene()->addItem(statusBar);
+
+    statusBar->setPos(0, current->boundingRect().height());
+    statusBar->setWidth(current->boundingRect().width());
+
+    screen->resetTransform();
 
     startTimers();
 
@@ -614,14 +596,27 @@ DisplayScreen *Terminal::setAlternateScreen(bool alt)
     return current;
 }
 
+/**
+ * @brief   Terminal::setStatusInsert - update the status bar with insert mode
+ * @param   insert - Q3270::InsertMode or Q3270::OvertypeMode
+ *
+ * @details setStatusInsert is called when the user toggles the insert mode with the
+ *          insert key.
+ */
 void Terminal::setStatusInsert(const bool insert)
 {
     if (!sessionConnected)
         return;
 
-    current->setStatusInsert(insert ? Q3270::InsertMode : Q3270::OvertypeMode);
+    statusBar->setStatusInsert(insert ? Q3270::InsertMode : Q3270::OvertypeMode);
 }
 
+/**
+ * @brief   Terminal::setTWait - Set the TWAIT condition
+ *
+ * @details setTWait is called when the terminal is waiting for a response from the host.
+ *          TWAIT is when the 'X <clock>' is shown.
+ */
 void Terminal::setTWait()
 {
     if (!sessionConnected)
@@ -630,11 +625,14 @@ void Terminal::setTWait()
     xClock = true;
     xSystem = true;
 
-    qDebug() << QDateTime::currentMSecsSinceEpoch() << "Terminal        : TWAIT set (xClock and xSystem set)";
-
     updateLockState();
 }
 
+/**
+ * @brief   Terminal::clearTWait - Clear the TWAIT condition
+ *
+ * @details clearTWait is called when the host has responded. It does not clear X System.
+ */
 void Terminal::clearTWait()
 {
     if (!sessionConnected)
@@ -642,11 +640,18 @@ void Terminal::clearTWait()
 
     xClock = false;
 
-    qDebug() << QDateTime::currentMSecsSinceEpoch() << "Terminal        : TWAIT cleared (xClock cleared)";
-
     updateLockState();
+
+    current->update();
 }
 
+/**
+ * @brief   Terminal::resetStatusXSystem - Clear X System condition if possible
+ *
+ * @details resetStatusXSystem is called when the user presses the Reset key or the
+ *          host has responded to a previous data stream. If TWAIT is set, this
+ *          is ignored.
+ */
 void Terminal::resetStatusXSystem()
 {
     if (!sessionConnected)
@@ -657,29 +662,29 @@ void Terminal::resetStatusXSystem()
 
     xSystem = false;
 
-    qDebug() << QDateTime::currentMSecsSinceEpoch() << "Terminal        : System Lock cleared (xSystem cleared)";
-
     updateLockState();
 }
 
+/**
+ * @brief   Terminal::updateLockState - Update the X <clock>, X System status
+ *
+ * @details updateLockState refreshes the status bar for X Clock or X System, or unlocked.
+ */
 void Terminal::updateLockState()
 {
     if (xClock) {
-        current->setStatusLock(Q3270::TerminalWait);
+        statusBar->setStatusLock(Q3270::TerminalWait);
         kbd.setLocked(true);
     }
     else if (xSystem) {
-        current->setStatusLock(Q3270::SystemLock);
+        statusBar->setStatusLock(Q3270::SystemLock);
         kbd.setLocked(true);
     }
     else {
-        current->setStatusLock(Q3270::Unlocked);
+        statusBar->setStatusLock(Q3270::Unlocked);
         kbd.setLocked(false);
     }
-
-    qDebug() << QDateTime::currentMSecsSinceEpoch() << "after setStatusLock: xSystem:" << xSystem << "xClock:" << xClock;
 }
-
 
 /**
  * @brief   Terminal::fit - fit the window content according to user preference
@@ -691,10 +696,10 @@ void Terminal::fit()
 {
     if (sessionConnected)
     {
-        view->fitInView(0, 0, 640, 490, stretchScreen);
+        screen->fitInView(screen->scene()->itemsBoundingRect(), stretchScreen);
     }
     else
     {
-        view->fitInView(QRectF(0, 0, 640, 480), Qt::IgnoreAspectRatio);
+        screen->fitInView(notConnected, Qt::IgnoreAspectRatio);
     }
 }

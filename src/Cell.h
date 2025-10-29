@@ -11,33 +11,21 @@
 #ifndef CELL_H
 #define CELL_H
 
-#include <QGraphicsSimpleTextItem>
-#include <QObject>
-#include <QGraphicsScene>
-#include <QPointer>
-
 #include "Q3270.h"
 #include "Models/Colours.h"
-#include "CodePage.h"
 
-
-class Cell : public QObject, public QGraphicsRectItem
+class Cell
 {
-    Q_OBJECT
 
 public:
-    Cell(int celladdress, qreal x_pos, qreal y_pos, qreal x, qreal y, CodePage &cp, const Colours *palette, QGraphicsItem *parent, QGraphicsScene *scene);
-
-    //QRectF boundingRect() const;
+    Cell();
 
     void setChar(const uchar ebcdic);
-    void setCharFromKB(const uchar c);
 
     // Getters, inline for speed
     inline uchar getEBCDIC() const                  { return ebcdic; };
-    inline QChar getChar() const                    { return glyph.text().at(0); }
 
-    inline Q3270::Colour getColour() const          { return colNum; };
+    const Q3270::Colour getColour() const;
 
     inline bool isFieldStart() const                { return fieldStart; };
     inline bool isAutoSkip() const                  { return prot & num; };
@@ -45,7 +33,7 @@ public:
     inline bool isGraphic() const                   { return graphic; };
     inline bool isMdtOn() const                     { return mdt; };
     bool isProtected() const;
-    inline bool isDisplay() const                   { return display; };
+    const bool isDisplay() const;
     inline bool isPenSelect() const                 { return pen; };
     inline bool isIntensify() const                 { return intensify; };
     inline bool isExtended() const                  { return extended; };
@@ -53,16 +41,13 @@ public:
     inline bool isReverse() const                   { return reverse; };
     inline bool isBlink() const                     { return blink; };
 
-    int getField() const;
+    Cell* getField();
 
     bool hasCharAttrs(const Q3270::CharAttr) const;
 
     // Setters
     void setField(Cell *c);
-
     void setColour(const Q3270::Colour col);
-    void setColourFromField()                       { setColour(field->getColour()); };
-
     void setFieldStart(const bool fs);
     void setNumeric(const bool num);
     void setGraphic(const bool ge);
@@ -76,39 +61,12 @@ public:
     void setReverse(const bool reverse);
     void setBlink(const bool blink);
 
-    void setFont(QFont);
-
     void setCharAttrs(Q3270::CharAttr, bool);
     void resetCharAttrs();
 
-    void copy(Cell &);
-
-    void setAttrs(bool, bool, bool, Q3270::Colour);
-
-    void refreshCodePage();
-
-    void blinkChar(bool);
-     bool updateCell();
+    void copy(const Cell &);
 
 private:
-
-    QGraphicsLineItem underscore;
-    QGraphicsSimpleTextItem glyph;
-
-    // Screen position of this cell
-    int address;
-
-    qreal xsize;
-    qreal ysize;
-
-    // Size
-    qreal xscale;
-    qreal yscale;
-
-    const Colours *palette;
-
-    // Codepage
-    const CodePage &cp;
 
     // EBCDIC code for this character
     uchar ebcdic;
@@ -144,16 +102,6 @@ private:
 
     // Colour of glyph
     Q3270::Colour colNum;
-
-    // Cell changed with this data transmission
-    bool changed;
-    bool displayChanged;
-    bool colourChanged;
-    bool reverseChanged;
-    bool uscoreChanged;
-    bool glyphChanged;
-
-    int updateCount;
 };
 
 #endif // CELL_H

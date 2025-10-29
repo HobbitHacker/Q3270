@@ -8,7 +8,6 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-
 #ifndef CLICKABLESVGITEM_H
 #define CLICKABLESVGITEM_H
 
