@@ -23,7 +23,6 @@
 #include "ActiveSettings.h"
 #include "Display/StatusBar.h"
 
-
 class Terminal : public QWidget
 {
     Q_OBJECT
@@ -35,10 +34,14 @@ class Terminal : public QWidget
 
         void connectSession();
 
-        int terminalWidth(bool alternate)       { return(!alternate ? primaryScreen->width() : alternateScreen->width()); }
-        int terminalHeight(bool alternate)      { return(!alternate ? primaryScreen->height() : alternateScreen->height()); };
-        int gridWidth(bool alternate)           { return(!alternate ? primaryScreen->gridWidth() : alternateScreen->gridWidth()); };
-        int gridHeight(bool alternate)          { return(!alternate ? primaryScreen->gridHeight() : alternateScreen->gridHeight()); };
+        // int terminalWidth(bool alternate)       { return(!alternate ? primaryScreen->width() : alternateScreen->width()); }
+        // int terminalHeight(bool alternate)      { return(!alternate ? primaryScreen->height() : alternateScreen->height()); };
+        // int gridWidth(bool alternate)           { return(!alternate ? primaryScreen->gridWidth() : alternateScreen->gridWidth()); };
+        // int gridHeight(bool alternate)          { return(!alternate ? primaryScreen->gridHeight() : alternateScreen->gridHeight()); };
+        int terminalWidth(bool alternate)          { return(!alternate ? 80 : activeSettings.getTerminalX()); };
+        int terminalHeight(bool alternate)         { return(!alternate ? 24 : activeSettings.getTerminalY()); };
+        int gridWidth(bool alternate)              { return(!alternate ? 80 *  12 : activeSettings.getTerminalX() * 12); };
+        int gridHeight(bool alternate)             { return(!alternate ? 24 *  22 : activeSettings.getTerminalY() * 22); };
 
         void setBlink(bool blink);
         void setBlinkSpeed(int speed);
@@ -84,8 +87,8 @@ class Terminal : public QWidget
 
     private:
 
-        void connectKeyboard(DisplayScreen &s);
-        void disconnectKeyboard(DisplayScreen &s);
+        void connectKeyboard();
+        void disconnectKeyboard();
         void updateLockState();
 
         void startTimers();
@@ -103,8 +106,8 @@ class Terminal : public QWidget
         QGraphicsRectItem *notConnected;
         QGraphicsSimpleTextItem *ncReason;
 
-        DisplayScreen *primaryScreen;
-        DisplayScreen *alternateScreen;
+//        DisplayScreen *primaryScreen;
+//        DisplayScreen *alternateScreen;
         DisplayScreen *current;
 
         StatusBar *statusBar;
@@ -130,7 +133,6 @@ class Terminal : public QWidget
 
         QTimer *blinker;
         QTimer *cursorBlinker;
-
 };
 
 #endif // TERMINAL_H

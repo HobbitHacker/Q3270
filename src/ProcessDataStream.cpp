@@ -18,10 +18,10 @@
  *
  * @details Initialise the ProcessDataStream object, setting power on settings.
  */
-ProcessDataStream::ProcessDataStream(Terminal *t)
+ProcessDataStream::ProcessDataStream(Terminal *t, DisplayScreen *screen)
+    : terminal(t)
+    , screen(screen)
 {
-    terminal = t;
-
     primary_pos = 0;
 
     lastAID = IBM3270_AID_NOAID;
@@ -40,12 +40,12 @@ ProcessDataStream::ProcessDataStream(Terminal *t)
 void ProcessDataStream::setScreen(bool alternate)
 {
 
-    screen = terminal->setAlternateScreen(alternate);
+    emit setAlternateScreen(alternate);
 
     alternate_size = alternate;
 
-    screen_x = screen->width();
-    screen_y = screen->height();
+    screen_x = terminal->terminalWidth(alternate);
+    screen_y = terminal->terminalHeight(alternate);
 
     screenSize = screen_x * screen_y;
 }
@@ -1178,11 +1178,11 @@ void ProcessDataStream::replySummary()
     qusablearea[17] = (y & 0xFF00) >> 8;
     qusablearea[18] = (y & 0xFF);
 
-    qusablearea[19] = ((int)terminal->gridWidth(false) & 0xFF00) >> 8;
-    qusablearea[20] = ((int)terminal->gridWidth(false) & 0xFF);
+    qusablearea[19] = ((int)(terminal->terminalWidth(false) * CELL_WIDTH) & 0xFF00) >> 8;
+    qusablearea[20] = ((int)(terminal->terminalWidth(false) * CELL_WIDTH) & 0xFF);
 
-    qusablearea[21] = ((int)terminal->gridHeight(false) & 0xFF00) >> 8;
-    qusablearea[22] = ((int)terminal->gridHeight(false) & 0xFF);
+    qusablearea[21] = ((int)(terminal->terminalHeight(false) * CELL_HEIGHT) & 0xFF00) >> 8;
+    qusablearea[22] = ((int)(terminal->terminalHeight(false) * CELL_HEIGHT) & 0xFF);
 
     qusablearea[23] = ((qusablearea[5] * qusablearea[7]) & 0xFF00) >> 8;
     qusablearea[24] = ((qusablearea[5] * qusablearea[7]) & 0xFF);

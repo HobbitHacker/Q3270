@@ -16,6 +16,10 @@
 #define Q3270_ORG "andyWare"
 #define Q3270_APP "Q3270"
 
+#define CELL_WIDTH 12
+#define CELL_HEIGHT 22
+
+
 /* 3270 Write Commands */
 #define IBM3270_W    0xF1  /* Write */
 #define IBM3270_EW   0xF5  /* Erase Write */

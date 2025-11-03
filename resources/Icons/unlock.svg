@@ -3,19 +3,21 @@
 
 <svg
    fill="#000000"
-   height="800px"
-   width="800px"
+   height="48"
+   width="48"
    version="1.1"
    id="Layer_1"
-   viewBox="0 0 330 330"
+   viewBox="0 0 48 48"
    xml:space="preserve"
    sodipodi:docname="unlock.svg"
-   inkscape:version="1.1.2 (0a00cf5339, 2022-02-04)"
+   inkscape:version="1.2.2 (b0a8486541, 2022-12-01)"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns="http://www.w3.org/2000/svg"
    xmlns:svg="http://www.w3.org/2000/svg"><defs
-   id="defs290" /><sodipodi:namedview
+   id="defs290">
+	
+</defs><sodipodi:namedview
    id="namedview288"
    pagecolor="#ffffff"
    bordercolor="#666666"
@@ -24,21 +26,19 @@
    inkscape:pageopacity="0.0"
    inkscape:pagecheckerboard="0"
    showgrid="false"
-   inkscape:zoom="1.08875"
-   inkscape:cx="215.38462"
-   inkscape:cy="400.45924"
+   inkscape:zoom="6.1589001"
+   inkscape:cx="50.577213"
+   inkscape:cy="43.43308"
    inkscape:window-width="2560"
-   inkscape:window-height="1382"
+   inkscape:window-height="1385"
    inkscape:window-x="0"
    inkscape:window-y="0"
    inkscape:window-maximized="1"
-   inkscape:current-layer="Layer_1" />
-<g
-   id="XMLID_516_"
-   style="fill:#ff0000">
-	<path
+   inkscape:current-layer="Layer_1"
+   inkscape:showpageshadow="2"
+   inkscape:deskcolor="#d1d1d1" />
+<path
    id="XMLID_517_"
-   d="M15,160c8.284,0,15-6.716,15-15V85c0-30.327,24.673-55,55-55c30.327,0,55,24.673,55,55v45h-25   c-8.284,0-15,6.716-15,15v170c0,8.284,6.716,15,15,15h200c8.284,0,15-6.716,15-15V145c0-8.284-6.716-15-15-15H170V85   c0-46.869-38.131-85-85-85S0,38.131,0,85v60C0,153.284,6.716,160,15,160z"
-   style="fill:#ff0000" />
-</g>
+   d="m 2.181818,23.272727 c 1.204946,0 2.181819,-0.976873 2.181819,-2.181818 v -8.727273 c 0,-4.411199 3.5888,-8 8,-8 4.4112,0 8,3.588801 8,8 v 6.545455 h -3.636364 c -1.204945,0 -2.181818,0.976873 -2.181818,2.181818 V 45.818182 C 14.545455,47.023128 15.522328,48 16.727273,48 h 29.09091 c 1.204946,0 2.181819,-0.976872 2.181819,-2.181818 V 21.090909 c 0,-1.204945 -0.976873,-2.181818 -2.181819,-2.181818 H 24.727274 V 12.363636 C 24.727274,5.546327 19.180946,0 12.363637,0 5.546327,0 0,5.546327 0,12.363636 v 8.727273 c 0,1.204945 0.976873,2.181818 2.181818,2.181818 z"
+   style="fill:#ff0000;stroke-width:0.145455" />
 </svg>

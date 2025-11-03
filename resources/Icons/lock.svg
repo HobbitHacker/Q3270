@@ -3,14 +3,14 @@
 
 <svg
    fill="#000000"
-   height="800px"
-   width="800px"
+   height="48"
+   width="48"
    version="1.1"
    id="Layer_1"
-   viewBox="0 0 330 330"
+   viewBox="0 0 47.999999 48"
    xml:space="preserve"
    sodipodi:docname="lock.svg"
-   inkscape:version="1.1.2 (0a00cf5339, 2022-02-04)"
+   inkscape:version="1.2.2 (b0a8486541, 2022-12-01)"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns="http://www.w3.org/2000/svg"
@@ -24,21 +24,24 @@
    inkscape:pageopacity="0.0"
    inkscape:pagecheckerboard="0"
    showgrid="false"
-   inkscape:zoom="0.022507243"
-   inkscape:cx="377.65621"
-   inkscape:cy="399.87128"
+   inkscape:zoom="11.523708"
+   inkscape:cx="-5.3368237"
+   inkscape:cy="23.299791"
    inkscape:window-width="2560"
-   inkscape:window-height="1382"
+   inkscape:window-height="1385"
    inkscape:window-x="0"
    inkscape:window-y="0"
    inkscape:window-maximized="1"
-   inkscape:current-layer="Layer_1" />
+   inkscape:current-layer="Layer_1"
+   inkscape:showpageshadow="2"
+   inkscape:deskcolor="#d1d1d1" />
 <g
    id="XMLID_518_"
-   style="fill:#ffcc00">
+   style="fill:#ffcc00"
+   transform="matrix(0.20869565,0,0,0.14545455,-10.434783,0)">
 	<path
    id="XMLID_519_"
-   d="M65,330h200c8.284,0,15-6.716,15-15V145c0-8.284-6.716-15-15-15h-15V85c0-46.869-38.131-85-85-85   S80.001,38.131,80.001,85v45H65c-8.284,0-15,6.716-15,15v170C50,323.284,56.716,330,65,330z M110.001,85   c0-30.327,24.673-55,54.999-55c30.327,0,55,24.673,55,55v45H110.001V85z"
+   d="m 65,330 h 200 c 8.284,0 15,-6.716 15,-15 V 145 c 0,-8.284 -6.716,-15 -15,-15 H 250 V 85 C 250,38.131 211.869,0 165,0 118.131,0 80.001,38.131 80.001,85 v 45 H 65 c -8.284,0 -15,6.716 -15,15 v 170 c 0,8.284 6.716,15 15,15 z M 110.001,85 c 0,-30.327 24.673,-55 54.999,-55 30.327,0 55,24.673 55,55 v 45 H 110.001 Z"
    style="fill:#ffcc00" />
 </g>
 </svg>

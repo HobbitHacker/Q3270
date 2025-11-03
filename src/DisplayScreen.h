@@ -26,9 +26,6 @@
 #include "Display/ClickableSvgItem.h"
 #include "Display/LockIndicator.h"
 
-#define CELL_WIDTH 12
-#define CELL_HEIGHT 22
-
 class DisplayScreen : public QGraphicsObject
 {
     Q_OBJECT
@@ -51,6 +48,8 @@ class DisplayScreen : public QGraphicsObject
         int height() const;
         qreal gridWidth() const;
         qreal gridHeight() const;
+
+        void setSize(const int x, const int y);
 
         void setChar(int pos, uchar c, bool fromKB);
         void setCharAttr(unsigned char c, unsigned char d);

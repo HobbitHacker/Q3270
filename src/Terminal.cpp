@@ -49,7 +49,7 @@ Terminal::Terminal(QGraphicsView *screen, ActiveSettings &activeSettings, CodePa
     screen->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     screen->setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContents);
     screen->setInteractive(false);
-    screen->setAlignment(Qt::AlignLeft | Qt::AlignTop);
+    screen->setAlignment(Qt::AlignCenter);
     screen->setTransformationAnchor(QGraphicsView::AnchorViewCenter);
 
     // Plug the keyboard in
@@ -97,7 +97,7 @@ Terminal::Terminal(QGraphicsView *screen, ActiveSettings &activeSettings, CodePa
 
     fit();
 
-    statusBar = new StatusBar(80 * CELL_WIDTH, CELL_HEIGHT * .5);
+    statusBar = new StatusBar(80 * CELL_WIDTH, CELL_HEIGHT * .90);
 
     // Blink timers
     blinker = new QTimer(this);
@@ -105,6 +105,8 @@ Terminal::Terminal(QGraphicsView *screen, ActiveSettings &activeSettings, CodePa
 
     blink      = activeSettings.getCursorBlink();
     blinkSpeed = activeSettings.getCursorBlinkSpeed();
+
+    current = new DisplayScreen(80, 24, cp, &palette);
 }
 
 /**
@@ -114,6 +116,7 @@ Terminal::Terminal(QGraphicsView *screen, ActiveSettings &activeSettings, CodePa
  */
 Terminal::~Terminal()
 {
+    delete current;
 }
 
 /**
@@ -126,8 +129,7 @@ void Terminal::setFont(QFont font)
 {
     if (sessionConnected)
     {
-        primaryScreen->setFont(font);
-        alternateScreen->setFont(font);
+        current->setFont(font);
     }
 }
 
@@ -186,8 +188,9 @@ void Terminal::rulerChanged(bool on)
     // Switch ruler on or off apporpriately
     if (sessionConnected)
     {
-        primaryScreen->rulerMode(on);
-        alternateScreen->rulerMode(on);
+        current->rulerMode(on);
+        // primaryScreen->rulerMode(on);
+        // alternateScreen->rulerMode(on);
     }
 }
 
@@ -202,19 +205,17 @@ void Terminal::rulerStyle(Q3270::RulerStyle rulerStyle)
     // Change ruler style to match settings
     if (sessionConnected)
     {
-        primaryScreen->setRulerStyle(rulerStyle);
-        alternateScreen->setRulerStyle(rulerStyle);
+        current->setRulerStyle(rulerStyle);
+        // primaryScreen->setRulerStyle(rulerStyle);
+        // alternateScreen->setRulerStyle(rulerStyle);
     }
 }
 
 /**
  * @brief   Terminal::connectSession - connect to a host
- * @param   host   - the host to connect to
- * @param   port   - the port to use
- * @param   luName - LU name, may be blank
  *
- * @details Connect to a host. Build the ProcessDataStream, the SocketConnection, the primary and alternate
- *          screens, and connect the Keyboard to them. Set the fonts and colours of the screens.
+ * @details Connect to a host. Build the ProcessDataStream, the SocketConnection, the display matrix
+ *          and connect the Keyboard. Set the fonts and colours of the screens.
  *
  *          Start timers to blink the cursor and any blinking characters on screen.
  */
@@ -222,40 +223,30 @@ void Terminal::connectSession()
 {
     setWindowTitle(QString('[').append(activeSettings.getSessionName()).append(']'));
 
-    primaryScreen = new DisplayScreen(80, 24, cp, &palette);
-    alternateScreen = new DisplayScreen(activeSettings.getTerminalX(), activeSettings.getTerminalY(), cp, &palette);
-
-    current = primaryScreen;
     screen->scene()->removeItem(notConnected);
-    screen->scene()->addItem(primaryScreen);
+    screen->scene()->addItem(current);
     screen->scene()->addItem(statusBar);
 
     statusBar->setPos(0, current->boundingRect().height());
 
-    datastream = new ProcessDataStream(this);
+    datastream = new ProcessDataStream(this, current);
     socket = new SocketConnection(activeSettings.getTerminalModel());
 
     socket->setSecure(activeSettings.getSecureMode());
     socket->setVerify(activeSettings.getVerifyCerts());
 
     connect(datastream, &ProcessDataStream::bufferReady, socket, &SocketConnection::sendResponse);
+    connect(datastream, &ProcessDataStream::setAlternateScreen, this, &Terminal::setAlternateScreen);
 
-    connect(primaryScreen, &DisplayScreen::bufferReady, socket, &SocketConnection::sendResponse);
-    connect(alternateScreen, &DisplayScreen::bufferReady, socket, &SocketConnection::sendResponse);
+    connect(current, &DisplayScreen::bufferReady, socket, &SocketConnection::sendResponse);
 
     connect(socket, &SocketConnection::dataStreamComplete, datastream, &ProcessDataStream::processStream);
-
     connect(socket, &SocketConnection::encryptedConnection, statusBar, &StatusBar::setEncrypted);
-
     connect(socket, &SocketConnection::connectionEnded, this, &Terminal::closeConnection);
 
-    primaryScreen->setFont(activeSettings.getFont());
-    primaryScreen->rulerMode(activeSettings.getRulerState());
-    primaryScreen->setRulerStyle(activeSettings.getRulerStyle());
-
-    alternateScreen->setFont(activeSettings.getFont());
-    alternateScreen->rulerMode(activeSettings.getRulerState());
-    alternateScreen->setRulerStyle(activeSettings.getRulerStyle());
+    current->setFont(activeSettings.getFont());
+    current->rulerMode(activeSettings.getRulerState());
+    current->setRulerStyle(activeSettings.getRulerStyle());
 
     // Status bar updates
     connect(datastream, &ProcessDataStream::processingComplete, this, &Terminal::clearTWait);
@@ -268,7 +259,11 @@ void Terminal::connectSession()
     // Keyboard inputs
     connect(&kbd, &Keyboard::key_Copy, this, &Terminal::copyText);
 
+    connectKeyboard();
+
     socket->connectMainframe(activeSettings.getHostName(), activeSettings.getHostPort(), activeSettings.getHostLU(), datastream);
+
+    startTimers();
 
     sessionConnected = true;
 
@@ -298,12 +293,11 @@ void Terminal::closeConnection(QString message)
     disconnect(socket, &SocketConnection::connectionEnded, this, &Terminal::closeConnection);
 
     disconnect(datastream, &ProcessDataStream::bufferReady, socket, &SocketConnection::sendResponse);
+    disconnect(datastream, &ProcessDataStream::setAlternateScreen, this, &Terminal::setAlternateScreen);
 
-    disconnect(primaryScreen, &DisplayScreen::bufferReady, socket, &SocketConnection::sendResponse);
-    disconnect(alternateScreen, &DisplayScreen::bufferReady, socket, &SocketConnection::sendResponse);
+    disconnect(current, &DisplayScreen::bufferReady, socket, &SocketConnection::sendResponse);
 
-    disconnectKeyboard(*primaryScreen);
-    disconnectKeyboard(*alternateScreen);
+    disconnectKeyboard();
 
     // Status bar updates
     disconnect(datastream, &ProcessDataStream::unlockKeyboard, this, &Terminal::resetStatusXSystem);
@@ -340,9 +334,6 @@ void Terminal::closeConnection(QString message)
 
     disconnect(socket, &SocketConnection::encryptedConnection, statusBar, &StatusBar::setEncrypted);
 
-    delete primaryScreen;
-    delete alternateScreen;
-
     delete datastream;
     socket->deleteLater();
 
@@ -361,26 +352,27 @@ void Terminal::closeConnection(QString message)
  * @details Connect the keyboard to the specified screen. Used to ensure the keyboard is connected to either the
  *          primary or alternate.
  */
-void Terminal::connectKeyboard(DisplayScreen &screen)
+void Terminal::connectKeyboard()
 {
-    connect(&kbd, &Keyboard::key_Character, &screen, &DisplayScreen::insertChar);
+    connect(&kbd, &Keyboard::key_Character, current, &DisplayScreen::insertChar);
 
-    connect(&kbd, &Keyboard::key_Home, &screen, &DisplayScreen::home);
-    connect(&kbd, &Keyboard::key_Backspace, &screen, &DisplayScreen::backspace);
-    connect(&kbd, &Keyboard::key_Delete, &screen, &DisplayScreen::deleteChar);
-    connect(&kbd, &Keyboard::key_EraseEOF, &screen, &DisplayScreen::eraseEOF);
-    connect(&kbd, &Keyboard::key_Newline, &screen, &DisplayScreen::newline);
-    connect(&kbd, &Keyboard::key_Tab, &screen, &DisplayScreen::tab);
-    connect(&kbd, &Keyboard::key_End, &screen, &DisplayScreen::endline);
-    connect(&kbd, &Keyboard::key_Backtab, &screen, &DisplayScreen::backtab);
-    connect(&kbd, &Keyboard::key_moveCursor, &screen, &DisplayScreen::moveCursor);
-    connect(&kbd, &Keyboard::key_toggleRuler, &screen, &DisplayScreen::toggleRuler);
-    connect(&kbd, &Keyboard::key_showInfo, &screen, &DisplayScreen::dumpInfo);
-    connect(&kbd, &Keyboard::key_showFields, &screen, &DisplayScreen::dumpFields);
-    connect(&kbd, &Keyboard::key_dumpScreen, &screen, &DisplayScreen::dumpDisplay);
-    connect(&kbd, &Keyboard::key_Attn, &screen, &DisplayScreen::interruptProcess);
-    connect(&kbd, &Keyboard::key_AID, &screen, &DisplayScreen::processAID);
-    connect(&screen, &DisplayScreen::cursorMoved, statusBar, &StatusBar::cursorMoved);
+    connect(&kbd, &Keyboard::key_Home, current, &DisplayScreen::home);
+    connect(&kbd, &Keyboard::key_Backspace, current, &DisplayScreen::backspace);
+    connect(&kbd, &Keyboard::key_Delete, current, &DisplayScreen::deleteChar);
+    connect(&kbd, &Keyboard::key_EraseEOF, current, &DisplayScreen::eraseEOF);
+    connect(&kbd, &Keyboard::key_Newline, current, &DisplayScreen::newline);
+    connect(&kbd, &Keyboard::key_Tab, current, &DisplayScreen::tab);
+    connect(&kbd, &Keyboard::key_End, current, &DisplayScreen::endline);
+    connect(&kbd, &Keyboard::key_Backtab, current, &DisplayScreen::backtab);
+    connect(&kbd, &Keyboard::key_moveCursor, current, &DisplayScreen::moveCursor);
+    connect(&kbd, &Keyboard::key_toggleRuler, current, &DisplayScreen::toggleRuler);
+    connect(&kbd, &Keyboard::key_showInfo, current, &DisplayScreen::dumpInfo);
+    connect(&kbd, &Keyboard::key_showFields, current, &DisplayScreen::dumpFields);
+    connect(&kbd, &Keyboard::key_dumpScreen, current, &DisplayScreen::dumpDisplay);
+    connect(&kbd, &Keyboard::key_Attn, current, &DisplayScreen::interruptProcess);
+    connect(&kbd, &Keyboard::key_AID, current, &DisplayScreen::processAID);
+    
+    connect(current, &DisplayScreen::cursorMoved, statusBar, &StatusBar::cursorMoved);
 }
 
 /**
@@ -389,26 +381,27 @@ void Terminal::connectKeyboard(DisplayScreen &screen)
  *
  * @details Disconnect the keyboard from the specified screen.
  */
-void Terminal::disconnectKeyboard(DisplayScreen &screen)
+void Terminal::disconnectKeyboard()
 {
-    disconnect(&kbd, &Keyboard::key_Character, &screen, &DisplayScreen::insertChar);
+    disconnect(&kbd, &Keyboard::key_Character, current, &DisplayScreen::insertChar);
 
-    disconnect(&kbd, &Keyboard::key_Home, &screen, &DisplayScreen::home);
-    disconnect(&kbd, &Keyboard::key_Backspace, &screen, &DisplayScreen::backspace);
-    disconnect(&kbd, &Keyboard::key_Delete, &screen, &DisplayScreen::deleteChar);
-    disconnect(&kbd, &Keyboard::key_EraseEOF, &screen, &DisplayScreen::eraseEOF);
-    disconnect(&kbd, &Keyboard::key_Newline, &screen, &DisplayScreen::newline);
-    disconnect(&kbd, &Keyboard::key_Tab, &screen, &DisplayScreen::tab);
-    disconnect(&kbd, &Keyboard::key_End, &screen, &DisplayScreen::endline);
-    disconnect(&kbd, &Keyboard::key_Backtab, &screen, &DisplayScreen::backtab);
-    disconnect(&kbd, &Keyboard::key_moveCursor, &screen, &DisplayScreen::moveCursor);
-    disconnect(&kbd, &Keyboard::key_toggleRuler, &screen, &DisplayScreen::toggleRuler);
-    disconnect(&kbd, &Keyboard::key_showInfo, &screen, &DisplayScreen::dumpInfo);
-    disconnect(&kbd, &Keyboard::key_showFields, &screen, &DisplayScreen::dumpFields);
-    disconnect(&kbd, &Keyboard::key_dumpScreen, &screen, &DisplayScreen::dumpDisplay);
-    disconnect(&kbd, &Keyboard::key_Attn, &screen, &DisplayScreen::interruptProcess);
-    disconnect(&kbd, &Keyboard::key_AID, &screen, &DisplayScreen::processAID);
-    disconnect(&screen, &DisplayScreen::cursorMoved, statusBar, &StatusBar::cursorMoved);
+    disconnect(&kbd, &Keyboard::key_Home, current, &DisplayScreen::home);
+    disconnect(&kbd, &Keyboard::key_Backspace, current, &DisplayScreen::backspace);
+    disconnect(&kbd, &Keyboard::key_Delete, current, &DisplayScreen::deleteChar);
+    disconnect(&kbd, &Keyboard::key_EraseEOF, current, &DisplayScreen::eraseEOF);
+    disconnect(&kbd, &Keyboard::key_Newline, current, &DisplayScreen::newline);
+    disconnect(&kbd, &Keyboard::key_Tab, current, &DisplayScreen::tab);
+    disconnect(&kbd, &Keyboard::key_End, current, &DisplayScreen::endline);
+    disconnect(&kbd, &Keyboard::key_Backtab, current, &DisplayScreen::backtab);
+    disconnect(&kbd, &Keyboard::key_moveCursor, current, &DisplayScreen::moveCursor);
+    disconnect(&kbd, &Keyboard::key_toggleRuler, current, &DisplayScreen::toggleRuler);
+    disconnect(&kbd, &Keyboard::key_showInfo, current, &DisplayScreen::dumpInfo);
+    disconnect(&kbd, &Keyboard::key_showFields, current, &DisplayScreen::dumpFields);
+    disconnect(&kbd, &Keyboard::key_dumpScreen, current, &DisplayScreen::dumpDisplay);
+    disconnect(&kbd, &Keyboard::key_Attn, current, &DisplayScreen::interruptProcess);
+    disconnect(&kbd, &Keyboard::key_AID, current, &DisplayScreen::processAID);
+    
+    disconnect(current, &DisplayScreen::cursorMoved, statusBar, &StatusBar::cursorMoved);
 }
 
 /**
@@ -560,32 +553,23 @@ void Terminal::blinkCursor()
  * @param   alt - true for alternate, false for primary
  * @return  the screen switched to
  *
- * @details Change the currently displayed screen in the view, connect the keyboard to the right screen, and ensure it
- *          fits into the window, according to user preference. The switched-to screen is returned.
+ * @details Resize the screen matrix, and ensure it fits into the window, according to user preference.
  */
 DisplayScreen *Terminal::setAlternateScreen(bool alt)
 {
     stopTimers();
 
-    // Initially the cursor and characters are shown
-    shortCursorBlink = false;
-    shortCharacterBlink = false;
-
-    screen->scene()->removeItem(current);
-    screen->scene()->removeItem(statusBar);
-
-    current = !alt ? primaryScreen : alternateScreen;
-
-    disconnectKeyboard(*alternateScreen);
-    disconnectKeyboard(*primaryScreen);
-
-    connectKeyboard(*current);
-
-    screen->scene()->addItem(current);
-    screen->scene()->addItem(statusBar);
+    if (!alt)
+        current->setSize(80, 24);
+    else
+        current->setSize(activeSettings.getTerminalX(), activeSettings.getTerminalY());
 
     statusBar->setPos(0, current->boundingRect().height());
-    statusBar->setWidth(current->boundingRect().width());
+    statusBar->setSize(current->boundingRect().width(), CELL_HEIGHT * 0.90);
+
+    QRectF nr = current->boundingRect().united(statusBar->mapToScene(statusBar->boundingRect()).boundingRect());
+
+    screen->scene()->setSceneRect(nr);
 
     screen->resetTransform();
 

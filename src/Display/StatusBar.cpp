@@ -33,9 +33,9 @@
 StatusBar::StatusBar(int screen_x, int screen_y)
     : screen_x(screen_x)
     , screen_y(screen_y)
-    , fm(QFontMetrics(QFont("Courier")))
+    , fm(QFontMetrics(QFont("Sans serif")))
 
-{
+{    
     QColor blue(0x80, 0x80, 0xFF);
 
     blueLine.setParentItem(this);
@@ -43,7 +43,6 @@ StatusBar::StatusBar(int screen_x, int screen_y)
     blueLine.setPen(blue);
 
     statusBarText = QFont("Sans serif");
-    statusBarText.setPixelSize(16);
 
     fm = QFontMetrics(statusBarText);
 
@@ -63,12 +62,8 @@ StatusBar::StatusBar(int screen_x, int screen_y)
     effect->setColor(Qt::white);
     clock->setGraphicsEffect(effect);
 
-    QRectF r = lock->boundingRect();
-
     for (ClickableSvgItem *item : { unlock, lock, locktick }) {
-        item->setPos(screen_x * 0.05, 4);
         item->setVisible(false);
-        item->setScale(16 / r.height());
     }
 
     // X <clock>
@@ -103,39 +98,53 @@ StatusBar::StatusBar(int screen_x, int screen_y)
 
     insert   = Q3270::OvertypeMode;
 
-    setWidth(screen_x);
+    setSize(screen_x, screen_y);
 }
 
-/**
- * @brief   StatusBar::setWidth - adjust the positions of the status indicators
- * @param   width - the width of the display matrix
- *
- * @details setWidth adjusts the positions of the status indicators according to the width of the display.
- *          The connection (4-A) is always at 0
- *          The padlock (secure connection etc) is at 5% across
- *          XSystem etc at 20% across
- *          Insert at 40%
- *          Cursor position at 90%
- */
-void StatusBar::setWidth(const int width)
+void StatusBar::setSize(int width, int height)
 {
+    prepareGeometryChange();
+
     screen_x = width;
+    screen_y = height;
 
-    blueLine.setLine(0, 0.5, screen_x, 0.5);
+    // Font and metrics
+    statusBarText.setPixelSize(screen_y - 2);
+    fm = QFontMetrics(statusBarText);
 
-    statusConnect.setPos(0, FONT_OFFSET);
+    iconPosY = 4;
 
-    for (ClickableSvgItem *item : { unlock, lock, locktick }) {
-        item->setPos(screen_x * 0.05, 4);
+    // Line
+    blueLine.setLine(0, 0, screen_x, 0);
+
+    // Positions (metrics-based)
+    const qreal baseline = (screen_y - fm.height()) / 2;
+
+    statusConnect.setPos(0, baseline);
+
+    for (ClickableSvgItem *item : { unlock, lock, locktick })
+    {
+        item->resetTransform();
+        item->setPos(screen_x * 0.05, iconPosY);
+        QSizeF svgSize = item->renderer()->defaultSize();
+        qreal scale = (screen_y - 6) / svgSize.height();
+        item->setTransform(QTransform::fromScale(scale, scale), true);
     }
 
-    xSystemText.setPos(screen_x * .20, FONT_OFFSET);
-    xText.setPos(screen_x * .20, FONT_OFFSET);
-    clock->setPos(xText.boundingRect().width() + 2 + screen_x * .20, 4);
+    QSizeF svgSize = clock->renderer()->defaultSize();
+    qreal scale = (screen_y - 6) / svgSize.height();
 
-    statusInsert.setPos(screen_x * .40, FONT_OFFSET);
+    clock->resetTransform();
+    clock->setTransform(QTransform::fromScale(scale, scale), true);
 
-    statusCursor.setPos(screen_x * .90, FONT_OFFSET);
+    const qreal labelStartX = screen_x * 0.20;
+    xSystemText.setPos(labelStartX, baseline);
+
+    xText.setPos(labelStartX, baseline);
+    clock->setPos(labelStartX + fm.horizontalAdvance("X"), iconPosY);
+
+    statusInsert.setPos(screen_x * 0.40, baseline);
+    statusCursor.setPos(screen_x * 0.90, baseline);
 }
 
 /**

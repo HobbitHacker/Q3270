@@ -18,7 +18,7 @@
 #include "Q3270.h"
 #include "ClickableSvgItem.h"
 
-#define FONT_OFFSET -2
+#define FONT_OFFSET -3
 
 class StatusBar : public QGraphicsObject
 {
@@ -31,7 +31,7 @@ class StatusBar : public QGraphicsObject
         void setStatusInsert(Q3270::Indicators insert);
         void setStatusLock(Q3270::Indicators status);
 
-        void setWidth(const int x);
+        void setSize(const int x, const int y);
 
         QRectF boundingRect() const override;
         void paint(QPainter *p, const QStyleOptionGraphicsItem *i, QWidget *w) override;
@@ -50,6 +50,9 @@ class StatusBar : public QGraphicsObject
 
         int cursor_x;
         int cursor_y;
+
+        qreal iconPosY;
+        qreal iconScale;
 
         QFont statusBarText;
         QFontMetrics fm;

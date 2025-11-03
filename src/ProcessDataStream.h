@@ -33,7 +33,7 @@ class ProcessDataStream : public QObject
 
         bool processing;
 
-        ProcessDataStream(Terminal *t);
+        ProcessDataStream(Terminal *t, DisplayScreen *s);
 
         void showFields();
         void resetMDTs();
@@ -44,6 +44,7 @@ class ProcessDataStream : public QObject
 
     signals:
 
+        void setAlternateScreen(bool alternate);
         void bufferReady(QByteArray &b);
         void processingComplete();
         void unlockKeyboard();
@@ -52,9 +53,8 @@ class ProcessDataStream : public QObject
 
     private:
 
-        DisplayScreen *screen;
-
         Terminal *terminal;
+        DisplayScreen *screen;
 
         QByteArray::Iterator buffer;
 

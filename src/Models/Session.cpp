@@ -44,7 +44,7 @@ Session Session::fromActiveSettings(const ActiveSettings &active) {
 void Session::toActiveSettings(ActiveSettings &active) const
 {
     // Stop Terminal() getting lots of signals all at once
-    QSignalBlocker block(active);
+//    QSignalBlocker block(active);
 
     active.setSessionName(name);
     active.setDescription(description);

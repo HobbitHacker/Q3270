@@ -29,7 +29,7 @@
  *          the screen and for managing fields, graphic escape, attributes and so on. 
  *          
  *          The screen is defined as a width x height area. Each cell within that area is CELL_WIDTH by
- *          CELL_HEIGHT. This is a 4:3 ration akin to the original 3270 screens; scaled by Qt as required.
+ *          CELL_HEIGHT. This is a 4:3 ratio akin to the original 3270 screens; scaled by Qt as required.
  *          
  *          DisplayScreen also handles the crosshairs (the ruler, which tracks where the cursor is), and
  *          the rubberband for selecting, copying and pasting sections of the screen.
@@ -45,7 +45,7 @@ DisplayScreen::DisplayScreen(int screen_x, int screen_y, CodePage &cp, const Col
     gridSize_X = CELL_WIDTH;
     gridSize_Y = CELL_HEIGHT;
 
-    screenPos_max = screen_x * screen_y;
+    setSize(screen_x, screen_y);
 
     // Default settings
     ruler = Q3270::CrossHair;
@@ -66,13 +66,6 @@ DisplayScreen::DisplayScreen(int screen_x, int screen_y, CodePage &cp, const Col
     myRb->setPen(myRbPen);
     myRb->setZValue(10);
     myRb->hide();
-
-    // Build 3270 display matrix
-
-    cells.resize(screenPos_max);
-
-    // Set default attributes for initial power-on
-    clear();
 
     setFont(QFont("ibm3270", 14));
 
@@ -143,34 +136,18 @@ int DisplayScreen::height() const
     return screen_y;
 }
 
-/**
- * @brief   DisplayScreen::gridWidth - return the width of a cell on the screen
- * @return  the width of the character cell
- * 
- * @details width is called to extract the horizontal cell size. It is used by the
- *          Read Partition (Query) structure field which responds to the host with the capabilities
- *          of the terminal. 
- *          
- *          The cell size is calculated as 640 / screen_x.
- */
-qreal DisplayScreen::gridWidth() const
+void DisplayScreen::setSize(const int x, const int y)
 {
-    return gridSize_X;
-}
+    screen_x = x;
+    screen_y = y;
 
-/**
- * @brief   DisplayScreen::gridHeight - return the height of a cell on the screen
- * @return  the height of the character cell
- * 
- * @details width is called to extract the vertical cell size. It is used by the
- *          Read Partition (Query) structure field which responds to the host with the capabilities
- *          of the terminal. 
- *          
- *          The cell size is calculated as 480 / screen_y.
- */
-qreal DisplayScreen::gridHeight() const
-{
-    return gridSize_Y;
+    screenPos_max = x * y;
+
+    // Build 3270 display matrix
+    cells.resize(screenPos_max);
+
+    // Clear matrix and set initial attributes
+    clear();
 }
 
 /**
@@ -232,6 +209,8 @@ void DisplayScreen::clear()
 
     geActive = false;
     unformatted = true;
+
+    setCursor(0);
 }
 
 /**
@@ -1459,7 +1438,7 @@ void DisplayScreen::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget
             }
         }
     }
-/*
+
     QPen pen(QColor(128,128,128,64));
     pen.setWidth(0);
     p->setPen(pen);
@@ -1471,5 +1450,5 @@ void DisplayScreen::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget
     for (int r = 0; r <= screen_y; ++r) {
         qreal y = r * gridSize_Y + 0.5;
         p->drawLine(0, y, screen_x * gridSize_X, y);
-    }*/
+    }
 }
