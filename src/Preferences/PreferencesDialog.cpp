@@ -157,6 +157,16 @@ void PreferencesDialog::showForm()
     // Enable blink speed adjustment only if blink is enabled
     ui->cursorBlinkSpeed->setEnabled(ui->cursorBlink->QAbstractButton::isChecked());
 
+    ui->rulerOn->setChecked(activeSettings.getRulerState());
+
+    // Find the key for the ruler style setting
+    QString key = comboRulerStyle.key(activeSettings.getRulerStyle());
+
+    // Set the combo box to that entry
+    int idx = ui->crosshair->findText(key);
+    if (idx >= 0)
+        ui->crosshair->setCurrentIndex(idx);
+
     ui->cursorColour->setChecked(activeSettings.getCursorColourInherit());
     ui->stretch->setChecked(activeSettings.getStretchScreen());
 

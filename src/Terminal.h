@@ -72,6 +72,8 @@ class Terminal : public QWidget
         void changeCodePage(QString codepage);
         void setFont(QFont font);
 
+        void toggleRuler();
+
         void resetStatusXSystem();
         void setStatusInsert(const bool insert);
         void setTWait();
@@ -106,8 +108,6 @@ class Terminal : public QWidget
         QGraphicsRectItem *notConnected;
         QGraphicsSimpleTextItem *ncReason;
 
-//        DisplayScreen *primaryScreen;
-//        DisplayScreen *alternateScreen;
         DisplayScreen *current;
 
         StatusBar *statusBar;

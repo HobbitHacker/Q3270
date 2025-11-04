@@ -189,8 +189,21 @@ void Terminal::rulerChanged(bool on)
     if (sessionConnected)
     {
         current->rulerMode(on);
-        // primaryScreen->rulerMode(on);
-        // alternateScreen->rulerMode(on);
+    }
+}
+
+/**
+ * @brief   Terminal::toggleRuler - toggle the ruler
+ *
+ * @details Called when the ruler is switched on or off from the keyboard. The display update is delegated
+ *          to the signal connected to the active settings update.
+ */
+void Terminal::toggleRuler()
+{
+    // Switch ruler on or off apporpriately
+    if (sessionConnected)
+    {
+        activeSettings.setRulerState(!activeSettings.getRulerState());
     }
 }
 
@@ -206,8 +219,6 @@ void Terminal::rulerStyle(Q3270::RulerStyle rulerStyle)
     if (sessionConnected)
     {
         current->setRulerStyle(rulerStyle);
-        // primaryScreen->setRulerStyle(rulerStyle);
-        // alternateScreen->setRulerStyle(rulerStyle);
     }
 }
 
@@ -227,7 +238,7 @@ void Terminal::connectSession()
     screen->scene()->addItem(current);
     screen->scene()->addItem(statusBar);
 
-    statusBar->setPos(0, current->boundingRect().height());
+    statusBar->setPos(0, current->boundingRect().height() + 1);
 
     datastream = new ProcessDataStream(this, current);
     socket = new SocketConnection(activeSettings.getTerminalModel());
@@ -365,7 +376,6 @@ void Terminal::connectKeyboard()
     connect(&kbd, &Keyboard::key_End, current, &DisplayScreen::endline);
     connect(&kbd, &Keyboard::key_Backtab, current, &DisplayScreen::backtab);
     connect(&kbd, &Keyboard::key_moveCursor, current, &DisplayScreen::moveCursor);
-    connect(&kbd, &Keyboard::key_toggleRuler, current, &DisplayScreen::toggleRuler);
     connect(&kbd, &Keyboard::key_showInfo, current, &DisplayScreen::dumpInfo);
     connect(&kbd, &Keyboard::key_showFields, current, &DisplayScreen::dumpFields);
     connect(&kbd, &Keyboard::key_dumpScreen, current, &DisplayScreen::dumpDisplay);
@@ -373,6 +383,8 @@ void Terminal::connectKeyboard()
     connect(&kbd, &Keyboard::key_AID, current, &DisplayScreen::processAID);
     
     connect(current, &DisplayScreen::cursorMoved, statusBar, &StatusBar::cursorMoved);
+
+    connect(&kbd, &Keyboard::key_toggleRuler, this, &Terminal::toggleRuler);
 }
 
 /**
@@ -402,6 +414,8 @@ void Terminal::disconnectKeyboard()
     disconnect(&kbd, &Keyboard::key_AID, current, &DisplayScreen::processAID);
     
     disconnect(current, &DisplayScreen::cursorMoved, statusBar, &StatusBar::cursorMoved);
+
+    disconnect(&kbd, &Keyboard::key_toggleRuler, this, &Terminal::toggleRuler);
 }
 
 /**
@@ -564,7 +578,7 @@ DisplayScreen *Terminal::setAlternateScreen(bool alt)
     else
         current->setSize(activeSettings.getTerminalX(), activeSettings.getTerminalY());
 
-    statusBar->setPos(0, current->boundingRect().height());
+    statusBar->setPos(0, current->boundingRect().height() + 1);
     statusBar->setSize(current->boundingRect().width(), CELL_HEIGHT * 0.90);
 
     QRectF nr = current->boundingRect().united(statusBar->mapToScene(statusBar->boundingRect()).boundingRect());

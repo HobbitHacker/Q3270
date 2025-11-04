@@ -36,9 +36,9 @@
  */
 DisplayScreen::DisplayScreen(int screen_x, int screen_y, CodePage &cp, const Colours *palette)
     : cp(cp)
-    ,  palette(palette)
-    ,  screen_x(screen_x)
-    ,  screen_y(screen_y)
+    , palette(palette)
+    , screen_x(screen_x)
+    , screen_y(screen_y)
 {
     this->setPos(0, 0);
 
@@ -77,10 +77,6 @@ DisplayScreen::DisplayScreen(int screen_x, int screen_y, CodePage &cp, const Col
     cursor.setPen(Qt::NoPen);
     cursor.setParentItem(this);
     cursor.setZValue(4);
-
-    // Set up crosshairs
-    crosshair_X.setLine(0, 0, 0, screen_y * gridSize_Y);
-    crosshair_Y.setLine(0, 0, screen_x * gridSize_X, 0);
 
     crosshair_X.setPen(QPen(Qt::white, 0));
     crosshair_Y.setPen(QPen(Qt::white, 0));
@@ -142,6 +138,10 @@ void DisplayScreen::setSize(const int x, const int y)
     screen_y = y;
 
     screenPos_max = x * y;
+
+    // Set up crosshairs
+    crosshair_X.setLine(0, 0, 0, screen_y * gridSize_Y);
+    crosshair_Y.setLine(0, 0, screen_x * gridSize_X, 0);
 
     // Build 3270 display matrix
     cells.resize(screenPos_max);
@@ -1438,7 +1438,7 @@ void DisplayScreen::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget
             }
         }
     }
-
+/*
     QPen pen(QColor(128,128,128,64));
     pen.setWidth(0);
     p->setPen(pen);
@@ -1451,4 +1451,5 @@ void DisplayScreen::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget
         qreal y = r * gridSize_Y + 0.5;
         p->drawLine(0, y, screen_x * gridSize_X, y);
     }
+*/
 }
