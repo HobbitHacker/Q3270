@@ -12,9 +12,14 @@
 
 #include "KeyboardMap.h"
 
+/**
+ * @brief   KeyboardMap::getFactoryMap - return the hard-coded keyboard map
+ * @return  a KeyboardMap containing the hard-coded defaults
+ *
+ * @details getFactoryMap returns the hard-coded default keyboard mapping, named 'Factory'.
+ */
 KeyboardMap KeyboardMap::getFactoryMap()
 {
-
     KeyboardMap km;
 
     km.set("Enter",      { "Enter", "RCtrl" });
@@ -85,6 +90,12 @@ KeyboardMap KeyboardMap::getFactoryMap()
 
 }
 
+/**
+ * @brief   KeyboardMap::getFunctions - return the functions
+ * @return  A list of functions used in the map
+ *
+ * @details getFunctions returns a list of the functions used in the keyboard map
+ */
 QStringList KeyboardMap::getFunctions() const
 {
     QStringList list;
@@ -96,38 +107,54 @@ QStringList KeyboardMap::getFunctions() const
     return list;
 }
 
+/**
+ * @brief   KeyboardMap::forEach - helper function to iterate over the map
+ * @param   fn - a callback function to run
+ *
+ * @details forEach iterates over the keyboard map and calls the passed function fn
+ */
 void KeyboardMap::forEach(std::function<void(const QString&, const QStringList&)> fn) const {
     for (const auto &m : mappings) {
         fn(m.functionName, m.keys);
     }
 }
 
-void KeyboardMap::setKeyMapping(const QString &functionName,
-                                const QKeySequence &sequence)
+/**
+ * @brief   KeyboardMap::setKeyMapping - set a keyboard mapping
+ * @param   functionName - the Q3270 function
+ * @param   symbolic     - a string representing the key sequence
+ *
+ * @details setKeyMapping sets the supplied symbolic key sequence to the function name in the
+ *          the keyboard map. The key sequence symbolic is a normalized form like 'Ctrl+A', but
+ *          also handles left Ctrl and right Ctrl independently of each other. A key sequence can
+ *          only map to a single Q3270 function, so any sequence passed is removed from anywhere
+ *          it appears in the map first.
+ */
+void KeyboardMap::setKeyMapping(const QString &functionName, const QString &symbolic)
 {
-    qDebug() << this->name << "Setting" << sequence.toString() << "to" << functionName;
+    qDebug() << this->name << "Setting" << symbolic << "to" << functionName;
 
-    const QString seqStr = sequence.toString();
-
-    // Remove this sequence from any other function
+    // Remove this key from ALL functions, including the target to avoid duplicates
     for (Mapping &m : mappings) {
-        if (m.functionName != functionName) {
-            m.keys.removeAll(seqStr);
-        }
+        m.keys.removeAll(symbolic);
     }
 
-    // Add to the target function if not "Unassigned"
     if (!functionName.isEmpty() && functionName != "Unassigned") {
-        auto it = std::find_if(mappings.begin(), mappings.end(), [&](const Mapping &m)
-                               { return m.functionName == functionName; });
+        auto it = std::find_if(mappings.begin(), mappings.end(),
+                               [&](const Mapping &m) { return m.functionName == functionName; });
         if (it == mappings.end()) {
-            mappings.append({functionName, {seqStr}});
+            mappings.append({functionName, {symbolic}});
         } else {
-            it->keys.append(seqStr);
+            it->keys.append(symbolic);
         }
     }
 }
 
+/**
+ * @brief   KeyboardMap::set - set a given set of sequences to
+ * @param   function
+ * @param   keys
+ */
 void KeyboardMap::set(const QString &function, const QStringList &keys)
 {
     for (Mapping &m : mappings) {

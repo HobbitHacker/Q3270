@@ -33,7 +33,7 @@ struct KeyboardMap
     QStringList getFunctions() const;
 
     void forEach(std::function<void(const QString&, const QStringList&)> fn) const;
-    void setKeyMapping(const QString &functionName, const QKeySequence &sequence);
+    void setKeyMapping(const QString &functionName, const QString &sequence);
 
     void dumpMaps(const QString &tag) const;
 

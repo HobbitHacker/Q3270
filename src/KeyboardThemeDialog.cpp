@@ -11,11 +11,12 @@
 #include "Q3270.h"
 #include "KeyboardThemeDialog.h"
 #include "ui_KeyboardTheme.h"
+#include "Preferences/KeyboardSequenceEdit.h"
 #include "Keyboard.h"
 
 /**
  * @brief   KeyboardThemeDialog::KeyboardThemeDialog - Keyboard Theme Dialog
- * @param   storeRef - KeyboardStore, common across Q370
+ * @param   storeRef - KeyboardStore, common across Q3270
  * @param   parent - parent widget
  *
  * @details KeyboardTheme presents the dialog for managing the Keyboard Themes.
@@ -23,7 +24,9 @@
  *          applied to the running session and saved to disk.
  */
 KeyboardThemeDialog::KeyboardThemeDialog(KeyboardStore &storeRef, QWidget *parent)
-    : QDialog(parent), store(storeRef), ui(new Ui::KeyboardTheme)
+    : QDialog(parent)
+    , store(storeRef)
+    , ui(new Ui::KeyboardTheme)
 {
     ui->setupUi(this);
 
@@ -58,6 +61,8 @@ KeyboardThemeDialog::KeyboardThemeDialog(KeyboardStore &storeRef, QWidget *paren
 
     // Key sequence edit finished editing
     connect(ui->keySequenceEdit, &QKeySequenceEdit::editingFinished, this, &KeyboardThemeDialog::truncateShortcut);
+
+    connect(ui->keySequenceEdit, &KeyboardSequenceEdit::specialKeyCaptured, this, &KeyboardThemeDialog::handleSpecialKey);
 
     // Set mapping button
     connect(ui->setKeyboardMap, &QPushButton::clicked, this, &KeyboardThemeDialog::setKey);
@@ -134,6 +139,12 @@ void KeyboardThemeDialog::setTheme(const QString &themeName)
     // Clear key sequence and message
     ui->keySequenceEdit->clear();
     ui->message->clear();
+
+    // Prevent modifications to Factory theme
+    bool isFactoryTheme = (currentTheme->name == "Factory");
+    ui->keySequenceEdit->setDisabled(isFactoryTheme);
+    ui->setKeyboardMap->setDisabled(isFactoryTheme);
+    ui->KeyboardFunctionList->setDisabled(isFactoryTheme);
 }
 
 /**
@@ -356,8 +367,6 @@ void KeyboardThemeDialog::removeTheme()
  */
 void KeyboardThemeDialog::populateKeySequence(int row, const QString &functionName, const QStringList &keyList)
 {
-    //NOTE: This doesn't handle the custom left-ctrl/right-ctrl stuff
-
     // If the row clicked is a different row to last time, set the sequence to the first mapping
     if (row != lastRow)
     {
@@ -373,10 +382,13 @@ void KeyboardThemeDialog::populateKeySequence(int row, const QString &functionNa
     // Set the function list field on the form to show the function defined by the row
     ui->KeyboardFunctionList->setCurrentIndex(ui->KeyboardFunctionList->findText(functionName));
 
-    // If the key is mapped, display the key sequence, otherwise, blank it out
     if (!keyList.isEmpty())
     {
-        ui->keySequenceEdit->setKeySequence(QKeySequence(keyList[lastSeq]));
+        const QString keyStr = keyList[lastSeq].trimmed();
+        if (QLineEdit *le = ui->keySequenceEdit->findChild<QLineEdit*>())
+        {
+            le->setText(keyStr);
+        }
     }
     else
     {
@@ -402,8 +414,7 @@ void KeyboardThemeDialog::populateKeySequence(int row, const QString &functionNa
  * @brief   KeyboardTheme::setKey - set the key mapping
  *
  * @details When the user clicks the 'Set Mapping' button, this routine populates the keyboard map
- *          with the desired settings. The map is searched for an existing mapping, and if present, it
- *          is removed (it's not possible to map the same key to two different functions). Finally, the
+ *          with the desired settings. The mapping is cleared from the map for all functions, and then
  *          key sequence is stored in the map, and the table is rebuilt.
  */
 void KeyboardThemeDialog::setKey()
@@ -413,10 +424,11 @@ void KeyboardThemeDialog::setKey()
 
     currentTheme->setKeyMapping(
         ui->KeyboardFunctionList->currentText(),
-        ui->keySequenceEdit->keySequence()
+        ui->keySequenceEdit->findChild<QLineEdit*>()->text().trimmed()
         );
 
     ui->KeyboardMap->setTheme(*currentTheme);
+    ui->keySequenceEdit->clear();
 
     dirty = true;
     unapplied = true;
@@ -433,11 +445,22 @@ void KeyboardThemeDialog::setKey()
 void KeyboardThemeDialog::truncateShortcut()
 {
     // Use only the first key sequence the user pressed
-    int value = ui->keySequenceEdit->keySequence()[0];
-    QKeySequence shortcut(value);
-    ui->keySequenceEdit->setKeySequence(shortcut);
+    if (QLineEdit *le = ui->keySequenceEdit->findChild<QLineEdit*>()) {
+        QStringList parts = le->text().split(',', Qt::SkipEmptyParts);
+        if (!parts.isEmpty()) {
+            le->setText(parts.first().trimmed());
+        }
+    }
+/*    int value = ui->keySequenceEdit->keySequence()[0];
+    ui->keySequenceEdit->setKeySequence(shortcut);*/
 }
 
+/**
+ * @brief   KeyboardThemeDialog::updateUiState - update various fields depending on user interaction
+ *
+ * @details updateUiState is used to enable/disable various UI elements depending on what the user has
+ *          interacted with.
+ */
 void KeyboardThemeDialog::updateUiState()
 {
     // Dirty means there are unsaved modifications
@@ -457,4 +480,24 @@ void KeyboardThemeDialog::updateUiState()
     ui->themeDescriptionEdit->setDisabled(isFactory);
 //    ui->KeyboardMap->setReadOnly(isFactory);
 
+}
+
+/**
+ * @brief   KeyboardThemeDialog::handleSpecialKey - handles the key sequence
+ * @param   symbolic - the string name of the key
+ *
+ * @details Updates the keyboard map with the selected key sequence.
+ */
+void KeyboardThemeDialog::handleSpecialKey(const QString &symbolic)
+{
+    if (currentTheme->name == "Factory")
+        return;
+
+    currentTheme->setKeyMapping(ui->KeyboardFunctionList->currentText(), symbolic);
+    ui->KeyboardMap->setTheme(*currentTheme);
+
+    dirty = true;
+    unapplied = true;
+
+    updateUiState();
 }

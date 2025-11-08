@@ -8,6 +8,8 @@
  * See the LICENSE file in the project root for full license information.
  */
 
+#include <QDebug>
+
 #include "KeyboardMapWidget.h"
 #include "ui_KeyboardMapWidget.h"
 
@@ -37,15 +39,15 @@ void KeyboardMapWidget::setTheme(const KeyboardMap &map)
     map.forEach([&row, this](const QString &function, const QStringList &keys)
                 {
         ui->KeyboardMap->insertRow(row);
-        ui->KeyboardMap->setItem(row, 0, new QTableWidgetItem(function));
-        ui->KeyboardMap->setItem(row, 1, new QTableWidgetItem(keys.join(", ")));
+        ui->KeyboardMap->setItem(row, 0, new QTableWidgetItem(keys.join(", ")));
+        ui->KeyboardMap->setItem(row, 1, new QTableWidgetItem(function));
         ++row;
     });
 }
 
 QString KeyboardMapWidget::functionNameForRow(int row) const
 {
-    if (QTableWidgetItem *it = ui->KeyboardMap->item(row, 0))
+    if (QTableWidgetItem *it = ui->KeyboardMap->item(row, 1))
         return it->text();
 
     return {};
@@ -53,7 +55,7 @@ QString KeyboardMapWidget::functionNameForRow(int row) const
 
 QStringList KeyboardMapWidget::mappingsForRow(int row) const
 {
-    if (QTableWidgetItem *it = ui->KeyboardMap->item(row, 1))
+    if (QTableWidgetItem *it = ui->KeyboardMap->item(row, 0))
         return it->text().split(", ");
 
     return {};
@@ -71,8 +73,8 @@ KeyboardMap KeyboardMapWidget::currentMappings() const
     KeyboardMap map;
 
     for (int row = 0; row < ui->KeyboardMap->rowCount(); ++row) {
-        QTableWidgetItem *fnItem   = ui->KeyboardMap->item(row, 0);
-        QTableWidgetItem *keysItem = ui->KeyboardMap->item(row, 1);
+        QTableWidgetItem *keysItem = ui->KeyboardMap->item(row, 0);
+        QTableWidgetItem *fnItem   = ui->KeyboardMap->item(row, 1);
 
         if (!fnItem)
             continue;
@@ -81,13 +83,13 @@ KeyboardMap KeyboardMapWidget::currentMappings() const
         if (functionName.isEmpty())
             continue;
 
+
         if (keysItem) {
             const QStringList raw = keysItem->text().split(',', Qt::SkipEmptyParts);
             for (const QString &seqStr : raw) {
                 const QString trimmed = seqStr.trimmed();
                 if (!trimmed.isEmpty()) {
-                    QKeySequence keySeq(trimmed);
-                    map.setKeyMapping(functionName, keySeq);
+                    map.setKeyMapping(functionName, trimmed);
                 }
             }
         }
@@ -95,3 +97,4 @@ KeyboardMap KeyboardMapWidget::currentMappings() const
 
     return map;
 }
+

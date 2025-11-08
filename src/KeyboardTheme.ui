@@ -80,7 +80,7 @@
       </widget>
      </item>
      <item>
-      <widget class="QKeySequenceEdit" name="keySequenceEdit">
+      <widget class="KeyboardSequenceEdit" name="keySequenceEdit">
        <property name="enabled">
         <bool>true</bool>
        </property>
@@ -153,6 +153,11 @@
    <extends>QWidget</extends>
    <header>Preferences/KeyboardMapWidget.h</header>
    <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>KeyboardSequenceEdit</class>
+   <extends>QKeySequenceEdit</extends>
+   <header>Preferences/KeyboardSequenceEdit.h</header>
   </customwidget>
  </customwidgets>
  <resources/>

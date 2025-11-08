@@ -85,6 +85,8 @@ class KeyboardThemeDialog : public QDialog
 
         void setKey();
         void truncateShortcut();
+
+        void handleSpecialKey(const QString &symbolic);
         void populateKeySequence(int row, const QString &functionName, const QStringList &keyList);
 
         void revertTheme();

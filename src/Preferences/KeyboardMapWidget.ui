@@ -55,6 +55,9 @@
      <property name="selectionBehavior">
       <enum>QAbstractItemView::SelectRows</enum>
      </property>
+     <property name="sortingEnabled">
+      <bool>true</bool>
+     </property>
      <attribute name="horizontalHeaderHighlightSections">
       <bool>false</bool>
      </attribute>
@@ -66,7 +69,7 @@
      </attribute>
      <column>
       <property name="text">
-       <string>Function</string>
+       <string>Key Mapping(s)</string>
       </property>
       <property name="textAlignment">
        <set>AlignLeading|AlignVCenter</set>
@@ -74,7 +77,7 @@
      </column>
      <column>
       <property name="text">
-       <string>Mapped To</string>
+       <string>3270 Function</string>
       </property>
       <property name="textAlignment">
        <set>AlignLeading|AlignVCenter</set>

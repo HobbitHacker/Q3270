@@ -9,7 +9,6 @@ set(SOURCES
     Display/DisplayScreen_Cursor.cpp
     Display/StatusBar.cpp
     Display/DisplayScreen_Mouse.cpp
-
     FunctionRegistry.cpp
     Models/Colours.cpp
     Models/KeyboardMap.cpp
@@ -34,6 +33,7 @@ set(SOURCES
     Terminal.cpp
     main.cpp
     SocketConnection.cpp
+    Preferences/KeyboardSequenceEdit.cpp
 )
 
 set(HEADERS
@@ -69,6 +69,7 @@ set(HEADERS
     Stores/SessionStore.h
     SocketConnection.h
     Terminal.h
+    Preferences/KeyboardSequenceEdit.h
     ${CMAKE_BINARY_DIR}/Version.h
 )
 
