@@ -28,7 +28,7 @@ class StatusBar : public QGraphicsObject
 
         StatusBar(int screen_x, int screen_y);
 
-        void setStatusInsert(Q3270::Indicators insert);
+        void setStatusInsert(Q3270::InsertOverType insert);
         void setStatusLock(Q3270::Indicators status);
 
         void setSize(const int x, const int y);
@@ -46,7 +46,7 @@ class StatusBar : public QGraphicsObject
         int screen_x;
         int screen_y;
 
-        Q3270::Indicators insert;
+        Q3270::InsertOverType insert;
 
         int cursor_x;
         int cursor_y;

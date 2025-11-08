@@ -96,7 +96,7 @@ StatusBar::StatusBar(int screen_x, int screen_y)
     statusInsert.setParentItem(this);
     statusInsert.setText("");
 
-    insert   = Q3270::OvertypeMode;
+    insert   = Q3270::InsertMode;
 
     setSize(screen_x, screen_y);
 }
@@ -200,7 +200,7 @@ void StatusBar::setStatusLock(Q3270::Indicators status)
  *
  * @details Called to show the Insert status on the status line.
  */
-void StatusBar::setStatusInsert(Q3270::Indicators insert)
+void StatusBar::setStatusInsert(Q3270::InsertOverType insert)
 {
     this->insert = insert;
 

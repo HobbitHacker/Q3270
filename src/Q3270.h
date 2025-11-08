@@ -193,16 +193,19 @@ namespace Q3270 {
         TELNET_STATE_SB_TN3270E_SEND_DEVICE_TYPE
     };
 
-    // TODO: Split Lock indicators from insert/overtype
     // Status bar indicators
     enum Indicators {
         Unlocked,
         SystemLock,
         TerminalWait,
-        OvertypeMode,
-        InsertMode,
         GoElsewhere
     };
+
+    // Insert & Overtype
+    enum InsertOverType {
+        OvertypeMode,
+        InsertMode
+    };     
 
     // Socket encryption state
     enum Encryption {
