@@ -40,6 +40,7 @@ struct Session {
         bool secureConnection;
         bool verifyCertificate;
         bool backspaceStop;
+        Q3270::FontTweak tweaks;
 
     static Session fromActiveSettings(const ActiveSettings &settings);
     void toActiveSettings(ActiveSettings &settings) const;

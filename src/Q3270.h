@@ -248,12 +248,22 @@ namespace Q3270 {
         Vertical,
         Horizontal
     };
+    
+    // Font tweak
+    enum FontTweak
+    {
+        None,
+        ZeroDot,
+        ZeroSlash
+    };
 
     Q_ENUM_NS(TelnetState)
     Q_ENUM_NS(RulerStyle)
     Q_ENUM_NS(Colour)
     Q_ENUM_NS(CharAttr)
     Q_ENUM_NS(Indicators)
+    Q_ENUM_NS(InsertOverType)
+    Q_ENUM_NS(FontTweak)
 };
 
 Q_DECLARE_METATYPE(Q3270::RulerStyle)

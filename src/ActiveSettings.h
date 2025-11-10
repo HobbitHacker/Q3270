@@ -63,6 +63,9 @@ class ActiveSettings : public QObject
 
         QFont getFont() const                            { return termFont; }
         void setFont(const QFont &font);
+        
+        Q3270::FontTweak getTweak() const                { return tweaks; }
+        void  setTweak(Q3270::FontTweak tweak);
 
         int getTerminalX() const                         { return termX; }
         int getTerminalY() const                         { return termY; }
@@ -100,6 +103,7 @@ class ActiveSettings : public QObject
         void terminalModelChanged(int x, int y, int model);
 
         void fontChanged(QFont font);
+        void fontTweakChanged(Q3270::FontTweak t);
 
         void codePageChanged(QString codepage);
 
@@ -144,7 +148,6 @@ class ActiveSettings : public QObject
         bool secureMode;
         bool verifyCerts;
 
-
         // Themes
         QString keyboardThemeName;
         QString colourThemeName;
@@ -160,6 +163,7 @@ class ActiveSettings : public QObject
         bool cursorBlink;                   // Whether the cursor blinks
         int cursorBlinkSpeed;               // How fast the cursor blinks
 
+        Q3270::FontTweak tweaks;
 };
 
 #endif // ACTIVESETTINGS_H

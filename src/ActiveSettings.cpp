@@ -51,6 +51,8 @@ ActiveSettings::ActiveSettings()
     hostName = "";
     hostLU   = "";
     hostPort = 23;
+    
+    tweaks = Q3270::None;
 }
 
 /**
@@ -520,5 +522,14 @@ void ActiveSettings::setDescription(const QString &desc)
     {
         description = desc;
         emit descriptionChanged(desc);
+    }
+}
+
+void ActiveSettings::setTweak(Q3270::FontTweak t)
+{
+    if (t != tweaks)
+    {
+        tweaks = t;
+        emit fontTweakChanged(tweaks);
     }
 }

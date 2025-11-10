@@ -98,6 +98,7 @@ class PreferencesDialog : public QDialog
 
         // Used to populate the combobox with nice names
         QMap<QString, Q3270::RulerStyle> comboRulerStyle;
+        QMap<QString, Q3270::FontTweak> comboFontTweak;
 
         void accept();
         void reject();

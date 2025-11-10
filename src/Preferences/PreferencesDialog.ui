@@ -518,23 +518,7 @@
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_8">
               <item>
-               <widget class="QComboBox" name="comboBox">
-                <item>
-                 <property name="text">
-                  <string>Leave Zero As Font</string>
-                 </property>
-                </item>
-                <item>
-                 <property name="text">
-                  <string>Add a dot to Zero</string>
-                 </property>
-                </item>
-                <item>
-                 <property name="text">
-                  <string>Add a slash to zero</string>
-                 </property>
-                </item>
-               </widget>
+               <widget class="QComboBox" name="fontTweak"/>
               </item>
              </layout>
             </widget>
@@ -687,7 +671,7 @@
   <tabstop>crosshair</tabstop>
   <tabstop>deleteSameLine</tabstop>
   <tabstop>backspaceStop</tabstop>
-  <tabstop>comboBox</tabstop>
+  <tabstop>fontTweak</tabstop>
   <tabstop>colourTheme</tabstop>
   <tabstop>manageColourThemes</tabstop>
  </tabstops>

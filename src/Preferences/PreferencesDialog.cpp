@@ -50,6 +50,12 @@ PreferencesDialog::PreferencesDialog(CodePage &codepages, ActiveSettings &active
     // Populate combo box from vector keys
     ui->crosshair->addItems(comboRulerStyle.keys());
 
+    comboFontTweak.insert("Leave zero as font", Q3270::None);
+    comboFontTweak.insert("Zero with dot", Q3270::ZeroDot);
+    comboFontTweak.insert("Zero with slash", Q3270::ZeroSlash);
+    
+    ui->fontTweak->addItems(comboFontTweak.keys());
+    
     // Populate code page list
     ui->CodePages->addItems(codepages.getCodePageList());
 
@@ -149,8 +155,7 @@ void PreferencesDialog::showForm()
 
     // Set the combo box to that entry
     int idx = ui->crosshair->findText(key);
-    if (idx >= 0)
-        ui->crosshair->setCurrentIndex(idx);
+    ui->crosshair->setCurrentIndex(idx > 0 ? idx : 0);
 
     ui->cursorColour->setChecked(activeSettings.getCursorColourInherit());
     ui->stretch->setChecked(activeSettings.getStretchScreen());
@@ -158,6 +163,12 @@ void PreferencesDialog::showForm()
     ui->backspaceStop->setChecked(activeSettings.getBackspaceStop());
 
     ui->FontWidgetBox->setFont(activeSettings.getFont());
+    
+    // Find font tweak setting
+    key = comboFontTweak.key(activeSettings.getTweak());
+    
+    idx = ui->fontTweak->findText(key);
+    ui->fontTweak->setCurrentIndex(idx > 0 ? idx : 0);
 
     populateColourThemeNames();
     populateKeyboardThemeNames();
@@ -254,6 +265,7 @@ void PreferencesDialog::accept()
     activeSettings.setRulerStyle(comboRulerStyle.value(ui->crosshair->currentText()));
     activeSettings.setCursorColourInherit(ui->cursorColour->QAbstractButton::isChecked());
     activeSettings.setFont(ui->FontWidgetBox->currentFont());
+    activeSettings.setTweak(comboFontTweak.value(ui->fontTweak->currentText()));
     activeSettings.setCodePage(ui->CodePages->currentText());
     activeSettings.setKeyboardTheme(ui->keyboardTheme->currentText());
     activeSettings.setColourTheme(ui->colourTheme->currentText());

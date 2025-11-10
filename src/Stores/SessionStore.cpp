@@ -25,6 +25,9 @@ void SessionStore::load()
 {
     Session s;
 
+    QMetaEnum rs = QMetaEnum::fromType<Q3270::RulerStyle>();
+    QMetaEnum ft = QMetaEnum::fromType<Q3270::FontTweak>();
+    
     settings.beginGroup("Sessions"); // All Sessions
 
     for (QString name : settings.childGroups())
@@ -47,15 +50,18 @@ void SessionStore::load()
         s.cursorInheritColour= settings.value("CursorInheritColour").toBool();
         s.ruler              = settings.value("Ruler").toBool();
 
-        // Enum deserialization
-        QMetaEnum me = QMetaEnum::fromType<Q3270::RulerStyle>();
+        // Convert the RulerStyle readable form to the enum
         QByteArray styleKey = settings.value("RulerStyle").toString().toUtf8();
-        s.rulerStyle = static_cast<Q3270::RulerStyle>(me.keyToValue(styleKey));
+        s.rulerStyle = static_cast<Q3270::RulerStyle>(rs.keyToValue(styleKey));
 
         // Font setup
         s.font.setFamily   (settings.value("Font").toString());
         s.font.setPointSize(settings.value("FontSize").toInt());
         s.font.setStyleName(settings.value("FontStyle").toString());
+
+        // Convert the FontTweak readable form to the enum        
+        QByteArray tweakKey = settings.value("FontTweak").toString().toUtf8();
+        s.tweaks            = static_cast<Q3270::FontTweak>(ft.keysToValue(tweakKey));
 
         s.screenStretch     = settings.value("ScreenStretch").toBool();
         s.codepage          = settings.value("Codepage").toString();
@@ -86,7 +92,8 @@ bool SessionStore::saveSession(const Session &session)
 
     settings.beginGroup(session.name);
 
-    QMetaEnum metaEnum = QMetaEnum::fromType<Q3270::RulerStyle>();
+    QMetaEnum rs = QMetaEnum::fromType<Q3270::RulerStyle>();
+    QMetaEnum ft = QMetaEnum::fromType<Q3270::FontTweak>();
 
     settings.setValue("Description", session.description);
     settings.setValue("ColourTheme", session.colourTheme);
@@ -101,10 +108,11 @@ bool SessionStore::saveSession(const Session &session)
     settings.setValue("CursorBlinkSpeed", session.cursorBlinkSpeed);
     settings.setValue("CursorInheritColour", session.cursorInheritColour);
     settings.setValue("Ruler", session.ruler);
-    settings.setValue("RulerStyle", QString(metaEnum.valueToKey(session.rulerStyle)));
+    settings.setValue("RulerStyle", QString(rs.valueToKey(session.rulerStyle)));
     settings.setValue("Font", session.font.family());
     settings.setValue("FontSize", session.font.pointSize());
     settings.setValue("FontStyle", session.font.styleName());
+    settings.setValue("FontTweak", QString(ft.valueToKey(session.tweaks)));
     settings.setValue("ScreenStretch", session.screenStretch);
     settings.setValue("Codepage", session.codepage);
     settings.setValue("SecureConnection", session.secureConnection);

@@ -37,6 +37,7 @@ Session Session::fromActiveSettings(const ActiveSettings &active) {
     s.codepage = active.getCodePage();
     s.keyboardTheme = active.getKeyboardThemeName();
     s.colourTheme = active.getColourThemeName();
+    s.tweaks = active.getTweak();
 
     return s;
 }
@@ -65,4 +66,5 @@ void Session::toActiveSettings(ActiveSettings &active) const
     active.setCodePage(codepage);
     active.setKeyboardTheme(keyboardTheme);
     active.setColourTheme(colourTheme);
+    active.setTweak(tweaks);
 }
