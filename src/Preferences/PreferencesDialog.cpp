@@ -53,21 +53,7 @@ PreferencesDialog::PreferencesDialog(CodePage &codepages, ActiveSettings &active
     // Populate code page list
     ui->CodePages->addItems(codepages.getCodePageList());
 
-    // TODO: "Enter" when displaying font selection causes font dialog to vanish from widget
-
-    // Build a QFontDialog for use within our Settings dialog
-    qfd = new QFontDialog();
-    qfd->setWindowFlags(Qt::Widget);
-    qfd->setOption(QFontDialog::NoButtons);
-    qfd->setOption(QFontDialog::DontUseNativeDialog);
-
-    connect(qfd, &QFontDialog::currentFontChanged, this, &PreferencesDialog::changeFont);
-
-    ui->verticalLayout_5->addWidget(qfd);
-
-    // Forward theme apply events from any dialog opened by PreferencesDialog
-    // so callers (eg MainWindow) can react to in-memory changes.
-    // Note: connection is created where the dialog is instantiated (MainWindow).
+    connect(ui->FontWidgetBox, &FontWidget::fontChanged, this, &PreferencesDialog::changeFont);
 }
 
 /**
@@ -77,7 +63,6 @@ PreferencesDialog::PreferencesDialog(CodePage &codepages, ActiveSettings &active
  */
 PreferencesDialog::~PreferencesDialog()
 {
-    delete ui;
 }
 
 /**
@@ -172,7 +157,7 @@ void PreferencesDialog::showForm()
 
     ui->backspaceStop->setChecked(activeSettings.getBackspaceStop());
 
-    qfd->setCurrentFont(activeSettings.getFont());
+    ui->FontWidgetBox->setFont(activeSettings.getFont());
 
     populateColourThemeNames();
     populateKeyboardThemeNames();
@@ -189,7 +174,7 @@ void PreferencesDialog::showForm()
     ui->secureConnection->setChecked(activeSettings.getSecureMode());
     ui->verifyCerts->setChecked(activeSettings.getVerifyCerts());
     ui->verifyCerts->setEnabled(ui->secureConnection->isChecked());
-
+    
     this->exec();
 }
 
@@ -268,7 +253,7 @@ void PreferencesDialog::accept()
     activeSettings.setRulerState(ui->rulerOn->QAbstractButton::isChecked());
     activeSettings.setRulerStyle(comboRulerStyle.value(ui->crosshair->currentText()));
     activeSettings.setCursorColourInherit(ui->cursorColour->QAbstractButton::isChecked());
-    activeSettings.setFont(qfd->currentFont());
+    activeSettings.setFont(ui->FontWidgetBox->currentFont());
     activeSettings.setCodePage(ui->CodePages->currentText());
     activeSettings.setKeyboardTheme(ui->keyboardTheme->currentText());
     activeSettings.setColourTheme(ui->colourTheme->currentText());

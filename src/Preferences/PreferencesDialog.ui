@@ -29,7 +29,7 @@
       </sizepolicy>
      </property>
      <property name="currentIndex">
-      <number>0</number>
+      <number>2</number>
      </property>
      <widget class="QWidget" name="connection">
       <attribute name="title">
@@ -160,6 +160,7 @@
                <widget class="QLabel" name="label_7">
                 <property name="font">
                  <font>
+                  <weight>75</weight>
                   <bold>true</bold>
                  </font>
                 </property>
@@ -204,6 +205,7 @@
                <widget class="QLabel" name="label_5">
                 <property name="font">
                  <font>
+                  <weight>75</weight>
                   <bold>true</bold>
                  </font>
                 </property>
@@ -287,6 +289,7 @@
                <widget class="QLabel" name="label_26">
                 <property name="font">
                  <font>
+                  <weight>75</weight>
                   <bold>true</bold>
                  </font>
                 </property>
@@ -502,10 +505,10 @@
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout_10">
        <item>
+        <widget class="FontWidget" name="FontWidgetBox" native="true"/>
+       </item>
+       <item>
         <layout class="QVBoxLayout" name="FontLayout">
-         <item>
-          <layout class="QVBoxLayout" name="verticalLayout_5"/>
-         </item>
          <item>
           <layout class="QGridLayout" name="gridLayout">
            <item row="0" column="0">
@@ -660,6 +663,12 @@
    <class>ColourSwatchWidget</class>
    <extends>QWidget</extends>
    <header>Preferences/ColourSwatchWidget.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>FontWidget</class>
+   <extends>QWidget</extends>
+   <header>Preferences/FontWidget.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

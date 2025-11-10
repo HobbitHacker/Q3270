@@ -14,6 +14,7 @@
 #include <QDialog>
 #include <QColorDialog>
 #include <QFontDialog>
+#include <QFontDatabase>
 #include <QSettings>
 #include <QMessageBox>
 #include <QTableWidgetItem>
@@ -34,16 +35,16 @@ namespace Ui {
 
 class PreferencesDialog : public QDialog
 {
-        Q_OBJECT
+    Q_OBJECT
 
-        typedef QMap<QString, QStringList> KeyboardMap;
+    typedef QMap<QString, QStringList> KeyboardMap;
 
 //        Q_ENUM(RulerStyle);
 
     public:
 
-    explicit PreferencesDialog(CodePage &codepages, ActiveSettings &activeSettings, KeyboardStore &keyboardStore, ColourStore &colourStore, QWidget *parent = nullptr);
-        ~PreferencesDialog();
+        explicit PreferencesDialog(CodePage &codepages, ActiveSettings &activeSettings, KeyboardStore &keyboardStore, ColourStore &colourStore, QWidget *parent = nullptr);
+            ~PreferencesDialog();
 
         void showForm();
 
@@ -51,8 +52,8 @@ class PreferencesDialog : public QDialog
 
         void tempFontChange(QFont f);
 
-    // Forwarded when keyboard themes are applied from the KeyboardThemeDialog
-    void themesApplied(const QString &name);
+        // Forwarded when keyboard themes are applied from the KeyboardThemeDialog
+        void themesApplied(const QString &name);
 
         // Emitted when hostname field is not blank
         // TODO: Is this the right place for this?
@@ -86,8 +87,6 @@ class PreferencesDialog : public QDialog
 
         Ui::PreferencesDialog *ui;
 
-        QFontDialog *qfd;
-
         CodePage &codepages;
         ActiveSettings &activeSettings;
 
@@ -96,8 +95,6 @@ class PreferencesDialog : public QDialog
 
         QString keyboardThemeName;
         KeyboardMap keyboardTheme;
-
-        QFont qfdFont;
 
         // Used to populate the combobox with nice names
         QMap<QString, Q3270::RulerStyle> comboRulerStyle;

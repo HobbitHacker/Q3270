@@ -34,6 +34,7 @@ set(SOURCES
     main.cpp
     SocketConnection.cpp
     Preferences/KeyboardSequenceEdit.cpp
+    Preferences/FontWidget.cpp
 )
 
 set(HEADERS
@@ -70,6 +71,7 @@ set(HEADERS
     SocketConnection.h
     Terminal.h
     Preferences/KeyboardSequenceEdit.h
+    Preferences/FontWidget.h
     ${CMAKE_BINARY_DIR}/Version.h
 )
 
@@ -86,6 +88,7 @@ set(FORMS
     Preferences/PreferencesDialog.ui
     Sessions/SessionDialog.ui
     Sessions/SessionPreview.ui
+    Preferences/FontWidget.ui
 )
 
 set(RESOURCES
