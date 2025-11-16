@@ -1121,13 +1121,6 @@ void DisplayScreen::getModifiedFields(QByteArray &buffer)
                                 buffer.append(b);
                             }
                             nextPos = nextPos % screenPos_max;
-                            //FIXME: Not sure this is right. This was a quick hack to cater for there being only one unprotected
-                            //       field on the screen.
-                            if (nextPos == 0)
-                            {
-                                printf("Wrapped!");
-                                return;
-                            }
                         }
                         while(!cells[nextPos].isFieldStart());
                     }

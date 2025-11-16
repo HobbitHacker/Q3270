@@ -8,9 +8,10 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-#include "Terminal.h"
 #include <QDateTime>
+#include <QVBoxLayout>
 
+#include "Terminal.h"
 #include "Display/StatusBar.h"
 
 /**
@@ -36,7 +37,7 @@ Terminal::Terminal(QGraphicsView *screen, ActiveSettings &activeSettings, CodePa
     , palette(cs)
     , activeSettings(activeSettings)
     , screen(screen)
-{
+{   
     QGraphicsScene *screenScene = new QGraphicsScene(this);
 
     screen->setScene(screenScene);

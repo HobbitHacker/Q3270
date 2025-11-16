@@ -65,7 +65,7 @@ class Terminal : public QWidget
     public slots:
 
         void closeConnection(QString message = "");
-        void closeEvent(QCloseEvent *closeEvent);
+        void closeEvent(QCloseEvent *closeEvent) override;
         void setCurrentFont(QFont f);
         void rulerStyle(Q3270::RulerStyle r);
         void rulerChanged(bool on);
@@ -86,7 +86,7 @@ class Terminal : public QWidget
 
         void blinkText();
         void blinkCursor();
-
+        
     private:
 
         void connectKeyboard();
