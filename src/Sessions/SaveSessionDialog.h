@@ -22,7 +22,7 @@ public:
     SaveSessionDialog(SessionStore &store, ActiveSettings &settings, QWidget *parent = nullptr);
 
 private slots:
-    void onSaveClicked();
+    void onAccept() override;
     void saveSessionNameEdited(const QString &name);
 
 private:

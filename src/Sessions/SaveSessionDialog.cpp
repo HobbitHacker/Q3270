@@ -17,6 +17,14 @@
 #include "SaveSessionDialog.h"
 
 
+/**
+ * @brief   SaveSessionDialog::SaveSessionDialog constructor.
+ * @param   store               Reference to the SessionStore.
+ * @param   activeSettings      Reference to the ActiveSettings.
+ * @param   parent              Parent widget.
+ * 
+ * @details This dialog allows the user to save the current active settings as a session.
+ */
 SaveSessionDialog::SaveSessionDialog(SessionStore &store, ActiveSettings &activeSettings, QWidget *parent)
     : SessionDialogBase(store, parent), activeSettings(activeSettings)
 {
@@ -31,14 +39,21 @@ SaveSessionDialog::SaveSessionDialog(SessionStore &store, ActiveSettings &active
 
     ui->previewWidget->setSession(Session::fromActiveSettings(activeSettings));
 
-    connect(ui->buttonBox->button(QDialogButtonBox::Ok), &QPushButton::clicked, this, &SaveSessionDialog::onSaveClicked);
     connect(ui->sessionNameEdit, &QLineEdit::textChanged, this, &SaveSessionDialog::saveSessionNameEdited);
 
     ui->sessionNameEdit->setReadOnly(false);
     ui->sessionDescEdit->setReadOnly(false);
 }
 
-void SaveSessionDialog::onSaveClicked()
+/**
+  * @brief   SaveSessionDialog::onAccept Slot called when the Save button is clicked.
+  * 
+  * @details This function saves the current active settings as a new session
+  *          with the name and description provided in the dialog. If a session
+  *          with the same name already exists, the user is prompted to confirm
+  *          overwriting it.
+  */
+void SaveSessionDialog::onAccept()
 {
     Session s = Session::fromActiveSettings(activeSettings);
 
@@ -75,6 +90,13 @@ void SaveSessionDialog::onSaveClicked()
     accept(); // Close dialog with success
 }
 
+/**
+ * @brief   SaveSessionDialog::saveSessionNameEdited Slot called when the session name is edited.
+ * @param   name        The new session name.
+ * 
+ * @details This function enables or disables the OK button based on whether
+ *          the session name is empty.
+ */
 void SaveSessionDialog::saveSessionNameEdited(const QString &name)
 {
     bool hasName = name.trimmed().isEmpty();
