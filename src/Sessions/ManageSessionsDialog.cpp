@@ -14,9 +14,16 @@
 #include "ManageSessionsDialog.h"
 #include "ManageAutoStartDialog.h"
 #include "Stores/SessionStore.h"
-//#include "ManageAutoStartDialog.h"
 #include "ui_SessionDialog.h"
 
+/**
+ * @brief   ManageSessionsDialog::ManageSessionsDialog constructor.
+ * @param   store               Reference to the SessionStore.
+ * @param   parent              Parent widget.
+ * 
+ * @details This dialog allows the user to manage saved sessions,
+ *          including deleting sessions and managing auto-start sessions.
+ */
 ManageSessionsDialog::ManageSessionsDialog(SessionStore &store, QWidget *parent)
     : SessionDialogBase(store, parent)
 {
@@ -30,6 +37,9 @@ ManageSessionsDialog::ManageSessionsDialog(SessionStore &store, QWidget *parent)
     connect(this, &SessionDialogBase::deleteRequested, this,&ManageSessionsDialog::doDelete);
 }
 
+/**
+ * @brief   Handle the "Manage AutoStart..." button click event.
+ */
 void ManageSessionsDialog::onManageAutoStartClicked()
 {
     ManageAutoStartDialog dlg(store, this);

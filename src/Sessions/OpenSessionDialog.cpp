@@ -19,7 +19,15 @@
 #include "Stores/SessionStore.h"
 #include "Models/Session.h"
 
-
+/**
+ * @brief   OpenSessionDialog::OpenSessionDialog constructor.
+ * @param   store               Reference to the SessionStore.
+ * @param   activeSettings      Reference to the ActiveSettings.
+ * @param   parent              Parent widget.
+ * 
+ * @details This dialog allows the user to open a saved session
+ *          and load its settings into the active configuration.
+ */
 OpenSessionDialog::OpenSessionDialog(SessionStore &store, ActiveSettings &activeSettings, QWidget *parent)
     : SessionDialogBase(store, parent), activeSettings(activeSettings)
 {
@@ -34,6 +42,12 @@ OpenSessionDialog::OpenSessionDialog(SessionStore &store, ActiveSettings &active
     connect(ui->buttonBox->button(QDialogButtonBox::Ok), &QPushButton::clicked, this, &OpenSessionDialog::onOpenClicked);
 }
 
+/**
+  * @brief   OpenSessionDialog::onOpenClicked Slot called when the Open button is clicked.
+  * 
+  * @details This function loads the selected session's settings
+  *          into the active configuration and accepts the dialog.
+  */
 void OpenSessionDialog::onOpenClicked()
 {
     Session s;

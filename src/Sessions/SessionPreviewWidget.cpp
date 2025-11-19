@@ -12,6 +12,12 @@
 #include "HostAddressUtils.h"
 #include <QStyleOptionButton>
 
+/**
+ * @brief   SessionPreviewWidget::SessionPreviewWidget constructor.
+ * @param   parent      Parent widget.
+ *
+ * @details This widget provides a preview of a session's settings.
+ */
 SessionPreviewWidget::SessionPreviewWidget(QWidget *parent)
     : QWidget(parent), check(":/Icons/check-square.svg"), uncheck(":/Icons/x-square.svg")
 {
@@ -31,6 +37,12 @@ SessionPreviewWidget::SessionPreviewWidget(QWidget *parent)
     previewVerifyCert->setFixedSize(indicatorSize);
 }
 
+/**
+ * @brief   SessionPreviewWidget::setSession Sets the session to preview.
+ * @param   session     The session to preview.
+ *
+ * @details This function updates the preview widget with the details of the given session.
+ */
 void SessionPreviewWidget::setSession(const Session &session)
 {
     groupBox->setEnabled(true);
@@ -41,6 +53,11 @@ void SessionPreviewWidget::setSession(const Session &session)
     previewVerifyCert->setPixmap(session.verifyCertificate ? checked : unchecked);
 }
 
+/**
+ * @brief   SessionPreviewWidget::clear Clears the session preview.
+ *
+ * @details This function resets the preview widget to its default state.
+ */
 void SessionPreviewWidget::clear()
 {
     groupBox->setEnabled(false);

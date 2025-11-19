@@ -10,6 +10,16 @@
 
 #include "HostAddressUtils.h"
 
+/**
+ * @brief   Format a host address string.
+ * @param   hostName    The hostname or IP address.
+ * @param   hostPort    The port number (0 if not specified).
+ * @param   hostLU      The LU name (empty if not specified).
+ * @return  A formatted address string.
+ *
+ * @details This function constructs a host address string in the format:
+ *          [LU@]hostname[:port]
+ */
 QString HostAddressUtils::format(const QString &hostName, int hostPort, const QString &hostLU) {
     QString address;
 
@@ -27,6 +37,16 @@ QString HostAddressUtils::format(const QString &hostName, int hostPort, const QS
     return address;
 }
 
+/**
+ * @brief   Parse a host address string.
+ * @param   address     The address string to parse.
+ * @param   hostName    Output parameter for the hostname or IP address.
+ * @param   hostPort    Output parameter for the port number.
+ * @param   hostLU      Output parameter for the LU name.
+ *
+ * @details This function extracts the hostname, port, and LU name
+ *          from an address string in the format: [LU@]hostname[:port]
+ */
 void HostAddressUtils::parse(const QString &address, QString &hostName, int &hostPort, QString &hostLU) {
     if (address.contains('@')) {
         hostLU   = address.section('@', 0, 0);

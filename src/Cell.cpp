@@ -47,6 +47,12 @@ Cell::Cell()
     charAttrTransparency = false;
 }
 
+/**
+ * @brief   Cell::isProtected - is this cell protected?
+ * @return  true if the cell is protected, false if unprotected
+ *
+ * @details If this cell is not a field start, the value is taken from the field cell instead.
+ */
 const bool Cell::isDisplay() const
 {
     if (field && !fieldStart)
@@ -54,6 +60,7 @@ const bool Cell::isDisplay() const
     else
         return display;
 }
+
 /**
  * @brief   Cell::setUnderscore - switch underscore on or off
  * @param   onoff - true to show the underscore, false to hide it

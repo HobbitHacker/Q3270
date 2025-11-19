@@ -15,19 +15,29 @@
 #include "Q3270.h"
 #include "SessionStore.h"
 
+/**
+ * @brief   SessionStore constructor.
+ * 
+ * @details Initializes the SessionStore with the application settings.
+ */
 SessionStore::SessionStore()
         : settings(Q3270_ORG, Q3270_APP)
 {
 
 }
 
+/**
+ * @brief   load Loads sessions from persistent storage into the store.
+ * 
+ * @details This function reads session data from QSettings and populates
+ *          the in-memory session map.
+ */
 void SessionStore::load()
 {
     Session s;
 
     QMetaEnum rs = QMetaEnum::fromType<Q3270::RulerStyle>();
-    QMetaEnum ft = QMetaEnum::fromType<Q3270::FontTweak>();
-    
+    QMetaEnum ft = QMetaEnum::fromType<Q3270::FontTweak>();    
     settings.beginGroup("Sessions"); // All Sessions
 
     for (QString name : settings.childGroups())
@@ -77,12 +87,28 @@ void SessionStore::load()
     settings.endGroup(); // All Sessions
 }
 
+/**
+ * @brief   getSession Retrieves a session by name.
+ * @param   name        The name of the session to retrieve.
+ * @return  The Session object corresponding to the given name.
+ * 
+ * @details This function looks up the session in the in-memory map
+ *          and returns it. If the session does not exist, an empty
+ *          Session object is returned.
+ */
 Session SessionStore::getSession(const QString &name) const
 {
     return sessions.value(name);
 }
 
-
+/**
+ * @brief   saveSession Saves a session to persistent storage.
+ * @param   session     The Session object to save.
+ * @return  True if the session was saved successfully, false otherwise.
+ * 
+ * @details This function writes the session data to QSettings
+ *          and updates the in-memory session map.
+ */
 bool SessionStore::saveSession(const Session &session)
 {
     if (session.name.trimmed().isEmpty())
@@ -121,9 +147,21 @@ bool SessionStore::saveSession(const Session &session)
     settings.endGroup(); // session group
     settings.endGroup(); // Sessions group
 
+    settings.sync(); // ensure it’s written to disk
+
+    // Update in-memory store
+    sessions.insert(session.name, session);
+
     return true;
 }
 
+/**
+ * @brief   listSessions Lists all sessions in the store.
+ * @return  A QList of all Session objects.
+ * 
+ * @details This function returns a list of all sessions
+ *          currently stored in memory.
+ */
 QList<Session> SessionStore::listSessions() const
 {
     QList<Session> result;
@@ -136,6 +174,13 @@ QList<Session> SessionStore::listSessions() const
     return result;
 }
 
+/**
+ * @brief   listSessionNames Lists all session names in the store.
+ * @return  A QStringList of all session names.
+ * 
+ * @details This function retrieves the names of all sessions
+ *          stored in persistent storage.
+ */
 QStringList SessionStore::listSessionNames() const
 {
     QStringList names;
@@ -152,6 +197,13 @@ QStringList SessionStore::listSessionNames() const
     return names;
 }
 
+/**
+ * @brief   deleteSession Deletes a session from persistent storage.
+ * @param   name        The name of the session to delete.
+ * 
+ * @details This function removes the session with the given name
+ *          from QSettings and the in-memory session map.
+ */
 void SessionStore::deleteSession(const QString &name)
 {
     settings.beginGroup("Sessions");
@@ -159,8 +211,17 @@ void SessionStore::deleteSession(const QString &name)
     settings.endGroup();
 
     settings.sync(); // ensure it’s written to disk
+
+    sessions.remove(name);
 }
 
+/**
+ * @brief   listAutoStartSessions Lists all auto-start session names.
+ * @return  A QStringList of auto-start session names.
+ * 
+ * @details This function retrieves the list of sessions configured
+ *          to auto-start from persistent storage.
+ */
 QStringList SessionStore::listAutoStartSessions() const
 {
     QList<QString> realSessions = listSessionNames();
@@ -182,6 +243,14 @@ QStringList SessionStore::listAutoStartSessions() const
     return autoStart;
 }
 
+/**
+ * @brief   saveAutoStartSessions Saves the list of auto-start session names.
+ * @param   list        The QStringList of session names to set as auto-start.
+ * @return  True if the list was saved successfully, false otherwise.
+ * 
+ * @details This function writes the provided list of session names
+ *          to persistent storage as the auto-start configuration.
+ */
 bool SessionStore::saveAutoStartSessions(const QStringList &list)
 {
     QList<QString> realSessions = listSessionNames();
