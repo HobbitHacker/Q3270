@@ -86,6 +86,8 @@ class Terminal : public QWidget
 
         void blinkText();
         void blinkCursor();
+
+        bool eventFilter(QObject* obj, QEvent* event);
         
     private:
 

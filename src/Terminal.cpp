@@ -38,6 +38,9 @@ Terminal::Terminal(QGraphicsView *screen, ActiveSettings &activeSettings, CodePa
     , activeSettings(activeSettings)
     , screen(screen)
 {   
+
+    screen->viewport()->installEventFilter(this);
+
     QGraphicsScene *screenScene = new QGraphicsScene(this);
 
     screen->setScene(screenScene);
@@ -695,10 +698,23 @@ void Terminal::fit()
 {
     if (sessionConnected)
     {
+        qDebug() << current->boundingRect();
+        qDebug() << statusBar->boundingRect();
         screen->fitInView(screen->scene()->itemsBoundingRect(), stretchScreen);
     }
     else
     {
         screen->fitInView(notConnected, Qt::IgnoreAspectRatio);
     }
+}
+
+// In Terminal:
+bool Terminal::eventFilter(QObject* obj, QEvent* event)
+{
+    if (obj == screen->viewport() && event->type() == QEvent::Resize)
+    {
+        fit(); // viewport resized, recompute fit
+        return false; // let default handling continue
+    }
+    return QWidget::eventFilter(obj, event);
 }
