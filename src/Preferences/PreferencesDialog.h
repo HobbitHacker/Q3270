@@ -51,6 +51,7 @@ class PreferencesDialog : public QDialog
     signals:
 
         void tempFontChange(QFont f);
+        void tempFontTweakChange(Q3270::FontTweak f);
 
         // Forwarded when keyboard themes are applied from the KeyboardThemeDialog
         void themesApplied(const QString &name);
@@ -67,6 +68,8 @@ class PreferencesDialog : public QDialog
     private slots:
 
         void changeFont(QFont f);
+        void changeFontTweak(int index);
+
         void terminalModelDropDownChanged(int m);
 
         void colourThemeDropDownChanged(int index);

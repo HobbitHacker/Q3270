@@ -66,6 +66,7 @@ Terminal::Terminal(QGraphicsView *screen, ActiveSettings &activeSettings, CodePa
     connect(&activeSettings, &ActiveSettings::cursorBlinkSpeedChanged, this, &Terminal::setBlinkSpeed);
 
     connect(&activeSettings, &ActiveSettings::fontChanged, this, &Terminal::setFont);
+    connect(&activeSettings, &ActiveSettings::fontTweakChanged, this, &Terminal::setFontTweak);
     connect(&activeSettings, &ActiveSettings::codePageChanged, this, &Terminal::changeCodePage);
     connect(&activeSettings, &ActiveSettings::stretchScreenChanged, this, &Terminal::setScreenStretch);
 
@@ -134,6 +135,15 @@ void Terminal::setFont(QFont font)
     if (sessionConnected)
     {
         current->setFont(font);
+    }
+}
+
+void Terminal::setFontTweak(Q3270::FontTweak f)
+{
+    if (sessionConnected)
+    {
+        current->setFontTweak(f);
+        current->update();
     }
 }
 
@@ -260,6 +270,7 @@ void Terminal::connectSession()
     connect(socket, &SocketConnection::connectionEnded, this, &Terminal::closeConnection);
 
     current->setFont(activeSettings.getFont());
+    current->setFontTweak(activeSettings.getTweak());
     current->rulerMode(activeSettings.getRulerState());
     current->setRulerStyle(activeSettings.getRulerStyle());
 
@@ -698,8 +709,6 @@ void Terminal::fit()
 {
     if (sessionConnected)
     {
-        qDebug() << current->boundingRect();
-        qDebug() << statusBar->boundingRect();
         screen->fitInView(screen->scene()->itemsBoundingRect(), stretchScreen);
     }
     else
@@ -708,13 +717,21 @@ void Terminal::fit()
     }
 }
 
-// In Terminal:
+/**
+ * @brief   Terminal::eventFilter - handle a change of internal geometry
+ * @param   obj   - the object having the event
+ * @param   event - the event
+ * @return
+ *
+ * @details This routine gains control when the internal size of the scene changes. This is purely to handle
+ *          the toolbar being shown/hidden, so that the display matrix can be resized properly.
+ */
 bool Terminal::eventFilter(QObject* obj, QEvent* event)
 {
     if (obj == screen->viewport() && event->type() == QEvent::Resize)
     {
-        fit(); // viewport resized, recompute fit
-        return false; // let default handling continue
+        fit();
+        return false;
     }
     return QWidget::eventFilter(obj, event);
 }

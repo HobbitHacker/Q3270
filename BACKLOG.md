@@ -7,6 +7,7 @@
 - Reinstate duplicate window start
 - Remaining 3270 orders
 - Per-session window geometry option
+- Review colour handling (eg, "black" as a background might not be black)
 
 ### Medium-term ###
 
@@ -27,4 +28,7 @@
 
 ### Completed ###
 
+- Handle Ctrl keys independently in the Keyboard Map dialog
 - Reinstate auto-start sessions
+- Improve Font selection dialog
+- Implement 'font tweaks' capability to tailor how a zero appears

@@ -89,6 +89,7 @@ class DisplayScreen : public QGraphicsObject
 
         void clear();
         void setFont(const QFont &font);
+        void setFontTweak(const Q3270::FontTweak f);
 
         void toggleRuler();
         void setRuler();
@@ -199,10 +200,18 @@ class DisplayScreen : public QGraphicsObject
         QPointF mouseStart;
 
         QFont font;
+        Q3270::FontTweak fontTweak;
+
+        // Font tweak settings
+        QPoint dotOffset;
+        QPoint slashStart;
+        QPoint slashEnd;
+        int dotRadius;
 
         int findField(int pos);
         int findNextField(int pos);
         void applyCharAttributes(int pos, Cell *field);
+        void updateFontMetrics();
 };
 
 #endif // DISPLAYSCREEN_H

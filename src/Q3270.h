@@ -57,6 +57,7 @@
 /* Constants for some EBCDIC chars */
 #define IBM3270_CHAR_NULL  0x00
 #define IBM3270_CHAR_SPACE 0x40
+#define IBM3270_CHAR_ZERO  0xF0
 
 /* Write Structured Field Commands */
 #define IBM3270_WSF_RESET         0x00

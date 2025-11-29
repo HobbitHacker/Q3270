@@ -23,6 +23,7 @@
 #include "Version.h"
 #include "Q3270.h"
 #include "Models/Session.h"
+
 /**
  * @brief   MainWindow::MainWindow - the main application
  * @param   launchParms - a name
@@ -82,8 +83,9 @@ MainWindow::MainWindow(LaunchParms launchParms) : QMainWindow(launchParms.parent
     // Construct the 3270 Terminal
     terminal = new Terminal(ui->screenView, activeSettings, codePage, keyboard, Colours::getFactoryTheme());
 
-    // Used for dynamically showing font changes when using the font selection dialog
+    // Used for dynamically showing font changes when using the font tab in Preferences
     connect(settings, &PreferencesDialog::tempFontChange, terminal, &Terminal::setCurrentFont);
+    connect(settings, &PreferencesDialog::tempFontTweakChange, terminal, &Terminal::setFontTweak);
 
     // Check if the user modified the active colour & keyboard themes through the theme dialogs
     connect(keyboardTheme, &KeyboardThemeDialog::themesApplied, this, &MainWindow::checkKeyboardThemeModified);

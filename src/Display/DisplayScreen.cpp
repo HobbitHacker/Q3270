@@ -53,6 +53,7 @@ DisplayScreen::DisplayScreen(int screen_x, int screen_y, CodePage &cp, const Col
     blinkShow = true;
     cursorShow = true;
     cursorColour = true;
+    fontTweak = Q3270::None;
 
     cursor_pos = 0;
 
@@ -160,6 +161,59 @@ void DisplayScreen::setSize(const int x, const int y)
 void DisplayScreen::setFont(const QFont &font)
 {
     this->font = font;
+    updateFontMetrics();
+}
+
+/**
+ * @brief   DisplayScreen::setFontTweak - change the way zero is displayed
+ * @param   f - how a zero is modified on screen
+ *
+ * @details setFontTweak changes the way a zero is displayed.
+ */
+void DisplayScreen::setFontTweak(const Q3270::FontTweak f)
+{
+    this->fontTweak = f;
+    updateFontMetrics();
+}
+
+/**
+ * @brief   DisplayScreen::updateFontMetrics - update the font metrics for zero overlays
+ *
+ * @details The position of a slash or a dot for a font tweak zero overlay will vary depending
+ *          on the font. This routine calculates new positions.
+ *
+ * @note    The maths in this routine was devised by Copilot.
+ */
+void DisplayScreen::updateFontMetrics()
+{
+    QFontMetrics fm(font);
+    int w = fm.horizontalAdvance(QChar('0')); // glyph width
+    int h = fm.height();                      // glyph height
+
+    // Dot at glyph center
+    dotOffset = QPoint(gridSize_X/2, gridSize_Y/2);
+    dotRadius = qMax(1, (int)(gridSize_Y / 8));  // scales with cell height
+
+    // Dot radius can also scale
+    dotRadius = qMax(1, h / 12);
+
+    // Slash calculations
+    int gh = fm.height();
+
+    w = gridSize_X;
+    h = gridSize_Y;
+
+    QPointF center(w/2.0, h/2.0);
+
+    // Slash length proportional to font height, but clamped to cell diagonal
+    double L = std::min(gh * 0.6, std::sqrt(w*w + h*h) * 0.9);
+
+    // 45° angle
+    double dx = std::cos(M_PI/3) * (L/2.0);
+    double dy = std::sin(M_PI/3) * (L/2.0);
+
+    slashStart = QPoint(qRound(center.x() + dx), qRound(center.y() - dy));
+    slashEnd   = QPoint(qRound(center.x() - dx), qRound(center.y() + dy));
 }
 
 /**
@@ -1415,6 +1469,29 @@ void DisplayScreen::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget
                     if (!cs.isGraphic())
                     {
                         p->drawText(rect, Qt::AlignCenter, cp.getUnicodeChar(cs.getEBCDIC()));
+                        if (cs.getEBCDIC() == IBM3270_CHAR_ZERO)
+                        {
+                            // Slash/dot overlay
+                            p->save();
+                            p->setRenderHint(QPainter::Antialiasing, true);
+                            switch(fontTweak)
+                            {
+                                case Q3270::None:
+                                    break;
+                                case Q3270::ZeroDot:
+                                    p->setBrush(fg);
+                                    p->setPen(Qt::NoPen);
+                                    p->drawEllipse(rect.topLeft() + dotOffset, dotRadius, dotRadius);
+                                    break;
+                                case Q3270::ZeroSlash:
+                                    p->setBrush(Qt::NoBrush);   // no fill needed
+                                    p->setPen(fg);              // stroke colour
+                                    p->drawLine(rect.topLeft() + slashStart,
+                                                rect.topLeft() + slashEnd);
+                                    break;
+                            }
+                            p->restore();
+                        }
                     }
                     else
                     {

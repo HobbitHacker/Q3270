@@ -60,6 +60,7 @@ PreferencesDialog::PreferencesDialog(CodePage &codepages, ActiveSettings &active
     ui->CodePages->addItems(codepages.getCodePageList());
 
     connect(ui->FontWidgetBox, &FontWidget::fontChanged, this, &PreferencesDialog::changeFont);
+    connect(ui->fontTweak, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &PreferencesDialog::changeFontTweak);
 }
 
 /**
@@ -241,14 +242,24 @@ void PreferencesDialog::terminalModelDropDownChanged(int model)
  * @brief   PreferencesDialog::changeFont - signalled when the user has picked a new font
  * @param   newFont - the new font
  *
- * @details When the Font tab is displayed, and the user has chosen a new font, it would be possible
- *          to dynamically display the changes of font in the terminal as they happen.
- *
- * @note    This feature is not currently enabled.
+ * @details When the Font tab is displayed, and the user has chosen a new font, dynamically
+ *          display the changes of font in the terminal as they happen.
  */
 void PreferencesDialog::changeFont(QFont newFont)
 {
     emit tempFontChange(newFont);
+}
+
+/**
+ * @brief   PreferencesDialog::changeFontTweak - signalled when the font tweak is changed.
+ * @param   index - the combobox index
+ *
+ * @details When the font tab is displayed, and the user changes the Font Tweak option,
+ *          display the changes dynamically on the terminal.
+ */
+void PreferencesDialog::changeFontTweak(int index)
+{
+    emit tempFontTweakChange(comboFontTweak.value(ui->fontTweak->currentText()));
 }
 
 /**
@@ -329,16 +340,7 @@ void PreferencesDialog::populateColourThemeNames()
 void PreferencesDialog::manageColourThemes()
 {
     // Run the Colour Themes dialog
-    // Construct the dialog with the shared KeyboardStore so edits apply to runtime
     ColourTheme dlg(colourStore, this);
-    // Connect apply signal so the preferences UI can react if needed
-///    connect(&dlg, &ColoKeyboardThemeDialog::themesApplied, this, [this](const QString &name){
-        // Refresh our dropdown in case themes changed
-//        populateKeyboardThemeNames();
-        // Forward to any listeners (eg MainWindow) so runtime can be updated
-  //      emit themesApplied(name);
-  //  });
-
     dlg.exec();
 
     // Refresh the colour theme names, in case they changed

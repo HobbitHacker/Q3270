@@ -71,6 +71,7 @@ class Terminal : public QWidget
         void rulerChanged(bool on);
         void changeCodePage(QString codepage);
         void setFont(QFont font);
+        void setFontTweak(Q3270::FontTweak f);
 
         void toggleRuler();
 
