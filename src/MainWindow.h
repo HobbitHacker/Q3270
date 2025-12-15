@@ -95,9 +95,6 @@ class MainWindow : public QMainWindow
       void menuKeyboardTheme();
       void menuColourTheme();
 
-      // View menu
-      void menuToolBar(const bool visible);
-
       // The Help menu
       void menuAbout();
       void menuAboutConnection();

@@ -60,7 +60,10 @@ MainWindow::MainWindow(LaunchParms launchParms) : QMainWindow(launchParms.parent
     connect(ui->actionManage_Auto_Sart_Sessions, &QAction::triggered, this, &MainWindow::menuManageAutostartSessions);
     connect(ui->actionSave_Session,              &QAction::triggered, this, &MainWindow::menuSaveSession);
     connect(ui->actionConnection_Information,    &QAction::triggered, this, &MainWindow::menuAboutConnection);
-    connect(ui->actionToolbar,                   &QAction::triggered, this, &MainWindow::menuToolBar);
+
+    QAction *tbToggle = ui->toolBar->toggleViewAction();
+    ui->menuView->addAction(tbToggle);
+    tbToggle->setText(tr("Show Toolbar"));
 
     connect(&activeSettings, &ActiveSettings::keyboardThemeChanged, this, &MainWindow::activeKeyboardNameChanged);
     connect(&activeSettings, &ActiveSettings::colourThemeChanged,   this, &MainWindow::activeColoursNameChanged);
@@ -106,7 +109,7 @@ MainWindow::MainWindow(LaunchParms launchParms) : QMainWindow(launchParms.parent
     restoreGeometry(savedSettings.value("MainWindowGeometry").toByteArray());
     restoreState(savedSettings.value("MainWindowState").toByteArray());
 
-    menuToolBar(savedSettings.value("ShowToolbar", true).toBool());
+    ui->toolBar->setVisible(savedSettings.value("ShowToolbar", true).toBool());
 
 
     // If a something was passed to the MainWindow, try to open it
@@ -685,16 +688,6 @@ void MainWindow::checkHostNameChange(const QString &hostName, const int hostPort
     ui->actionSave_SessionAs->setDisabled(valid);
 
     activeSettings.setSessionName("");
-}
-
-/**
- * @brief   MainWindow::menuToolBar - called when the user selects View->Show(Hide) Toolbar
- * @param   visible - whether the tool bar is visible
- */
-void MainWindow::menuToolBar(const bool visible)
-{
-    ui->toolBar->setVisible(visible);
-    ui->actionToolbar->setChecked(visible);
 }
 
 /*
