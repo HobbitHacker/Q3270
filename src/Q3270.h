@@ -258,6 +258,12 @@ namespace Q3270 {
         ZeroSlash
     };
 
+    // EAU / EUA flag to reset MDT or not
+    enum class EraseResetMDT {
+        ResetMDT,
+        DoNotResetMDT
+    };
+
     Q_ENUM_NS(TelnetState)
     Q_ENUM_NS(RulerStyle)
     Q_ENUM_NS(Colour)
@@ -265,6 +271,7 @@ namespace Q3270 {
     Q_ENUM_NS(Indicators)
     Q_ENUM_NS(InsertOverType)
     Q_ENUM_NS(FontTweak)
+    Q_ENUM_NS(EraseResetMDT)
 };
 
 Q_DECLARE_METATYPE(Q3270::RulerStyle)

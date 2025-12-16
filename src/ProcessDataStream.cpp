@@ -105,38 +105,38 @@ void ProcessDataStream::processStream(QByteArray &b, bool tn3270e)
         case IBM3270_EW:
         case IBM3270_CCW_EW:
             processEW(false);
-            buffer++;
             break;
         case IBM3270_W:
         case IBM3270_CCW_W:
             processW();
-            buffer++;
             break;
         case IBM3270_WSF:
         case IBM3270_CCW_WSF:
             wsfProcessing = true;
-            buffer++;
             break;
         case IBM3270_EWA:
         case IBM3270_CCW_EWA:
             processEW(true);
-            buffer++;
             break;
         case IBM3270_RM:
         case IBM3270_CCW_RM:
             processRM();
-            buffer++;
+            break;
+        case IBM3270_EAU:
+        case IBM3270_CCW_EAU:
+            processEAU();
             break;
         case IBM3270_RB:
         case IBM3270_CCW_RB:
             processRB();
-            buffer++;
             break;
         default:
             printf("\n\n[** Unrecognised WRITE command: %02X - Block Ignored **]\n\n", (uchar) *buffer);
             processing = false;
             return;
     }
+
+    buffer++;
 
     while(buffer < b.end())
     {
@@ -368,6 +368,25 @@ void ProcessDataStream::processRB()
     printf("[ReadBuffer]");
 
     screen->getScreen(reply);
+}
+
+/**
+ * @brief   ProcessDataStream::processEAU - The 3270 ERASE ALL UNPROTECTED command
+ *
+ * @details The EAU (not to be confused with EUA!) erases all unprotected fields on the screen,
+ *          resets MDTs positions the cursor to the first enterable field on the screen, and
+ *          resets the AID.
+ */
+void ProcessDataStream::processEAU()
+{
+    qDebug() << "[EraseAllUnprotected]";
+
+    screen->eraseUnprotected(0, screenSize, Q3270::EraseResetMDT::ResetMDT);
+
+    restoreKeyboard = true;
+
+    screen->setCursor(screen->findNextUnprotectedField(0));
+    lastAID = IBM3270_AID_NOAID;
 }
 
 /**
@@ -763,7 +782,7 @@ void ProcessDataStream::processEUA()
 
     printf("[EraseUnprotected to Address %d]", stopAddress);
 
-    screen->eraseUnprotected(primary_pos, stopAddress);
+    screen->eraseUnprotected(primary_pos, stopAddress, Q3270::EraseResetMDT::DoNotResetMDT);
 
     lastWasCmd = true;
 }

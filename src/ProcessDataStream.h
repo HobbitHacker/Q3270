@@ -98,12 +98,13 @@ class ProcessDataStream : public QObject
         void processOrders();
 
         /* 3270 Command Codes */
-        /* TODO: 3270 Command codes RMA and EAU */
+        /* TODO: 3270 Command code RMA */
         void processW();
         void processEW(bool alternate);      // Incorporates EWA
         void processRB();
         void processWSF();
         void processRM();
+        void processEAU();
 
         /* 3270 Orders */
         void processSF();

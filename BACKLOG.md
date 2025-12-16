@@ -5,9 +5,10 @@
 ### Short-term ###
 
 - Reinstate duplicate window start
-- Remaining 3270 orders
+- RMA 3270 command
 - Per-session window geometry option
 - Review colour handling (eg, "black" as a background might not be black)
+- Scripting interface
 
 ### Medium-term ###
 
@@ -15,6 +16,7 @@
 - Rework code pages
 - Introduction of new code pages
 - Invalid data stream handling (PROG 705 eg)
+- Make use of a function registry for keyboard shortcuts
 
 ### Long-term ###
  
@@ -32,3 +34,4 @@
 - Reinstate auto-start sessions
 - Improve Font selection dialog
 - Implement 'font tweaks' capability to tailor how a zero appears
+- EAU implemented

@@ -912,7 +912,7 @@ void DisplayScreen::eraseEOF()
  *          in the 3270 data stream. All unprotected fields between the specified positions are
  *          set to nulls.
  */
-void DisplayScreen::eraseUnprotected(int start, int end)
+void DisplayScreen::eraseUnprotected(int start, int end, Q3270::EraseResetMDT resetMDT)
 {
     if (end < start)
     {
@@ -928,11 +928,15 @@ void DisplayScreen::eraseUnprotected(int start, int end)
     {
         if(cells[i].isProtected() || cells[i].isFieldStart())
         {
+            if (!cells[i].isProtected() && resetMDT == Q3270::EraseResetMDT::ResetMDT)
+            {
+                cells[i].setMDT(false);
+            }
             i = findNextUnprotectedField(i);
         }
         else
         {
-                cells[i].setChar(IBM3270_CHAR_SPACE);
+            cells[i].setChar(IBM3270_CHAR_NULL);
         }
     }
 }

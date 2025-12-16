@@ -76,7 +76,7 @@ class DisplayScreen : public QGraphicsObject
 
         bool insertChar(unsigned char c, bool insertMode);
 
-        void eraseUnprotected(int start, int end);
+        void eraseUnprotected(int start, int end, Q3270::EraseResetMDT resetMDT);
 
         void setCursor(const int x, const int y);
         void setCursor(int pos);
