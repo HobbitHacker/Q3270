@@ -122,6 +122,10 @@ void ProcessDataStream::processStream(QByteArray &b, bool tn3270e)
         case IBM3270_CCW_RM:
             processRM();
             break;
+        case IBM3270_RMA:
+/*        case IBM3270_CCW_RMA */
+            processRMA();
+            break;
         case IBM3270_EAU:
         case IBM3270_CCW_EAU:
             processEAU();
@@ -430,7 +434,24 @@ void ProcessDataStream::processWSF()
 void ProcessDataStream::processRM()
 {
     printf("[ReadModified]");
-    screen->processAID(lastAID, false);
+    screen->processAID(lastAID, Q3270_SHORT_READ);
+}
+
+/**
+ * @brief   ProcessDataStream::processRMA - The 3270 READ MODIFIED ALL command
+ * 
+ * @details Extract all modified fields from screen and return them to the host.
+ * 
+ * @note    Read Modified All Command
+ *          The Read Modified All command operates exactly like the Read Modified
+ *          command, except that it always causes both the addresses and the data from all
+ *          modified fields to be sent to the application program independent of the AID code.
+ *          This includes those AID codes that would normally result in a short read, as well
+ *          as for trigger action (X' 7F' ), Clear Partition (X '6A' ), and Read Partition (X' 61 ').
+ */
+void ProcessDataStream::processRMA()
+{
+    screen->processAID(lastAID, Q3270_NOT_SHORT_READ);
 }
 
 /**

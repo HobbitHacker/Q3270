@@ -949,13 +949,21 @@ void DisplayScreen::eraseUnprotected(int start, int end, Q3270::EraseResetMDT re
  * @details Process an attention key. If the key was a short read key (like CLEAR, PA1 etc) then no
  *          fields are returned to the host.
  */
-void DisplayScreen::processAID(int aid, bool shortRead)
+void DisplayScreen::processAID(int aid, bool allowShortRead)
 {
     QByteArray respBuffer = QByteArray();
 
     respBuffer.append(aid);
 
     lastAID = aid;
+
+    bool isShortReadAID = (aid == IBM3270_AID_CLEAR ||
+                           aid == IBM3270_AID_PA1 ||
+                           aid == IBM3270_AID_PA2 ||
+                           aid == IBM3270_AID_PA3
+                           /* aid == IBM3270_AID_TRIGGER */);
+
+    bool shortRead = isShortReadAID && allowShortRead;
 
     if (!shortRead)
     {

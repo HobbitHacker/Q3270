@@ -5,7 +5,6 @@
 ### Short-term ###
 
 - Reinstate duplicate window start
-- RMA 3270 command
 - Per-session window geometry option
 - Review colour handling (eg, "black" as a background might not be black)
 - Scripting interface
@@ -35,3 +34,4 @@
 - Improve Font selection dialog
 - Implement 'font tweaks' capability to tailor how a zero appears
 - EAU implemented
+- RMA implemented
