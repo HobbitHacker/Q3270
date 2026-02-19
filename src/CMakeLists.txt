@@ -98,8 +98,12 @@ set(RESOURCES
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+if(APPLE)
+    set(Q3270_BUNDLE_TYPE MACOSX_BUNDLE)
+endif()
+
 if(Qt6_FOUND)
-    qt_add_executable(Q3270
+    qt_add_executable(Q3270 ${Q3270_BUNDLE_TYPE}
         ${SOURCES}
         ${HEADERS}
         ${FORMS}
@@ -109,7 +113,7 @@ if(Qt6_FOUND)
 else()
     qt5_wrap_ui(UI_HEADERS ${FORMS})
     qt5_add_resources(RCC_SOURCES ${RESOURCES})
-    add_executable(Q3270
+    add_executable(Q3270 ${Q3270_BUNDLE_TYPE}
         ${SOURCES}
         ${HEADERS}
         ${UI_HEADERS}

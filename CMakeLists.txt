@@ -2,6 +2,11 @@ cmake_minimum_required(VERSION 3.16)
 
 project(Q3270 VERSION 0.2.0 LANGUAGES CXX)
 
+# --- NEW: Target Apple Silicon (M4/M-series) ---
+if(APPLE)
+    set(CMAKE_OSX_ARCHITECTURES "arm64")
+endif()
+
 # Append Git hash to build to track commits
 execute_process(
     COMMAND git rev-parse --short HEAD
@@ -45,10 +50,28 @@ add_definitions(-DQT_DEPRECATED_WARNINGS)
 # build logic for code in src/
 add_subdirectory(src)
 
-# Install the main executable into bin/
-install(TARGETS Q3270
-    RUNTIME DESTINATION bin
-)
+if(APPLE)
+    # This tells CMake to put the .app in the root of the install directory
+    set_target_properties(Q3270 PROPERTIES
+        MACOSX_BUNDLE TRUE
+        MACOSX_BUNDLE_BUNDLE_NAME "Q3270 Emulator"
+        MACOSX_BUNDLE_GUI_IDENTIFIER "com.hobbithacker.q3270"
+    )
+
+    install(TARGETS Q3270
+        BUNDLE DESTINATION .
+        RUNTIME DESTINATION bin
+    )
+else()
+    # Your existing Linux/Debian install logic
+    install(TARGETS Q3270 RUNTIME DESTINATION bin)
+    option(DEBIAN_INSTALL "Install paths for Debian packaging" OFF)
+    if(DEBIAN_INSTALL)
+        install(FILES LICENSE README.md DESTINATION share/q3270)
+    else()
+        install(FILES LICENSE README.md DESTINATION share/Q3270)
+    endif()
+endif()
 
 option(DEBIAN_INSTALL "Install paths for Debian packaging" OFF)
 
