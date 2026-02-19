@@ -1,0 +1,40 @@
+name: macOS M4 Build
+on: [push]
+
+jobs:
+  build-macos:
+    runs-on: macos-14 # This is the Apple Silicon runner (M-series)
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Native Qt5 via Homebrew
+        run: |
+          # Install the Homebrew version of Qt5 which supports arm64
+          brew install qt@5
+          # Map the paths so CMake can find it
+          echo "Qt5_DIR=$(brew --prefix qt@5)/lib/cmake/Qt5" >> $GITHUB_ENV
+          echo "$(brew --prefix qt@5)/bin" >> $GITHUB_PATH
+
+      - name: Configure and Build
+        run: |
+          mkdir build && cd build
+          # Use the environment variable to point to the Homebrew Qt path
+          cmake .. \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_OSX_ARCHITECTURES="arm64" \
+            -DCMAKE_PREFIX_PATH="${{ env.Qt5_DIR }}"
+          make -j$(sysctl -n hw.ncpu)
+
+      - name: Package DMG
+        run: |
+          # Homebrew installs macdeployqt in the bin folder we added to PATH
+          macdeployqt build/src/Q3270.app -dmg
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Q3270-macOS-M4
+          path: build/src/*.dmg
+
+
