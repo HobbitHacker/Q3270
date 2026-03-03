@@ -172,12 +172,11 @@ const QStringList KeyboardStore::themeNames() const
 /**
  * @brief   KeyboardStore::getTheme - return a named KeyboardMap
  * @param   theme - the name of the KeyboardMap
- * @return  The specified KeyboardMap
+ * @return  The specified KeyboardMap or Factory if not found
  *
  * @details Returns the named keyboard map from the store.
- *          TODO: No handling of a non-match
  */
 KeyboardMap KeyboardStore::getTheme(const QString &theme) const
 {
-    return themes.value(theme);
+    return themes.contains(theme) ? themes.value(theme) : themes.value("Factory");
 }

@@ -1443,7 +1443,7 @@ void DisplayScreen::applyCharAttributes(int pos, Cell *field)
 
 void DisplayScreen::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget *)
 {
-    p->fillRect(boundingRect(), QColor(Qt::black));
+    p->fillRect(boundingRect(), palette->colour(Q3270::Black));
 
     p->setFont(font);
 
@@ -1461,7 +1461,7 @@ void DisplayScreen::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget
             QRectF rect(c * gridSize_X, r * gridSize_Y, gridSize_X, gridSize_Y);
 
             QColor fg = palette->colour(cs.getColour());
-            QColor bg = QColor(Qt::black);
+            QColor bg = palette->colour(Q3270::Black);
 
             // reverse
             if (cs.isReverse())

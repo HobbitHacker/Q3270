@@ -300,7 +300,7 @@ void Terminal::connectSession()
 
     screen->setInteractive(true);
 
-    fit();
+    setAlternateScreen(false);
 }
 
 /**
