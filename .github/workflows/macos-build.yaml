@@ -1,40 +1,55 @@
-name: macOS M4 Build
-on: [push]
+name: macOS Multi-Arch Build
+on:
+   workflow_dispatch:
 
 jobs:
   build-macos:
-    runs-on: macos-14 # This is the Apple Silicon runner (M-series)
+    strategy:
+      matrix:
+        include:
+          - os: macos-26-intel  # Intel Runner
+            arch: x86_64
+            name: Intel-x86
+          - os: macos-26        # Apple Silicon Runner (M-series)
+            arch: arm64
+            name: Apple-Silicon
+
+    runs-on: ${{ matrix.os }}
+    name: Build for ${{ matrix.name }}
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install Native Qt5 via Homebrew
+      - name: Install Qt5
         run: |
-          # Install the Homebrew version of Qt5 which supports arm64
           brew install qt@5
-          # Map the paths so CMake can find it
           echo "Qt5_DIR=$(brew --prefix qt@5)/lib/cmake/Qt5" >> $GITHUB_ENV
           echo "$(brew --prefix qt@5)/bin" >> $GITHUB_PATH
 
       - name: Configure and Build
         run: |
+          rm -rf build
           mkdir build && cd build
-          # Use the environment variable to point to the Homebrew Qt path
           cmake .. \
             -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_OSX_ARCHITECTURES="arm64" \
-            -DCMAKE_PREFIX_PATH="${{ env.Qt5_DIR }}"
+            -DCMAKE_SYSTEM_NAME=Darwin \
+            -DCMAKE_SYSTEM_PROCESSOR=${{ matrix.arch }} \
+            -DCMAKE_OSX_ARCHITECTURES=${{ matrix.arch }} \
+            -DCMAKE_PREFIX_PATH="${{ env.Qt5_DIR }}" \
+            -DCMAKE_OSX_DEPLOYMENT_TARGET="11.0" \
+            -DCMAKE_C_FLAGS="-arch ${{ matrix.arch }}" \
+            -DCMAKE_CXX_FLAGS="-arch ${{ matrix.arch }}" \
+            -DCMAKE_EXE_LINKER_FLAGS="-arch ${{ matrix.arch }}"
           make -j$(sysctl -n hw.ncpu)
 
       - name: Package DMG
         run: |
-          # Homebrew installs macdeployqt in the bin folder we added to PATH
+          # Ensure we target the .app location correctly
           macdeployqt build/src/Q3270.app -dmg
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Q3270-macOS-M4
+          name: Q3270-macOS-${{ matrix.name }}
           path: build/src/*.dmg
-
-
