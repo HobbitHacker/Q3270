@@ -31,17 +31,20 @@ jobs:
         run: |
           rm -rf build
           mkdir build && cd build
-          cmake .. \
+          # Use env vars to force the compiler's hand early
+          export CFLAGS="-arch ${{ matrix.arch }}"
+          export CXXFLAGS="-arch ${{ matrix.arch }}"
+          export LDFLAGS="-arch ${{ matrix.arch }}"
+
+          cmake -G "Unix Makefiles" .. \
             -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_SYSTEM_NAME=Darwin \
-            -DCMAKE_SYSTEM_PROCESSOR=${{ matrix.arch }} \
-            -DCMAKE_OSX_ARCHITECTURES=${{ matrix.arch }} \
+            -DCMAKE_OSX_ARCHITECTURES="${{ matrix.arch }}" \
+            -DCMAKE_OSX_SYSROOT=$(xcrun --sdk macos --show-sdk-path) \
             -DCMAKE_PREFIX_PATH="${{ env.Qt5_DIR }}" \
             -DCMAKE_OSX_DEPLOYMENT_TARGET="11.0" \
-            -DCMAKE_C_FLAGS="-arch ${{ matrix.arch }}" \
-            -DCMAKE_CXX_FLAGS="-arch ${{ matrix.arch }}" \
-            -DCMAKE_EXE_LINKER_FLAGS="-arch ${{ matrix.arch }}"
-          make -j$(sysctl -n hw.ncpu)
+            -DCMAKE_APPLE_SILICON_PROCESSOR=x86_64
+
+          make -j$(sysctl -n hw.ncpu) VERBOSE=1
 
       - name: Package DMG
         run: |

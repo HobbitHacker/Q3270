@@ -2,9 +2,11 @@ cmake_minimum_required(VERSION 3.16)
 
 project(Q3270 VERSION 0.2.0 LANGUAGES CXX)
 
-# --- NEW: Target Apple Silicon (M4/M-series) ---
+# --- FIX: Only default to arm64 if nothing else is specified ---
 if(APPLE)
-    set(CMAKE_OSX_ARCHITECTURES "arm64")
+    if(NOT CMAKE_OSX_ARCHITECTURES)
+        set(CMAKE_OSX_ARCHITECTURES "arm64")
+    endif()
 endif()
 
 # Append Git hash to build to track commits
