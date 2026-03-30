@@ -1,13 +1,17 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(Q3270 VERSION 0.2.0 LANGUAGES CXX)
-
-# --- FIX: Only default to arm64 if nothing else is specified ---
+# --- MOVE THIS ABOVE PROJECT() ---
 if(APPLE)
     if(NOT CMAKE_OSX_ARCHITECTURES)
         set(CMAKE_OSX_ARCHITECTURES "arm64")
     endif()
+    # Force the deployment target to ensure we aren't using a "Tahoe-only" SDK
+    if(NOT CMAKE_OSX_DEPLOYMENT_TARGET)
+        set(CMAKE_OSX_DEPLOYMENT_TARGET "11.0")
+    endif()
 endif()
+
+project(Q3270 VERSION 0.2.0 LANGUAGES CXX)
 
 # Append Git hash to build to track commits
 execute_process(
