@@ -53,7 +53,7 @@ Cell::Cell()
  *
  * @details If this cell is not a field start, the value is taken from the field cell instead.
  */
-const bool Cell::isDisplay() const
+bool Cell::isDisplay() const
 {
     if (field && !fieldStart)
         return field->isDisplay();
@@ -92,7 +92,7 @@ void Cell::setColour(const Q3270::Colour c)
     colNum = c;
 }
 
-const Q3270::Colour Cell::getColour() const
+Q3270::Colour Cell::getColour() const
 {
     return colNum;
 };

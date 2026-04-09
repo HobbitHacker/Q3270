@@ -22,24 +22,24 @@ public:
 
     void setChar(const uchar ebcdic);
 
-    // Getters, inline for speed
-    inline uchar getEBCDIC() const                  { return ebcdic; }
+    // Inline getters, for speed
+    uchar getEBCDIC() const                  { return ebcdic; }
+    bool isReverse() const                   { return reverse; }
+    bool isBlink() const                     { return blink; }
+    bool isFieldStart() const                { return fieldStart; }
+    bool isAutoSkip() const                  { return prot & num; }
+    bool isNumeric() const                   { return num; }
+    bool isGraphic() const                   { return graphic; }
+    bool isMdtOn() const                     { return mdt; }
+    bool isPenSelect() const                 { return pen; }
+    bool isIntensify() const                 { return intensify; }
+    bool isExtended() const                  { return extended; }
 
-    const Q3270::Colour getColour() const;
+    Q3270::Colour getColour() const;
 
-    inline bool isFieldStart() const                { return fieldStart; }
-    inline bool isAutoSkip() const                  { return prot & num; }
-    inline bool isNumeric() const                   { return num; }
-    inline bool isGraphic() const                   { return graphic; }
-    inline bool isMdtOn() const                     { return mdt; }
     bool isProtected() const;
-    const bool isDisplay() const;
-    inline bool isPenSelect() const                 { return pen; }
-    inline bool isIntensify() const                 { return intensify; }
-    inline bool isExtended() const                  { return extended; }
+    bool isDisplay() const;
     bool isUScore() const;
-    inline bool isReverse() const                   { return reverse; }
-    inline bool isBlink() const                     { return blink; }
 
     Cell* getField();
 
