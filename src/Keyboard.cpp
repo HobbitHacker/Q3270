@@ -195,8 +195,8 @@ bool Keyboard::eventFilter( QObject *dist, QEvent *event )
 
     QKeyEvent *keyEvent = static_cast<QKeyEvent *>(event);
 
-//    printf("Keyboard        : Type: %s   Count: %d   Key: %d   Native: %d Modifiers: %d   nativeModifiers: %d   nativeVirtualKey: %d    text: %s (%2.2X)    Mapped:%d\n", event->type() == QEvent::KeyPress ? "Press" : "Release", keyEvent->count(), keyEvent->key(), keyEvent->nativeScanCode(), keyEvent->modifiers(), keyEvent->nativeModifiers(), keyEvent->nativeVirtualKey(), keyEvent->text().toLatin1().data(), keyEvent->text().toLatin1().data()[0], kbBuffer[bufferEnd].isMapped);
-//    fflush(stdout);
+    //    printf("Keyboard        : Type: %s   Count: %d   Key: %d   Native: %d Modifiers: %d   nativeModifiers: %d   nativeVirtualKey: %d    text: %s (%2.2X)    Mapped:%d\n", event->type() == QEvent::KeyPress ? "Press" : "Release", keyEvent->count(), keyEvent->key(), keyEvent->nativeScanCode(), keyEvent->modifiers(), keyEvent->nativeModifiers(), keyEvent->nativeVirtualKey(), keyEvent->text().toLatin1().data(), keyEvent->text().toLatin1().data()[0], kbBuffer[bufferEnd].isMapped);
+    //    fflush(stdout);
 
     // If we need to wait for a key to be released (from a previous key press)
     // check to see if the event was a key press. If so, and it generated a character,
@@ -264,6 +264,8 @@ bool Keyboard::processKey()
 {
     int key = kbBuffer[bufferEnd].key;
 
+    qDebug() << "processKey: looking up key" << Qt::hex << kbBuffer[bufferEnd].key << "in map";
+
     kbBuffer[bufferEnd].isMapped = kbBuffer[bufferEnd].map->contains(key);
 
     //printf("Keyboard        : isSimpleText: %d - Key is mapped: %d\n", kbBuffer[bufferEnd].keyChar,kbBuffer[bufferEnd].isMapped);
@@ -293,7 +295,7 @@ bool Keyboard::processKey()
 
         if (kbBuffer[bufferEnd].mapped == &Keyboard::attn)
         {
-            attn();   
+            attn();
         }
         else if (kbBuffer[bufferEnd].mapped == &Keyboard::reset)
         {
@@ -301,23 +303,23 @@ bool Keyboard::processKey()
         }
         else if (!systemLock)
         {
-           if (kbBuffer[bufferEnd].mustMap && kbBuffer[bufferEnd].isMapped)
-           {
-               qDebug() << "Keyboard        : Processing nextKey (mapped and mustMap set)";
-               nextKey();
-           }
-           else if (!kbBuffer[bufferEnd].mustMap)
-           {
-               qDebug() << "Keyboard        : Processing nextKey (not mapped, and mustMap not set)";
-               nextKey();
-           }
-           else
-           {
-               qDebug() << "Keyboard        : Ignoring key";
-               keyCount--;
-               clearBufferEntry();
-               return false;
-           }
+            if (kbBuffer[bufferEnd].mustMap && kbBuffer[bufferEnd].isMapped)
+            {
+                qDebug() << "Keyboard        : Processing nextKey (mapped and mustMap set)";
+                nextKey();
+            }
+            else if (!kbBuffer[bufferEnd].mustMap)
+            {
+                qDebug() << "Keyboard        : Processing nextKey (not mapped, and mustMap not set)";
+                nextKey();
+            }
+            else
+            {
+                qDebug() << "Keyboard        : Ignoring key";
+                keyCount--;
+                clearBufferEntry();
+                return false;
+            }
         }
         else
         {
@@ -369,14 +371,14 @@ bool Keyboard::needtoWait(QKeyEvent *event)
         case Qt::Key_Alt:
         case Qt::Key_AltGr:
         case Qt::Key_Meta:
-//            printf("Keyboard        : Storing modifiers %8.8x\n", event->modifiers());
+            //            printf("Keyboard        : Storing modifiers %8.8x\n", event->modifiers());
             kbBuffer[bufferEnd].modifiers = event->modifiers();
             kbBuffer[bufferEnd].nativeKey = event->nativeVirtualKey();
             qDebug() << "Keyboard        : Need to wait";
             wait = true;
             break;
         default:
-//            printf("Keyboard        : Storing %d\n", event->key());
+            //            printf("Keyboard        : Storing %d\n", event->key());
             kbBuffer[bufferEnd].modifiers = event->modifiers();
             kbBuffer[bufferEnd].key = event->key();
             if (event->text().length() > 0)
@@ -1075,8 +1077,12 @@ void Keyboard::setMapping(QString key, QString function)
         const auto keyList = key.split('+');
 
         // Extract last key of sequence (the actual key)
+        //        const QKeySequence keys(keyList.constLast());
+        //        keyCode = keys[0];
+
+        // Strip out modifier bits (macOS returns them as part of the key code)
         const QKeySequence keys(keyList.constLast());
-        keyCode = keys[0];
+        keyCode = keys[0] & ~Qt::KeyboardModifierMask;
 
         // Extract any modifiers
         if (keyList.count() > 1)
@@ -1114,6 +1120,9 @@ void Keyboard::setMapping(QString key, QString function)
     }
 
     setMap->insert(keyCode, { functionMap.value(function), key, function });
+
+    qDebug() << "setMapping: storing keyCode" << Qt::hex << keyCode << "in map for function" << function;
+
 }
 
 /**

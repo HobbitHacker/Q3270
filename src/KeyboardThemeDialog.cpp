@@ -422,11 +422,26 @@ void KeyboardThemeDialog::setKey()
     if (currentTheme->name == "Factory")
         return;
 
+    const QKeySequence seq = ui->keySequenceEdit->keySequence();
+    const QString keyStr = seq.isEmpty()
+        ? ui->keySequenceEdit->findChild<QLineEdit*>()->text().trimmed()  // handles LCtrl/RCtrl special cases
+        : seq.toString(QKeySequence::PortableText);
+
+    currentTheme->setKeyMapping(
+        ui->KeyboardFunctionList->currentText(),
+        keyStr
+    );
+
+/* void KeyboardThemeDialog::setKey()
+{
+    if (currentTheme->name == "Factory")
+        return;
+
     currentTheme->setKeyMapping(
         ui->KeyboardFunctionList->currentText(),
         ui->keySequenceEdit->findChild<QLineEdit*>()->text().trimmed()
         );
-
+*/
     ui->KeyboardMap->setTheme(*currentTheme);
     ui->keySequenceEdit->clear();
 
@@ -442,7 +457,7 @@ void KeyboardThemeDialog::setKey()
  * @details Qt allows multiple key sequences, but Q3270 is only interested in the first.
  *          Truncate the incoming sequence to just the first.
  */
-void KeyboardThemeDialog::truncateShortcut()
+/* void KeyboardThemeDialog::truncateShortcut()
 {
     // Use only the first key sequence the user pressed
     if (QLineEdit *le = ui->keySequenceEdit->findChild<QLineEdit*>()) {
@@ -451,8 +466,18 @@ void KeyboardThemeDialog::truncateShortcut()
             le->setText(parts.first().trimmed());
         }
     }
-/*    int value = ui->keySequenceEdit->keySequence()[0];
-    ui->keySequenceEdit->setKeySequence(shortcut);*/
+//    int value = ui->keySequenceEdit->keySequence()[0];
+//    ui->keySequenceEdit->setKeySequence(shortcut);
+} */
+void KeyboardThemeDialog::truncateShortcut()
+{
+    const QKeySequence seq = ui->keySequenceEdit->keySequence();
+    if (!seq.isEmpty()) {
+        const QString portable = seq.toString(QKeySequence::PortableText);
+        if (QLineEdit *le = ui->keySequenceEdit->findChild<QLineEdit*>()) {
+            le->setText(portable);
+        }
+    }
 }
 
 /**

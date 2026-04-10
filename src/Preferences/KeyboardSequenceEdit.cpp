@@ -9,6 +9,8 @@
  */
 
 #include <QLineEdit>
+#include <QTextStream>
+#include <QDebug>
 
 #include "KeyboardSequenceEdit.h"
 #include "Q3270.h"
@@ -36,6 +38,10 @@ KeyboardSequenceEdit::KeyboardSequenceEdit(QWidget *parent)
  */
 void KeyboardSequenceEdit::keyPressEvent(QKeyEvent *event)
 {
+    qDebug() << "Key pressed - nativeVirtualKey:" << Qt::hex << event->nativeVirtualKey()
+    << "nativeScanCode:" << event->nativeScanCode()
+    << "nativeModifiers:" << event->nativeModifiers();
+
     if (event->key() == Qt::Key_Control) {
         if (event->nativeVirtualKey() == 0xffe3) {
             pendingCtrlText = "LCtrl";

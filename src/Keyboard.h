@@ -95,7 +95,7 @@ class Keyboard : public QObject
         struct keyStruct
         {
             int key;
-            int modifiers;
+            Qt::KeyboardModifiers modifiers;
             int nativeKey;
             QChar keyChar;
             QMap<int, kbDets> *map;
