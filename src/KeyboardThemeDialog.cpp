@@ -142,9 +142,13 @@ void KeyboardThemeDialog::setTheme(const QString &themeName)
 
     // Prevent modifications to Factory theme
     bool isFactoryTheme = (currentTheme->name == "Factory");
+
     ui->keySequenceEdit->setDisabled(isFactoryTheme);
     ui->setKeyboardMap->setDisabled(isFactoryTheme);
     ui->KeyboardFunctionList->setDisabled(isFactoryTheme);
+
+    ui->themeNameEdit->setReadOnly(isFactoryTheme);
+    // ui->themeDescriptionEdit->setReadOnly(isFactoryTheme);  // commented until we store theme descriptions
 }
 
 /**
@@ -184,9 +188,7 @@ void KeyboardThemeDialog::handleThemeChanged(const QString &name)
 /**
  * @brief   KeyboardTheme::addTheme - add a new theme
  *
- * @details Called when the user clicks the New Theme button. A dialog box is presented with a
- *          new theme name; there is a slot connected to this field to ensure it is unique and
- *          the OK button is only enabled when it is. The initially selected new theme name is
+ * @details Called when the user clicks the New Theme button. The initially selected new theme name is
  *          "New Theme " concatenated to the first non-existent number (ie, "New Theme 1" or
  *          "New Theme 2" etc).
  *
@@ -210,6 +212,9 @@ void KeyboardThemeDialog::createNewTheme()
     ui->themeDescriptionEdit->clear();
     ui->themeNameEdit->setFocus();
     ui->themeNameEdit->setText(newName);
+
+    ui->themeNameEdit->setReadOnly(false);
+    // ui->themeDescriptionEdit->setReadOnly(false);  // commented until we store theme descriptions
 
     KeyboardMap newMap;
     newMap.name = newName;
@@ -237,9 +242,11 @@ void KeyboardThemeDialog::validateThemeName(const QString &name)
 {
     bool duplicate = store.themeNames().contains(name, Qt::CaseSensitive);
     bool empty = name.trimmed().isEmpty();
+    bool saveEnabled = (!empty && !duplicate) || dirty; // Allow saving if the name is unchanged but the theme is modified
+    bool applyEnabled = (!empty && !duplicate) || unapplied; // Allow applying if the name is unchanged but the theme is modified;
 
-    ui->buttonBox->button(QDialogButtonBox::Save)->setEnabled(!empty && !duplicate);
-    ui->buttonBox->button(QDialogButtonBox::Apply)->setEnabled(!empty && !duplicate);
+    ui->buttonBox->button(QDialogButtonBox::Save)->setEnabled(saveEnabled);
+    ui->buttonBox->button(QDialogButtonBox::Apply)->setEnabled(applyEnabled);
 
     // TODO: Implement visual feedback across other dialogs for error fields
 
@@ -344,6 +351,16 @@ void KeyboardThemeDialog::removeTheme()
     if (currentThemeIx >=0)
     {
         setTheme(ui->keyboardThemes->currentText());
+        /* void KeyboardThemeDialog::setKey()
+{
+    if (currentTheme->name == "Factory")
+        return;
+
+    currentTheme->setKeyMapping(
+        ui->KeyboardFunctionList->currentText(),
+        ui->keySequenceEdit->findChild<QLineEdit*>()->text().trimmed()
+        );
+*/
     }
     else
     {
@@ -432,16 +449,6 @@ void KeyboardThemeDialog::setKey()
         keyStr
     );
 
-/* void KeyboardThemeDialog::setKey()
-{
-    if (currentTheme->name == "Factory")
-        return;
-
-    currentTheme->setKeyMapping(
-        ui->KeyboardFunctionList->currentText(),
-        ui->keySequenceEdit->findChild<QLineEdit*>()->text().trimmed()
-        );
-*/
     ui->KeyboardMap->setTheme(*currentTheme);
     ui->keySequenceEdit->clear();
 
@@ -457,18 +464,6 @@ void KeyboardThemeDialog::setKey()
  * @details Qt allows multiple key sequences, but Q3270 is only interested in the first.
  *          Truncate the incoming sequence to just the first.
  */
-/* void KeyboardThemeDialog::truncateShortcut()
-{
-    // Use only the first key sequence the user pressed
-    if (QLineEdit *le = ui->keySequenceEdit->findChild<QLineEdit*>()) {
-        QStringList parts = le->text().split(',', Qt::SkipEmptyParts);
-        if (!parts.isEmpty()) {
-            le->setText(parts.first().trimmed());
-        }
-    }
-//    int value = ui->keySequenceEdit->keySequence()[0];
-//    ui->keySequenceEdit->setKeySequence(shortcut);
-} */
 void KeyboardThemeDialog::truncateShortcut()
 {
     const QKeySequence seq = ui->keySequenceEdit->keySequence();
