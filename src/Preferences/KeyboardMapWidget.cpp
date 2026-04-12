@@ -13,6 +13,12 @@
 #include "KeyboardMapWidget.h"
 #include "ui_KeyboardMapWidget.h"
 
+/**
+ * @brief   KeyboardMapWidget::KeyboardMapWidget - widget to display the keyboard map
+ * @param   parent - the parent widget
+ *
+ * @details Initialise the widget and set up the table to display the keyboard map.
+ */
 KeyboardMapWidget::KeyboardMapWidget(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::KeyboardMapWidget)
@@ -25,11 +31,22 @@ KeyboardMapWidget::KeyboardMapWidget(QWidget *parent) :
     connect(ui->KeyboardMap, &QTableWidget::itemClicked, this, &KeyboardMapWidget::handleItemClicked);
 }
 
+/**
+ * @brief   KeyboardMapWidget::~KeyboardMapWidget - destructor
+ *
+ * @details Clean up the widget.
+ */
 KeyboardMapWidget::~KeyboardMapWidget()
 {
     delete ui;
 }
 
+/**
+ * @brief   KeyboardMapWidget::setTheme - set the keyboard map to display
+ * @param   map - the keyboard map to display
+ *
+ * @details setTheme takes a keyboard map and sets up the mappings of keys to function names in the table.
+ */
 void KeyboardMapWidget::setTheme(const KeyboardMap &map)
 {
     ui->KeyboardMap->setRowCount(0);
@@ -45,6 +62,13 @@ void KeyboardMapWidget::setTheme(const KeyboardMap &map)
     });
 }
 
+/**
+ * @brief   KeyboardMapWidget::functionNameForRow - get the function name for a given row
+ * @param   row - the row to get the function name for
+ * @return  the function name for the given row, or an empty string if not found
+ *
+ * @details Helper to get the function name for a given row in the table.
+ */
 QString KeyboardMapWidget::functionNameForRow(int row) const
 {
     if (QTableWidgetItem *it = ui->KeyboardMap->item(row, 1))
@@ -53,6 +77,13 @@ QString KeyboardMapWidget::functionNameForRow(int row) const
     return {};
 }
 
+/**
+ * @brief   KeyboardMapWidget::mappingsForRow - get the key mappings for a given row
+ * @param   row - the row to get the key mappings for
+ * @return  the key mappings for the given row, or an empty list if not found
+ *
+ * @details Helper to get the key mappings for a given row in the table.
+ */
 QStringList KeyboardMapWidget::mappingsForRow(int row) const
 {
     if (QTableWidgetItem *it = ui->KeyboardMap->item(row, 0))
@@ -61,6 +92,14 @@ QStringList KeyboardMapWidget::mappingsForRow(int row) const
     return {};
 }
 
+/**
+ * @brief   KeyboardMapWidget::handleItemClicked - handle a click on an item in the table
+ * @param   item - the item that was clicked
+ *
+ * @details When an item is clicked in the table, emit a signal with the function name and key
+ *          mappings for that row. Used by the Preferences dialog to allow the user to edit the
+ *          mappings for a function.
+ */
 void KeyboardMapWidget::handleItemClicked(QTableWidgetItem *item)
 {
     int row = item->row();
@@ -68,6 +107,14 @@ void KeyboardMapWidget::handleItemClicked(QTableWidgetItem *item)
     emit mappingClicked(row, functionNameForRow(row), mappingsForRow(row));
 }
 
+/**
+ * @brief   KeyboardMapWidget::currentMappings - get the current keyboard map from the table
+ * @return  the current keyboard map from the table
+ *
+ * @details currentMappings reads the current state of the table and constructs a KeyboardMap object
+ *          representing the mappings currently displayed in the table. Used by the Preferences dialog
+ *          to save changes made by the user to the keyboard map.
+ */
 KeyboardMap KeyboardMapWidget::currentMappings() const
 {
     KeyboardMap map;
