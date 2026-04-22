@@ -173,14 +173,8 @@ class DisplayScreen : public QGraphicsObject
         bool useCharAttr;
 
         struct {
-                bool uscore;
-                bool uscore_default;
-
-                bool reverse;
-                bool reverse_default;
-
-                bool blink;
-                bool blink_default;
+                Q3270::Highlight highlight;
+                bool highlight_default;
 
                 QBrush colour;
                 Q3270::Colour colNum;

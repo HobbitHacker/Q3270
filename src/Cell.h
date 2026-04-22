@@ -24,8 +24,6 @@ public:
 
     // Inline getters, for speed
     uchar getEBCDIC() const                  { return ebcdic; }
-    bool isReverse() const                   { return reverse; }
-    bool isBlink() const                     { return blink; }
     bool isFieldStart() const                { return fieldStart; }
     bool isAutoSkip() const                  { return prot & num; }
     bool isNumeric() const                   { return num; }
@@ -35,11 +33,16 @@ public:
     bool isIntensify() const                 { return intensify; }
     bool isExtended() const                  { return extended; }
 
+    bool isUScore()  const                   { return getHighlight() == Q3270::Underscore; }
+    bool isReverse() const                   { return getHighlight() == Q3270::Reverse; }
+    bool isBlink()   const                   { return getHighlight() == Q3270::Blink; }
+
+    Q3270::Highlight getHighlight() const;;
+
     Q3270::Colour getColour() const;
 
     bool isProtected() const;
     bool isDisplay() const;
-    bool isUScore() const;
 
     Cell* getField();
 
@@ -57,9 +60,7 @@ public:
     void setPenSelect(const bool pensel);
     void setIntensify(const bool intens);
     void setExtended(const bool extend);
-    void setUnderscore(const bool uscore);
-    void setReverse(const bool reverse);
-    void setBlink(const bool blink);
+    void setHighlight(const Q3270::Highlight h);
 
     void setCharAttrs(Q3270::CharAttr, bool);
     void resetCharAttrs();
@@ -90,9 +91,7 @@ private:
 
     /* Extended Attributes */
     bool extended;
-    bool uscore;
-    bool reverse;
-    bool blink;
+    Q3270::Highlight highlight;
 
     /* Character Attributes in effect */
     bool charAttrExtended;

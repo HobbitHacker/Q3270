@@ -36,7 +36,8 @@ Cell::Cell()
 
     field = nullptr;
 
-    uscore = false;
+    highlight = Q3270::NoHighlight;
+
     display = true;
     num = false;
     mdt = false;
@@ -62,14 +63,15 @@ bool Cell::isDisplay() const
 }
 
 /**
- * @brief   Cell::setUnderscore - switch underscore on or off
- * @param   onoff - true to show the underscore, false to hide it
+ * @brief Cell::setHighlight - set the highlight of the cell to the specified value
+ * @param h - the new highlight value
  *
- * @details setUnderscore toggles the underscore setting.
+ * @details setHighlight is used to set the highlight of the cell to the specified value.
+ *          Highlight is mutually exclusive, so setting one highlight will switch off the others.
  */
-void Cell::setUnderscore(const bool onoff)
+void Cell::setHighlight(Q3270::Highlight h)
 {
-    uscore = onoff;
+    highlight = h;
 }
 
 /**
@@ -115,9 +117,7 @@ void Cell::setFieldStart(const bool fs)
     if (fieldStart)
     {
         field = nullptr;
-        setUnderscore(false);
-        setReverse(false);
-        setBlink(false);
+        setHighlight(Q3270::NoHighlight);
 
         if (!extended)
         {
@@ -253,31 +253,6 @@ void Cell::setExtended(const bool e)
 }
 
 /**
- * @brief   Cell::setReverse - set the reverse video state of the cell
- * @param   r - true for reverse video, false for normal.
- *
- * @details Reverse video is an extended field attribute or a character attribute. Cells can be
- *          either reversed, underscored or blinking. The co-ordindation of that is done by DisplayScreen.
- */
-void Cell::setReverse(const bool r)
-{
-    reverse = r;
-}
-
-/**
- * @brief   Cell::setBlink - set the blink status of the character
- * @param   b - true for blink, false for static
- *
- * @details Blink is an extended field attribute or a character attribute. Cells can be
- *          either reversed, underscored or blinking. The co-ordindation of that is done by DisplayScreen.
- */
-void Cell::setBlink(const bool b)
-{
-    blink = b;
-}
-
-
-/**
  *  @brief   Cell::setField - set this cell's field pointer
  *  @param   field - the address of the field in memory, or null
  *
@@ -347,26 +322,23 @@ bool Cell::isProtected() const
 
 
 /**
- * @brief   Cell::isUScore - return the state of the underscore
- * @return  True if the underscore is showing, false otherwise
+ * @brief   Cell::getHighlight - return the highlight status of this cell
  *
- * @details Returns the state of the underscore, based on the field start or this cell's underscore
- *          state if this is a field start.
+ * @details Return the highlight status of this cell. If this is a field start,
+ *          then it's always the field's highlight status.
+ *
+ * @return  the highlight status of this cell
  */
-bool Cell::isUScore() const
+Q3270::Highlight Cell::getHighlight() const
 {
-    if (fieldStart)
-    {
-        return uscore;
-    }
+    if (fieldStart || hasCharAttrs(Q3270::ExtendedAttr))
+        return highlight;
 
     if (field)
-    {
-        return field->uscore;
-    }
+        return field->highlight;
 
-    return false;
-};
+    return Q3270::NoHighlight;;
+}
 
 /**
  * @brief   Cell::setCharAttrs - set the characater attribute
@@ -450,11 +422,8 @@ void Cell::copy(const Cell &fromCell)
 //    pen = fromCell.isPenSelect();
 //    setDisplay(fromCell.isDisplay());
 
-    blink = fromCell.isBlink();
-
     setColour(fromCell.getColour());
-    setUnderscore(fromCell.isUScore());
-    setReverse(fromCell.isReverse());
+    setHighlight(fromCell.getHighlight());
 
     graphic = fromCell.isGraphic();
 

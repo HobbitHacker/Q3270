@@ -250,9 +250,7 @@ void DisplayScreen::clear()
         cells[i].setIntensify(false);
 
         cells[i].setExtended(false);
-        cells[i].setUnderscore(false);
-        cells[i].setReverse(false);
-        cells[i].setBlink(false);
+        cells[i].setHighlight(Q3270::NoHighlight);
 
         cells[i].setColour(Q3270::Green);
 
@@ -339,17 +337,9 @@ void DisplayScreen::setChar(int pos, uchar c, bool fromKB)
 
     // Extended attributes
     if (thisCell.hasCharAttrs(Q3270::CharAttr::ExtendedAttr))
-    {
-        thisCell.setReverse(charAttr.reverse_default   ? fieldAttr->isReverse() : charAttr.reverse);
-        thisCell.setUnderscore(charAttr.uscore_default ? fieldAttr->isUScore()  : charAttr.uscore);
-        thisCell.setBlink(charAttr.blink_default       ? fieldAttr->isBlink()   : charAttr.blink);
-    }
+        thisCell.setHighlight(charAttr.highlight_default ? fieldAttr->getHighlight() : charAttr.highlight);
     else
-    {
-        thisCell.setReverse(fieldAttr->isReverse());
-        thisCell.setUnderscore(fieldAttr->isUScore());
-        thisCell.setBlink(fieldAttr->isBlink());
-    }
+        thisCell.setHighlight(fieldAttr->getHighlight());
 
     // Maintain blink cells rectangles for blink()
     int row = pos / screen_x;
@@ -391,9 +381,7 @@ void DisplayScreen::setCharAttr(unsigned char extendedType, unsigned char extend
     switch(extendedType)
     {
         case IBM3270_EXT_DEFAULT:
-            charAttr.blink_default = true;
-            charAttr.reverse_default = true;
-            charAttr.uscore_default = true;
+            charAttr.highlight_default = true;
             charAttr.colour_default = true;
 //            printf("default");
             break;
@@ -401,36 +389,26 @@ void DisplayScreen::setCharAttr(unsigned char extendedType, unsigned char extend
             switch(extendedValue)
             {
                 case IBM3270_EXT_HI_DEFAULT:
-                    charAttr.uscore  = false;
-                    charAttr.reverse = false;
-                    charAttr.blink   = false;
-//                    printf("default");
+                    charAttr.highlight_default = true;
                     break;
+//                    printf("default");
                 case IBM3270_EXT_HI_NORMAL:
-                    charAttr.uscore  = false;
-                    charAttr.reverse = false;
-                    charAttr.blink   = false;
+                    charAttr.highlight = Q3270::NoHighlight;
 //                    printf("normal");
                     break;
                 case IBM3270_EXT_HI_BLINK:
-                    charAttr.blink   = true;
-                    charAttr.uscore  = false;
-                    charAttr.reverse = false;
-                    charAttr.blink_default = false;
+                    charAttr.highlight = Q3270::Blink;
+                    charAttr.highlight_default = false;
 //                    printf("blink");
                     break;
                 case IBM3270_EXT_HI_REVERSE:
-                    charAttr.blink   = false;
-                    charAttr.uscore  = false;
-                    charAttr.reverse = true;
-                    charAttr.reverse_default = false;
+                    charAttr.highlight = Q3270::Reverse;
+                    charAttr.highlight_default = false;
 //                    printf("reverse");
                     break;
                 case IBM3270_EXT_HI_USCORE:
-                    charAttr.blink   = false;
-                    charAttr.reverse = false;
-                    charAttr.uscore  = true;
-                    charAttr.uscore_default = false;
+                    charAttr.highlight = Q3270::Underscore;
+                    charAttr.highlight_default = false;
 //                    printf("uscore");
                     break;
                 default:
@@ -483,9 +461,7 @@ void DisplayScreen::setCharAttr(unsigned char extendedType, unsigned char extend
  */
 void DisplayScreen::resetCharAttr()
 {
-    charAttr.blink_default = true;
-    charAttr.reverse_default = true;
-    charAttr.uscore_default = true;
+    charAttr.highlight_default = true;
     charAttr.colour_default = true;
 
     useCharAttr = false;
@@ -613,9 +589,7 @@ void DisplayScreen::resetExtended(int pos)
  */
 void DisplayScreen::resetExtendedHilite(int pos)
 {
-    cells[pos].setUnderscore(false);
-    cells[pos].setBlink(false);
-    cells[pos].setReverse(false);
+    cells[pos].setHighlight(Q3270::NoHighlight);
 }
 
 /**
@@ -638,8 +612,6 @@ void DisplayScreen::setExtendedColour(int pos, bool foreground, unsigned char c)
     cells[pos].setColour((Q3270::Colour)(c&7));
 }
 
-//FIXME: Cell() should do the co-ordination of underscore/blink/reverse, resulting in 2 fewer calls for each
-
 /**
  * @brief   DisplayScreen::setExtendedBlink - switch blink on
  * @param   pos - screen position
@@ -648,9 +620,7 @@ void DisplayScreen::setExtendedColour(int pos, bool foreground, unsigned char c)
  */
 void DisplayScreen::setExtendedBlink(int pos)
 {
-    cells[pos].setUnderscore(false);
-    cells[pos].setReverse(false);
-    cells[pos].setBlink(true);
+    cells[pos].setHighlight(Q3270::Blink);
 }
 
 /**
@@ -661,9 +631,7 @@ void DisplayScreen::setExtendedBlink(int pos)
  */
 void DisplayScreen::setExtendedReverse(int pos)
 {
-    cells[pos].setUnderscore(false);
-    cells[pos].setBlink(false);
-    cells[pos].setReverse(true);
+    cells[pos].setHighlight(Q3270::Reverse);
 }
 
 /**
@@ -674,9 +642,7 @@ void DisplayScreen::setExtendedReverse(int pos)
  */
 void DisplayScreen::setExtendedUscore(int pos)
 {
-    cells[pos].setBlink(false);
-    cells[pos].setReverse(false);
-    cells[pos].setUnderscore(true);
+    cells[pos].setHighlight(Q3270::Underscore);
 }
 
 /**
@@ -1425,20 +1391,10 @@ void DisplayScreen::applyCharAttributes(int pos, Cell *field)
     else
         cells[pos].setColour(field->getColour());
 
-    if (!charAttr.blink_default)
+    if (!charAttr.highlight_default)
         cells[pos].setCharAttrs(Q3270::ExtendedAttr, true);
     else
-        cells[pos].setBlink(field->isBlink());
-
-    if (!charAttr.reverse_default)
-        cells[pos].setCharAttrs(Q3270::ExtendedAttr, true);
-    else
-        cells[pos].setReverse(field->isReverse());
-
-    if (!charAttr.uscore_default)
-        cells[pos].setCharAttrs(Q3270::ExtendedAttr, true);
-    else
-        cells[pos].setUnderscore(field->isUScore());
+        cells[pos].setHighlight(field->getHighlight());
 }
 
 void DisplayScreen::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget *)

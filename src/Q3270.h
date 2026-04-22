@@ -242,6 +242,14 @@ namespace Q3270 {
         TransparencyAttr
     };
 
+    // Character-level attribute in effect
+    enum Highlight {
+        NoHighlight,
+        Underscore,
+        Reverse,
+        Blink
+    };
+
     // Ruler styles
     enum RulerStyle
     {
@@ -272,6 +280,7 @@ namespace Q3270 {
     Q_ENUM_NS(InsertOverType)
     Q_ENUM_NS(FontTweak)
     Q_ENUM_NS(EraseResetMDT)
+    Q_ENUM_NS(Highlight)
 };
 
 Q_DECLARE_METATYPE(Q3270::RulerStyle)
