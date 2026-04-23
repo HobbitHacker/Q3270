@@ -163,8 +163,8 @@ void Keyboard::lockKeyboard()
 /**
  * @brief   Keyboard::unlockKeyboard - unlock the keyboard
  *
- * @details Remove XSystem and renable the keyboard, allowing keys to be processed. As this routine has unlocked
- *          the keyboard, immediately process any keys in the buffer.
+ * @details Remove XSystem and renable the keyboard, allowing keys to be processed.
+ *          As this routine has unlocked the keyboard, immediately process any keys in the buffer.
  */
 //void Keyboard::unlockKeyboard()
 //{
@@ -195,8 +195,15 @@ bool Keyboard::eventFilter( QObject *dist, QEvent *event )
 
     QKeyEvent *keyEvent = static_cast<QKeyEvent *>(event);
 
-    //    printf("Keyboard        : Type: %s   Count: %d   Key: %d   Native: %d Modifiers: %d   nativeModifiers: %d   nativeVirtualKey: %d    text: %s (%2.2X)    Mapped:%d\n", event->type() == QEvent::KeyPress ? "Press" : "Release", keyEvent->count(), keyEvent->key(), keyEvent->nativeScanCode(), keyEvent->modifiers(), keyEvent->nativeModifiers(), keyEvent->nativeVirtualKey(), keyEvent->text().toLatin1().data(), keyEvent->text().toLatin1().data()[0], kbBuffer[bufferEnd].isMapped);
-    //    fflush(stdout);
+    qDebug() << "Keyboard        : Type:" << (keyEvent->type() == QEvent::KeyPress ? "Press" : "Release") <<
+                " Count:" << keyEvent->count() <<
+                " Key:" << keyEvent->key() <<
+                " Native:" << keyEvent->nativeScanCode() <<
+                " Modifiers:" << keyEvent->modifiers() <<
+                " NativeModifiers:" << keyEvent->nativeModifiers() <<
+                " NativeVirtualKey:" << keyEvent->nativeVirtualKey() <<
+                " Text:" << keyEvent->text() << "(" << keyEvent->text().toLatin1().data()[0] << ")" <<
+                " Mapped:" << kbBuffer[bufferEnd].isMapped;
 
     // If we need to wait for a key to be released (from a previous key press)
     // check to see if the event was a key press. If so, and it generated a character,
