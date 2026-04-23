@@ -27,11 +27,11 @@ class KeyboardSequenceEdit : public QKeySequenceEdit
     protected:
         void keyPressEvent(QKeyEvent *event) override;
         void keyReleaseEvent(QKeyEvent *event) override;
-//        void focusInEvent(QFocusEvent *event) override;
-//        void focusOutEvent(QFocusEvent *event) override;
+        void focusInEvent(QFocusEvent *event) override;
+        void focusOutEvent(QFocusEvent *event) override;
 
     private:
-        bool ctrlUsedInChord;
+
         bool ctrlPending;
         QString pendingCtrlText;
 
