@@ -298,7 +298,23 @@ Q_DECLARE_METATYPE(Q3270::RulerStyle)
 #define Q3270_SHORT_READ true
 
 // Left Ctrl and Right Ctrl hard wiring; this may break with non-X11 Windowing systems
-#define Q3270_LEFT_CTRL 65507
-#define Q3270_RIGHT_CTRL 65508
+#ifdef Q_OS_MAC
+    #define Q3270_META_MOD Qt::ControlModifier
+    #define Q3270_CTRL_MOD Qt::MetaModifier
+    #define Q3270_META_KEY Qt::Key_Control
+    #define Q3270_CTRL_KEY Qt::Key_Meta
+    #define Q3270_LEFT_CTRL  59
+    #define Q3270_RIGHT_CTRL 62
+    #define Q3270_META_TEXT "Cmd"
+#else
+    #define Q3270_CTRL_MOD   Qt::ControlModifier
+    #define Q3270_META_MOD   Qt::MetaModifier
+    #define Q3270_CTRL_KEY   Qt::Key_Control
+    #define Q3270_META_KEY   Qt::Key_Meta
+    #define Q3270_LEFT_CTRL  65507
+    #define Q3270_RIGHT_CTRL 65508
+    #define Q3270_META_TEXT "Meta"
+#endif
+
 
 #endif // N3270_H

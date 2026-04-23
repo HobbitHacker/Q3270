@@ -132,7 +132,7 @@ void KeyboardMap::forEach(std::function<void(const QString&, const QStringList&)
  */
 void KeyboardMap::setKeyMapping(const QString &functionName, const QString &symbolic)
 {
-    qDebug() << this->name << "Setting" << symbolic << "to" << functionName;
+//    qDebug() << this->name << "Setting" << symbolic << "to" << functionName;
 
     // Remove this key from ALL functions, including the target to avoid duplicates
     for (Mapping &m : mappings) {
