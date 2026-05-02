@@ -570,14 +570,13 @@ void DisplayScreen::resetExtended(int pos)
 {
     resetExtendedHilite(pos);
 
-    cells[pos].setColour(Q3270::Blue);
+    cells[pos].setColour(Q3270::UnprotectedNormal);
 
     cells[pos].setDisplay(true);
     cells[pos].setNumeric(false);
     cells[pos].setMDT(false);
     cells[pos].setPenSelect(false);
-    // FIXME: is this right that setProtected is commented out? Protecton comes from the field attr
-    // cell.at(pos)->setProtected(false);
+    cells[pos].setProtected(false);
 }
 
 /**
