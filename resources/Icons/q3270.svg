@@ -1,119 +1,85 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<!-- Created with Inkscape (http://www.inkscape.org/) -->
-
-<svg
-   width="48"
-   height="48"
-   viewBox="0 0 12.7 12.7"
-   version="1.1"
-   id="svg1972"
-   inkscape:version="1.2.2 (b0a8486541, 2022-12-01)"
-   sodipodi:docname="q3270.svg"
-   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
-   xmlns:xlink="http://www.w3.org/1999/xlink"
-   xmlns="http://www.w3.org/2000/svg"
-   xmlns:svg="http://www.w3.org/2000/svg">
-  <sodipodi:namedview
-     id="namedview1974"
-     pagecolor="#ffffff"
-     bordercolor="#666666"
-     borderopacity="1.0"
-     inkscape:showpageshadow="2"
-     inkscape:pageopacity="0.0"
-     inkscape:pagecheckerboard="0"
-     inkscape:deskcolor="#d1d1d1"
-     inkscape:document-units="mm"
-     showgrid="false"
-     inkscape:zoom="19.02887"
-     inkscape:cx="29.560347"
-     inkscape:cy="24.909519"
-     inkscape:window-width="2560"
-     inkscape:window-height="1384"
-     inkscape:window-x="0"
-     inkscape:window-y="0"
-     inkscape:window-maximized="1"
-     inkscape:current-layer="layer1" />
-  <defs
-     id="defs1969">
-    <linearGradient
-       inkscape:collect="always"
-       id="linearGradient2608">
-      <stop
-         style="stop-color:#848484;stop-opacity:0;"
-         offset="0"
-         id="stop2604" />
-      <stop
-         style="stop-color:#000000;stop-opacity:1;"
-         offset="1"
-         id="stop2606" />
-    </linearGradient>
-    <radialGradient
-       inkscape:collect="always"
-       xlink:href="#linearGradient2608"
-       id="radialGradient2610"
-       cx="33.030914"
-       cy="110.19107"
-       fx="33.030914"
-       fy="110.19107"
-       r="15.422394"
-       gradientTransform="matrix(1,0,0,1.603668,0,-66.518819)"
-       gradientUnits="userSpaceOnUse" />
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1024" height="1024" viewBox="0 0 680 680" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <clipPath id="sq">
+      <rect x="80" y="80" width="520" height="520" rx="108" ry="108"/>
+    </clipPath>
   </defs>
-  <g
-     inkscape:label="Layer 1"
-     inkscape:groupmode="layer"
-     id="layer1">
-    <g
-       aria-label="Q"
-       transform="matrix(0.40433112,0,0,0.25258785,-7.0234987,-21.489222)"
-       id="text2510"
-       style="font-size:60.5988px;line-height:1.25;letter-spacing:0px;word-spacing:0px;stroke-width:0.62582828;stroke:#ff0000;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0">
-      <path
-         d="m 48.453308,107.03184 c 0,-12.846943 -5.272095,-21.57317 -15.392095,-21.57317 -10.180599,0 -15.452694,9.029221 -15.452694,21.63377 0,12.90755 5.464429,20.06995 14.846706,21.39138 6.100568,0.85922 9.728349,0.0162 12.273499,6.43965 l 3.391181,-3.09712 c -2.06036,-6.12048 -1.721529,-4.32383 -7.599612,-5.53581 6.423473,-3.51473 7.933015,-10.41127 7.933015,-19.2587 z m -7.601571,0.0318 c 0,11.15018 -0.168364,16.43158 -7.197825,16.43158 -6.847665,0 -8.271147,-4.996 -8.271147,-16.14618 0,-11.089581 0.497243,-16.897577 7.526704,-16.897577 7.029461,0 7.942268,5.522595 7.942268,16.612177 z"
-         style="font-family:'Fira Mono';-inkscape-font-specification:'Fira Mono';fill:url(#radialGradient2610);fill-opacity:1;stroke:#ff0000;stroke-opacity:1;stroke-width:0.62582828;stroke-dasharray:none;stroke-dashoffset:0"
-         id="path2578"
-         sodipodi:nodetypes="sssscccssssss" />
+
+  <rect x="80" y="80" width="520" height="520" rx="108" ry="108" fill="#0e120e"/>
+
+  <g clip-path="url(#sq)">
+
+    <rect x="110" y="138" width="460" height="344" rx="18" ry="18" fill="#060e06"/>
+    <rect x="130" y="158" width="420" height="304" rx="10" ry="10" fill="#070e07"/>
+
+    <g font-family="'Courier New',monospace" font-weight="400">
+
+      <rect x="130" y="158" width="420" height="18" fill="#2ecc54" opacity="0.12"/>
+      <text x="340" y="171" font-size="13" font-weight="700" fill="#ffff44" opacity="0.90" text-anchor="middle">Q3270  -  PRIMARY OPTION MENU</text>
+
+      <text x="148" y="200" font-size="12" fill="#2ecc54" opacity="0.80">SELECT OPTION  ==&gt;</text>
+      <text x="355" y="200" font-size="12" fill="#ffffff" opacity="0.70">_</text>
+
+      <text x="148" y="222" font-size="12" fill="#ffff44" opacity="0.70">0</text>
+      <text x="163" y="222" font-size="12" fill="#2ecc54" opacity="0.55">SETTINGS</text>
+      <text x="255" y="222" font-size="12" fill="#ffffff" opacity="0.40">- Session preferences</text>
+
+      <text x="148" y="237" font-size="12" fill="#ffff44" opacity="0.70">1</text>
+      <text x="163" y="237" font-size="12" fill="#2ecc54" opacity="0.55">CONNECT</text>
+      <text x="255" y="237" font-size="12" fill="#ffffff" opacity="0.40">- Open host session</text>
+
+      <text x="148" y="252" font-size="12" fill="#ffff44" opacity="0.70">2</text>
+      <text x="163" y="252" font-size="12" fill="#2ecc54" opacity="0.55">SESSIONS</text>
+      <text x="255" y="252" font-size="12" fill="#ffffff" opacity="0.40">- Manage sessions</text>
+
+      <text x="148" y="267" font-size="12" fill="#ffff44" opacity="0.70">3</text>
+      <text x="163" y="267" font-size="12" fill="#2ecc54" opacity="0.55">TRANSFER</text>
+      <text x="255" y="267" font-size="12" fill="#ffffff" opacity="0.40">- File transfer</text>
+
+      <text x="148" y="282" font-size="12" fill="#ffff44" opacity="0.70">4</text>
+      <text x="163" y="282" font-size="12" fill="#2ecc54" opacity="0.55">MACROS</text>
+      <text x="255" y="282" font-size="12" fill="#ffffff" opacity="0.40">- Keyboard macros</text>
+
+      <text x="148" y="297" font-size="12" fill="#ffff44" opacity="0.70">5</text>
+      <text x="163" y="297" font-size="12" fill="#2ecc54" opacity="0.55">LOG</text>
+      <text x="255" y="297" font-size="12" fill="#ffffff" opacity="0.40">- Session log</text>
+
+      <text x="148" y="317" font-size="12" fill="#2ecc54" opacity="0.18">────────────────────────────────────</text>
+
+      <text x="148" y="333" font-size="12" fill="#ff4444" opacity="0.75">X</text>
+      <text x="163" y="333" font-size="12" fill="#ff4444" opacity="0.55">EXIT</text>
+      <text x="255" y="333" font-size="12" fill="#ffffff" opacity="0.40">- End session</text>
+
+      <text x="148" y="355" font-size="11" fill="#44ffff" opacity="0.35">Q3270 Terminal Emulator  v1.0</text>
+      <text x="148" y="368" font-size="11" fill="#44ffff" opacity="0.28">(c) 2024  Licensed under GPL v3</text>
+
+      <text x="148" y="388" font-size="11" fill="#4a8fff" opacity="0.50">PF1=HELP</text>
+      <text x="228" y="388" font-size="11" fill="#4a8fff" opacity="0.50">PF3=EXIT</text>
+      <text x="308" y="388" font-size="11" fill="#4a8fff" opacity="0.50">PF9=SWAP</text>
+      <text x="393" y="388" font-size="11" fill="#4a8fff" opacity="0.50">PF12=CANCEL</text>
+
     </g>
-    <g
-       aria-label="3"
-       transform="matrix(1.8585627,0,0,2.5406581,-3.064471,-3.3469917)"
-       id="text2564"
-       style="font-size:4.36579px;line-height:1.25;letter-spacing:0px;word-spacing:0px;fill:#ff0000;stroke:#fdf300;stroke-width:0.104752;stroke-dasharray:none;stroke-opacity:1">
-      <path
-         d="m 3.8992962,2.7895538 q 0,0.3230685 -0.1964606,0.5151632 -0.1920947,0.1920948 -0.4758711,0.2619474 v 0.013097 q 0.3754579,0.043658 0.5675527,0.2270211 0.1964605,0.1833631 0.1964605,0.4933342 0,0.270679 -0.1353394,0.4889685 -0.1309737,0.2139241 -0.4103843,0.340532 -0.2750448,0.1222421 -0.7116237,0.1222421 -0.5064317,0 -0.8993528,-0.1702658 V 4.5227724 q 0.2008264,0.1004132 0.4191159,0.1528026 0.2226552,0.052389 0.4103842,0.052389 0.353629,0 0.4933343,-0.1222421 0.144071,-0.1222421 0.144071,-0.3448974 0,-0.1309737 -0.065487,-0.2182895 Q 3.1702092,3.9508539 3.0043092,3.907196 2.842775,3.8591723 2.5502671,3.8591723 H 2.3145144 V 3.3527407 h 0.2401185 q 0.2881421,0 0.436579,-0.052389 0.1528026,-0.056755 0.2051921,-0.1484368 0.056755,-0.096047 0.056755,-0.2182895 0,-0.1659 -0.1047789,-0.2575816 -0.1004132,-0.096047 -0.3405316,-0.096047 -0.2226553,0 -0.3885553,0.078584 -0.161534,0.074218 -0.2750446,0.1484362 L 1.8386433,2.3529748 q 0.1833632,-0.1309737 0.4278474,-0.2182895 0.2488501,-0.087316 0.5893817,-0.087316 0.4802369,0 0.7596474,0.1964606 0.2837764,0.1920947 0.2837764,0.5457239 z"
-         style="font-weight:bold;-inkscape-font-specification:'sans-serif Bold';fill:#ff8a00;fill-opacity:1;stroke:#fdf300;stroke-width:0.104752;stroke-dasharray:none;stroke-opacity:1"
-         id="path2698" />
-    </g>
-    <g
-       aria-label="2"
-       transform="matrix(1.6675273,0,0,2.5013557,-1.4223265,-11.213688)"
-       id="text2568"
-       style="font-size:4.53684px;line-height:1.25;letter-spacing:0px;word-spacing:0px;fill:#0cd200;stroke:#fdf300;stroke-width:0.113422;stroke-opacity:1">
-      <path
-         d="M 4.9995846,8.4989643 H 2.7357014 V 8.0225961 L 3.5477958,7.2014281 Q 3.7927851,6.947365 3.9425009,6.779502 q 0.1497157,-0.1724 0.2177683,-0.3085052 0.068053,-0.140642 0.068053,-0.2994314 0,-0.1950841 -0.1088842,-0.2903577 -0.1043473,-0.095274 -0.2858209,-0.095274 -0.1860104,0 -0.3629472,0.0862 -0.1769368,0.0862 -0.3720209,0.2449893 L 2.7266277,5.6770499 Q 2.8672698,5.5545552 3.0215223,5.4502079 3.1803117,5.3458605 3.3844695,5.2823448 q 0.2086947,-0.068053 0.4990524,-0.068053 0.3175788,0 0.5444208,0.1179578 0.2313789,0.113421 0.3538736,0.313042 0.1270315,0.1950841 0.1270315,0.4446103 0,0.2676735 -0.1088842,0.4899787 Q 4.6956163,6.8021862 4.4914585,7.0199545 4.2918375,7.2377228 4.0060166,7.5008595 L 3.5886273,7.8910278 v 0.031758 h 1.4109573 z"
-         style="font-weight:bold;-inkscape-font-specification:'sans-serif Bold';fill:#0dd600;fill-opacity:1;stroke:#fdf300;stroke-opacity:1"
-         id="path2701" />
-    </g>
-    <g
-       aria-label="7"
-       transform="matrix(1.8363154,0,0,2.4984645,-0.9156482,-20.398051)"
-       id="text2572"
-       style="font-size:4.5755px;line-height:1.25;letter-spacing:0px;word-spacing:0px;fill:#3858e1;stroke:#fdf300;stroke-width:0.114388;stroke-opacity:1">
-      <path
-         d="M 3.857102,12.186463 5.083336,9.5006448 H 3.47276 V 8.9195563 H 5.815416 V 9.3542288 L 4.580031,12.186463 Z"
-         style="font-weight:bold;-inkscape-font-specification:'sans-serif Bold';fill:#3858e1;fill-opacity:1;stroke:#fdf300;stroke-opacity:1"
-         id="path2704" />
-    </g>
-    <g
-       aria-label="0"
-       transform="matrix(1.9069769,0,0,2.638034,0.93901842,-32.465941)"
-       id="text2576"
-       style="font-size:4.2104px;line-height:1.25;letter-spacing:0px;word-spacing:0px;fill:#ff00d3;stroke:#fdf300;stroke-width:0.105;stroke-opacity:1">
-      <path
-         d="m 6.1120854,14.595943 q 0,0.484196 -0.10526,0.829449 -0.1010496,0.345253 -0.3326216,0.530511 -0.2273616,0.185257 -0.6147184,0.185257 -0.5431416,0 -0.7957656,-0.408409 -0.252624,-0.412619 -0.252624,-1.136808 0,-0.488406 0.1010496,-0.833659 0.1010496,-0.345253 0.3326216,-0.53051 0.231572,-0.185258 0.6147184,-0.185258 0.5389312,0 0.7957656,0.408409 0.2568344,0.408409 0.2568344,1.141018 z m -1.4694296,0 q 0,0.513669 0.088418,0.774714 0.088418,0.256834 0.3284112,0.256834 0.2357824,0 0.3284112,-0.256834 0.092629,-0.256834 0.092629,-0.774714 0,-0.513668 -0.092629,-0.774713 -0.092629,-0.261045 -0.3284112,-0.261045 -0.2399928,0 -0.3284112,0.261045 -0.088418,0.261045 -0.088418,0.774713 z"
-         style="font-weight:bold;-inkscape-font-specification:'sans-serif Bold';stroke:#fdf300;stroke-opacity:1"
-         id="path2761" />
-    </g>
+
+    <text x="145" y="422"
+      font-family="'Courier New',monospace"
+      font-size="88"
+      font-weight="700"
+      letter-spacing="2">
+      <tspan fill="#3a8fff">Q</tspan><tspan fill="#ff4444">3</tspan><tspan fill="#ff44ff">2</tspan><tspan fill="#44ff44">7</tspan><tspan fill="#44ffff">0</tspan>
+    </text>
+
+    <rect x="130" y="432" width="420" height="1" fill="#2ecc54" opacity="0.3"/>
+    <text x="148" y="447" font-family="'Courier New',monospace" font-size="12" fill="#ff4444" opacity="0.60">DISCONNECTED</text>
+    <text x="496" y="447" font-family="'Courier New',monospace" font-size="12" fill="#2ecc54" opacity="0.50" text-anchor="end">09:41:22</text>
+
+    <rect x="130" y="158" width="420" height="304" rx="10" ry="10" fill="none" stroke="#1a3a1a" stroke-width="1" opacity="0.6"/>
+
   </g>
+
+  <rect x="110" y="138" width="460" height="344" rx="18" ry="18" fill="none" stroke="#2a4a2a" stroke-width="1.5" opacity="0.4"/>
+  <rect x="80" y="80" width="520" height="520" rx="108" ry="108" fill="none" stroke="#1a2e1a" stroke-width="3" opacity="0.6"/>
+
+  <rect x="178" y="553" width="324" height="20" rx="6" fill="#131813" opacity="0.9"/>
+  <rect x="285" y="576" width="110" height="14" rx="7" fill="#1a2a1a"/>
 </svg>
