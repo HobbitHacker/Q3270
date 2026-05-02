@@ -19,7 +19,6 @@
 #include <QVector>
 #include <QMap>
 
-#include "Q3270.h"
 #include "Models/KeyboardMap.h"
 
 class Keyboard : public QObject
@@ -65,7 +64,6 @@ class Keyboard : public QObject
         void key_dumpScreen();
 
     public slots:
-//        void unlockKeyboard();
         void setConnected(bool state);
 
         void setMap(const KeyboardMap &kmap);

@@ -9,7 +9,6 @@
  */
 
 #include "Keyboard.h"
-#include "Stores/KeyboardStore.h"
 #include <QDebug>
 #include <QDateTime>
 #include "Q3270.h"
@@ -101,6 +100,15 @@ const Keyboard::FunctionBinding Keyboard::bindings[] = {
     { "Blah",         &Keyboard::info }
 };
 
+/**
+ * @brief   Keyboard::makeFunctionMap - create the function map from the static array of bindings
+ * @return  a QMap of function name to handler
+ *
+ * @details makeFunctionMap creates the function map from the static array of bindings. This is done
+ *          in a separate function to the constructor to allow the function map to be declared as const, and
+ *          to avoid the static initialization order fiasco, as the bindings array is static and used to
+ *          initialize the function map.
+ */
 QMap<QString, Keyboard::Handler> Keyboard::makeFunctionMap()
 {
     QMap<QString, Handler> map;
@@ -109,6 +117,10 @@ QMap<QString, Keyboard::Handler> Keyboard::makeFunctionMap()
     return map;
 }
 
+/**
+ * @brief   Keyboard::Keyboard - constructor
+ * @details Keyboard initializes the keyboard state, and sets the default keyboard map to the factory map.
+ */
 Keyboard::Keyboard() : functionMap(makeFunctionMap())
 {
     systemLock = false;
@@ -124,6 +136,13 @@ Keyboard::Keyboard() : functionMap(makeFunctionMap())
     setMap(KeyboardMap::getFactoryMap());
 }
 
+/**
+ * @brief   Keyboard::allFunctionNames - return a list of all function names
+ * @return  a QStringList of all function names
+ *
+ * @details Keyboard::allFunctionNames returns a list of all function names. This is used to populate the list of functions
+ *          that can be mapped in the keyboard mapping dialog.
+ */
 QStringList Keyboard::allFunctionNames()
 {
     QStringList list;
@@ -159,18 +178,6 @@ void Keyboard::lockKeyboard()
     systemLock = true;
     emit setEnterInhibit();
 }
-
-/**
- * @brief   Keyboard::unlockKeyboard - unlock the keyboard
- *
- * @details Remove XSystem and renable the keyboard, allowing keys to be processed.
- *          As this routine has unlocked the keyboard, immediately process any keys in the buffer.
- */
-//void Keyboard::unlockKeyboard()
-//{
-//    systemLock = false;
-//    nextKey();
-//}
 
 /**
  * @brief   Keyboard::eventFilter - process keyboard events
@@ -470,7 +477,6 @@ void Keyboard::nextKey()
             if (!systemLock && keyCount > 0)
             {
                 qDebug() << "Keyboard        : processing next key (more stored)";
-                fflush(stdout);
                 nextKey();
             }
         }
