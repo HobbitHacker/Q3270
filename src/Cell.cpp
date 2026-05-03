@@ -16,7 +16,7 @@
 #include <QGraphicsItem>
 #include <QGraphicsScene>
 
-/*!
+/**
  * @brief
  * Cell represents a single character cell on the display matrix and all the attributes that
  * go with that (underscore, blink and so on).
@@ -30,22 +30,31 @@
  * Each cell also contains a pointer to its Field Start cell (if one exists on the display), and field attributes
  * colours, etc are taken from that cell (if appropriate).
  */
-
 Cell::Cell()
 {
+    reset();
+}
 
-    field = nullptr;
-
-    highlight = Q3270::NoHighlight;
-
-    display = true;
-    num = false;
-    mdt = false;
-
-    charAttrExtended = false;
-    charAttrColour = false;
-    charAttrCharSet = false;
-    charAttrTransparency = false;
+/**
+ * @brief   Cell::reset - reset the cell to default values
+ *
+ * @details Called when a cell is reset, either at power on or by a Clear or EW(A). Resets all attributes to default values.
+ */
+void Cell::reset()
+{
+    setFieldStart(false);
+    setField(nullptr);
+    setNumeric(false);
+    setMDT(false);
+    setProtected(false);
+    setDisplay(true);
+    setPenSelect(false);
+    setIntensify(false);
+    setExtended(false);
+    setHighlight(Q3270::NoHighlight);
+    setColour(Q3270::UnprotectedNormal);
+    setChar(IBM3270_CHAR_NULL);
+    resetCharAttrs();
 }
 
 /**
@@ -96,8 +105,14 @@ void Cell::setColour(const Q3270::Colour c)
 
 Q3270::Colour Cell::getColour() const
 {
-    return colNum;
-};
+    if (fieldStart || charAttrColour)
+        return colNum;
+
+    if (field)
+        return field->colNum;
+
+    return Q3270::UnprotectedNormal;
+}
 
 /**
  * @brief   Cell::setFieldStart - set the 'Field' flag to show whether this cell is the start of a field
@@ -121,21 +136,21 @@ void Cell::setFieldStart(const bool fs)
 
         if (!extended)
         {
-            if (prot & !intensify)
+            if (prot && !intensify)
             {
-                colNum = Q3270::ProtectedNormal;
+                setColour(Q3270::ProtectedNormal);
             }
-            else if (prot & intensify)
+            else if (prot && intensify)
             {
-                colNum = Q3270::ProtectedIntensified;
+                setColour(Q3270::ProtectedIntensified);
             }
-            else if (!prot & !intensify)
+            else if (!prot && !intensify)
             {
-                colNum = Q3270::UnprotectedNormal;
+                setColour(Q3270::UnprotectedNormal);
             }
             else
             {
-                colNum = Q3270::UnprotectedIntensified;
+                setColour(Q3270::UnprotectedIntensified);
             }
         }
     }
@@ -222,10 +237,7 @@ void Cell::setDisplay(const bool d)
  */
 void Cell::setPenSelect(const bool p)
 {
-    if (fieldStart)
-    {
-        pen = p;
-    }
+    pen = p;
 }
 
 /**
@@ -266,15 +278,7 @@ void Cell::setExtended(const bool e)
 void Cell::setField(Cell *field)
 {
     this->field = field;
-
-    if (field)
-    {
-        if (!charAttrColour)
-        {
-            colNum = field->colNum;
-        }
-    }
-};
+}
 
 /**
  * @brief   Cell::getField - get the address of the field cell that owns this one
@@ -296,7 +300,7 @@ Cell* Cell::getField()
     }
 
     return nullptr;
-};
+}
 
 /**
  * @brief   Cell::isProtected - return whether this field is protected or not
@@ -318,7 +322,7 @@ bool Cell::isProtected() const
     }
 
     return false;
-};
+}
 
 
 /**

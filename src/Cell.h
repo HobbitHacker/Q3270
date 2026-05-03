@@ -37,7 +37,7 @@ public:
     bool isReverse() const                   { return getHighlight() == Q3270::Reverse; }
     bool isBlink()   const                   { return getHighlight() == Q3270::Blink; }
 
-    Q3270::Highlight getHighlight() const;;
+    Q3270::Highlight getHighlight() const;
 
     Q3270::Colour getColour() const;
 
@@ -66,6 +66,8 @@ public:
     void resetCharAttrs();
 
     void copy(const Cell &);
+
+    void reset();
 
 private:
 

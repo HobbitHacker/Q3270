@@ -239,24 +239,8 @@ void DisplayScreen::resetColours()
 void DisplayScreen::clear()
 {
     for(int i = 0; i < screenPos_max; i++)
-    {
-        cells[i].setFieldStart(false);
+        cells[i].reset();
 
-        cells[i].setNumeric(false);
-        cells[i].setMDT(false);
-        cells[i].setProtected(false);
-        cells[i].setDisplay(true);
-        cells[i].setPenSelect(false);
-        cells[i].setIntensify(false);
-
-        cells[i].setExtended(false);
-        cells[i].setHighlight(Q3270::NoHighlight);
-
-        cells[i].setColour(Q3270::Green);
-
-        cells[i].setChar(IBM3270_CHAR_NULL);
-        cells[i].setField(nullptr);
-    }
     resetCharAttr();
 
     geActive = false;
