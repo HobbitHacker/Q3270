@@ -14,7 +14,7 @@ var searchData=
   ['getsession_11',['getSession',['../classSessionStore.html#a0d4fc2b0c3b82d487b3dd185157af717',1,'SessionStore']]],
   ['getterminalmodelname_12',['getTerminalModelName',['../classActiveSettings.html#abbb001d35e76954021cb2f15b3a9add4',1,'ActiveSettings']]],
   ['gettheme_13',['gettheme',['../classColourStore.html#a174316528b3cbbd8e659920f8d1494d6',1,'ColourStore::getTheme()'],['../classKeyboardStore.html#a6b733f65c5d13d57d3f4f6470652f951',1,'KeyboardStore::getTheme()']]],
-  ['getting_20started_14',['getting started',['../md_Q3270.html#autotoc_md18',1,'Getting Started'],['../md__2home_2runner_2work_2Q3270_2Q3270_2README.html#autotoc_md49',1,'Getting Started']]],
+  ['getting_20started_14',['getting started',['../index.html#autotoc_md18',1,'Getting Started'],['../md__2home_2runner_2work_2Q3270_2Q3270_2README.html#autotoc_md49',1,'Getting Started']]],
   ['getunicodechar_15',['getUnicodeChar',['../classCodePage.html#a363356a6f384ead69660fe9eb51cd2cb',1,'CodePage']]],
   ['getunicodegraphicchar_16',['getUnicodeGraphicChar',['../classCodePage.html#a7f1160fe91bcb794c67cd61a15144925',1,'CodePage']]]
 ];

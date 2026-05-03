@@ -25,41 +25,39 @@
 var NAVTREE =
 [
   [ "Q3270", "index.html", [
-    [ "Q3270 Emulator Backlog", "md__2home_2runner_2work_2Q3270_2Q3270_2BACKLOG.html", null ],
-    [ "Q3270", "md_Q3270.html", [
-      [ "Introduction", "md_Q3270.html#autotoc_md8", [
-        [ "Background", "md_Q3270.html#autotoc_md9", null ],
-        [ "Colour Heritage", "md_Q3270.html#autotoc_md10", null ],
-        [ "Platform Support", "md_Q3270.html#autotoc_md11", null ],
-        [ "Dependencies", "md_Q3270.html#autotoc_md12", null ]
-      ] ],
-      [ "Installation", "md_Q3270.html#autotoc_md14", [
-        [ "Linux", "md_Q3270.html#autotoc_md15", null ],
-        [ "macOS", "md_Q3270.html#autotoc_md16", null ]
-      ] ],
-      [ "Getting Started", "md_Q3270.html#autotoc_md18", [
-        [ "Sessions", "md_Q3270.html#autotoc_md19", null ]
-      ] ],
-      [ "Menu Reference", "md_Q3270.html#autotoc_md21", [
-        [ "File Menu", "md_Q3270.html#autotoc_md22", [
-          [ "Open Session", "md_Q3270.html#autotoc_md23", null ],
-          [ "Save Session As", "md_Q3270.html#autotoc_md24", null ]
-        ] ],
-        [ "Session Menu", "md_Q3270.html#autotoc_md26", null ],
-        [ "Manage Menu", "md_Q3270.html#autotoc_md28", null ],
-        [ "View Menu", "md_Q3270.html#autotoc_md30", null ]
-      ] ],
-      [ "Preferences", "md_Q3270.html#autotoc_md32", [
-        [ "Connection Tab", "md_Q3270.html#autotoc_md33", null ],
-        [ "Terminal Tab", "md_Q3270.html#autotoc_md34", null ],
-        [ "Colour Tab", "md_Q3270.html#autotoc_md35", null ],
-        [ "Keyboard Tab", "md_Q3270.html#autotoc_md36", null ]
-      ] ],
-      [ "Colour Themes", "md_Q3270.html#autotoc_md38", null ],
-      [ "Keyboard Mapping", "md_Q3270.html#autotoc_md40", null ],
-      [ "Known Limitations", "md_Q3270.html#autotoc_md42", null ],
-      [ "Licence", "md_Q3270.html#autotoc_md44", null ]
+    [ "Introduction", "index.html#autotoc_md8", [
+      [ "Background", "index.html#autotoc_md9", null ],
+      [ "Colour Heritage", "index.html#autotoc_md10", null ],
+      [ "Platform Support", "index.html#autotoc_md11", null ],
+      [ "Dependencies", "index.html#autotoc_md12", null ]
     ] ],
+    [ "Installation", "index.html#autotoc_md14", [
+      [ "Linux", "index.html#autotoc_md15", null ],
+      [ "macOS", "index.html#autotoc_md16", null ]
+    ] ],
+    [ "Getting Started", "index.html#autotoc_md18", [
+      [ "Sessions", "index.html#autotoc_md19", null ]
+    ] ],
+    [ "Menu Reference", "index.html#autotoc_md21", [
+      [ "File Menu", "index.html#autotoc_md22", [
+        [ "Open Session", "index.html#autotoc_md23", null ],
+        [ "Save Session As", "index.html#autotoc_md24", null ]
+      ] ],
+      [ "Session Menu", "index.html#autotoc_md26", null ],
+      [ "Manage Menu", "index.html#autotoc_md28", null ],
+      [ "View Menu", "index.html#autotoc_md30", null ]
+    ] ],
+    [ "Preferences", "index.html#autotoc_md32", [
+      [ "Connection Tab", "index.html#autotoc_md33", null ],
+      [ "Terminal Tab", "index.html#autotoc_md34", null ],
+      [ "Colour Tab", "index.html#autotoc_md35", null ],
+      [ "Keyboard Tab", "index.html#autotoc_md36", null ]
+    ] ],
+    [ "Colour Themes", "index.html#autotoc_md38", null ],
+    [ "Keyboard Mapping", "index.html#autotoc_md40", null ],
+    [ "Known Limitations", "index.html#autotoc_md42", null ],
+    [ "Licence", "index.html#autotoc_md44", null ],
+    [ "Q3270 Emulator Backlog", "md__2home_2runner_2work_2Q3270_2Q3270_2BACKLOG.html", null ],
     [ "Q3270 - A Qt-based 3270 Emulator", "md__2home_2runner_2work_2Q3270_2Q3270_2README.html", [
       [ "Features", "md__2home_2runner_2work_2Q3270_2Q3270_2README.html#autotoc_md47", null ],
       [ "Getting Started", "md__2home_2runner_2work_2Q3270_2Q3270_2README.html#autotoc_md49", [
