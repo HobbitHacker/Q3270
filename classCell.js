@@ -1,0 +1,26 @@
+var classCell =
+[
+    [ "Cell", "classCell.html#a394510643e8664cf12b5efaf5cb99f71", null ],
+    [ "copy", "classCell.html#a8a90ec8bf8c13e37ecf073b1b7f69b36", null ],
+    [ "getField", "classCell.html#afd46b45d5eb731cfc274793506e480a6", null ],
+    [ "getHighlight", "classCell.html#a318522ba94228c0105114ba18f31a6db", null ],
+    [ "hasCharAttrs", "classCell.html#ae68edb36f8d3c2cb136f890484df0700", null ],
+    [ "isDisplay", "classCell.html#a623f5bc4f82ccaf7f8c92140de2bfce3", null ],
+    [ "isProtected", "classCell.html#ac1f338629c117e2443c01c7fa8983de4", null ],
+    [ "reset", "classCell.html#afbc65512fb26ca43bd7b0aae85f2366e", null ],
+    [ "resetCharAttrs", "classCell.html#aa927c5cdc080ab1c76d665adc80c2c35", null ],
+    [ "setChar", "classCell.html#af41a1f68544d9983278f6186252632a9", null ],
+    [ "setCharAttrs", "classCell.html#a9bcd5775e27e4ae65f77efc8e3172376", null ],
+    [ "setColour", "classCell.html#a2789607defa44570078062224dfcdeb2", null ],
+    [ "setDisplay", "classCell.html#a5b8d09887c5e6f9fe00945ea89ddc498", null ],
+    [ "setExtended", "classCell.html#a6ee741f50248ba92debd8d61169cbef3", null ],
+    [ "setField", "classCell.html#a20d15f3de1260fb9c328ecd9f6cd60d2", null ],
+    [ "setFieldStart", "classCell.html#a616e2c6625e2f5f53fd5cc15b90aeb68", null ],
+    [ "setGraphic", "classCell.html#a841e7ba2dce4fee8c710d389538097f0", null ],
+    [ "setHighlight", "classCell.html#abe843de9999fdf79c8b3d9fa7b9b1f8e", null ],
+    [ "setIntensify", "classCell.html#aa440430d1ae914bb0ef7e2243edb6007", null ],
+    [ "setMDT", "classCell.html#a115d3e642c737d905778fe5609b0882e", null ],
+    [ "setNumeric", "classCell.html#a480a68f5e486ac0c989d5257f2f42ce8", null ],
+    [ "setPenSelect", "classCell.html#a2f6ffc61ca437a52117cc6060e0eff74", null ],
+    [ "setProtected", "classCell.html#a66cfa26050ed87764496492d9d6dce81", null ]
+];

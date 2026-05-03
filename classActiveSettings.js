@@ -1,0 +1,28 @@
+var classActiveSettings =
+[
+    [ "ActiveSettings", "classActiveSettings.html#a05e0410792f937c96ad26736c060fe65", null ],
+    [ "applyUserHostChange", "classActiveSettings.html#a36f4ec2a16ea92b04812c1c55e85c57c", null ],
+    [ "getHostAddress", "classActiveSettings.html#a304305324c167b00af2eb64491068a61", null ],
+    [ "getRulerStyleName", "classActiveSettings.html#add437ad013261b98385553d159a86379", null ],
+    [ "getTerminalModelName", "classActiveSettings.html#abbb001d35e76954021cb2f15b3a9add4", null ],
+    [ "setBackspaceStop", "classActiveSettings.html#ad3766a0d2a0c9dd6def0898a7420f6a8", null ],
+    [ "setCodePage", "classActiveSettings.html#a7b550df07c23a82a51ca828112005b24", null ],
+    [ "setColourTheme", "classActiveSettings.html#a16162bf20d7149b31dfd5a7272cdcf7d", null ],
+    [ "setCursorBlink", "classActiveSettings.html#a03245a67ae0594ec5d04f92f92869871", null ],
+    [ "setCursorBlinkSpeed", "classActiveSettings.html#a212899ec6e869e872993b87e82c4831d", null ],
+    [ "setCursorColourInherit", "classActiveSettings.html#ab5f97bcd08a8d39bd09ae9f794c824c1", null ],
+    [ "setDescription", "classActiveSettings.html#a8f8902b40171de52d6735fb48bd75c64", null ],
+    [ "setFont", "classActiveSettings.html#a87dce58eaa435708f71c22824fdf17a8", null ],
+    [ "setHostAddress", "classActiveSettings.html#a93894f260fedb0fafa1f802c0600d5d2", null ],
+    [ "setHostAddress", "classActiveSettings.html#a0669f70b1af262efed55f54ac92eca3b", null ],
+    [ "setKeyboardTheme", "classActiveSettings.html#a599cd1cba485d4b260adc64873ccd1ec", null ],
+    [ "setRulerState", "classActiveSettings.html#a080d3c4b0f81f106108e20bd241ee186", null ],
+    [ "setRulerStyle", "classActiveSettings.html#a9f35c456c668a55c566bceaf9eb7c0b5", null ],
+    [ "setRulerStyleName", "classActiveSettings.html#a993f346acfd45c72473be860954d61d0", null ],
+    [ "setSecureMode", "classActiveSettings.html#aaeac1963f7a13b146ece45d72629b957", null ],
+    [ "setSessionName", "classActiveSettings.html#a08a2dac10bb0cc8e3ee01f2ca5708f7b", null ],
+    [ "setStretchScreen", "classActiveSettings.html#a153805d100c7cd399025a7dbb6f17624", null ],
+    [ "setTerminal", "classActiveSettings.html#a7cd7fd7011a08af8eb4d2cf2977fdc3e", null ],
+    [ "setTerminal", "classActiveSettings.html#a536385a95a1aae73206c8f7bef1f7c98", null ],
+    [ "setVerifyCerts", "classActiveSettings.html#abaf9e1798792d9f6d25c0745c08612c3", null ]
+];

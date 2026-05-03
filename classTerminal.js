@@ -1,0 +1,27 @@
+var classTerminal =
+[
+    [ "Terminal", "classTerminal.html#a87424f9f279b581d47d799fcbd74ccba", null ],
+    [ "~Terminal", "classTerminal.html#add5a7d4dd45b68af9a0afb1cc845af2f", null ],
+    [ "blinkCursor", "classTerminal.html#a4ef48a1450184038c414d6d6edcf5f3c", null ],
+    [ "blinkText", "classTerminal.html#afd69e096aa2c06c50482d71d88d93462", null ],
+    [ "changeCodePage", "classTerminal.html#ac5a0bfb132500d445bca0dda00fd4095", null ],
+    [ "clearTWait", "classTerminal.html#ab8776c3e7f3f1e84f06f621f11f810c3", null ],
+    [ "closeConnection", "classTerminal.html#a1a4494613e80390e0a868715df3be8eb", null ],
+    [ "closeEvent", "classTerminal.html#a5dbfd36c8b3545205a1109cc06ee7f9e", null ],
+    [ "connectSession", "classTerminal.html#a96fb243b3688993186d4024b0eb5cb38", null ],
+    [ "eventFilter", "classTerminal.html#a3423fe6bf937aa1bb7225d483022417d", null ],
+    [ "fit", "classTerminal.html#a6c15f8076b460cf522794c6db0f3cf07", null ],
+    [ "resetStatusXSystem", "classTerminal.html#aa69cd93d2857674dcfe5bea28a158d71", null ],
+    [ "rulerChanged", "classTerminal.html#a22cf406a7a8b01e74011304ad710861b", null ],
+    [ "rulerStyle", "classTerminal.html#a68b9766a9c9a80ef489b9e6d42573fac", null ],
+    [ "setAlternateScreen", "classTerminal.html#a3ab473952ab86148bfc333f2150a3774", null ],
+    [ "setBlink", "classTerminal.html#afed8e92e6f086b0ed0050f6431933e32", null ],
+    [ "setBlinkSpeed", "classTerminal.html#ad9397fc54aab59aca53b144d517b9de1", null ],
+    [ "setColourTheme", "classTerminal.html#a363293655aae7cccd6fdffb4104a4034", null ],
+    [ "setCurrentFont", "classTerminal.html#afb16d573c61f1ae5337c27e65d7cc96e", null ],
+    [ "setFont", "classTerminal.html#a13aa479ac53e5f8d95d76c7a0945cc6e", null ],
+    [ "setScreenStretch", "classTerminal.html#abcd72534c8071fc8ad246af9a91dfb45", null ],
+    [ "setStatusInsert", "classTerminal.html#a2a2608d9811c938aa0627cbd890dadfe", null ],
+    [ "setTWait", "classTerminal.html#abab8d858c3c25405baffd12cd422f7c8", null ],
+    [ "toggleRuler", "classTerminal.html#a5e6a1630e2f37c3d474909d15f6cf536", null ]
+];
