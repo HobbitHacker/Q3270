@@ -1,12 +1,15 @@
 var searchData=
 [
-  ['emulator_0',['Q3270 - A Qt-based 3270 Emulator',['../md__2home_2runner_2work_2Q3270_2Q3270_2README.html',1,'']]],
-  ['emulator_20backlog_1',['Q3270 Emulator Backlog',['../md__2home_2runner_2work_2Q3270_2Q3270_2BACKLOG.html',1,'']]],
-  ['enableokbutton_2',['enableOKButton',['../classSessionDialogBase.html#afa3421692d236b589d6f152f9474351f',1,'SessionDialogBase']]],
-  ['endline_3',['endline',['../classDisplayScreen.html#af538220eecd3baa18cbcf8047fa871f7',1,'DisplayScreen']]],
-  ['eraseeof_4',['eraseEOF',['../classDisplayScreen.html#ad20a7d73db08f0da2c8d5191da97fde0',1,'DisplayScreen']]],
-  ['eraseunprotected_5',['eraseUnprotected',['../classDisplayScreen.html#af87d4e99ad26f638e90573feb2fa249f',1,'DisplayScreen']]],
-  ['eventfilter_6',['eventfilter',['../classKeyboard.html#a18f4d924a7aba4f0700dd47721d6d710',1,'Keyboard::eventFilter()'],['../classTerminal.html#a3423fe6bf937aa1bb7225d483022417d',1,'Terminal::eventFilter()']]],
-  ['exec_7',['exec',['../classColourTheme.html#a7223cbfce9a1e099c069b1a7f32cc3a2',1,'ColourTheme::exec()'],['../classKeyboardThemeDialog.html#a0a945b9c3d88fbb1441cfb3e155f6939',1,'KeyboardThemeDialog::exec()']]],
-  ['exists_8',['exists',['../classColourStore.html#a204980c16cb43e3ca14a37d49d30f773',1,'ColourStore']]]
+  ['features_0',['Features',['../md__2home_2runner_2work_2Q3270_2Q3270_2README.html#autotoc_md47',1,'']]],
+  ['file_20menu_1',['File Menu',['../index.html#autotoc_md22',1,'']]],
+  ['findnextunprotectedfield_2',['findNextUnprotectedField',['../classDisplayScreen.html#a0ae7fe45fa121fbad181d89657f2dd8a',1,'DisplayScreen']]],
+  ['findprevunprotectedfield_3',['findPrevUnprotectedField',['../classDisplayScreen.html#a7a3629a9dea484b60566b8be9b5df616',1,'DisplayScreen']]],
+  ['fit_4',['fit',['../classTerminal.html#a6c15f8076b460cf522794c6db0f3cf07',1,'Terminal']]],
+  ['focusinevent_5',['focusInEvent',['../classKeyboardSequenceEdit.html#a3884b7dd3c3534c9196b993a113025ce',1,'KeyboardSequenceEdit']]],
+  ['focusoutevent_6',['focusOutEvent',['../classKeyboardSequenceEdit.html#a4f74c0e1f5f643c6883b6d0af81f078a',1,'KeyboardSequenceEdit']]],
+  ['fontwidget_7',['fontwidget',['../classFontWidget.html',1,'FontWidget'],['../classFontWidget.html#a13813f153fe5e06a16d76b3c40cd669f',1,'FontWidget::FontWidget()']]],
+  ['foreach_8',['forEach',['../structKeyboardMap.html#ad83ce1477746e18859e3b32d053003d1',1,'KeyboardMap']]],
+  ['functioninfo_9',['FunctionInfo',['../structFunctionInfo.html',1,'']]],
+  ['functionnameforrow_10',['functionNameForRow',['../classKeyboardMapWidget.html#afaffeeeaa5264d8076638dad0e8250b2',1,'KeyboardMapWidget']]],
+  ['functionregistry_11',['FunctionRegistry',['../classFunctionRegistry.html',1,'']]]
 ];

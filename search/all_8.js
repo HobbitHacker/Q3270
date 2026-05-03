@@ -1,7 +1,11 @@
 var searchData=
 [
-  ['hascharattrs_0',['hasCharAttrs',['../classCell.html#ae68edb36f8d3c2cb136f890484df0700',1,'Cell']]],
-  ['height_1',['height',['../classDisplayScreen.html#a61a31ef1148389254ea122cf4cddd71c',1,'DisplayScreen']]],
-  ['heritage_2',['Colour Heritage',['../index.html#autotoc_md10',1,'']]],
-  ['home_3',['home',['../classDisplayScreen.html#ac6a7e3a9a42de60b75f8ff1c531ceb7a',1,'DisplayScreen']]]
+  ['insertchar_0',['insertChar',['../classDisplayScreen.html#a1de2aa500bce6bee62141ff1ef1d41c4',1,'DisplayScreen']]],
+  ['installation_1',['installation',['../index.html#autotoc_md14',1,'Installation'],['../md__2home_2runner_2work_2Q3270_2Q3270_2README.html#autotoc_md49',1,'Installation']]],
+  ['interruptprocess_2',['interruptProcess',['../classDisplayScreen.html#ae575d2df38de3023710aa6aabbb00c18',1,'DisplayScreen']]],
+  ['introduction_3',['Introduction',['../index.html#autotoc_md8',1,'']]],
+  ['isaskip_4',['isAskip',['../classDisplayScreen.html#a7be6f9a39e8ef8319c0bbec3db42933c',1,'DisplayScreen']]],
+  ['isdisplay_5',['isDisplay',['../classCell.html#a623f5bc4f82ccaf7f8c92140de2bfce3',1,'Cell']]],
+  ['isfieldstart_6',['isFieldStart',['../classDisplayScreen.html#a76654c070f045a5fd1ed1acbaed1cb28',1,'DisplayScreen']]],
+  ['isprotected_7',['isprotected',['../classCell.html#ac1f338629c117e2443c01c7fa8983de4',1,'Cell::isProtected()'],['../classDisplayScreen.html#ad40ea590ceedf7b601e5e9cbafc70837',1,'DisplayScreen::isProtected()']]]
 ];

@@ -1,8 +1,11 @@
 var searchData=
 [
-  ['onaccept_0',['onAccept',['../classSessionDialogBase.html#a777ab05d94ff418857bb68cc58b0feb7',1,'SessionDialogBase']]],
-  ['onrowclicked_1',['onRowClicked',['../classSessionDialogBase.html#a88fbb43473d0a4ec5f6d992578ca501c',1,'SessionDialogBase']]],
-  ['open_20session_2',['Open Session',['../index.html#autotoc_md23',1,'']]],
-  ['opened_3',['opened',['../classSocketConnection.html#a46381b7efbc8ed85114f236ce39b6efe',1,'SocketConnection']]],
-  ['opensessiondialog_4',['opensessiondialog',['../classOpenSessionDialog.html',1,'OpenSessionDialog'],['../classOpenSessionDialog.html#a557ee8750b88b422414da94ae3ca45f9',1,'OpenSessionDialog::OpenSessionDialog()']]]
+  ['platform_20support_0',['Platform Support',['../index.html#autotoc_md11',1,'']]],
+  ['populatesessiontable_1',['populateSessionTable',['../classSessionDialogBase.html#a98856a591c025f7e6e4f28cc8c58b427',1,'SessionDialogBase']]],
+  ['preferences_2',['Preferences',['../index.html#autotoc_md32',1,'']]],
+  ['preferencesdialog_3',['preferencesdialog',['../classPreferencesDialog.html',1,'PreferencesDialog'],['../classPreferencesDialog.html#ae8d709a502a5f249f4fd949f9b2187c6',1,'PreferencesDialog::PreferencesDialog()']]],
+  ['processaid_4',['processAID',['../classDisplayScreen.html#a6d1b02dfef9659de17706aa3c71e1566',1,'DisplayScreen']]],
+  ['processdatastream_5',['processdatastream',['../classProcessDataStream.html',1,'ProcessDataStream'],['../classProcessDataStream.html#aa46e2fd71c6bf7f62c719e139c6a9a23',1,'ProcessDataStream::ProcessDataStream()']]],
+  ['processkey_6',['processKey',['../classKeyboard.html#afe6b80fdb58cb076d61410c04fb36601',1,'Keyboard']]],
+  ['processstream_7',['processStream',['../classProcessDataStream.html#ad0407f3c50d9e299b5d9b88e3046be06',1,'ProcessDataStream']]]
 ];

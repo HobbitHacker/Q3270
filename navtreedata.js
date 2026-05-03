@@ -58,15 +58,14 @@ var NAVTREE =
     [ "Known Limitations", "index.html#autotoc_md42", null ],
     [ "Licence", "index.html#autotoc_md44", null ],
     [ "Q3270 Emulator Backlog", "md__2home_2runner_2work_2Q3270_2Q3270_2BACKLOG.html", null ],
-    [ "Q3270 - A Qt-based 3270 Emulator", "md__2home_2runner_2work_2Q3270_2Q3270_2README.html", [
+    [ "Q3270 — A Qt-based TN3270 Emulator", "md__2home_2runner_2work_2Q3270_2Q3270_2README.html", [
       [ "Features", "md__2home_2runner_2work_2Q3270_2Q3270_2README.html#autotoc_md47", null ],
-      [ "Getting Started", "md__2home_2runner_2work_2Q3270_2Q3270_2README.html#autotoc_md49", [
-        [ "Prerequisites", "md__2home_2runner_2work_2Q3270_2Q3270_2README.html#autotoc_md50", null ],
-        [ "Dependencies", "md__2home_2runner_2work_2Q3270_2Q3270_2README.html#autotoc_md51", null ],
-        [ "Building", "md__2home_2runner_2work_2Q3270_2Q3270_2README.html#autotoc_md52", null ]
+      [ "Installation", "md__2home_2runner_2work_2Q3270_2Q3270_2README.html#autotoc_md49", [
+        [ "Linux", "md__2home_2runner_2work_2Q3270_2Q3270_2README.html#autotoc_md50", null ],
+        [ "macOS", "md__2home_2runner_2work_2Q3270_2Q3270_2README.html#autotoc_md51", null ]
       ] ],
-      [ "Packages", "md__2home_2runner_2work_2Q3270_2Q3270_2README.html#autotoc_md53", null ],
-      [ "Backlog", "md__2home_2runner_2work_2Q3270_2Q3270_2README.html#autotoc_md54", null ]
+      [ "Documentation", "md__2home_2runner_2work_2Q3270_2Q3270_2README.html#autotoc_md53", null ],
+      [ "Licence", "md__2home_2runner_2work_2Q3270_2Q3270_2README.html#autotoc_md55", null ]
     ] ],
     [ "Classes", "annotated.html", [
       [ "Class List", "annotated.html", "annotated_dup" ],

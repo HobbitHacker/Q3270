@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['view_20menu_0',['View Menu',['../index.html#autotoc_md30',1,'']]]
+  ['width_0',['width',['../classDisplayScreen.html#a24e2d5da024ca52a5a2a9b7b45b98363',1,'DisplayScreen']]]
 ];

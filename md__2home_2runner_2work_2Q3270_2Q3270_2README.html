@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Q3270: Q3270 - A Qt-based 3270 Emulator</title>
+<title>Q3270: Q3270 — A Qt-based TN3270 Emulator</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -91,67 +91,49 @@ $(document).ready(function(){initNavTree('md__2home_2runner_2work_2Q3270_2Q3270_
 </div>
 
 <div><div class="header">
-  <div class="headertitle"><div class="title">Q3270 - A Qt-based 3270 Emulator</div></div>
+  <div class="headertitle"><div class="title">Q3270 — A Qt-based TN3270 Emulator</div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p><a class="anchor" id="autotoc_md45"></a> Q3270 is a Qt-based 3270 terminal emulator with colour themes and keyboard mapping dialogs built in.</p>
-<p>"Emulator" is an interesting term. Some refer to these kinds of programs as Simulators, some as TN3270 Clients, and others use the term Emulator. I use the term Emulator.</p>
-<p>Aimed at the IBM mainframe (MVS, OS/390, z/OS, VM, zVM, call it what you will), this program is intended to be used to access computers running those operating systems, via the TN3270 protocol.</p>
-<p>It's not (yet) as feature rich as other emulators, but it is (in my limited cases) usuable for things like MVS 3.8j under Hercules.</p>
-<p>I've used it for MVS 3.8j and VM/370, and for IBM's zXplore at 204.90.115.200:623.</p>
-<p>Documentation is unfortunately sparse presently.</p>
+<div class="textblock"><p><a class="anchor" id="autotoc_md45"></a> Q3270 is a TN3270 terminal emulator for accessing IBM mainframe systems running MVS, z/OS, VM/CMS and related operating systems. Built with Qt, it runs on Linux and macOS.</p>
+<p><img src="Docs/Images/ispf_screenshot.png" alt="Q3270 showing ISPF on z/OS 3.1" class="inline"/></p>
 <hr  />
 <h1><a class="anchor" id="autotoc_md47"></a>
 Features</h1>
 <ul>
-<li>Standard 3270 model sizes</li>
-<li>IBM-DYNAMIC user-selectable screen size</li>
+<li>Standard 3270 model sizes plus IBM-DYNAMIC user-selectable screen dimensions</li>
+<li>Colour theme editor with full 3179 field attribute colour mapping</li>
 <li><a class="el" href="classKeyboard.html" title="Keyboard::Keyboard - Keyboard input processing.">Keyboard</a> mapping dialog</li>
-<li>Colour mapping dialog</li>
-<li><a class="el" href="structSession.html">Session</a> management (save, load, auto‑start lists)</li>
-<li>SSL support (not heavily tested)</li>
-<li>Dynamic font scaling according to window size</li>
+<li><a class="el" href="structSession.html">Session</a> management — save, load, and auto-start session lists</li>
+<li>Dynamic font scaling to fit the window</li>
+<li>SSL/TLS support</li>
 </ul>
 <hr  />
 <h1><a class="anchor" id="autotoc_md49"></a>
-Getting Started</h1>
+Installation</h1>
 <h2><a class="anchor" id="autotoc_md50"></a>
-Prerequisites</h2>
-<ul>
-<li><b>Qt</b>: 5.15 (baseline, known‑good) <br  />
-</li>
-<li>Qt 6.x should work, but is currently experimental. <br  />
-</li>
-<li><b>g++</b> C++ compiler</li>
-<li><b>CMake</b></li>
-<li><b>QtSvg</b> module (required for SVG rendering)</li>
-</ul>
-<h2><a class="anchor" id="autotoc_md51"></a>
-Dependencies</h2>
-<p>On Linux, install Qt development libraries and build tools via your package manager. <br  />
- For example (these package names may be incorrect, check your distro) - :</p>
-<ul>
-<li>Ubuntu/Debian: <code>sudo apt install build-essential qtbase5-dev qttools5-dev-tools libqt5svg5-dev</code></li>
-<li>Fedora: <code>sudo dnf install qt5-qtbase-devel qt5-qtsvg-devel</code></li>
-<li>openSUSE: <code>sudo zypper install libqt5-qtbase-devel libqt5-qtsvg-devel</code></li>
-<li>Arch Linux: <code>sudo pacman -S base-devel qt5-base qt5-svg</code></li>
-</ul>
-<h2><a class="anchor" id="autotoc_md52"></a>
-Building</h2>
-<p><code>git clone <a href="https://github.com/HobbitHacker/Q3270.git">https://github.com/HobbitHacker/Q3270.git</a></code></p>
-<p><code>cd Q3270</code></p>
-<p><code>cmake .</code></p>
-<p><code>make</code></p>
-<p>This will build a Q3270 executable, which you can then run with:</p>
-<p><code>./Q3270</code></p>
+Linux</h2>
+<p>Install Qt 5.15 development libraries via your package manager, then build from source:</p>
+<p><b>Ubuntu/Debian:</b> </p><div class="fragment"><div class="line">sudo apt install build-essential qtbase5-dev qttools5-dev-tools libqt5svg5-dev</div>
+</div><!-- fragment --><p> <b>Fedora:</b> </p><div class="fragment"><div class="line">sudo dnf install qt5-qtbase-devel qt5-qtsvg-devel</div>
+</div><!-- fragment --><p> <b>openSUSE:</b> </p><div class="fragment"><div class="line">sudo zypper install libqt5-qtbase-devel libqt5-qtsvg-devel</div>
+</div><!-- fragment --><p> <b>Arch Linux:</b> </p><div class="fragment"><div class="line">sudo pacman -S base-devel qt5-base qt5-svg</div>
+</div><!-- fragment --><p>Then: </p><div class="fragment"><div class="line">git clone https://github.com/HobbitHacker/Q3270.git</div>
+<div class="line">cd Q3270</div>
+<div class="line">cmake .</div>
+<div class="line">make</div>
+<div class="line">./Q3270</div>
+</div><!-- fragment --><h2><a class="anchor" id="autotoc_md51"></a>
+macOS</h2>
+<div class="fragment"><div class="line">brew tap HobbitHacker/q3270</div>
+<div class="line">brew install q3270</div>
+</div><!-- fragment --><hr  />
 <h1><a class="anchor" id="autotoc_md53"></a>
-Packages</h1>
-<p>Unstable testing packages may be found under</p>
-<p><a href="https://github.com/HobbitHacker/Q3270/actions">https://github.com/HobbitHacker/Q3270/actions</a></p>
-<p>for a given distribution.</p>
-<h1><a class="anchor" id="autotoc_md54"></a>
-Backlog</h1>
-<p>See BACKLOG.md for a list of things still to be done. </p>
+Documentation</h1>
+<p>Full documentation is at <a href="https://hobbithacker.github.io/Q3270">https://hobbithacker.github.io/Q3270</a>.</p>
+<hr  />
+<h1><a class="anchor" id="autotoc_md55"></a>
+Licence</h1>
+<p>BSD 3-Clause. See [LICENSE](LICENSE) for details. </p>
 </div></div><!-- contents -->
 </div><!-- PageDoc -->
 </div><!-- doc-content -->
