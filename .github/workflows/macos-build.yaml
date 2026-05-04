@@ -1,22 +1,22 @@
 name: macOS Multi-Arch Build
+
 on:
-   workflow_dispatch:
+  workflow_dispatch:
+  workflow_call:
 
 jobs:
   build-macos:
     strategy:
       matrix:
         include:
-          - os: macos-26-intel  # Intel Runner
+          - os: macos-26-intel
             arch: x86_64
             name: Intel-x86
-          - os: macos-26        # Apple Silicon Runner (M-series)
+          - os: macos-26
             arch: arm64
             name: Apple-Silicon
-
     runs-on: ${{ matrix.os }}
     name: Build for ${{ matrix.name }}
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -31,11 +31,9 @@ jobs:
         run: |
           rm -rf build
           mkdir build && cd build
-          # Use env vars to force the compiler's hand early
           export CFLAGS="-arch ${{ matrix.arch }}"
           export CXXFLAGS="-arch ${{ matrix.arch }}"
           export LDFLAGS="-arch ${{ matrix.arch }}"
-
           cmake -G "Unix Makefiles" .. \
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_OSX_ARCHITECTURES="${{ matrix.arch }}" \
@@ -43,16 +41,22 @@ jobs:
             -DCMAKE_PREFIX_PATH="${{ env.Qt5_DIR }}" \
             -DCMAKE_OSX_DEPLOYMENT_TARGET="11.0" \
             -DCMAKE_APPLE_SILICON_PROCESSOR=x86_64
-
           make -j$(sysctl -n hw.ncpu) VERBOSE=1
 
       - name: Package DMG
         run: |
-          # Ensure we target the .app location correctly
           macdeployqt build/src/Q3270.app -dmg
+          mv build/src/Q3270.dmg Q3270-${{ matrix.name }}.dmg
 
-      - name: Upload Artifact
+      - name: Upload to GitHub Release
+        if: github.event_name == 'workflow_call'
+        uses: softprops/action-gh-release@v1
+        with:
+          files: "Q3270-${{ matrix.name }}.dmg"
+
+      - name: Upload as workflow artifact
+        if: github.event_name == 'workflow_dispatch'
         uses: actions/upload-artifact@v4
         with:
           name: Q3270-macOS-${{ matrix.name }}
-          path: build/src/*.dmg
+          path: "Q3270-${{ matrix.name }}.dmg"
