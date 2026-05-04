@@ -16,15 +16,20 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Install git-cliff
+        run: |
+          VERSION=$(curl -sI https://github.com/orhun/git-cliff/releases/latest | grep -i location | grep -oP 'v[\d.]+')
+          curl -sL "https://github.com/orhun/git-cliff/releases/download/${VERSION}/git-cliff-${VERSION#v}-x86_64-unknown-linux-gnu.tar.gz" \
+            | tar -xz --strip-components=1
+          sudo mv git-cliff /usr/local/bin/
+
       - name: Generate release notes with git-cliff
         id: cliff
-        uses: orhun/git-cliff-action@v3
-        with:
-          config: cliff.toml
-          args: --latest --strip header
-        env:
-          OUTPUT: CHANGES.md
-          GITHUB_REPO: ${{ github.repository }}
+        run: |
+          NOTES=$(git-cliff --latest --strip header)
+          echo "content<<EOF" >> $GITHUB_OUTPUT
+          echo "$NOTES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
   create-release:
     needs: generate-release-notes

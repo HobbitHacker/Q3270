@@ -49,13 +49,13 @@ jobs:
           mv build/src/Q3270.dmg Q3270-${{ matrix.name }}.dmg
 
       - name: Upload to GitHub Release
-        if: github.event_name == 'workflow_call'
+        if: ${{ github.workflow == 'Release' }}
         uses: softprops/action-gh-release@v1
         with:
           files: "Q3270-${{ matrix.name }}.dmg"
 
       - name: Upload as workflow artifact
-        if: github.event_name == 'workflow_dispatch'
+        if: ${{ github.workflow != 'Release' }}
         uses: actions/upload-artifact@v4
         with:
           name: Q3270-macOS-${{ matrix.name }}

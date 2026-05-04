@@ -41,13 +41,13 @@ jobs:
           mv ../*.deb .
 
       - name: Upload to GitHub Release
-        if: github.event_name == 'workflow_call'
+        if: ${{ github.workflow == 'Release' }}
         uses: softprops/action-gh-release@v1
         with:
           files: "*.deb"
 
       - name: Upload as workflow artifact
-        if: github.event_name == 'workflow_dispatch'
+        if: ${{ github.workflow == 'Release' }}
         uses: actions/upload-artifact@v4
         with:
           name: debian-packages
