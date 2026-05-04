@@ -3,6 +3,11 @@ name: Documentation
 on:
   push:
     branches: [ main ]
+    paths:
+      - 'Docs/**'
+      - 'src/**/*.h'
+      - 'src/**/*.cpp'
+      - 'CMakeLists.txt'
 
 jobs:
   docs:
