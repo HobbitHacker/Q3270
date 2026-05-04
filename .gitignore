@@ -108,6 +108,7 @@ debian/*.substvars
 debian/q3270/
 debian/.debhelper/
 debian/tmp/
+debian/changelog
 *.deb
 *.dsc
 *.build
