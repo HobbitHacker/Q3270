@@ -25,13 +25,7 @@ public:
     // Inline getters, for speed
     uchar getEBCDIC() const                  { return ebcdic; }
     bool isFieldStart() const                { return fieldStart; }
-    bool isAutoSkip() const                  { return prot & num; }
-    bool isNumeric() const                   { return num; }
     bool isGraphic() const                   { return graphic; }
-    bool isMdtOn() const                     { return mdt; }
-    bool isPenSelect() const                 { return pen; }
-    bool isIntensify() const                 { return intensify; }
-    bool isExtended() const                  { return extended; }
 
     bool isUScore()  const                   { return getHighlight() == Q3270::Underscore; }
     bool isReverse() const                   { return getHighlight() == Q3270::Reverse; }
@@ -41,8 +35,15 @@ public:
 
     Q3270::Colour getColour() const;
 
+    bool isExtended() const;
+
     bool isProtected() const;
     bool isDisplay() const;
+    bool isAutoSkip() const;
+    bool isNumeric() const;
+    bool isMdtOn() const;
+    bool isPenSelect() const;
+    bool isIntensify() const;
 
     Cell* getField();
 

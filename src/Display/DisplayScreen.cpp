@@ -245,6 +245,7 @@ void DisplayScreen::clear()
 
     geActive = false;
     unformatted = true;
+    fieldCount = 0;
 
     setCursor(0);
 }
@@ -274,17 +275,23 @@ void DisplayScreen::setChar(int pos, uchar c, bool fromKB)
     {
         thisCell.setFieldStart(false);
 
-        Cell *lastField;
+        if (--fieldCount == 0)
+            unformatted = true;
 
-        // If this is the first position on the screen, we need the last screen position's field
-        lastField = cells[pos == 0 ? screenPos_max - 1 : pos - 1].getField();
+        Cell *lastField = nullptr;
+
+        if (!unformatted)
+        {
+            // If this is the first position on the screen, we need the last screen position's field
+            lastField = cells[pos == 0 ? screenPos_max - 1 : pos - 1].getField();
+        }
 
         int tmpPos = pos;
 
         while(!cells[tmpPos % screenPos_max].isFieldStart() && tmpPos < pos + screenPos_max)
         {
             int i1 = tmpPos++ % screenPos_max;
-//          qDebug() << "Field at" << pos << "was FieldStart. Updating" << i1 << "as" << lastField;
+//          qDebug() << "Field at" << pos << "(" << &cells[pos] << ")" << "was FieldStart. Updating" << i1 << "as" << lastField;
             cells[i1].setField(lastField);
         }
     }
@@ -313,17 +320,33 @@ void DisplayScreen::setChar(int pos, uchar c, bool fromKB)
 
     geActive = false;
 
-    // Colour
-    if (thisCell.hasCharAttrs(Q3270::CharAttr::ColourAttr) && !charAttr.colour_default)
-        thisCell.setColour(charAttr.colNum);
-    else
-        thisCell.setColour(fieldAttr->getColour());
+    // Unformatted screen - use character attributes if present, otherwise default colours and no highlighting
+    if (unformatted)
+    {
+        if (thisCell.hasCharAttrs(Q3270::ColourAttr) && !charAttr.colour_default)
+             thisCell.setColour(charAttr.colNum);
+        else
+             thisCell.setColour(Q3270::UnprotectedNormal);
 
-    // Extended attributes
-    if (thisCell.hasCharAttrs(Q3270::CharAttr::ExtendedAttr))
-        thisCell.setHighlight(charAttr.highlight_default ? fieldAttr->getHighlight() : charAttr.highlight);
+         if (thisCell.hasCharAttrs(Q3270::CharAttr::ExtendedAttr))
+             thisCell.setHighlight(charAttr.highlight_default ? Q3270::NoHighlight : charAttr.highlight);
+         else
+             thisCell.setHighlight(Q3270::NoHighlight);
+    }
     else
-        thisCell.setHighlight(fieldAttr->getHighlight());
+    {
+        // Colour
+        if (thisCell.hasCharAttrs(Q3270::CharAttr::ColourAttr) && !charAttr.colour_default)
+            thisCell.setColour(charAttr.colNum);
+        else
+            thisCell.setColour(fieldAttr->getColour());
+
+        // Extended attributes
+        if (thisCell.hasCharAttrs(Q3270::CharAttr::ExtendedAttr))
+            thisCell.setHighlight(charAttr.highlight_default ? fieldAttr->getHighlight() : charAttr.highlight);
+        else
+            thisCell.setHighlight(fieldAttr->getHighlight());
+    }
 
     // Maintain blink cells rectangles for blink()
     int row = pos / screen_x;
@@ -489,9 +512,6 @@ void DisplayScreen::setGraphicEscape()
  */
 void DisplayScreen::setField(int pos, unsigned char c, bool sfe)
 {
-    // At least one field is defined
-    unformatted = false;
-
     // Set field attribute flags
     bool prot   = (c>>5) & 1;
     bool num    = (c>>4) & 1;
@@ -509,17 +529,21 @@ void DisplayScreen::setField(int pos, unsigned char c, bool sfe)
 
     cells[pos].setExtended(sfe);
 
-    cells[pos].setFieldStart(true);
+    // Keep track of fields
+    if(!cells[pos].isFieldStart())
+    {
+        cells[pos].setFieldStart(true);
+        fieldCount++;
+//        qDebug() << "Field count now" << fieldCount;
+    }
 
     // Fields are set to 0x00
     cells[pos].setChar(IBM3270_CHAR_NULL);
 
-/*  if (pos == screenPos_max - 1)
-    {
-        qDebug() << "I'm here";
-    }
-*/
     cascadeAttrs(pos);
+
+    // At least one field is defined
+    unformatted = false;
 }
 
 /**
@@ -532,14 +556,14 @@ void DisplayScreen::setField(int pos, unsigned char c, bool sfe)
  */
 void DisplayScreen::cascadeAttrs(int pos)
 {
-        int endPos = pos + screenPos_max;
+    int endPos = pos + screenPos_max;
 
-        int i = pos + 1;
-        while(i < endPos && !(cells[i % screenPos_max].isFieldStart()))
-        {
-            int offset = i++ % screenPos_max;
-            cells[offset].setField(&cells[pos]);
-        }
+    int i = pos + 1;
+    while(i < endPos && !(cells[i % screenPos_max].isFieldStart()))
+    {
+        int offset = i++ % screenPos_max;
+        cells[offset].setField(&cells[pos]);
+    }
 }
 
 /**
@@ -1206,11 +1230,19 @@ void DisplayScreen::addPosToBuffer(QByteArray &buffer, int pos)
  */
 void DisplayScreen::dumpFields()
 {
+    if (unformatted)
+    {
+        qDebug() << "Screen is unformatted";
+        return;
+    }
+
     QString line = "";
     for (int i = 0; i < screen_x; i++)
     {
         line.append(QString("%1").arg(i%10));
     }
+
+    qDebug() << "Fields on screen:" << fieldCount;
 
     qDebug() << "     " << line;
 
@@ -1226,13 +1258,15 @@ void DisplayScreen::dumpFields()
                     line.append("F");
                 else
                     line.append("f");
-            else if (cells[tmppos].getField()->isFieldStart())
+            else if (cells[tmppos].getField() && cells[tmppos].getField()->isFieldStart())
                 line.append(".");
             else
                 line.append("X");
         }
         qDebug() << QString("%1").arg(i, 3) <<  line;
     }
+
+    qDebug() << "f - field; F - modified field; . normal cell; X - fieldStart is not a field";
 }
 
 /**

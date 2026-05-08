@@ -126,7 +126,7 @@ Q3270::Colour Cell::getColour() const
  *          point to itself).
  */
 void Cell::setFieldStart(const bool fs)
-{
+{  
     fieldStart = fs;
 
     if (fieldStart)
@@ -285,8 +285,8 @@ void Cell::setField(Cell *field)
  * @return  The address of this cell's field within the 3270 matrix.
  *
  * @details When characters are entered into the display, either from the 3270 stream or from the keyboard,
- *          the field address is required to pick up the field attributes - if this field is a field start, then return
- *          this address, otherwise return the address of the field that owns this cell if there is one.
+ *          the field address is required to pick up the field attributes - if the field pointer is set, return
+ *          the address of the field that owns this cell if there is one, or nullptr if the field pointer is not set.
  */
 Cell* Cell::getField()
 {
@@ -294,6 +294,7 @@ Cell* Cell::getField()
     {
         return this;
     }
+
     if (field)
     {
         return field;
@@ -306,8 +307,9 @@ Cell* Cell::getField()
  * @brief   Cell::isProtected - return whether this field is protected or not
  * @return  True for a protected field, false otherwise
  *
- * @details Return the protected status of this cell. If this is a field start, then it's always
- *          protected.
+ * @details Return the protected status of this cell. If this is a field start, return the status, otherwise
+ *          return the field's protected status. If there is no field pointer, and this isn't a field start,
+ *          then return false (unprotected).
  */
 bool Cell::isProtected() const
 {
@@ -324,6 +326,143 @@ bool Cell::isProtected() const
     return false;
 }
 
+/**
+ * @brief   Cell::isAutoSkip - return whether this field has autoskip enabled or not
+ * @return  True for a field with autoskip enabled, false otherwise
+ *
+ * @details Return the autoskip status of this cell. If this is a field start, return the status, otherwise
+ *          return the field's autoskip status. If there is no field pointer, and this isn't a field start,
+ *          then return false (autoskip disabled).
+ */
+bool Cell::isAutoSkip() const
+{
+    if (fieldStart)
+    {
+        return prot && num;
+    }
+
+    if (field)
+    {
+        return field->prot && field->num;
+    }
+
+    return false;
+}
+
+/**
+ * @brief   Cell::isNumeric - return whether this field is numeric input only or not
+ * @return  True for a numeric input only field, false otherwise
+ *
+ * @details Return the numeric input only status of this cell. If this is a field start, otherwise
+ *          return the field's numeric input only status. If there is no field pointer, and this isn't a field start,
+ *          then return false (numeric input only disabled).
+ */
+bool Cell::isNumeric() const
+{
+    if (fieldStart)
+    {
+        return num;
+    }
+
+    if (field)
+    {
+        return field->num;
+    }
+
+    return false;
+}
+
+/**
+ * @brief   Cell::isMdtOn - return whether the MDT flag is on for this field
+ * @return  True for a field with MDT on, false otherwise
+ *
+ * @details Return the MDT status of this cell. If this is a field start, return the status, otherwise
+ *          return the field's MDT status. If there is no field pointer, and this isn't a field start,
+ *          then return false (MDT off).
+ */
+bool Cell::isMdtOn() const
+{
+    if (fieldStart)
+    {
+        return mdt;
+    }
+
+    if (field)
+    {
+        return field->mdt;
+    }
+
+    return false;
+}
+
+/**
+ *  @brief   Cell::isPenSelect - return whether this field is light pen selectable or not
+ *  @return  True for a field that is light pen selectable, false otherwise
+ *
+ *  @details Return the light pen selectable status of this cell. If this is a field start, return the status, otherwise
+ *           return the field's light pen selectable status. If there is no field pointer, and this isn't a field start,
+ *           then return false (light pen selectable disabled).
+ */
+bool Cell::isPenSelect() const
+{
+    if (fieldStart)
+    {
+        return pen;
+    }
+
+    if (field)
+    {
+        return field->pen;
+    }
+
+    return false;
+}
+
+/**
+ * @brief   Cell::isExtended - return whether this field is an extended field or not
+ * @return  True for an extended field, false otherwise
+ *
+ * @details Return the extended field status of this cell. If this is a field start, return the status, otherwise
+ *          return the field's extended field status. If there is no field pointer, and this isn't a field start,
+ *          then return false (not an extended field).
+ */
+bool Cell::isExtended() const
+{
+    if (fieldStart)
+    {
+        return extended;
+    }
+
+    if (field)
+    {
+        return field->extended;
+    }
+
+    return false;
+}
+
+/**
+ * @brief   Cell::isIntensify - return whether this field is intensified or not
+ * @return  True for an intensified field, false otherwise
+ *
+ * @details Return the intensify status of this cell. If this is a field start, return the status, otherwise
+ *          return the field's intensify status. If there is no field pointer, and this isn't a field start,
+ *          then return false (not intensified).
+ */
+bool Cell::isIntensify() const
+{
+    if (fieldStart)
+    {
+        return intensify;
+    }
+
+    if (field)
+    {
+        return field->intensify;
+    }
+
+    return false;
+}
 
 /**
  * @brief   Cell::getHighlight - return the highlight status of this cell
@@ -419,13 +558,6 @@ void Cell::resetCharAttrs()
  */
 void Cell::copy(const Cell &fromCell)
 {
-//    these should come from the Field Attribute
-//    prot = fromCell.isProtected();
-//    mdt = fromCell.isMdtOn();
-//    num = fromCell.isNumeric();
-//    pen = fromCell.isPenSelect();
-//    setDisplay(fromCell.isDisplay());
-
     setColour(fromCell.getColour());
     setHighlight(fromCell.getHighlight());
 

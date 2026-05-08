@@ -148,13 +148,13 @@ class DisplayScreen : public QGraphicsObject
         const CodePage &cp;
         const Colours *palette;
 
-        int screen_x;                /* Max Columns */
-        int screen_y;                /* Max Rows */
-        int screenPos_max;           /* Max position on screen */
+        int screen_x;               /* Max Columns */
+        int screen_y;               /* Max Rows */
+        int screenPos_max;          /* Max position on screen */
 
-        int cursor_pos;              /* Cursor position */
+        int cursor_pos;             /* Cursor position */
 
-        QVector<Cell> cells;    /* Screen slot */
+        QVector<Cell> cells;        /* Screen slot */
 
         bool blinkShow;             /* Whether the character is shown/hidden for a given blink event */
         bool cursorShow;            /* Whether the cursor is shown/hidden for a given blink event */
@@ -206,6 +206,8 @@ class DisplayScreen : public QGraphicsObject
         int findNextField(int pos);
         void applyCharAttributes(int pos, Cell *field);
         void updateFontMetrics();
+
+        int fieldCount;
 };
 
 #endif // DISPLAYSCREEN_H
