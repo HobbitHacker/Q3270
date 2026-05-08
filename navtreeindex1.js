@@ -1,5 +1,11 @@
 var NAVTREEINDEX1 =
 {
+"classSessionDialogBase.html#a98856a591c025f7e6e4f28cc8c58b427":[11,0,30,7],
+"classSessionDialogBase.html#aaddb0a3de567f188f2a8515878c817c7":[11,0,30,10],
+"classSessionDialogBase.html#aae7e425a259a47b187ec07dbda6e51d7":[11,0,30,1],
+"classSessionDialogBase.html#afa3421692d236b589d6f152f9474351f":[11,0,30,4],
+"classSessionPreviewWidget.html":[11,0,31],
+"classSessionPreviewWidget.html#a3a8363ac7194c76e90dc20533dd71a7b":[11,0,31,2],
 "classSessionPreviewWidget.html#a84a22b706006f08f1ca6b3602a4106e0":[11,0,31,0],
 "classSessionPreviewWidget.html#abe9c9bb3ce9ecc8a782eb0437de7d10b":[11,0,31,1],
 "classSessionStore.html":[11,0,32],

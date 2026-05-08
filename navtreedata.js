@@ -85,7 +85,7 @@ var NAVTREE =
 var NAVTREEINDEX =
 [
 "ActiveSettings_8h_source.html",
-"classSessionPreviewWidget.html#a84a22b706006f08f1ca6b3602a4106e0"
+"classSessionDialogBase.html#a98856a591c025f7e6e4f28cc8c58b427"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';
