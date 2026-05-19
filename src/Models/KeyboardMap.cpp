@@ -13,76 +13,76 @@
 #include "KeyboardMap.h"
 
 /**
- * @brief   KeyboardMap::getFactoryMap - return the hard-coded keyboard map
+ * @brief   KeyboardMap::factoryDefaults - return the hard-coded keyboard map
  * @return  a KeyboardMap containing the hard-coded defaults
  *
- * @details getFactoryMap returns the hard-coded default keyboard mapping, named 'Factory'.
+ * @details Returns the hard-coded default keyboard mapping, named 'Factory'.
  */
-KeyboardMap KeyboardMap::getFactoryMap()
+KeyboardMap KeyboardMap::factoryDefaults()
 {
     KeyboardMap km;
 
-    km.set("Enter",      { "Enter", "RCtrl" });
-    km.set("Reset",      { "LCtrl" });
-    km.set("Insert",     { "Insert" });
-    km.set("Delete",     { "Delete" });
-    km.set("Up",         { "Up" });
-    km.set("Down",       { "Down" });
-    km.set("Left",       { "Left" });
-    km.set("Right",      { "Right" });
+    km.assignKeys("Enter",      { "Enter", "RCtrl" });
+    km.assignKeys("Reset",      { "LCtrl" });
+    km.assignKeys("Insert",     { "Insert" });
+    km.assignKeys("Delete",     { "Delete" });
+    km.assignKeys("Up",         { "Up" });
+    km.assignKeys("Down",       { "Down" });
+    km.assignKeys("Left",       { "Left" });
+    km.assignKeys("Right",      { "Right" });
 
-    km.set("Backspace",  { "Backspace" });
+    km.assignKeys("Backspace",  { "Backspace" });
 
-    km.set("Tab",        { "Tab" });
-    km.set("Backtab",    { "Backtab", "Shift+Tab", "Shift+Backtab" });
+    km.assignKeys("Tab",        { "Tab" });
+    km.assignKeys("Backtab",    { "Backtab", "Shift+Tab", "Shift+Backtab" });
 
-    km.set("Home",       { "Home" });
-    km.set("EraseEOF",   { "End" });
-    km.set("NewLine",    { "Return" });
-    km.set("EndLine",    { "Ctrl+End" });
+    km.assignKeys("Home",       { "Home" });
+    km.assignKeys("EraseEOF",   { "End" });
+    km.assignKeys("NewLine",    { "Return" });
+    km.assignKeys("EndLine",    { "Ctrl+End" });
 
-    km.set("F1",         { "F1" });
-    km.set("F2",         { "F2" });
-    km.set("F3",         { "F3" });
-    km.set("F4",         { "F4" });
-    km.set("F5",         { "F5" });
-    km.set("F6",         { "F6" });
-    km.set("F7",         { "F7", "PgUp" });
-    km.set("F8",         { "F8", "PgDown" });
-    km.set("F9",         { "F9" });
-    km.set("F10",        { "F10" });
-    km.set("F11",        { "F11" });
-    km.set("F12",        { "F12" });
+    km.assignKeys("F1",         { "F1" });
+    km.assignKeys("F2",         { "F2" });
+    km.assignKeys("F3",         { "F3" });
+    km.assignKeys("F4",         { "F4" });
+    km.assignKeys("F5",         { "F5" });
+    km.assignKeys("F6",         { "F6" });
+    km.assignKeys("F7",         { "F7", "PgUp" });
+    km.assignKeys("F8",         { "F8", "PgDown" });
+    km.assignKeys("F9",         { "F9" });
+    km.assignKeys("F10",        { "F10" });
+    km.assignKeys("F11",        { "F11" });
+    km.assignKeys("F12",        { "F12" });
 
-    km.set("F13",        { "Shift+F1" });
-    km.set("F14",        { "Shift+F2" });
-    km.set("F15",        { "Shift+F3" });
-    km.set("F16",        { "Shift+F4" });
-    km.set("F17",        { "Shift+F5" });
-    km.set("F18",        { "Shift+F6" });
-    km.set("F19",        { "Shift+F7" } );
-    km.set("F20",        { "Shift+F8" });
-    km.set("F21",        { "Shift+F9" });
-    km.set("F22",        { "Shift+F10" });
-    km.set("F23",        { "Shift+F11" });
-    km.set("F24",        { "Shift+F12" });
+    km.assignKeys("F13",        { "Shift+F1" });
+    km.assignKeys("F14",        { "Shift+F2" });
+    km.assignKeys("F15",        { "Shift+F3" });
+    km.assignKeys("F16",        { "Shift+F4" });
+    km.assignKeys("F17",        { "Shift+F5" });
+    km.assignKeys("F18",        { "Shift+F6" });
+    km.assignKeys("F19",        { "Shift+F7" } );
+    km.assignKeys("F20",        { "Shift+F8" });
+    km.assignKeys("F21",        { "Shift+F9" });
+    km.assignKeys("F22",        { "Shift+F10" });
+    km.assignKeys("F23",        { "Shift+F11" });
+    km.assignKeys("F24",        { "Shift+F12" });
 
-    km.set("PA1",        { "Alt+1" });
-    km.set("PA2",        { "Alt+2" });
-    km.set("PA3",        { "Alt+3" });
+    km.assignKeys("PA1",        { "Alt+1" });
+    km.assignKeys("PA2",        { "Alt+2" });
+    km.assignKeys("PA3",        { "Alt+3" });
 
-    km.set("Attn",       { "Escape" });
+    km.assignKeys("Attn",       { "Escape" });
 
-    km.set("ToggleRuler", { "Ctrl+Home" });
+    km.assignKeys("ToggleRuler", { "Ctrl+Home" });
 
-    km.set("Clear",       { "Pause" });
+    km.assignKeys("Clear",       { "Pause" });
 
-    km.set("Copy",        { "Ctrl+C" });
-    km.set("Paste",       { "Ctrl+V" });
+    km.assignKeys("Copy",        { "Ctrl+C" });
+    km.assignKeys("Paste",       { "Ctrl+V" });
 
-    km.set("Info",        { "Ctrl+I" });
-    km.set("Fields",      { "Ctrl+F" });
-    km.set("DumpScreen",  { "Ctrl-D" });
+    km.assignKeys("Info",        { "Ctrl+I" });
+    km.assignKeys("Fields",      { "Ctrl+F" });
+    km.assignKeys("DumpScreen",  { "Ctrl-D" });
 
     km.name = "Factory";
 
@@ -96,7 +96,7 @@ KeyboardMap KeyboardMap::getFactoryMap()
  *
  * @details getFunctions returns a list of the functions used in the keyboard map
  */
-QStringList KeyboardMap::getFunctions() const
+QStringList KeyboardMap::functionNames() const
 {
     QStringList list;
     list.reserve(mappings.size()); // minor optimisation
@@ -108,62 +108,48 @@ QStringList KeyboardMap::getFunctions() const
 }
 
 /**
- * @brief   KeyboardMap::forEach - helper function to iterate over the map
- * @param   fn - a callback function to run
- *
- * @details forEach iterates over the keyboard map and calls the passed function fn
- */
-void KeyboardMap::forEach(std::function<void(const QString&, const QStringList&)> fn) const {
-    for (const auto &m : mappings) {
-        fn(m.functionName, m.keys);
-    }
-}
-
-/**
- * @brief   KeyboardMap::setKeyMapping - set a keyboard mapping
+ * @brief   KeyboardMap::assignKey - set a keyboard mapping
  * @param   functionName - the Q3270 function
  * @param   symbolic     - a string representing the key sequence
  *
- * @details setKeyMapping sets the supplied symbolic key sequence to the function name in the
- *          the keyboard map. The key sequence symbolic is a normalized form like 'Ctrl+A', but
- *          also handles left Ctrl and right Ctrl independently of each other. A key sequence can
- *          only map to a single Q3270 function, so any sequence passed is removed from anywhere
- *          it appears in the map first.
+ * @details assignKey is a helper to assign a single key sequence for a given function.
+ *          The key sequence is a normalized form like 'Ctrl+A'.
  */
-void KeyboardMap::setKeyMapping(const QString &functionName, const QString &symbolic)
+void KeyboardMap::assignKey(const QString &functionName, const QString &symbolic)
 {
-//    qDebug() << this->name << "Setting" << symbolic << "to" << functionName;
-
-    // Remove this key from ALL functions, including the target to avoid duplicates
-    for (Mapping &m : mappings) {
-        m.keys.removeAll(symbolic);
-    }
-
-    if (!functionName.isEmpty() && functionName != "Unassigned") {
-        auto it = std::find_if(mappings.begin(), mappings.end(),
-                               [&](const Mapping &m) { return m.functionName == functionName; });
-        if (it == mappings.end()) {
-            mappings.append({functionName, {symbolic}});
-        } else {
-            it->keys.append(symbolic);
-        }
-    }
+    assignKeys(functionName, {symbolic});
 }
 
 /**
- * @brief   KeyboardMap::set - set a given set of sequences to
- * @param   function
- * @param   keys
+ * @brief   KeyboardMap::assignKeys - assignKeys a given assignKeys of sequences to a function
+ * @param   function - the Q3270 function
+ * @param   keys - a list of symbolic key sequences to map to the function
+ *
+ * @details assignKeys assigns a given list of key sequences to a function. The existing mapping
+ *          for those keys is removed first, and then the new mapping is added.
  */
-void KeyboardMap::set(const QString &function, const QStringList &keys)
+void KeyboardMap::assignKeys(const QString &functionName, const QStringList &keys)
 {
-    for (Mapping &m : mappings) {
-        if (m.functionName == function) {
-            m.keys = keys; // replace the whole list
-            return;
-        }
+    for (Mapping &m : mappings)
+        for (const QString &key : keys)
+            m.keys.removeAll(key);
+
+    // Lambda for finding the mapping for the function name, if it exists
+    auto matchesFunction = [&](const Mapping &m) {
+        return m.functionName == functionName;
+    };
+
+    if (!functionName.isEmpty() && functionName != "Unassigned")
+    {
+        auto it = std::find_if(mappings.begin(), mappings.end(), matchesFunction);
+
+        if (it == mappings.end())
+            mappings.append({functionName, keys});
+        else
+            for (const QString &key : keys)
+                if (!it->keys.contains(key))
+                    it->keys.append(key);
     }
-    mappings.append({function, keys});
 }
 
 void KeyboardMap::dumpMaps(const QString &tag) const

@@ -444,10 +444,7 @@ void KeyboardThemeDialog::setKey()
         ? ui->keySequenceEdit->findChild<QLineEdit*>()->text().trimmed()  // handles LCtrl/RCtrl special cases
         : seq.toString(QKeySequence::PortableText);
 
-    currentTheme->setKeyMapping(
-        ui->KeyboardFunctionList->currentText(),
-        keyStr
-    );
+    currentTheme->assignKey(ui->KeyboardFunctionList->currentText(), keyStr);
 
     ui->KeyboardMap->setTheme(*currentTheme);
     ui->keySequenceEdit->clear();
@@ -513,7 +510,7 @@ void KeyboardThemeDialog::handleSpecialKey(const QString &symbolic)
     if (currentTheme->name == "Factory")
         return;
 
-    currentTheme->setKeyMapping(ui->KeyboardFunctionList->currentText(), symbolic);
+    currentTheme->assignKey(ui->KeyboardFunctionList->currentText(), symbolic);
     ui->KeyboardMap->setTheme(*currentTheme);
 
     dirty = true;

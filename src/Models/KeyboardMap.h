@@ -17,9 +17,8 @@
 
 struct Mapping
 {
-    QString functionName;
-    QStringList keys;
-
+    QString functionName;  // Q3270 function name (eg, "Enter", "Reset", "Copy")
+    QStringList keys;      // list of symbolic key sequences that map to the function (eg, "Ctrl+A", "Shift+Tab")
 };
 
 struct KeyboardMap
@@ -27,16 +26,13 @@ struct KeyboardMap
     QString name;
     QList<Mapping> mappings;
 
-    static KeyboardMap getFactoryMap();
+    QStringList functionNames() const;
 
-    void set(const QString &function, const QStringList &keys);
-    QStringList getFunctions() const;
+    static KeyboardMap factoryDefaults();
 
-    void forEach(std::function<void(const QString&, const QStringList&)> fn) const;
-    void setKeyMapping(const QString &functionName, const QString &sequence);
-
+    void assignKeys(const QString &function, const QStringList &keys);
+    void assignKey(const QString &functionName, const QString &sequence);
     void dumpMaps(const QString &tag) const;
-
 };
 
 #endif // KEYBOARDMAP_H

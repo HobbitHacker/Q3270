@@ -45,23 +45,21 @@ KeyboardMapWidget::~KeyboardMapWidget()
  * @brief   KeyboardMapWidget::setTheme - set the keyboard map to display
  * @param   map - the keyboard map to display
  *
- * @details setTheme takes a keyboard map and sets up the mappings of keys to function names in the table.
+ * @details setTheme takes a keyboard map and sets up the mappings of keys to function names
+ *          in the table.
  */
 void KeyboardMapWidget::setTheme(const KeyboardMap &map)
 {
     ui->KeyboardMap->setRowCount(0);
-
     int row = 0;
-
-    map.forEach([&row, this](const QString &function, const QStringList &keys)
-                {
+    for (const Mapping &m : map.mappings)
+    {
         ui->KeyboardMap->insertRow(row);
-        ui->KeyboardMap->setItem(row, 0, new QTableWidgetItem(keys.join(", ")));
-        ui->KeyboardMap->setItem(row, 1, new QTableWidgetItem(function));
+        ui->KeyboardMap->setItem(row, 0, new QTableWidgetItem(m.keys.join(", ")));
+        ui->KeyboardMap->setItem(row, 1, new QTableWidgetItem(m.functionName));
         ++row;
-    });
+    }
 }
-
 /**
  * @brief   KeyboardMapWidget::functionNameForRow - get the function name for a given row
  * @param   row - the row to get the function name for
@@ -119,6 +117,9 @@ KeyboardMap KeyboardMapWidget::currentMappings() const
 {
     KeyboardMap map;
 
+    // Iterate through the table rows and build the map based on the function and keys defined
+    // in each row of the table. Skip any rows that don't have a function defined, and for functions
+    // that do have keys defined, split the keys by comma and add them to the map for that function.
     for (int row = 0; row < ui->KeyboardMap->rowCount(); ++row) {
         QTableWidgetItem *keysItem = ui->KeyboardMap->item(row, 0);
         QTableWidgetItem *fnItem   = ui->KeyboardMap->item(row, 1);
@@ -126,17 +127,19 @@ KeyboardMap KeyboardMapWidget::currentMappings() const
         if (!fnItem)
             continue;
 
+        // Get the function name, and skip if empty
         const QString functionName = fnItem->text().trimmed();
         if (functionName.isEmpty())
             continue;
 
-
+        // If there are keys defined for this function, split them and add to the map
         if (keysItem) {
             const QStringList raw = keysItem->text().split(',', Qt::SkipEmptyParts);
+            // Trim each key sequence and add to the map if not empty
             for (const QString &seqStr : raw) {
                 const QString trimmed = seqStr.trimmed();
                 if (!trimmed.isEmpty()) {
-                    map.setKeyMapping(functionName, trimmed);
+                    map.assignKey(functionName, trimmed);
                 }
             }
         }

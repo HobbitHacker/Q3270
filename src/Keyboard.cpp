@@ -133,7 +133,7 @@ Keyboard::Keyboard() : functionMap(makeFunctionMap())
 
     clearBufferEntry();
 
-    setMap(KeyboardMap::getFactoryMap());
+    setMap(KeyboardMap::factoryDefaults());
 }
 
 /**

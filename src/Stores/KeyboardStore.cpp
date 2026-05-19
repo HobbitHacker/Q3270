@@ -31,14 +31,14 @@ KeyboardStore::KeyboardStore() : settings(Q3270_ORG, Q3270_APP)
 void KeyboardStore::load()
 {
     themes.clear();
-    themes.insert("Factory", KeyboardMap::getFactoryMap());
+    themes.insert("Factory", KeyboardMap::factoryDefaults());
 
     settings.beginGroup("KeyboardThemes");
 
     QStringList themeList = settings.childGroups();
     themeList.sort(Qt::CaseSensitive);
 
-    const QStringList functionList = themes.value("Factory").getFunctions();
+    const QStringList functionList = themes.value("Factory").functionNames();
 
     for (const QString &themeName : themeList) {
         if (themeName == "Factory")
@@ -53,7 +53,7 @@ void KeyboardStore::load()
         for (const QString &keyName : keys) {
             QString function = settings.value(keyName).toString();
             if (functionList.contains(function))
-                map.set(function, { keyName });
+                map.assignKeys(function, { keyName });
         }
 
         if (!map.mappings.isEmpty())
@@ -71,7 +71,7 @@ void KeyboardStore::load()
  */
 void KeyboardStore::loadFactoryTheme()
 {
-    themes.insert("Factory", KeyboardMap::getFactoryMap());
+    themes.insert("Factory", KeyboardMap::factoryDefaults());
 }
 
 /**
