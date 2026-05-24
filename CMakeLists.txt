@@ -29,7 +29,7 @@ configure_file(
     @ONLY
 )
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Qt meta compilers
@@ -43,15 +43,9 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "RelWithDebInfo" "MinSizeRel")
 endif()
 
-# Find Qt (Qt5 or Qt6)
-find_package(Qt6 QUIET COMPONENTS Core Gui Widgets Network Svg SvgWidgets)
-if(NOT Qt6_FOUND)
-  find_package(Qt5 REQUIRED COMPONENTS Core Gui Widgets Network Svg)
-endif()
+find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets Network Svg SvgWidgets)
 
 add_compile_options(-Wall -Wextra -Wunused-function -fdiagnostics-show-option -fno-diagnostics-color)
-
-add_definitions(-DQT_DEPRECATED_WARNINGS)
 
 # build logic for code in src/
 add_subdirectory(src)
@@ -59,7 +53,6 @@ add_subdirectory(src)
 if(APPLE)
     # This tells CMake to put the .app in the root of the install directory
     set_target_properties(Q3270 PROPERTIES
-        MACOSX_BUNDLE TRUE
         MACOSX_BUNDLE_BUNDLE_NAME "Q3270 Emulator"
         MACOSX_BUNDLE_GUI_IDENTIFIER "com.hobbithacker.q3270"
     )
@@ -77,12 +70,4 @@ else()
     else()
         install(FILES LICENSE README.md DESTINATION share/Q3270)
     endif()
-endif()
-
-option(DEBIAN_INSTALL "Install paths for Debian packaging" OFF)
-
-if(DEBIAN_INSTALL)
-    install(FILES LICENSE README.md DESTINATION share/q3270)
-else()
-    install(FILES LICENSE README.md DESTINATION share/Q3270)
 endif()

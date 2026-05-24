@@ -95,33 +95,17 @@ set(RESOURCES
     ${CMAKE_SOURCE_DIR}/resources/Q3270.qrc
 )
 
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
 if(APPLE)
     set(Q3270_BUNDLE_TYPE MACOSX_BUNDLE)
 endif()
 
-if(Qt6_FOUND)
-    qt_add_executable(Q3270 ${Q3270_BUNDLE_TYPE}
-        ${SOURCES}
-        ${HEADERS}
-        ${FORMS}
-        ${RESOURCES}
-    )
-    target_link_libraries(Q3270 PRIVATE Qt6::Core Qt6::Gui Qt6::Widgets Qt6::Network Qt6::Svg Qt6::SvgWidgets)
-else()
-    qt5_wrap_ui(UI_HEADERS ${FORMS})
-    qt5_add_resources(RCC_SOURCES ${RESOURCES})
-    add_executable(Q3270 ${Q3270_BUNDLE_TYPE}
-        ${SOURCES}
-        ${HEADERS}
-        ${UI_HEADERS}
-        ${RCC_SOURCES}
-    )
-    target_link_libraries(Q3270 PRIVATE Qt5::Core Qt5::Gui Qt5::Widgets Qt5::Network Qt5::Svg)
-    target_include_directories(Q3270 PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
-endif()
+qt_add_executable(Q3270 ${Q3270_BUNDLE_TYPE}
+    ${SOURCES}
+    ${HEADERS}
+    ${FORMS}
+    ${RESOURCES}
+)
+target_link_libraries(Q3270 PRIVATE Qt6::Core Qt6::Gui Qt6::Widgets Qt6::Network Qt6::Svg Qt6::SvgWidgets)
 
 target_include_directories(Q3270 PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
