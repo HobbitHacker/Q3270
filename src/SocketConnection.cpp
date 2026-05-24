@@ -24,7 +24,6 @@
 SocketConnection::SocketConnection(int modelType)
 {
     dataSocket = new QSslSocket(this);
-//    dataSocket = new QTcpSocket(this);
     telnetState = Q3270::TELNET_STATE_DATA;
 
     this->termName = tn3270e_terminal_types[modelType];
@@ -34,8 +33,7 @@ SocketConnection::SocketConnection(int modelType)
     connect(dataSocket, &QSslSocket::disconnected, this, &SocketConnection::closed);
 
     connect(dataSocket, &QSslSocket::readyRead, this, &SocketConnection::onReadyRead);
-    // Forward the error signal, QOverload is necessary as error() is overloaded, see the Qt docs
-    connect(dataSocket, QOverload<QAbstractSocket::SocketError>::of(&QAbstractSocket::errorOccurred), this, &SocketConnection::error);
+    connect(dataSocket, &QAbstractSocket::errorOccurred, this, &SocketConnection::error);
 
     tn3270e_Mode = false;
     secureMode = false;
@@ -71,8 +69,6 @@ void SocketConnection::setVerify(bool v)
  */
 void SocketConnection::error(QAbstractSocket::SocketError socketError)
 {
-    qDebug() << "Error:" << dataSocket->errorString();
-
     emit connectionEnded(dataSocket->errorString());
 }
 
@@ -98,7 +94,6 @@ void SocketConnection::opened()
 {
     emit encryptedConnection(Q3270::Unencrypted);
     emit connectionStarted();
-
 }
 
 /**
@@ -149,7 +144,7 @@ void SocketConnection::connectMainframe(const QString &address, quint16 port, co
 
     connect(dataSocket, &QSslSocket::stateChanged, this, &SocketConnection::socketStateChanged);
     connect(dataSocket, &QSslSocket::encrypted, this, &SocketConnection::socketEncrypted);
-    connect(dataSocket, QOverload<const QList<QSslError> &>::of(&QSslSocket::sslErrors), this, &SocketConnection::sslErrors);
+    connect(dataSocket, &QSslSocket::sslErrors, this, &SocketConnection::sslErrors);
 
     if (secureMode)
     {
@@ -161,10 +156,7 @@ void SocketConnection::connectMainframe(const QString &address, quint16 port, co
     }
 
     qDebug() << "Encrypted:" << dataSocket->isEncrypted();
-    qDebug() << "Certificate:" << dataSocket->peerCertificate();
 
-//    disconnect(dataSocket, QOverload<const QList<QSslError> &>::of(&QSslSocket::sslErrors), this, &SocketConnection::sslErrors);
-//    dataSocket->connectToHost(address, port);
     displayDataStream = d;
     this->luName = luName;
 }
@@ -173,7 +165,7 @@ void SocketConnection::connectMainframe(const QString &address, quint16 port, co
  * @brief   SocketConnection::sslErrors - handle SSL errors
  * @param   errors - the list of errors
  *
- * @details Called when SSL errors happen. If the user has chosen to not verify the certificates
+ * @details Called when SSL errors happen. If the user has chosen to verify the certificates
  *          for an SSL connection, the connection is failed, otherwise, the SSL errors are
  *          enumerated and passed to Qt to be ignored, after which the connection can be
  *          considered 'semi secure'.
@@ -214,6 +206,8 @@ void SocketConnection::socketEncrypted()
     {
         emit encryptedConnection(Q3270::Encrypted);
     }
+
+    qDebug() << "Certificate:" << dataSocket->peerCertificate();
 }
 
 /**
