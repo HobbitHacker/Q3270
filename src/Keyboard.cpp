@@ -1097,7 +1097,7 @@ void Keyboard::setMapping(QString key, QString function)
 
         // Strip out modifier bits (macOS returns them as part of the key code)
         const QKeySequence keys(keyList.constLast());
-        keyCode = keys[0] & ~Qt::KeyboardModifierMask;
+        keyCode = keys[0].key();
 
         // Extract any modifiers
         if (keyList.count() > 1)
