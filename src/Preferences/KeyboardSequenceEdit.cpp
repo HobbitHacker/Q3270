@@ -156,18 +156,3 @@ void KeyboardSequenceEdit::focusInEvent(QFocusEvent *event)
         le->setPlaceholderText(tr("Press shortcut…"));
     }
 }
-
-/**
- * @brief   KeyboardSequenceEdit::focusOutEvent - react to the field losing focus
- * @param   event - the incoming focus event
- *
- * @details focusOutEvent clears the placeholder text when the field loses focus.
- */
-void KeyboardSequenceEdit::focusOutEvent(QFocusEvent *event)
-{
-    QKeySequenceEdit::focusOutEvent(event);
-
-    if (QLineEdit *le = findChild<QLineEdit*>()) {
-        le->setPlaceholderText(tr(""));
-    }
-}
