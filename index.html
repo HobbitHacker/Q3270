@@ -95,9 +95,9 @@ $(document).ready(function(){initNavTree('index.html',''); initResizable(); });
 </div><!--header-->
 <div class="contents">
 <div class="textblock"><p><a class="anchor" id="md_Q3270"></a> © Andy Styles, 2020 - 2026</p>
-<h1><a class="anchor" id="autotoc_md8"></a>
+<h1><a class="anchor" id="autotoc_md1"></a>
 Introduction</h1>
-<h2><a class="anchor" id="autotoc_md9"></a>
+<h2><a class="anchor" id="autotoc_md2"></a>
 Background</h2>
 <p>Q3270 is a TN3270 terminal emulator for accessing IBM mainframe computers running MVS, z/OS, VM/CMS and related operating systems. It is built using the Qt framework and runs on Linux and macOS.</p>
 <p>The name Q3270 reflects both its Qt heritage and its purpose: a Qt-based 3270 terminal emulator.</p>
@@ -110,10 +110,10 @@ Background</h2>
 </ul>
 <p>It is developed using QtCreator and QtDesigner.</p>
 <p>This document does not describe what a 3270 terminal is, nor how to operate one. It is expected that the reader is familiar with IBM mainframe systems.</p>
-<h2><a class="anchor" id="autotoc_md10"></a>
+<h2><a class="anchor" id="autotoc_md3"></a>
 Colour Heritage</h2>
 <p>Q3270 supports the 7-colour field attribute model used on the later IBM 3278 type terminals. The standard palette — blue, red, pink, green, turquoise, yellow and white — is fully supported, and colour themes allow these to be customised to suit personal preference.</p>
-<h2><a class="anchor" id="autotoc_md11"></a>
+<h2><a class="anchor" id="autotoc_md4"></a>
 Platform Support</h2>
 <table class="markdownTable">
 <tr class="markdownTableHead">
@@ -125,41 +125,41 @@ Platform Support</h2>
 <tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone">Windows   </td><td class="markdownTableBodyNone">Not tested   </td></tr>
 </table>
-<h2><a class="anchor" id="autotoc_md12"></a>
+<h2><a class="anchor" id="autotoc_md5"></a>
 Dependencies</h2>
-<p>Q3270 requires Qt 5.15 or later, including the QtSvg module.</p>
+<p>Q3270 requires Qt 6 or later, including the QtSvg module.</p>
 <hr  />
-<h1><a class="anchor" id="autotoc_md14"></a>
+<h1><a class="anchor" id="autotoc_md7"></a>
 Installation</h1>
-<h2><a class="anchor" id="autotoc_md15"></a>
+<h2><a class="anchor" id="autotoc_md8"></a>
 Linux</h2>
 <p>Install Qt development libraries via your package manager, then build from source.</p>
-<p><b>Ubuntu/Debian:</b> </p><div class="fragment"><div class="line">sudo apt install build-essential qtbase5-dev qttools5-dev-tools libqt5svg5-dev</div>
-</div><!-- fragment --><p><b>Fedora:</b> </p><div class="fragment"><div class="line">sudo dnf install qt5-qtbase-devel qt5-qtsvg-devel</div>
-</div><!-- fragment --><p><b>openSUSE:</b> </p><div class="fragment"><div class="line">sudo zypper install libqt5-qtbase-devel libqt5-qtsvg-devel</div>
-</div><!-- fragment --><p><b>Arch Linux:</b> </p><div class="fragment"><div class="line">sudo pacman -S base-devel qt5-base qt5-svg</div>
+<p><b>Ubuntu/Debian:</b> </p><div class="fragment"><div class="line">sudo apt install build-essential qt6-base-dev qt6-tools-dev qt6-svg-dev</div>
+</div><!-- fragment --><p><b>Fedora:</b> </p><div class="fragment"><div class="line">sudo dnf install gcc-c++ qt6-qtbase-devel qt6-qtsvg-devel qt6-qttools-devel</div>
+</div><!-- fragment --><p><b>openSUSE:</b> </p><div class="fragment"><div class="line">sudo zypper install gcc-c++ libqt6-qtbase-devel libqt6-qtsvg-devel libqt6-qttools-devel</div>
+</div><!-- fragment --><p><b>Arch Linux:</b> </p><div class="fragment"><div class="line">sudo pacman -S base-devel qt6-base qt6-svg</div>
 </div><!-- fragment --><p>Then build: </p><div class="fragment"><div class="line">git clone https://github.com/HobbitHacker/Q3270.git</div>
 <div class="line">cd Q3270</div>
 <div class="line">cmake .</div>
 <div class="line">make</div>
 <div class="line">./Q3270</div>
-</div><!-- fragment --><h2><a class="anchor" id="autotoc_md16"></a>
+</div><!-- fragment --><h2><a class="anchor" id="autotoc_md9"></a>
 macOS</h2>
 <p>Q3270 is available via Homebrew:</p>
 <div class="fragment"><div class="line">brew tap HobbitHacker/q3270</div>
 <div class="line">brew install q3270</div>
 </div><!-- fragment --><hr  />
-<h1><a class="anchor" id="autotoc_md18"></a>
+<h1><a class="anchor" id="autotoc_md11"></a>
 Getting Started</h1>
 <p>When Q3270 is launched without any auto-start sessions configured, the main window appears with no active connection. From here you can open a saved session, create a new connection via the <a class="el" href="structSession.html">Session</a> menu, or configure auto-start sessions for hosts you connect to regularly.</p>
 <p><img src="../Images/MainWindow.png" alt="The Q3270 Main Window" class="inline"/></p>
-<h2><a class="anchor" id="autotoc_md19"></a>
+<h2><a class="anchor" id="autotoc_md12"></a>
 Sessions</h2>
 <p>In Q3270, a <em><a class="el" href="structSession.html">Session</a></em> is a named configuration for a particular host. Each session stores the host address and port, terminal size and characteristics, font, colour theme, and keyboard mapping. This allows you to maintain separate configurations for different hosts — for example, one session for a local Hercules MVS system and another for IBM's Z xPlore environment.</p>
 <hr  />
-<h1><a class="anchor" id="autotoc_md21"></a>
+<h1><a class="anchor" id="autotoc_md14"></a>
 Menu Reference</h1>
-<h2><a class="anchor" id="autotoc_md22"></a>
+<h2><a class="anchor" id="autotoc_md15"></a>
 File Menu</h2>
 <p>The <b>File</b> menu handles session files.</p>
 <p><img src="../Images/file_menu.png" alt="The File Menu" class="inline"/></p>
@@ -169,17 +169,17 @@ File Menu</h2>
 <p><b>Save <a class="el" href="structSession.html">Session</a></b> saves the current session settings, overwriting the previously saved version. This option is only available once a session has been saved at least once.</p>
 <p><b>Save <a class="el" href="structSession.html">Session</a> As</b> saves the current connection as a new session, or saves the current session under a new name.</p>
 <p><b>Quit</b> closes Q3270.</p>
-<h3><a class="anchor" id="autotoc_md23"></a>
+<h3><a class="anchor" id="autotoc_md16"></a>
 Open Session</h3>
 <p>Selecting a session from the list will apply its saved settings and connect to the configured host.</p>
 <p><img src="../Images/open_session.png" alt="Open a previously saved session" class="inline"/></p>
-<h3><a class="anchor" id="autotoc_md24"></a>
+<h3><a class="anchor" id="autotoc_md17"></a>
 Save Session As</h3>
 <p>Enter a session name and description, or click an existing session to use it as a starting point, then click OK. If you use the name of an existing session, Q3270 will ask you to confirm before overwriting it.</p>
 <p><img src="../Images/save_session_as.png" alt="Save Session As" class="inline"/></p>
 <p><img src="../Images/overwrite_save_as.png" alt="Confirm Overwrite" class="inline"/></p>
 <hr  />
-<h2><a class="anchor" id="autotoc_md26"></a>
+<h2><a class="anchor" id="autotoc_md19"></a>
 Session Menu</h2>
 <p>The <b><a class="el" href="structSession.html">Session</a></b> menu controls the connection to the host.</p>
 <p><img src="../Images/session_menu.png" alt="The Session Menu" class="inline"/></p>
@@ -187,7 +187,7 @@ Session Menu</h2>
 <p><b>Disconnect</b> terminates the current connection.</p>
 <p><b>Preferences</b> opens the session preferences dialog. See the Preferences section below for full details.</p>
 <hr  />
-<h2><a class="anchor" id="autotoc_md28"></a>
+<h2><a class="anchor" id="autotoc_md21"></a>
 Manage Menu</h2>
 <p>The <b>Manage</b> menu provides access to global application settings and session management features.</p>
 <p><b>Sessions</b> manages the list of saved sessions.</p>
@@ -195,14 +195,14 @@ Manage Menu</h2>
 <p><b><a class="el" href="classKeyboard.html" title="Keyboard::Keyboard - Keyboard input processing.">Keyboard</a> Maps</b> opens the keyboard mapping editor. <a class="el" href="classKeyboard.html" title="Keyboard::Keyboard - Keyboard input processing.">Keyboard</a> maps are global to the application; each session selects which map to use. See the <a class="el" href="classKeyboard.html" title="Keyboard::Keyboard - Keyboard input processing.">Keyboard</a> <a class="el" href="structMapping.html">Mapping</a> section for details.</p>
 <p><b>Colour Themes</b> opens the colour theme editor. Colour themes are global to the application; each session selects which theme to use. See the Colour Themes section for details.</p>
 <hr  />
-<h2><a class="anchor" id="autotoc_md30"></a>
+<h2><a class="anchor" id="autotoc_md23"></a>
 View Menu</h2>
 <p><b>Show Toolbar</b> toggles the toolbar on and off.</p>
 <hr  />
-<h1><a class="anchor" id="autotoc_md32"></a>
+<h1><a class="anchor" id="autotoc_md25"></a>
 Preferences</h1>
 <p>The Preferences dialog configures settings for the current session. It is opened via <a class="el" href="structSession.html">Session</a> → Preferences, and contains several tabs.</p>
-<h2><a class="anchor" id="autotoc_md33"></a>
+<h2><a class="anchor" id="autotoc_md26"></a>
 Connection Tab</h2>
 <p><img src="../Images/preferences_1.png" alt="Preferences Dialog - Connection Tab" class="inline"/></p>
 <p>The Connection tab specifies the host to connect to. The target can be a hostname or IP address. If the host uses a non-standard port (for example, Hercules with MVS 3.8j defaults to port 3270 rather than the standard TN3270 port 23), this can be overridden here. An optional LU name can be used to connect to a specific logical unit on the host, such as an MVS console.</p>
@@ -210,7 +210,7 @@ Connection Tab</h2>
 <blockquote class="doxtable">
 <p>&zwj;<b>Note:</b> Disabling certificate verification means your connection may be susceptible to interception. Only disable this when you are confident in the security of your network path. </p>
 </blockquote>
-<h2><a class="anchor" id="autotoc_md34"></a>
+<h2><a class="anchor" id="autotoc_md27"></a>
 Terminal Tab</h2>
 <p><img src="../Images/preferences_2.png" alt="Preferences Dialog - Terminal Tab" class="inline"/></p>
 <p>The <a class="el" href="classTerminal.html">Terminal</a> tab controls the characteristics of the terminal connection.</p>
@@ -224,23 +224,23 @@ Terminal Tab</h2>
 <p><b>Tweaks</b> modifies terminal behaviour relative to the original 3270 specification.</p>
 <p>The <b>Delete key</b> option controls whether the Delete key (which removes the character under the cursor and shifts remaining characters back) operates across display lines when a field spans multiple lines. By default this is disabled, matching original 3270 behaviour.</p>
 <p>The <b>Backspace</b> option controls whether the Backspace key can move the cursor back beyond the start of the current field. By default this is prevented, matching original 3270 behaviour.</p>
-<h2><a class="anchor" id="autotoc_md35"></a>
+<h2><a class="anchor" id="autotoc_md28"></a>
 Colour Tab</h2>
 <p>The Colour tab allows you to select which colour theme this session uses. Colour themes are configured globally via Manage → Colour Themes.</p>
-<h2><a class="anchor" id="autotoc_md36"></a>
+<h2><a class="anchor" id="autotoc_md29"></a>
 Keyboard Tab</h2>
 <p>The <a class="el" href="classKeyboard.html" title="Keyboard::Keyboard - Keyboard input processing.">Keyboard</a> tab allows you to select which keyboard map this session uses. <a class="el" href="classKeyboard.html" title="Keyboard::Keyboard - Keyboard input processing.">Keyboard</a> maps are configured globally via Manage → <a class="el" href="classKeyboard.html" title="Keyboard::Keyboard - Keyboard input processing.">Keyboard</a> Maps.</p>
 <hr  />
-<h1><a class="anchor" id="autotoc_md38"></a>
+<h1><a class="anchor" id="autotoc_md31"></a>
 Colour Themes</h1>
 <p>Colour themes control how 3270 field attributes are rendered on screen. Q3270 supports the 7-colour palette of the IBM 3179 terminal — blue, red, pink, green, turquoise, yellow and white — and themes allow each of these to be mapped to any colour you choose.</p>
 <p>Themes are global to the application and are selected per session. Multiple themes can be defined, allowing different visual styles for different sessions or hosts.</p>
 <hr  />
-<h1><a class="anchor" id="autotoc_md40"></a>
+<h1><a class="anchor" id="autotoc_md33"></a>
 Keyboard Mapping</h1>
 <p>Q3270 allows the keyboard to be fully remapped to suit personal preference or to match the layout of other 3270 emulators you may be familiar with. <a class="el" href="classKeyboard.html" title="Keyboard::Keyboard - Keyboard input processing.">Keyboard</a> maps are global to the application and are selected per session.</p>
 <hr  />
-<h1><a class="anchor" id="autotoc_md42"></a>
+<h1><a class="anchor" id="autotoc_md35"></a>
 Known Limitations</h1>
 <p>Q3270 is actively developed. The following features are not yet implemented:</p>
 <ul>
@@ -250,9 +250,9 @@ Known Limitations</h1>
 <li>Printer session support</li>
 <li>Some less common 3270 field attributes (Field Mark, Dup, mandatory entry, trigger fields)</li>
 </ul>
-<p>See the project backlog for the current development priorities.</p>
+<p>See <a href="https://github.com/HobbitHacker/Q3270/issues">https://github.com/HobbitHacker/Q3270/issues</a> for the current development priorities, and to report bugs or request enhancements.</p>
 <hr  />
-<h1><a class="anchor" id="autotoc_md44"></a>
+<h1><a class="anchor" id="autotoc_md37"></a>
 Licence</h1>
 <p>Q3270 is released under the BSD 3-Clause licence. See the LICENSE file for full details. </p>
 </div></div><!-- PageDoc -->

@@ -1,9 +1,9 @@
 var searchData=
 [
   ['insertchar_0',['insertChar',['../classDisplayScreen.html#a1de2aa500bce6bee62141ff1ef1d41c4',1,'DisplayScreen']]],
-  ['installation_1',['installation',['../index.html#autotoc_md14',1,'Installation'],['../md__2home_2runner_2work_2Q3270_2Q3270_2README.html#autotoc_md49',1,'Installation']]],
+  ['installation_1',['installation',['../index.html#autotoc_md7',1,'Installation'],['../md__2home_2runner_2work_2Q3270_2Q3270_2README.html#autotoc_md42',1,'Installation']]],
   ['interruptprocess_2',['interruptProcess',['../classDisplayScreen.html#ae575d2df38de3023710aa6aabbb00c18',1,'DisplayScreen']]],
-  ['introduction_3',['Introduction',['../index.html#autotoc_md8',1,'']]],
+  ['introduction_3',['Introduction',['../index.html#autotoc_md1',1,'']]],
   ['isaskip_4',['isAskip',['../classDisplayScreen.html#a7be6f9a39e8ef8319c0bbec3db42933c',1,'DisplayScreen']]],
   ['isautoskip_5',['isAutoSkip',['../classCell.html#a16e1b7d760451193af4fd56c7650199b',1,'Cell']]],
   ['isdisplay_6',['isDisplay',['../classCell.html#a623f5bc4f82ccaf7f8c92140de2bfce3',1,'Cell']]],

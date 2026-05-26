@@ -12,7 +12,7 @@ var searchData=
   ['getsession_9',['getSession',['../classSessionStore.html#a0d4fc2b0c3b82d487b3dd185157af717',1,'SessionStore']]],
   ['getterminalmodelname_10',['getTerminalModelName',['../classActiveSettings.html#abbb001d35e76954021cb2f15b3a9add4',1,'ActiveSettings']]],
   ['gettheme_11',['gettheme',['../classColourStore.html#a174316528b3cbbd8e659920f8d1494d6',1,'ColourStore::getTheme()'],['../classKeyboardStore.html#a6b733f65c5d13d57d3f4f6470652f951',1,'KeyboardStore::getTheme()']]],
-  ['getting_20started_12',['Getting Started',['../index.html#autotoc_md18',1,'']]],
+  ['getting_20started_12',['Getting Started',['../index.html#autotoc_md11',1,'']]],
   ['getunicodechar_13',['getUnicodeChar',['../classCodePage.html#a363356a6f384ead69660fe9eb51cd2cb',1,'CodePage']]],
   ['getunicodegraphicchar_14',['getUnicodeGraphicChar',['../classCodePage.html#a7f1160fe91bcb794c67cd61a15144925',1,'CodePage']]]
 ];
