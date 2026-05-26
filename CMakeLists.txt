@@ -11,7 +11,7 @@ if(APPLE)
     endif()
 endif()
 
-project(Q3270 VERSION 0.2.4 LANGUAGES CXX)
+project(Q3270 VERSION 0.3.0 LANGUAGES CXX)
 
 # Append Git hash to build to track commits
 execute_process(
