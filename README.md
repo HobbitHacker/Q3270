@@ -22,7 +22,7 @@ and related operating systems. Built with Qt, it runs on Linux and macOS.
 
 ### Linux
 
-Install Qt 5.15 development libraries via your package manager, then build from source:
+Install Qt 6 development libraries via your package manager, then build from source:
 
 **Ubuntu/Debian:**
 ```
