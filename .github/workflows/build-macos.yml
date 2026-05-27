@@ -21,11 +21,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install Qt5
+      - name: Install Qt6
         run: |
-          brew install qt@5
-          echo "Qt5_DIR=$(brew --prefix qt@5)/lib/cmake/Qt5" >> $GITHUB_ENV
-          echo "$(brew --prefix qt@5)/bin" >> $GITHUB_PATH
+          brew install qt
+          echo "CMAKE_PREFIX_PATH=$(brew --prefix qt)" >> $GITHUB_ENV
 
       - name: Configure and Build
         run: |
