@@ -13,7 +13,7 @@ jobs:
       release_notes: ${{ steps.cliff.outputs.content }}
     steps:
       - name: Checkout source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.2.2
         with:
           fetch-depth: 0
 
@@ -59,7 +59,7 @@ jobs:
           echo "URL=$URL" >> $GITHUB_OUTPUT
 
       - name: Checkout Homebrew tap
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.2.2
         with:
           repository: HobbitHacker/homebrew-q3270
           token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
@@ -83,7 +83,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           body: ${{ needs.generate-release-notes.outputs.release_notes }}
           draft: false
@@ -95,15 +95,15 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/')
     steps:
       - name: Checkout source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.2.2
 
       - name: Generate SBOM
-        uses: anchore/sbom-action@v0
+        uses: anchore/sbom-action@v0.18.0
         with:
           output-file: q3270-${{ github.ref_name }}.spdx.json
           format: spdx-json
 
       - name: Attach SBOM to release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           files: q3270-${{ github.ref_name }}.spdx.json

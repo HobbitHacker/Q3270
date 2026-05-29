@@ -19,7 +19,7 @@ jobs:
     name: Build for ${{ matrix.name }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.2.2
 
       - name: Install Qt6
         run: |
@@ -49,13 +49,13 @@ jobs:
 
       - name: Upload to GitHub Release
         if: ${{ github.workflow == 'Release' }}
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           files: "Q3270-${{ matrix.name }}.dmg"
 
       - name: Upload as workflow artifact
         if: ${{ github.workflow != 'Release' }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4.6.2
         with:
           name: Q3270-macOS-${{ matrix.name }}
           path: "Q3270-${{ matrix.name }}.dmg"
