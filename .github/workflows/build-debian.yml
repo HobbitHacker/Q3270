@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Install packaging tools
         run: |
@@ -20,11 +20,13 @@ jobs:
             debhelper \
             fakeroot \
             qt6-base-dev \
-            libqt6svg6-dev
+            libqt6svg6-dev \
+            libgl-dev
 
       - name: Generate debian/changelog
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] || \
+             [ "${{ github.ref_type }}" = "branch" ]; then
             VERSION="0.0.0-dev"
           else
             VERSION=${GITHUB_REF_NAME#v}
@@ -39,14 +41,14 @@ jobs:
           mv ../*.deb .
 
       - name: Upload to GitHub Release
-        if: ${{ github.workflow == 'Release' }}
-        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
         with:
           files: "*.deb"
 
       - name: Upload as workflow artifact
-        if: ${{ github.workflow == 'Release' }}
-        uses: actions/upload-artifact@v4
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: actions/upload-artifact@v4.6.2
         with:
           name: debian-packages
           path: "*.deb"

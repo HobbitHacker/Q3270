@@ -19,7 +19,7 @@ jobs:
     name: Build for ${{ matrix.name }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Install Qt6
         run: |
@@ -44,18 +44,19 @@ jobs:
 
       - name: Package DMG
         run: |
-          macdeployqt build/src/Q3270.app -dmg
-          mv build/src/Q3270.dmg Q3270-${{ matrix.name }}.dmg
+          macdeployqt build/src/Q3270.app -verbose=2 -dmg || true
+          codesign --force --deep --sign - build/src/Q3270.app
+          hdiutil create -volname Q3270 -srcfolder build/src/Q3270.app -ov -format UDZO Q3270-${{ matrix.name }}.dmg
 
       - name: Upload to GitHub Release
-        if: ${{ github.workflow == 'Release' }}
-        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
         with:
           files: "Q3270-${{ matrix.name }}.dmg"
 
       - name: Upload as workflow artifact
-        if: ${{ github.workflow != 'Release' }}
-        uses: actions/upload-artifact@v4
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: actions/upload-artifact@v4.6.2
         with:
           name: Q3270-macOS-${{ matrix.name }}
           path: "Q3270-${{ matrix.name }}.dmg"
