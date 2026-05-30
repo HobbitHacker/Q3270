@@ -48,13 +48,13 @@ jobs:
           mv build/src/Q3270.dmg Q3270-${{ matrix.name }}.dmg
 
       - name: Upload to GitHub Release
-        if: ${{ github.workflow == 'Release' }}
+        if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
           files: "Q3270-${{ matrix.name }}.dmg"
 
       - name: Upload as workflow artifact
-        if: ${{ github.workflow != 'Release' }}
+        if: startsWith(github.ref, 'refs/tags/')
         uses: actions/upload-artifact@v4.6.2
         with:
           name: Q3270-macOS-${{ matrix.name }}
