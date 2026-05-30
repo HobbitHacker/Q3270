@@ -44,8 +44,9 @@ jobs:
 
       - name: Package DMG
         run: |
-          macdeployqt build/src/Q3270.app -dmg
-          mv build/src/Q3270.dmg Q3270-${{ matrix.name }}.dmg
+          macdeployqt build/src/Q3270.app -verbose=2 -dmg || true
+          codesign --force --deep --sign - build/src/Q3270.app
+          hdiutil create -volname Q3270 -srcfolder build/src/Q3270.app -ov -format UDZO Q3270-${{ matrix.name }}.dmg
 
       - name: Upload to GitHub Release
         if: startsWith(github.ref, 'refs/tags/')
