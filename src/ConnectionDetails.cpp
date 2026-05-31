@@ -10,61 +10,101 @@
 
 #include <QDebug>
 
-#include "CertificateDetails.h"
-#include "ui_CertificateDetails.h"
+#include <QSslCertificateExtension>
+
+#include "ConnectionDetails.h"
+#include "ui_ConnectionDetails.h"
 
 /**
- *  @brief   CertificateDetails::CertificateDetails - Display Certificate Details
+ *  @brief   ConnectionDetails::ConnectionDetails - Display Certificate Details
  *
  *  @details This class displays details about certificates used for the connection. Certificates are
  *           extracted from the connection and stored in this class because each certificate is displayed
  *           individually
  */
-
-CertificateDetails::CertificateDetails(const QList<QSslCertificate> &certlist, QWidget *parent) :
+ConnectionDetails::ConnectionDetails(Terminal *terminal, ActiveSettings &activeSettings, QWidget *parent) :
     QDialog(parent),
-    ui(new Ui::CertificateDetails),
-    certs(certlist)
-
+    terminal(terminal),
+    activeSettings(activeSettings),
+    ui(new Ui::ConnectionDetails)
 {
     ui->setupUi(this);
 
-    connect(ui->certificateList, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &CertificateDetails::showCertificate);
+    ui->hostname->setText(activeSettings.getHostName());
+    ui->port->setText(QString::number(activeSettings.getHostPort()));
+    ui->logicalunit->setText(activeSettings.getHostLU());
 
-    ui->certificateList->clear();
+    ui->keyboardTheme->setText(activeSettings.getKeyboardThemeName());
+    ui->colourTheme->setText(activeSettings.getColourThemeName());
 
-    for (int i = 0; i < certlist.size(); ++i)
+    ui->session->setText(activeSettings.getSessionName());
+    ui->description->setText(activeSettings.getDescription());
+
+    certs = terminal->getCertDetails();
+    ui->Details->setDisabled(certs.isEmpty());;
+
+    if (certs.length() == 0)
     {
-        const QSslCertificate &cert = certlist.at(i);
-        ui->certificateList->addItem (tr("%1%2 (%3)").arg(!i ? tr("This site: ") : tr("Issued by: "))
+        ui->secure->setText("No");
+    }
+    else
+    {
+        ui->secure->setText("Yes");
+
+        connect(ui->certificateList, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &ConnectionDetails::showCertificate);
+
+        ui->certificateList->clear();
+
+        for (int i = 0; i < certs.size(); ++i)
+        {
+            const QSslCertificate &cert = certs.at(i);
+            ui->certificateList->addItem (tr("%1%2 (%3)").arg(!i ? tr("This site: ") : tr("Issued by: "))
                                              .arg(cert.subjectInfo(QSslCertificate::Organization).join(QLatin1Char(' ')))
                                              .arg(cert.subjectInfo(QSslCertificate::CommonName).join(QLatin1Char(' '))));
+        }
+
+        QSslCertificate intermediate = certs.last(); // issuer of the leaf
+
+        // Find the root in Qt's CA database
+        QList<QSslCertificate> cas = QSslConfiguration::defaultConfiguration().caCertificates();
+        for (const QSslCertificate &ca : cas) {
+            if (ca.subjectInfo(QSslCertificate::CommonName) == intermediate.issuerInfo(QSslCertificate::CommonName))
+            {
+                certs.append(ca);
+                ui->certificateList->addItem (tr("%1%2 (%3)").arg(tr("Issued by: "))
+                                                 .arg(ca.subjectInfo(QSslCertificate::Organization).join(QLatin1Char(' ')))
+                                                 .arg(ca.subjectInfo(QSslCertificate::CommonName).join(QLatin1Char(' '))));
+                break;
+            }
+        }
+
+        ui->certificateList->setCurrentIndex(0);
+
+        font.setBold(true);
     }
 
-    ui->certificateList->setCurrentIndex(0);
-
-    font.setBold(true);
+    ui->tabWidget->setCurrentIndex(0);
 }
 
 /**
- * @brief   CertificateDetails::~CertificateDetails - destructor
+ * @brief   ConnectionDetails::~ConnectionDetails - destructor
  *
  * @details Delete the ui object created in the constructor.
  */
-CertificateDetails::~CertificateDetails()
+ConnectionDetails::~ConnectionDetails()
 {
     delete ui;
 }
 
 /**
- * @brief   CertificateDetails::showCertificate - show a specific certificate
+ * @brief   ConnectionDetails::showCertificate - show a specific certificate
  * @param   i - the index of the certificate in the drop-down list
  *
  * @details This is called when the user selects a different certificate from the drop-down list.
  *          The fields are added to the table in the dialog, and are only shown if they have content.
  *          (ie, blank fields are ignored).
  */
-void CertificateDetails::showCertificate(int i)
+void ConnectionDetails::showCertificate(int i)
 {
     ui->certificateDetails->setRowCount(0);
 
@@ -84,6 +124,13 @@ void CertificateDetails::showCertificate(int i)
         addRow(tr("Issuer Locality"), cert.issuerInfo(QSslCertificate::LocalityName));
         addRow(tr("Issuer State/Province"), cert.issuerInfo(QSslCertificate::StateOrProvinceName));
         addRow(tr("Issuer Common Name"), cert.issuerInfo(QSslCertificate::CommonName));
+        addRow(tr("Valid From"), QStringList(QLocale().toString(cert.effectiveDate().toLocalTime(), QLocale::LongFormat)));
+        addRow(tr("Valid Until"),QStringList(QLocale().toString(cert.expiryDate().toLocalTime(), QLocale::LongFormat)));
+
+        for (int j = 0; j < cert.extensions().size(); ++j) {
+            QSslCertificateExtension ext = cert.extensions().at(j);
+            addRow(tr("X509 ") + ext.name(), QStringList(ext.value().toString()));
+        }
 //        addRow(tr("MD5 Digest"), cert.digest().to));
     }
 
@@ -91,7 +138,7 @@ void CertificateDetails::showCertificate(int i)
 }
 
 /**
- * @brief   CertificateDetails::addRow - add a row to the certificate information table
+ * @brief   ConnectionDetails::addRow - add a row to the certificate information table
  * @param   field - the field to be added (the description)
  * @param   value - the value of the field
  *
@@ -99,7 +146,7 @@ void CertificateDetails::showCertificate(int i)
  *          If there are multiple values for the field, they are all added, but the field name is
  *          shown only once.
  */
-void CertificateDetails::addRow(QString field, QStringList value)
+void ConnectionDetails::addRow(QString field, QStringList value)
 {
     if (value.isEmpty())
         return;
@@ -119,7 +166,7 @@ void CertificateDetails::addRow(QString field, QStringList value)
 }
 
 /**
- * @brief   CertificateDetails::itemClicked - shows details about a specific certificate field
+ * @brief   ConnectionDetails::itemClicked - shows details about a specific certificate field
  * @param   item - cell that was clicked in the table
  *
  * @details When a cell is clicked in the certificate fields table, this routine displays the details
@@ -137,7 +184,7 @@ void CertificateDetails::addRow(QString field, QStringList value)
  *                     value     <-- user clicks here, but we need to show from field2 to the last value.
  *          field3     value
  */
-void CertificateDetails::itemClicked(QTableWidgetItem *item)
+void ConnectionDetails::itemClicked(QTableWidgetItem *item)
 {
     int startRow = item->row();
 

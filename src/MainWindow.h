@@ -35,7 +35,7 @@
 #include "ColourTheme.h"
 #include "KeyboardThemeDialog.h"
 #include "ActiveSettings.h"
-#include "CertificateDetails.h"
+#include "ConnectionDetails.h"
 #include "Stores/SessionStore.h"
 #include "Stores/KeyboardStore.h"
 #include "Stores/ColourStore.h"
@@ -44,7 +44,7 @@ QT_BEGIN_NAMESPACE
 
 namespace Ui {
     class MainWindowDialog;
-    class CertificateDetails;
+    class ConnectionDetails;
 }
 
 QT_END_NAMESPACE

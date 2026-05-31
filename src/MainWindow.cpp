@@ -12,7 +12,7 @@
 
 #include "ui_MainWindowDialog.h"
 #include "ui_About.h"
-#include "ui_CertificateDetails.h"
+#include "ui_ConnectionDetails.h"
 #include "HostAddressUtils.h"
 #include "Sessions/ManageAutoStartDialog.h"
 
@@ -445,8 +445,8 @@ void MainWindow::menuAbout()
  */
 void MainWindow::menuAboutConnection()
 {
-    CertificateDetails certDetails(terminal->getCertDetails());
-    certDetails.exec();
+    ConnectionDetails connectDetails(terminal, activeSettings);
+    connectDetails.exec();
 }
 
 /**

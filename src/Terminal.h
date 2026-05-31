@@ -34,14 +34,10 @@ class Terminal : public QWidget
 
         void connectSession();
 
-        // int terminalWidth(bool alternate)       { return(!alternate ? primaryScreen->width() : alternateScreen->width()); }
-        // int terminalHeight(bool alternate)      { return(!alternate ? primaryScreen->height() : alternateScreen->height()); };
-        // int gridWidth(bool alternate)           { return(!alternate ? primaryScreen->gridWidth() : alternateScreen->gridWidth()); };
-        // int gridHeight(bool alternate)          { return(!alternate ? primaryScreen->gridHeight() : alternateScreen->gridHeight()); };
-        int terminalWidth(bool alternate)          { return(!alternate ? 80 : activeSettings.getTerminalX()); };
-        int terminalHeight(bool alternate)         { return(!alternate ? 24 : activeSettings.getTerminalY()); };
-        int gridWidth(bool alternate)              { return(!alternate ? 80 *  12 : activeSettings.getTerminalX() * 12); };
-        int gridHeight(bool alternate)             { return(!alternate ? 24 *  22 : activeSettings.getTerminalY() * 22); };
+        int terminalWidth(bool alternate)          { return(!alternate ? 80 : activeSettings.getTerminalX()); }
+        int terminalHeight(bool alternate)         { return(!alternate ? 24 : activeSettings.getTerminalY()); }
+        int gridWidth(bool alternate)              { return(!alternate ? 80 *  12 : activeSettings.getTerminalX() * 12); }
+        int gridHeight(bool alternate)             { return(!alternate ? 24 *  22 : activeSettings.getTerminalY() * 22); }
 
         void setBlink(bool blink);
         void setBlinkSpeed(int speed);
@@ -52,9 +48,9 @@ class Terminal : public QWidget
 
         void fit();
 
-        inline bool isConnected() { return sessionConnected; };
+        bool isConnected() { return sessionConnected; }
 
-        QList<QSslCertificate> getCertDetails()    { return socket->getCertDetails(); };
+        QList<QSslCertificate> getCertDetails()    { return socket->getCertDetails(); }
 
     signals:
 

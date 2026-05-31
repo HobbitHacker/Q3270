@@ -1,7 +1,7 @@
 set(SOURCES
     ActiveSettings.cpp
     Cell.cpp
-    CertificateDetails.cpp
+    ConnectionDetails.cpp
     CodePage.cpp
     ColourTheme.cpp
     Display/ClickableSvgItem.cpp
@@ -40,7 +40,7 @@ set(SOURCES
 set(HEADERS
     ActiveSettings.h
     Cell.h
-    CertificateDetails.h
+    ConnectionDetails.h
     CodePage.h
     ColourTheme.h
     DisplayScreen.h
@@ -77,7 +77,7 @@ set(HEADERS
 
 set(FORMS
     About.ui
-    CertificateDetails.ui
+    ConnectionDetails.ui
     ColourTheme.ui
     KeyboardTheme.ui
     MainWindowDialog.ui

@@ -8,27 +8,32 @@
  * See the LICENSE file in the project root for full license information.
  */
 
-#ifndef CERTIFICATEDETAILS_H
-#define CERTIFICATEDETAILS_H
+#ifndef CONNECTIONDETAILS_H
+#define CONNECTIONDETAILS_H
 
 #include <QDialog>
 #include <QSslCertificate>
 #include <QTableWidgetItem>
 
+#include "Terminal.h"
+#include "ActiveSettings.h"
+
 namespace Ui {
-    class CertificateDetails;
+    class ConnectionDetails;
 }
 
-class CertificateDetails : public QDialog
+class ConnectionDetails : public QDialog
 {
     Q_OBJECT
 
     public:
-        explicit CertificateDetails(const QList<QSslCertificate> &list, QWidget *parent = nullptr);
-        ~CertificateDetails();
+        explicit ConnectionDetails(Terminal *terminal, ActiveSettings &activeSettings, QWidget *parent = nullptr);
+        ~ConnectionDetails();
 
     private:
-        Ui::CertificateDetails *ui;
+        Terminal *terminal;
+        ActiveSettings &activeSettings;
+        Ui::ConnectionDetails *ui;
 
         QList<QSslCertificate> certs;
 
@@ -41,4 +46,4 @@ class CertificateDetails : public QDialog
         void itemClicked(QTableWidgetItem *t);
 };
 
-#endif // CERTIFICATEDETAILS_H
+#endif // CONNECTIONDETAILS_H
