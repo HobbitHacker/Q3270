@@ -146,7 +146,7 @@ var NAVTREEINDEX1 =
 "md__2home_2runner_2work_2Q3270_2Q3270_2README.html#autotoc_md46":[9,2],
 "md__2home_2runner_2work_2Q3270_2Q3270_2README.html#autotoc_md48":[9,3],
 "pages.html":[],
-"structColours.html":[10,0,5],
+"structColours.html":[10,0,4],
 "structFunctionInfo.html":[10,0,11],
 "structKeyboardMap.html":[10,0,14],
 "structKeyboardMap.html#ac070e32faeab3c543a9e7374a7546653":[10,0,14,2],

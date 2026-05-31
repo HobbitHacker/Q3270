@@ -11,8 +11,8 @@ var hierarchy =
     [ "LaunchParms", "structLaunchParms.html", null ],
     [ "Mapping", "structMapping.html", null ],
     [ "QDialog", null, [
-      [ "CertificateDetails", "classCertificateDetails.html", null ],
       [ "ColourTheme", "classColourTheme.html", null ],
+      [ "ConnectionDetails", "classConnectionDetails.html", null ],
       [ "KeyboardThemeDialog", "classKeyboardThemeDialog.html", null ],
       [ "ManageAutoStartDialog", "classManageAutoStartDialog.html", null ],
       [ "PreferencesDialog", "classPreferencesDialog.html", null ],

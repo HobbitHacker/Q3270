@@ -1,7 +1,7 @@
 var searchData=
 [
-  ['_7ecertificatedetails_0',['~CertificateDetails',['../classCertificateDetails.html#a82c60a3db49350de89ff0b4f978978fb',1,'CertificateDetails']]],
-  ['_7ecolourtheme_1',['~ColourTheme',['../classColourTheme.html#aa76ad318a4de078c309a460384de5ecb',1,'ColourTheme']]],
+  ['_7ecolourtheme_0',['~ColourTheme',['../classColourTheme.html#aa76ad318a4de078c309a460384de5ecb',1,'ColourTheme']]],
+  ['_7econnectiondetails_1',['~ConnectionDetails',['../classConnectionDetails.html#a284e235079bc01723a747800ab3825e5',1,'ConnectionDetails']]],
   ['_7edisplayscreen_2',['~DisplayScreen',['../classDisplayScreen.html#a7d636ab1136da678b87e40f63274d8da',1,'DisplayScreen']]],
   ['_7ekeyboardmapwidget_3',['~KeyboardMapWidget',['../classKeyboardMapWidget.html#a77bcd8280c893d673bcc9cc268d8c70b',1,'KeyboardMapWidget']]],
   ['_7ekeyboardthemedialog_4',['~KeyboardThemeDialog',['../classKeyboardThemeDialog.html#a404f6a941ffe6f20d94432fd477d855e',1,'KeyboardThemeDialog']]],
