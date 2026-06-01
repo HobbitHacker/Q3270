@@ -21,14 +21,14 @@
      inkscape:pagecheckerboard="0"
      inkscape:deskcolor="#d1d1d1"
      inkscape:zoom="1.1171875"
-     inkscape:cx="511.55245"
+     inkscape:cx="512"
      inkscape:cy="512"
      inkscape:window-width="2560"
      inkscape:window-height="1387"
      inkscape:window-x="0"
      inkscape:window-y="0"
      inkscape:window-maximized="1"
-     inkscape:current-layer="g41" />
+     inkscape:current-layer="svg45" />
   <defs
      id="defs1">
     <clipPath
@@ -52,12 +52,25 @@
      ry="108"
      fill="#0e120e"
      id="rect2" />
+  <rect
+     x="80"
+     y="80"
+     width="520"
+     height="520"
+     rx="108"
+     ry="108"
+     fill="none"
+     stroke="#1a2e1a"
+     stroke-width="3"
+     opacity="0.6"
+     id="rect43" />
   <g
      clip-path="url(#sq)"
-     id="g41">
+     id="g41"
+     transform="translate(0,-21.25)">
     <rect
        x="110"
-       y="138"
+       y="149.95312"
        width="460"
        height="344"
        rx="18"
@@ -74,9 +87,11 @@
        fill="#070e07"
        id="rect4" />
     <g
-       font-family="'Courier New',monospace"
+       font-family="'Courier New', monospace"
        font-weight="400"
-       id="g35">
+       id="g35"
+       inkscape:label="g35"
+       transform="translate(0,13.28125)">
       <rect
          x="130"
          y="158"
@@ -94,174 +109,180 @@
          opacity="0.90"
          text-anchor="middle"
          id="text5"
-         style="-inkscape-font-specification:'Courier New, monospace, Normal';font-family:'Courier New', monospace;font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:13px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-anchor:middle;opacity:0.9;fill:#ffff44">Q3270  -  PRIMARY OPTION MENU</text>
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:13px;font-family:'Courier New', monospace;-inkscape-font-specification:'Courier New, monospace, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-anchor:middle;opacity:0.9;fill:#ffff44"
+         inkscape:label="Primary Option Menu">Q3270 - PRIMARY OPTION MENU</text>
       <text
          x="148"
          y="200"
-         font-size="12"
+         font-size="12px"
          fill="#2ecc54"
-         opacity="0.80"
-         id="text6">SELECT OPTION  ==&gt;</text>
+         opacity="0.8"
+         id="text6"
+         inkscape:label="Select Option">SELECT OPTION ==&gt;</text>
       <text
          x="280.625"
          y="200"
          font-size="12px"
          fill="#ffffff"
          opacity="0.7"
-         id="text7">_</text>
+         id="text7"
+         inkscape:label="cursor">_</text>
       <text
          x="148"
          y="222"
-         font-size="12"
+         font-size="12px"
          fill="#ffff44"
-         opacity="0.70"
-         id="text8">0</text>
+         opacity="0.7"
+         id="text8"
+         inkscape:label="0">0</text>
       <text
          x="163"
          y="222"
-         font-size="12"
+         font-size="12px"
          fill="#2ecc54"
          opacity="0.55"
-         id="text9">SETTINGS</text>
+         id="text9"
+         inkscape:label="Settings">SETTINGS</text>
       <text
          x="255"
          y="222"
-         font-size="12"
+         font-size="12px"
          fill="#ffffff"
-         opacity="0.40"
-         id="text10">- Session preferences</text>
+         opacity="0.4"
+         id="text10"
+         inkscape:label="Settings Description">- Session preferences</text>
       <text
          x="148"
          y="237"
-         font-size="12"
+         font-size="12px"
          fill="#ffff44"
-         opacity="0.70"
+         opacity="0.7"
          id="text11">1</text>
       <text
          x="163"
          y="237"
-         font-size="12"
+         font-size="12px"
          fill="#2ecc54"
          opacity="0.55"
          id="text12">CONNECT</text>
       <text
          x="255"
          y="237"
-         font-size="12"
+         font-size="12px"
          fill="#ffffff"
-         opacity="0.40"
+         opacity="0.4"
          id="text13">- Open host session</text>
       <text
          x="148"
          y="252"
-         font-size="12"
+         font-size="12px"
          fill="#ffff44"
-         opacity="0.70"
+         opacity="0.7"
          id="text14">2</text>
       <text
          x="163"
          y="252"
-         font-size="12"
+         font-size="12px"
          fill="#2ecc54"
          opacity="0.55"
          id="text15">SESSIONS</text>
       <text
          x="255"
          y="252"
-         font-size="12"
+         font-size="12px"
          fill="#ffffff"
-         opacity="0.40"
+         opacity="0.4"
          id="text16">- Manage sessions</text>
       <text
          x="148"
          y="267"
-         font-size="12"
+         font-size="12px"
          fill="#ffff44"
-         opacity="0.70"
+         opacity="0.7"
          id="text17">3</text>
       <text
          x="163"
          y="267"
-         font-size="12"
+         font-size="12px"
          fill="#2ecc54"
          opacity="0.55"
          id="text18">TRANSFER</text>
       <text
          x="255"
          y="267"
-         font-size="12"
+         font-size="12px"
          fill="#ffffff"
-         opacity="0.40"
+         opacity="0.4"
          id="text19">- File transfer</text>
       <text
          x="148"
          y="282"
-         font-size="12"
+         font-size="12px"
          fill="#ffff44"
-         opacity="0.70"
+         opacity="0.7"
          id="text20">4</text>
       <text
          x="163"
          y="282"
-         font-size="12"
+         font-size="12px"
          fill="#2ecc54"
          opacity="0.55"
          id="text21">MACROS</text>
       <text
          x="255"
          y="282"
-         font-size="12"
+         font-size="12px"
          fill="#ffffff"
-         opacity="0.40"
+         opacity="0.4"
          id="text22">- Keyboard macros</text>
       <text
          x="148"
          y="297"
-         font-size="12"
+         font-size="12px"
          fill="#ffff44"
-         opacity="0.70"
+         opacity="0.7"
          id="text23">5</text>
       <text
          x="163"
          y="297"
-         font-size="12"
+         font-size="12px"
          fill="#2ecc54"
          opacity="0.55"
          id="text24">LOG</text>
       <text
          x="255"
          y="297"
-         font-size="12"
+         font-size="12px"
          fill="#ffffff"
-         opacity="0.40"
+         opacity="0.4"
          id="text25">- Session log</text>
       <text
          x="148"
          y="317"
-         font-size="12"
+         font-size="12px"
          fill="#2ecc54"
          opacity="0.18"
          id="text26">────────────────────────────────────</text>
       <text
          x="148"
          y="333"
-         font-size="12"
+         font-size="12px"
          fill="#ff4444"
          opacity="0.75"
          id="text27">X</text>
       <text
          x="163"
          y="333"
-         font-size="12"
+         font-size="12px"
          fill="#ff4444"
          opacity="0.55"
          id="text28">EXIT</text>
       <text
          x="255"
          y="333"
-         font-size="12"
+         font-size="12px"
          fill="#ffffff"
-         opacity="0.40"
+         opacity="0.4"
          id="text29">- End session</text>
       <text
          x="148"
@@ -270,9 +291,12 @@
          fill="#44ffff"
          opacity="0.35"
          id="text30"
-         style="-inkscape-font-specification:'Courier New, monospace, Normal';font-family:'Courier New', monospace;font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:11.00000061px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;opacity:0.35;fill:#44ffff"><tspan
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:11px;font-family:'Courier New', monospace;-inkscape-font-specification:'Courier New, monospace, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;opacity:0.35;fill:#44ffff"
+         inkscape:label="Version"><tspan
            sodipodi:role="line"
-           id="tspan46">Q3270 Terminal Emulator v0.2.2</tspan></text>
+           id="tspan46"
+           x="148"
+           y="355">Q3270 Terminal Emulator v0.3.0</tspan></text>
       <text
          x="148"
          y="368"
@@ -280,66 +304,69 @@
          fill="#44ffff"
          opacity="0.28"
          id="text31"
-         style="-inkscape-font-specification:'Courier New, monospace, Normal';font-family:'Courier New', monospace;font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:11.00000061px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;opacity:0.28;fill:#44ffff"><tspan
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:11px;font-family:'Courier New', monospace;-inkscape-font-specification:'Courier New, monospace, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;opacity:0.28;fill:#44ffff"><tspan
            sodipodi:role="line"
-           id="tspan45">© 2026 Licensed under BSD-3</tspan></text>
+           id="tspan45"
+           x="148"
+           y="368">© 2026 Licensed under BSD-3</tspan></text>
       <text
          x="148"
          y="388"
-         font-size="11"
+         font-size="11px"
          fill="#4a8fff"
-         opacity="0.50"
+         opacity="0.5"
          id="text32">PF1=HELP</text>
       <text
          x="228"
          y="388"
-         font-size="11"
+         font-size="11px"
          fill="#4a8fff"
-         opacity="0.50"
+         opacity="0.5"
          id="text33">PF3=EXIT</text>
       <text
          x="308"
          y="388"
-         font-size="11"
+         font-size="11px"
          fill="#4a8fff"
-         opacity="0.50"
+         opacity="0.5"
          id="text34">PF9=SWAP</text>
       <text
          x="393"
          y="388"
-         font-size="11"
+         font-size="11px"
          fill="#4a8fff"
-         opacity="0.50"
+         opacity="0.5"
          id="text35">PF12=CANCEL</text>
     </g>
     <text
-       x="189.63567"
-       y="560.48315"
+       x="156.42639"
+       y="572.42786"
        font-family="'Courier New', monospace"
        font-size="88px"
        font-weight="700"
        letter-spacing="2"
        id="text39"
-       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:94.3548px;font-family:'Courier New', monospace;-inkscape-font-specification:'Courier New, monospace, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;letter-spacing:2.14443;stroke-width:1.07221"
-       transform="scale(1.0166853,0.98358854)"><tspan
+       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:115.997px;font-family:'Courier New', monospace;-inkscape-font-specification:'Courier New, monospace, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;letter-spacing:2.63629;stroke-width:1.31814"
+       transform="scale(1.0166853,0.98358854)"
+       inkscape:label="Q3270 text"><tspan
          fill="#3a8fff"
          id="tspan35"
-         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:94.3548px;font-family:'Courier New', monospace;-inkscape-font-specification:'Courier New, monospace, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;stroke-width:1.07221">Q</tspan><tspan
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:115.997px;font-family:'Courier New', monospace;-inkscape-font-specification:'Courier New, monospace, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;stroke-width:1.31814">Q</tspan><tspan
          fill="#ff4444"
          id="tspan36"
-         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:94.3548px;font-family:'Courier New', monospace;-inkscape-font-specification:'Courier New, monospace, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;stroke-width:1.07221">3</tspan><tspan
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:115.997px;font-family:'Courier New', monospace;-inkscape-font-specification:'Courier New, monospace, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;stroke-width:1.31814">3</tspan><tspan
          fill="#ff44ff"
          id="tspan37"
-         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:94.3548px;font-family:'Courier New', monospace;-inkscape-font-specification:'Courier New, monospace, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;stroke-width:1.07221">2</tspan><tspan
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:115.997px;font-family:'Courier New', monospace;-inkscape-font-specification:'Courier New, monospace, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;stroke-width:1.31814">2</tspan><tspan
          fill="#44ff44"
          id="tspan38"
-         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:94.3548px;font-family:'Courier New', monospace;-inkscape-font-specification:'Courier New, monospace, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;stroke-width:1.07221">7</tspan><tspan
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:115.997px;font-family:'Courier New', monospace;-inkscape-font-specification:'Courier New, monospace, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;stroke-width:1.31814">7</tspan><tspan
          fill="#44ffff"
          id="tspan39"
-         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:94.3548px;font-family:'Courier New', monospace;-inkscape-font-specification:'Courier New, monospace, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;stroke-width:1.07221">0</tspan></text>
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:115.997px;font-family:'Courier New', monospace;-inkscape-font-specification:'Courier New, monospace, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;stroke-width:1.31814">0</tspan></text>
     <rect
        x="130"
-       y="432"
+       y="451.92188"
        width="420"
        height="1"
        fill="#2ecc54"
@@ -347,24 +374,24 @@
        id="rect39" />
     <text
        x="148"
-       y="447"
-       font-family="'Courier New',monospace"
-       font-size="12"
+       y="466.92188"
+       font-family="'Courier New', monospace"
+       font-size="12px"
        fill="#ff4444"
-       opacity="0.60"
+       opacity="0.6"
        id="text40">DISCONNECTED</text>
     <text
        x="496"
-       y="447"
-       font-family="'Courier New',monospace"
-       font-size="12"
+       y="466.92188"
+       font-family="'Courier New', monospace"
+       font-size="12px"
        fill="#2ecc54"
-       opacity="0.50"
+       opacity="0.5"
        text-anchor="end"
        id="text41">09:41:22</text>
     <rect
        x="130"
-       y="158"
+       y="167.29688"
        width="420"
        height="304"
        rx="10"
@@ -375,45 +402,4 @@
        opacity="0.6"
        id="rect41" />
   </g>
-  <rect
-     x="110"
-     y="138"
-     width="460"
-     height="344"
-     rx="18"
-     ry="18"
-     fill="none"
-     stroke="#2a4a2a"
-     stroke-width="1.5"
-     opacity="0.4"
-     id="rect42" />
-  <rect
-     x="80"
-     y="80"
-     width="520"
-     height="520"
-     rx="108"
-     ry="108"
-     fill="none"
-     stroke="#1a2e1a"
-     stroke-width="3"
-     opacity="0.6"
-     id="rect43" />
-  <rect
-     x="178"
-     y="553"
-     width="324"
-     height="20"
-     rx="6"
-     fill="#131813"
-     opacity="0.9"
-     id="rect44" />
-  <rect
-     x="285"
-     y="576"
-     width="110"
-     height="14"
-     rx="7"
-     fill="#1a2a1a"
-     id="rect45" />
 </svg>
