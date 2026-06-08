@@ -45,22 +45,31 @@ MainWindow::MainWindow(LaunchParms launchParms) : QMainWindow(launchParms.parent
 
     ui->setupUi(this);
 
-    connect(ui->actionSessionPreferences,        &QAction::triggered, this, &MainWindow::menuSessionPreferences);
-    connect(ui->actionConnect,                   &QAction::triggered, this, &MainWindow::menuConnect);
-    connect(ui->actionQuit,                      &QAction::triggered, this, &MainWindow::menuQuit);
-    connect(ui->actionDisconnect,                &QAction::triggered, this, &MainWindow::menuDisconnect);
+    // File Menu
     connect(ui->actionNew,                       &QAction::triggered, this, &MainWindow::menuNew);
-    connect(ui->actionAbout_Q3270,               &QAction::triggered, this, &MainWindow::menuAbout);
-    connect(ui->actionColourThemes,              &QAction::triggered, this, &MainWindow::menuColourTheme);
-    connect(ui->actionSave_SessionAs,            &QAction::triggered, this, &MainWindow::menuSaveSessionAs);
     connect(ui->actionOpen_Session,              &QAction::triggered, this, &MainWindow::menuOpenSession);
-    connect(ui->actionKeyboardThemes,            &QAction::triggered, this, &MainWindow::menuKeyboardTheme);
-    connect(ui->actionOpen_Duplicate_Session,    &QAction::triggered, this, &MainWindow::menuDuplicate);
+//    connect(ui->actionOpen_Duplicate_Session,    &QAction::triggered, this, &MainWindow::menuDuplicate);
+    connect(ui->actionSave_Session,              &QAction::triggered, this, &MainWindow::menuSaveSession);
+    connect(ui->actionSave_SessionAs,            &QAction::triggered, this, &MainWindow::menuSaveSessionAs);
+    connect(ui->actionFile_Transfer,             &QAction::triggered, this, &MainWindow::menuFileTransfer);
+    connect(ui->actionQuit,                      &QAction::triggered, this, &MainWindow::menuQuit);
+
+    // Session Menu
+    connect(ui->actionConnect,                   &QAction::triggered, this, &MainWindow::menuConnect);
+    connect(ui->actionDisconnect,                &QAction::triggered, this, &MainWindow::menuDisconnect);
+    connect(ui->actionSessionPreferences,        &QAction::triggered, this, &MainWindow::menuSessionPreferences);
+
+    // Manage Menu
     connect(ui->actionManage_Sessions,           &QAction::triggered, this, &MainWindow::menuManageSessions);
     connect(ui->actionManage_Auto_Sart_Sessions, &QAction::triggered, this, &MainWindow::menuManageAutostartSessions);
-    connect(ui->actionSave_Session,              &QAction::triggered, this, &MainWindow::menuSaveSession);
+    connect(ui->actionKeyboardThemes,            &QAction::triggered, this, &MainWindow::menuKeyboardTheme);
+    connect(ui->actionColourThemes,              &QAction::triggered, this, &MainWindow::menuColourTheme);
+
+    // Help Menu
+    connect(ui->actionAbout_Q3270,               &QAction::triggered, this, &MainWindow::menuAbout);
     connect(ui->actionConnection_Information,    &QAction::triggered, this, &MainWindow::menuAboutConnection);
 
+    // View Menu
     QAction *tbToggle = ui->toolBar->toggleViewAction();
     ui->menuView->addAction(tbToggle);
     tbToggle->setText(tr("Show Toolbar"));
@@ -85,6 +94,9 @@ MainWindow::MainWindow(LaunchParms launchParms) : QMainWindow(launchParms.parent
 
     // Construct the 3270 Terminal
     terminal = new Terminal(ui->screenView, activeSettings, codePage, keyboard, Colours::getFactoryTheme());
+
+    // File Transfer Processing
+    fileTransfer = new FileTransferDialog(terminal, this);
 
     // Used for dynamically showing font changes when using the font tab in Preferences
     connect(settings, &PreferencesDialog::tempFontChange, terminal, &Terminal::setCurrentFont);
@@ -158,6 +170,21 @@ MainWindow::MainWindow(LaunchParms launchParms) : QMainWindow(launchParms.parent
 }
 
 /**
+ * @brief   MainWindow::~MainWindow - destructor
+ *
+ * @details Delete any objects obtained via 'new'.
+ */
+MainWindow::~MainWindow()
+{
+    // Cleanup
+    delete keyboardTheme;
+    //FIXME: delete of other objects obtained with 'new'
+    delete ui;
+}
+
+/** File Menu Routines **/
+
+/**
  * @brief   MainWindow::menuNew - start a new window
  *
  * @details Start a new window without a session
@@ -169,14 +196,79 @@ void MainWindow::menuNew()
 }
 
 /**
- * @brief   MainWindow::menuDuplicate - start a duplicate window
+ * @brief   MainWindow::mruConnect - open a previously used setting
  *
- * @details Start a new window with the same session name as the existing one
+ * @details Invoked when the user has selected a previously used setting from the most recently
+ *          used list. This may be a session name, or just a simple host name and port. If it
+ *          is not a session, the Save session option is greyed out.
  */
-void MainWindow::menuDuplicate()
+void MainWindow::mruConnect()
 {
-    MainWindow *newWindow = new MainWindow(LaunchParms { this, activeSettings.getSessionName() });
-    newWindow->show();
+    if (terminal->isConnected()) {
+        terminal->closeConnection();
+    }
+    // Find the sending object - the line in the 'Recent' menu
+    QAction *sender = (QAction *) QObject::sender();
+
+    // Split the menu entry into parts: 1. Host 192.168.0.1:23 or 1. Session Fred
+    QStringList parts = sender->text().split(" ");
+
+    qDebug() << parts[1];
+    qDebug() << parts[2];
+
+    // If this is a Host address, use that to connect to
+    if (!parts[1].compare("Host")) {
+        // Store the address in the current settings
+        QString namePart;
+        int portPart;
+        QString LUPart;
+
+        HostAddressUtils::parse(parts[2], namePart, portPart, LUPart);
+
+        activeSettings.setHostAddress(namePart, portPart, LUPart);
+
+        // Pick up address and connect
+        terminal->connectSession();
+
+        // Set Connect menu entries
+        ui->actionDisconnect->setEnabled(true);
+        ui->actionConnect->setDisabled(true);
+
+        // Not a named session, so can't save it as one (use Save Session As.. instead)
+        ui->actionSave_Session->setDisabled(true);
+    } else {
+        // Will contain either session name or host address
+        Session s = sessionStore.getSession(parts.mid(2).join(" "));
+
+        s.toActiveSettings(activeSettings);
+
+        // Connect the session
+        terminal->connectSession();
+
+        // It's a named session, so can save it
+        ui->actionSave_Session->setEnabled(true);
+    }
+
+    // Update recently used list
+    updateMRUList();
+}
+
+/**
+ * @brief   MainWindow::menuOpenSession - open a session
+ *
+ * @details Open a session
+ */
+void MainWindow::menuOpenSession()
+{
+    // Open Session dialog
+    OpenSessionDialog dlg(sessionStore, activeSettings, this);
+
+    bool opened(dlg.exec());
+
+    if (opened == QDialog::Accepted) {
+        terminal->connectSession();
+        updateMRUList();
+    }
 }
 
 /**
@@ -207,123 +299,39 @@ void MainWindow::menuSaveSessionAs()
 }
 
 /**
- * @brief   MainWindow::menuOpenSession - open a session
+ *  @brief   MainWindow::menuFileTransfer - open the file transfer dialog
  *
- * @details Open a session
+ *  @details Open the file transfer dialog, which allows the user to transfer files to/from the host
+ *           using IND$FILE.
  */
-void MainWindow::menuOpenSession()
+void MainWindow::menuFileTransfer()
 {
-    // Open Session dialog
-    OpenSessionDialog dlg(sessionStore, activeSettings, this);
-
-    bool opened(dlg.exec());
-
-    if (opened == QDialog::Accepted)
-    {
-        terminal->connectSession();
-        updateMRUList();
-    }
+    fileTransfer->showForm();
 }
 
 /**
- * @brief   MainWindow::menuManageSessions - Open the manage session dialog
+ * @brief   MainWindow::menuDuplicate - start a duplicate window
  *
- * @details Open the manage sessions dialog to allow the user to add/delete sessions.
+ * @details Start a new window with the same session name as the existing one
  */
-void MainWindow::menuManageSessions()
+void MainWindow::menuDuplicate()
 {
-    ManageSessionsDialog dlg(sessionStore, this);
-    dlg.exec();
+    MainWindow *newWindow = new MainWindow(LaunchParms { this, activeSettings.getSessionName() });
+    newWindow->show();
 }
 
 /**
- * @brief   MainWindow::menuManageSessions - Open the manage session dialog
+ * @brief   MainWindow::menuQuit - exit the application
  *
- * @details Open the manage sessions dialog to allow the user to add/delete sessions.
+ * @details Exit the application.
  */
-void MainWindow::menuManageAutostartSessions()
+void MainWindow::menuQuit()
 {
-    // Manage Sessions Dialog
-    ManageAutoStartDialog dlg(sessionStore);
-    dlg.exec();
+    storeAppWideSettings();
+    QApplication::quit();
 }
 
-/**
- * @brief   MainWindow::mruConnect - open a previously used setting
- *
- * @details Invoked when the user has selected a previously used setting from the most recently
- *          used list. This may be a session name, or just a simple host name and port. If it
- *          is not a session, the Save session option is greyed out.
- */
-void MainWindow::mruConnect()
-{
-    if (terminal->isConnected())
-    {
-        terminal->closeConnection();
-    }
-    // Find the sending object - the line in the 'Recent' menu
-    QAction *sender = (QAction *)QObject::sender();
-
-    // Split the menu entry into parts: 1. Host 192.168.0.1:23 or 1. Session Fred
-    QStringList parts = sender->text().split(" ");
-
-    qDebug() << parts[1];
-    qDebug() << parts[2];
-
-    // If this is a Host address, use that to connect to
-    if (!parts[1].compare("Host"))
-    {
-        // Store the address in the current settings
-        QString namePart;
-        int portPart;
-        QString LUPart;
-
-        HostAddressUtils::parse(parts[2], namePart, portPart, LUPart);
-
-        activeSettings.setHostAddress(namePart, portPart, LUPart);
-
-        // Pick up address and connect
-        terminal->connectSession();
-
-        // Set Connect menu entries
-        ui->actionDisconnect->setEnabled(true);
-        ui->actionConnect->setDisabled(true);
-
-        // Not a named session, so can't save it as one (use Save Session As.. instead)
-        ui->actionSave_Session->setDisabled(true);
-    }
-    else
-    {
-        // Will contain either session name or host address
-        Session s = sessionStore.getSession(parts.mid(2).join(" "));
-
-        s.toActiveSettings(activeSettings);
-
-        // Connect the session
-        terminal->connectSession();
-
-        // It's a named session, so can save it
-        ui->actionSave_Session->setEnabled(true);
-    }
-
-    // Update recently used list
-    updateMRUList();
-
-
-}
-
-/**
- * @brief   MainWindow::~MainWindow - destructor
- *
- * @details Delete any objects obtained via 'new'.
- */
-MainWindow::~MainWindow()
-{
-    // Cleanup
-    delete keyboardTheme;
-    //FIXME: delete of other objects obtained with 'new'
-    delete ui;
-}
+/** Session Menu Routines **/
 
 /**
  * @brief   MainWindow::menuConnect - connect to a host
@@ -348,7 +356,6 @@ void MainWindow::menuConnect()
     }
 }
 
-
 /**
  * @brief   MainWindow::menuDisconnect - disconnect from a host
  *
@@ -372,6 +379,43 @@ void MainWindow::menuSessionPreferences()
     settings->showForm();
 }
 
+/** Manage Menu Routines **/
+
+/**
+ * @brief   MainWindow::menuManageSessions - Open the manage session dialog
+ *
+ * @details Open the manage sessions dialog to allow the user to add/delete sessions.
+ */
+void MainWindow::menuManageSessions()
+{
+    ManageSessionsDialog dlg(sessionStore, this);
+    dlg.exec();
+}
+
+/**
+ * @brief   MainWindow::menuManageAutostartSessions - Open the manage autostart session dialog
+ *
+ * @details Open the manage autostart sessions dialog to allow the user to add/delete sessions
+ *          that are automatically started when the application is launched.
+ */
+void MainWindow::menuManageAutostartSessions()
+{
+    // Manage Sessions Dialog
+    ManageAutoStartDialog dlg(sessionStore);
+    dlg.exec();
+}
+
+/**
+ * @brief   MainWindow::menuKeyboardTheme - open the Keyboard Themes dialog
+ *
+ * @details Open the Keyboard Themes dialog, which allows the user to add, change and delete
+ *          Keyboard Themes.
+ */
+void MainWindow::menuKeyboardTheme()
+{
+    keyboardTheme->exec();
+}
+
 /**
  * @brief   MainWindow::menuColourTheme - open the Colour Themes dialog
  *
@@ -383,23 +427,7 @@ void MainWindow::menuColourTheme()
     colourTheme->exec();
 }
 
-/**
- * @brief   MainWindow::menuKeyboardTheme - open the Keyboard Themes dialog
- *
- * @details Open the Keyboard Themes dialog, which allows the user to add, change and delete
- *          Keyboard Themes.
- */
-void MainWindow::menuKeyboardTheme()
-{
-/*    if (keyboardTheme)
-    {
-        const QString kbTheme = activeSettings.getKeyboardThemeName();
-        if (!kbTheme.isEmpty())
-            keyboardTheme->getTheme(kbTheme);
-*/
-    keyboardTheme->exec();
-  //  }
-}
+/** Help Menu Routines **/
 
 /**
  * @brief   MainWindow::menuAbout - display the 'About' dialog.
@@ -449,6 +477,8 @@ void MainWindow::menuAboutConnection()
     connectDetails.exec();
 }
 
+/** Slots **/
+
 /**
  * @brief   MainWindow::enableConnectMenu - enable/disable the Connect menu
  * @param   state - true to enable, false to disable
@@ -459,6 +489,7 @@ void MainWindow::enableConnectMenu(bool state)
 {
     ui->actionConnect->setEnabled(state);
     ui->actionConnection_Information->setDisabled(true);
+    ui->actionFile_Transfer->setEnabled(state);
 }
 
 /**
@@ -471,6 +502,7 @@ void MainWindow::enableDisconnectMenu()
     ui->actionDisconnect->setEnabled(true);
     ui->actionConnect->setDisabled(true);
     ui->actionConnection_Information->setEnabled(true);
+    ui->actionFile_Transfer->setEnabled(true);
 }
 
 /**
@@ -483,6 +515,7 @@ void MainWindow::disableDisconnectMenu()
     ui->actionDisconnect->setDisabled(true);
     ui->actionConnect->setEnabled(true);
     ui->actionConnection_Information->setEnabled(true);
+    ui->actionFile_Transfer->setEnabled(false);
 }
 
 void MainWindow::populateMRU()
@@ -557,17 +590,6 @@ void MainWindow::updateMRUList()
         applicationSettings.setValue("Entry", mruList.at(i));
     }
     applicationSettings.endArray();
-}
-
-/**
- * @brief   MainWindow::menuQuit - exit the application
- *
- * @details Exit the application.
- */
-void MainWindow::menuQuit()
-{
-    storeAppWideSettings();
-    QApplication::quit();
 }
 
 /**

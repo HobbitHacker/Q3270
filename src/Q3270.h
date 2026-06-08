@@ -272,6 +272,12 @@ namespace Q3270 {
         DoNotResetMDT
     };
 
+    enum class TransferHostType {
+        TSO  = 0,
+        VM   = 1,
+        CICS = 2
+    };
+
     Q_ENUM_NS(TelnetState)
     Q_ENUM_NS(RulerStyle)
     Q_ENUM_NS(Colour)
@@ -281,7 +287,8 @@ namespace Q3270 {
     Q_ENUM_NS(FontTweak)
     Q_ENUM_NS(EraseResetMDT)
     Q_ENUM_NS(Highlight)
-};
+    Q_ENUM_NS(TransferHostType)
+}
 
 Q_DECLARE_METATYPE(Q3270::RulerStyle)
 

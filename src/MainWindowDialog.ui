@@ -27,7 +27,7 @@
       <item>
        <widget class="QGraphicsView" name="screenView">
         <property name="frameShape">
-         <enum>QFrame::NoFrame</enum>
+         <enum>QFrame::Shape::NoFrame</enum>
         </property>
        </widget>
       </item>
@@ -41,7 +41,7 @@
      <x>0</x>
      <y>0</y>
      <width>735</width>
-     <height>18</height>
+     <height>29</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuConnect">
@@ -68,6 +68,7 @@
     <addaction name="actionSave_Session"/>
     <addaction name="actionSave_SessionAs"/>
     <addaction name="separator"/>
+    <addaction name="actionFile_Transfer"/>
     <addaction name="separator"/>
     <addaction name="actionQuit"/>
    </widget>
@@ -103,7 +104,7 @@
     <string>toolBar</string>
    </property>
    <property name="toolButtonStyle">
-    <enum>Qt::ToolButtonTextUnderIcon</enum>
+    <enum>Qt::ToolButtonStyle::ToolButtonTextUnderIcon</enum>
    </property>
    <attribute name="toolBarArea">
     <enum>TopToolBarArea</enum>
@@ -256,6 +257,14 @@
    </property>
    <property name="text">
     <string>Auto Start Sessions...</string>
+   </property>
+  </action>
+  <action name="actionFile_Transfer">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>File Transfer  (IND$FILE)</string>
    </property>
   </action>
  </widget>

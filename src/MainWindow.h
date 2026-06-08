@@ -31,6 +31,7 @@
 #include <QString>
 
 #include "Preferences/PreferencesDialog.h"
+#include "FileTransfer/FileTransferDialog.h"
 #include "Terminal.h"
 #include "ColourTheme.h"
 #include "KeyboardThemeDialog.h"
@@ -75,15 +76,14 @@ class MainWindow : public QMainWindow
 
   private slots:
 
-      //File menu
+      // File menu
       void menuNew();
       void menuDuplicate();
       void mruConnect();
-      void menuSaveSessionAs();
-      void menuSaveSession();
       void menuOpenSession();
-      void menuManageSessions();
-      void menuManageAutostartSessions();
+      void menuSaveSession();
+      void menuSaveSessionAs();
+      void menuFileTransfer();
       void menuQuit();
 
       // Session menu
@@ -91,7 +91,9 @@ class MainWindow : public QMainWindow
       void menuDisconnect();
       void menuSessionPreferences();
 
-      // Themes menu
+      // Manage menu
+      void menuManageSessions();
+      void menuManageAutostartSessions();
       void menuKeyboardTheme();
       void menuColourTheme();
 
@@ -138,6 +140,9 @@ class MainWindow : public QMainWindow
       KeyboardThemeDialog *keyboardTheme;
       PreferencesDialog *settings;
       ColourTheme *colourTheme;
+
+      // File Transfer
+      FileTransferDialog *fileTransfer;
 
       int maxMruCount;
 
