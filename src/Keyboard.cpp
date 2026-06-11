@@ -1031,6 +1031,32 @@ void Keyboard::paste()
 }
 
 /**
+ * @brief   Keyboard::sendKeys - send a string of keys to the screen
+ * @param   keys - the keys to be sent
+ *
+ * @details Send a string of keys to the screen. This is used by File Transfer dialog
+ *          to send the transfer command to the screen.
+ */
+void Keyboard::sendKeys(const QString &keys)
+{
+    for(int i = 0; i < keys.length(); i++)
+    {
+        emit key_Character(keys.at(i).toLatin1(), Q3270::InsertOverType::OvertypeMode);
+    }
+}
+
+void Keyboard::sendActionKey(const QString &keyName)
+{
+    Handler method = functionMap.value(keyName);
+
+    if (method) {
+        (this->*method)();
+    } else {
+        qWarning() << "No binding found for key:" << keyName;
+    }
+}
+
+/**
  * @brief   Keyboard::info - show details about the character under the cursor
  *
  * @details A debugging routine that will display all the information about the Cell under the cursor

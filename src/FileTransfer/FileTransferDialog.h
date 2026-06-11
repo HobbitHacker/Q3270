@@ -18,7 +18,9 @@ class FileTransferDialog : public QDialog
         explicit FileTransferDialog(Terminal *terminal, QWidget *parent = nullptr);
         ~FileTransferDialog();
 
-        void showForm();
+        bool showForm();
+
+        const QString getCommand();
 
     private slots:
         void on_browseButton_clicked();

@@ -306,7 +306,10 @@ void MainWindow::menuSaveSessionAs()
  */
 void MainWindow::menuFileTransfer()
 {
-    fileTransfer->showForm();
+    if (fileTransfer->showForm()) {
+        // File transfer dialog returned OK, so start the file transfer
+        keyboard.sendKeys(fileTransfer->getCommand());
+    }
 }
 
 /**

@@ -38,6 +38,8 @@ class Keyboard : public QObject
         void invoke(const QString &functionName);
         void setLocked(const bool locked);
 
+        void sendKeys(const QString &keys);
+        void sendActionKey(const QString &keyname);
 
     signals:
         void setEnterInhibit();
