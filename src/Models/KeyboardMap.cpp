@@ -10,6 +10,7 @@
 
 #include <QDebug>
 
+#include "Q3270.h"
 #include "KeyboardMap.h"
 
 /**
@@ -39,7 +40,7 @@ KeyboardMap KeyboardMap::factoryDefaults()
     km.assignKeys("Home",       { "Home" });
     km.assignKeys("EraseEOF",   { "End" });
     km.assignKeys("NewLine",    { "Return" });
-    km.assignKeys("EndLine",    { "Ctrl+End" });
+    km.assignKeys("EndLine",    { Q3270_ENDLINE_KEY });
 
     km.assignKeys("F1",         { "F1" });
     km.assignKeys("F2",         { "F2" });
@@ -73,12 +74,12 @@ KeyboardMap KeyboardMap::factoryDefaults()
 
     km.assignKeys("Attn",       { "Escape" });
 
-    km.assignKeys("ToggleRuler", { "Ctrl+Home" });
+    km.assignKeys("ToggleRuler", { Q3270_RULER_KEY });
 
     km.assignKeys("Clear",       { "Pause" });
 
-    km.assignKeys("Copy",        { "Ctrl+C" });
-    km.assignKeys("Paste",       { "Ctrl+V" });
+    km.assignKeys("Copy",        { Q3270_COPY_KEY });
+    km.assignKeys("Paste",       { Q3270_PASTE_KEY });
 
     km.assignKeys("Info",        { "Ctrl+I" });
     km.assignKeys("Fields",      { "Ctrl+F" });

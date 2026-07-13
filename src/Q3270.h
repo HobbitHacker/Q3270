@@ -306,6 +306,10 @@ Q_DECLARE_METATYPE(Q3270::RulerStyle)
     #define Q3270_LEFT_CTRL  59
     #define Q3270_RIGHT_CTRL 62
     #define Q3270_META_TEXT "Cmd"
+    #define Q3270_COPY_KEY "Meta+C"
+    #define Q3270_PASTE_KEY "Meta+V"
+    #define Q3270_ENDLINE_KEY "Meta+End"
+    #define Q3270_RULER_KEY "Meta+Home"
 #else
     #define Q3270_CTRL_MOD   Qt::ControlModifier
     #define Q3270_META_MOD   Qt::MetaModifier
@@ -314,6 +318,10 @@ Q_DECLARE_METATYPE(Q3270::RulerStyle)
     #define Q3270_LEFT_CTRL  65507
     #define Q3270_RIGHT_CTRL 65508
     #define Q3270_META_TEXT "Meta"
+    #define Q3270_COPY_KEY "Ctrl+C"
+    #define Q3270_PASTE_KEY "Ctrl+V"
+    #define Q3270_ENDLINE_KEY "Ctrl+End"
+    #define Q3270_RULER_KEY "Ctrl+Home"
 #endif
 
 
