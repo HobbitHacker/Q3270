@@ -36,7 +36,7 @@ jobs:
           cmake -G "Unix Makefiles" .. \
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_OSX_ARCHITECTURES="${{ matrix.arch }}" \
-            -DCMAKE_OSX_SYSROOT=$(xcrun --sdk macos --show-sdk-path) \
+            -DCMAKE_OSX_SYSROOT=$(xcrun --sdk macosx --show-sdk-path) \
             -DCMAKE_PREFIX_PATH="${{ env.Qt5_DIR }}" \
             -DCMAKE_OSX_DEPLOYMENT_TARGET="11.0" \
             -DCMAKE_APPLE_SILICON_PROCESSOR=x86_64
