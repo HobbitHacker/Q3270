@@ -20,14 +20,9 @@
 #include <QSslConfiguration>
 #include <QSslCipher>
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <iostream>
-#include <string.h>
-
 #include <arpa/telnet.h>
 
-#include "ProcessDataStream.h"
+#include "ProcessDataStream/ProcessDataStream.h"
 
 class QHostAddress;
 
@@ -85,6 +80,8 @@ class SocketConnection : public QObject
 
         QByteArray incomingData;
         QByteArray subNegotiationBuffer;
+        QByteArray responseBuffer;
+        QByteArray escapedData;
 
         void processSubNegotiation();
 
@@ -95,6 +92,7 @@ class SocketConnection : public QObject
         char tn32703_functions_flags[5];
 
         void dump(QByteArray &a, QString title);
+        void escapeFF(const QByteArray &a);
 };
 
 #endif // SOCKETCONNECTION_H

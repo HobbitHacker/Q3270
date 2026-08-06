@@ -290,9 +290,6 @@ void SocketConnection::onReadyRead()
 
         if (dataStream.commitTransaction())
         {
-
-            qDebug();
-
             switch (telnetState)
 			{
 
@@ -478,32 +475,55 @@ void SocketConnection::onReadyRead()
  */
 void SocketConnection::sendResponse(QByteArray &b)
 {
-    QByteArray response;
+    responseBuffer.clear();
 
     // create a QDataStream operating on the socket
     QDataStream dataStream(dataSocket);
 
     if (tn3270e_Mode)
     {
-        response.append((uchar) TN3270E_DATATYPE_3270_DATA);
-        response.append((uchar) 0x00);
-        response.append((uchar) 0x00);
-        response.append((uchar) 0x00);
-        response.append((uchar) 0x00);
-        dump(response, "Send TN3270E Response");
-        dataStream.writeRawData(response, 5);
+        responseBuffer.append((uchar) TN3270E_DATATYPE_3270_DATA);
+        responseBuffer.append((uchar) 0x00);
+        responseBuffer.append((uchar) 0x00);
+        responseBuffer.append((uchar) 0x00);
+        responseBuffer.append((uchar) 0x00);
     }
 
     dump(b, "Sending data");
-    dataStream.writeRawData(b.constData(), b.size());
 
-    response.clear();
-    response.append((uchar) IAC);
-    response.append((uchar) EOR);
-    dump(response, "Sending EOR Response");
+    escapeFF(b);
+    responseBuffer.append(escapedData);
 
-    dataStream.writeRawData(response, 2);
+    responseBuffer.append((uchar) IAC);
+    responseBuffer.append((uchar) EOR);
+
+    dataStream.writeRawData(responseBuffer, responseBuffer.size());
 }
+
+/**
+ * @brief   SocketConnection::escapeFF - double up 0xFF bytes in a buffer
+ * @param   raw - the raw data to be sent to the host
+ * @return  the escaped data
+ *
+ * @details Any 0xFF bytes in the outgoing data need to be doubled up. This routine takes a buffer and
+ *          returns a new buffer with any 0xFF bytes doubled up.
+ */
+void SocketConnection::escapeFF(const QByteArray &raw)
+{
+    escapedData.clear();
+
+    for(int i = 0; i < raw.size(); i++)
+    {
+        escapedData.append(raw.at(i));
+
+        //Double up 0xFF bytes
+        if (raw.at(i) == 0xFF)
+        {
+            escapedData.append(0xFF);
+        }
+    }
+}
+
 
 /**
  * @brief   SocketConnection::processSubNegotiation - process a TN3270E sub-negotiation packet

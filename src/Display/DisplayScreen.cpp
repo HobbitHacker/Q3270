@@ -1209,18 +1209,7 @@ void DisplayScreen::addPosToBuffer(QByteArray &buffer, int pos)
     }
 
     buffer.append(byte1);
-
-    if (byte1 == 0xFF)
-    {
-        buffer.append(0xFF);
-    }
-
     buffer.append(byte2);
-
-    if (byte2 == 0xFF)
-    {
-        buffer.append(0xFF);
-    }
 }
 
 /**

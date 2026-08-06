@@ -78,7 +78,7 @@ class ProcessDataStream : public QObject
         int lastAID;    // Last AID encountered
 
         bool wsfProcessing;
-        int wsfLen;
+        unsigned int wsfLen;
 
         // True if the previous byte/byte sequence was a command; used for PT processing
         bool lastWasCmd;
@@ -88,6 +88,11 @@ class ProcessDataStream : public QObject
 
         // True if the last Program Tab operation hit the end of the display
         bool lastPTwrapped;
+
+        // IND$FILE related fields
+        unsigned long int ftRecordCount;  // Record count for file transfer
+        unsigned long long ftBytes;       // Bytes received for file transfer
+        bool ftMsg;                       // True if the last InsertReq was for a message
 
         void setScreen(bool alternate = false);
 
@@ -124,10 +129,23 @@ class ProcessDataStream : public QObject
         void WSFreset();
         void WSFreadPartition();
         void WSFoutbound3270DS();
+        void WSFtransfer();
+
+        void ftOpen();
+        void ftInsertReq();
+        void ftInsertData();
+        void ftClose();
+
+        void ftDataAck();
 
         void replySummary();
-        void addBytes(uchar *bytes, int len);
+
         void processAttributePairs(int mode);
+
+        // Helpers
+        quint8 nextBufferByte();
+        quint16 nextBufferHalfWord();
+
 };
 
 #endif // PROCESSDATASTREAM_H

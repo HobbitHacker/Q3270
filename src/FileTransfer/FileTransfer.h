@@ -1,0 +1,4 @@
+#ifndef FILETRANSFER_H
+#define FILETRANSFER_H
+
+#endif // FILETRANSFER_H

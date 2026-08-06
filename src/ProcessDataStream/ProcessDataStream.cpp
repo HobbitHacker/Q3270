@@ -72,6 +72,7 @@ void ProcessDataStream::processStream(QByteArray &b, bool tn3270e)
 //    qApp->processEvents();
     wsfProcessing = false;
     lastwasWrite = false;
+
     reply.clear();
 
     //TODO: Multiple structured field WRITE commands
@@ -85,11 +86,10 @@ void ProcessDataStream::processStream(QByteArray &b, bool tn3270e)
 
     if (tn3270e)
     {
-        unsigned char dataType = *buffer++;
-        unsigned char requestFlag = *buffer++;
-        unsigned char responseFlag = *buffer++;
-        unsigned char seqNumber = ((uchar) *buffer++<<16);
-        seqNumber+= (uchar) *buffer++;
+        quint8 dataType = nextBufferByte();
+        quint8 requestFlag = nextBufferByte();
+        quint8 responseFlag = nextBufferByte();
+        quint16 seqNumber = nextBufferHalfWord();
 
         // TODO: Handling of TN3270E datatypes
         if (dataType != TN3270E_DATATYPE_3270_DATA)
@@ -100,7 +100,7 @@ void ProcessDataStream::processStream(QByteArray &b, bool tn3270e)
     }
 
     // Process the incoming command
-    switch((uchar) *buffer)
+    switch(nextBufferByte())
     {
         case IBM3270_EW:
         case IBM3270_CCW_EW:
@@ -140,8 +140,6 @@ void ProcessDataStream::processStream(QByteArray &b, bool tn3270e)
             return;
     }
 
-    buffer++;
-
     while(buffer < b.end())
     {
         if (wsfProcessing)
@@ -152,7 +150,6 @@ void ProcessDataStream::processStream(QByteArray &b, bool tn3270e)
         {
             processOrders();
         }
-        buffer++;
     }
 
 
@@ -191,7 +188,9 @@ void ProcessDataStream::processStream(QByteArray &b, bool tn3270e)
  */
 void ProcessDataStream::processOrders()
 {
-    switch((uchar) *buffer)
+    quint8 order = nextBufferByte();
+
+    switch(order)
     {
         case IBM3270_SF:
             processSF();
@@ -224,7 +223,7 @@ void ProcessDataStream::processOrders()
             processGE();
             break;
         default:
-            placeChar((uchar) *buffer);
+            placeChar(order);
     }
 }
 
@@ -259,7 +258,9 @@ void ProcessDataStream::processOrders()
  */
 void ProcessDataStream::processWCC()
 {
-    uchar wcc = *buffer;
+    uchar wcc = nextBufferByte();
+
+    qDebug() << QString("ProcessDataStream: WCC = %1").arg(wcc, 2, 16);
 
     //TODO: Handle RESET
     int reset = (wcc>>6)&1;
@@ -320,7 +321,6 @@ void ProcessDataStream::processW()
 {
     printf("[Write ");
 
-    buffer++;
     processWCC();
 
     printf("]");
@@ -349,7 +349,6 @@ void ProcessDataStream::processEW(bool alternate)
         setScreen(alternate);
     }
 
-    buffer++;
     processWCC();
 
     printf("]");
@@ -401,15 +400,13 @@ void ProcessDataStream::processEAU()
  */
 void ProcessDataStream::processWSF()
 {
-    wsfProcessing = true;
+    QByteArray::Iterator wsfBuffer = buffer;
 
-    wsfLen = *buffer++<<8;
-    wsfLen += *buffer++;
+    wsfLen = nextBufferHalfWord();
 
-    // Decrease length by two-byte length field and structured field id byte
-    wsfLen-=3;
+    qDebug() << QString("Structured Field - length %1, type %2").arg(wsfLen, 4, 16).arg((uchar)*buffer, 2, 16);
 
-    switch((uchar) *buffer)
+    switch(nextBufferByte())
     {
         case IBM3270_WSF_RESET:
             WSFreset();
@@ -420,10 +417,18 @@ void ProcessDataStream::processWSF()
         case IBM3270_WSF_OB3270DS:
             WSFoutbound3270DS();
             break;
+        case IBM3270_WSF_TRANSFER:
+            WSFtransfer();
+            break;
         default:
-            printf("\n\n[** Unimplemented WSF command: %02X **]\n\n", *buffer);
+            qDebug() << QString("ProcessDataStream: [** Unimplemented WSF command: %1 - ignored **]").arg((quint8)*buffer, 2, 16);
             break;
     }
+
+    // The buffer is advanced outside of the switch statement to ensure that it is always moved past the WSF data,
+    // regardless of whether the command was implemented or not, and whether the bytes in the buffer were all
+    // consumed or left in the buffer having been extracted in other ways.
+    buffer = wsfBuffer + wsfLen;
 }
 
 /**
@@ -461,7 +466,7 @@ void ProcessDataStream::processRMA()
  */
 void ProcessDataStream::processSF()
 {
-    unsigned char fa = *++buffer;
+    uchar fa = nextBufferByte();
 //    printf("[Start Field: %02X ", fa);
 
     screen->setField(primary_pos, fa, false);
@@ -501,7 +506,7 @@ void ProcessDataStream::processSFE()
 void ProcessDataStream::processSBA()
 {
 //    printf("[SetBufferAddress ");
-    buffer++;
+
     int tmp_pos = extractBufferAddress();
 
     if (tmp_pos >= screenSize || tmp_pos < 0)
@@ -527,8 +532,8 @@ void ProcessDataStream::processSBA()
  */
 void ProcessDataStream::processSA()
 {
-    uchar extendedType = *++buffer;
-    uchar extendedValue = *++buffer;
+    uchar extendedType = nextBufferByte();
+    uchar extendedValue = nextBufferByte();
 //    printf("[SetAttribute %02X,%02X]", extendedType, extendedValue);
     screen->setCharAttr(extendedType, extendedValue);
 
@@ -569,7 +574,7 @@ void ProcessDataStream::processMF()
  */
 void ProcessDataStream::processAttributePairs(int mode)
 {
-    uchar numPairs = *++buffer;
+    quint8 numPairs = nextBufferByte();
 
     bool fieldDefined = false;
 
@@ -579,8 +584,8 @@ void ProcessDataStream::processAttributePairs(int mode)
 //            printf("[** Insufficient data for attribute pairs **]\n");
 //            return;
 //        }
-        uchar type = *++buffer;
-        uchar value = *++buffer;
+        quint8 type = nextBufferByte();
+        quint8 value = nextBufferByte();
 
         // Handle field attribute (X'C0') separately
         if (type == IBM3270_EXT_3270) {
@@ -690,7 +695,6 @@ void ProcessDataStream::processPT()
 {
     //TODO: <PT><PT> is not catered for properly
     printf("[Program Tab]");
-    buffer++;
 
     // If the current position is a field start and not protected, move one position
     if (screen->isFieldStart(primary_pos) && !screen->isProtected(primary_pos))
@@ -748,16 +752,15 @@ void ProcessDataStream::processPT()
  */
 void ProcessDataStream::processRA()
 {
-    buffer++;
     int endPos = extractBufferAddress();
 
-    uchar newChar = *++buffer;
+    uchar newChar = nextBufferByte();
 
     bool geRA = false;
     if (newChar == IBM3270_GE)
     {
         geRA = true;
-        newChar = *++buffer;
+        newChar = nextBufferByte();
     }
 
     if (endPos > screenSize || endPos < 0)
@@ -791,8 +794,6 @@ void ProcessDataStream::processRA()
  */
 void ProcessDataStream::processEUA()
 {
-
-    buffer++;
     int stopAddress = extractBufferAddress();
 
     if (stopAddress >= screenSize || stopAddress < 0)
@@ -816,448 +817,9 @@ void ProcessDataStream::processEUA()
 void ProcessDataStream::processGE()
 {
     screen->setGraphicEscape();
-    placeChar((uchar) *++buffer);
+    placeChar(nextBufferByte());
 
     lastWasCmd = false;
-}
-
-/**
- * @brief   ProcessDataStream::WSFoutbound3270DS - The 3270 Structured Field Outbound 3270DS
- *
- * @details The Outbound 3270DS is used to direct output to a specific partition. There are
- *          four possible incoming (outbound from the host) operations:
- *
- *          @li Write
- *          @li Erase/Write
- *          @li Erase/Write Alternate
- *          @li Erase All Unprotected
- *
- *          These operations can be directed to a specific partition after the Create Partition
- *          structured field has been used.
- *
- * @note    Q3270 supports only WRITE currently.
- */
-void ProcessDataStream::WSFoutbound3270DS()
-{
-    printf("[Outbound 3270DS");
-    uchar partition = *++buffer;
-
-    printf(" partition #%d ", partition);
-
-    uchar cmnd = *++buffer;
-
-    wsfLen-=2;
-
-    switch(cmnd)
-    {
-        case IBM3270_W:
-            printf("Write ");
-            buffer++;
-            processWCC();
-            wsfLen--;
-            break;
-        default:
-            printf("\n\n [** Unimplemented WSF command %02X - Ignored **]\n\n", cmnd);
-    }
-    while(wsfLen>0)
-    {
-        processOrders();
-        wsfLen--;
-    }
-}
-
-/**
- * @brief   ProcessDataStream::WSFreset - The 3270 Structured Field Reset
- *
- * @details The Reset is used to reset the terminal to its power on state.
- */
-void ProcessDataStream::WSFreset()
-{
-    printf("\n\n[** Reset Partition %02X - Not Implemented **]\n\n", *++buffer);
-    return;
-}
-
-/**
- * @brief   ProcessDataStream::WSFreadPartition - The 3270 Structured Field Read Partition
- *
- * @details The Read Partition function allows the host to read a specific partition or to
- *          query the device to report functions that it supports.
- *
- * @note    Q3270 only supports the Query function.
- */
-void ProcessDataStream::WSFreadPartition()
-{
-    uchar partition = *++buffer;
-    uchar type = *++buffer;
-
-    printf("ReadPartition %d - type %2.2X\n", partition, type);
-
-    reply.append((uchar) IBM3270_AID_SF);
-
-    replySummary();
-}
-
-/**
- * @brief    ProcessDataStream::replySummary - The 3270 Structured Field Query Reply (Summary)
- * @param    queryReply - the buffer to add the reply to
- *
- * @details  The Query Reply (Summary) structured field is used to inform the host of a summary of
- *           the functions that the device supports.
- *
- *           Here, the reply summary also includes, as structured fields following the summary, the
- *           device capabililties.
- *
- *           It is this function that allows the host the utilise the dynamic screen sizes.
- */
-void ProcessDataStream::replySummary()
-{
-
-    /* 62 x 160
-
-    > 0x0   88 000e 81 80 80 81 84 85 86 87 88 95 a1 a6 0017 81 81 01 00 *00a0* *003e* 01 000a 02e5 0002
-    > 0x20  006f 09 0c *26c0* 000881840026c000001b81858200090c000000000700100002b9
-    > 0x40  00250110f103c3013600268186001000f4f1f1f2f2f3f3f4f4f5f5f6f6f7f7f8
-    > 0x60  f8f9f9fafafbfbfcfcfdfdfefeffffffff000f81870500f0f1f1f2f2f4f4f8f8
-    > 0x80  00078188000102000c81950000100010000101001281a1000000000000000006
-    > 0xa0  a7f3f2f7f0001181a600000b01000050001800a0003effef
-
-    */
-
-    /* 43 x 80
-
-0040   88 - AID
-       00 0e - length (14 bytes including length)
-       81 - reply summary
-       80 - summary query reply
-       80 81 84 85 86 87 88 95 a1 - codes supported (summary, usable area, alphanumeric partitions, char sets, colour, hilighting, reply modes, DDM, RPQ names,
-0050   a6 - implicit partitions)
-
-       00 17 - length (23 bytes)
-       81 - query reply
-       81 - usable area
-       01 - 12/14 bit addressing allowed
-       00 - variable cells not supported, matrix character, units in cells
-       00 50 - width of usable area
-       00 2b - height of usable area
-       01 - size in mm
-       00 0a 02 e5 - distance between points in X as 2 byte numerator and 2 byte denominator (10/741)
-0060   00 02 00 6f - distance between points in Y as 2 byte n/d (2/111)
-       09 - number X of UNITS in default cell (9)
-       0c - number of Y UNITS in default cell (12)
-       0d 70 - display size (3440 - 43x80)
-
-       00 08 - length
-       81 - query reply
-       84 - alphanumeric partitions
-       00  - one partition only
-       0d 70 - total partition storage (3440 - 43x80)
-       00 - no vertical scrolling, no all points addressability, no partition protection, no presentation space copy, no modify partition
-
-0070   00 1b - length
-       81 - query reply
-       85 - character sets
-       82 - 10000010
-         1  ALT         graphic escape
-         0  MULTID   no multiple LCIDs
-         0  LOADABLE no LOAD PS
-         0  EXT      no LOAD PS EXTENDED
-         0  MS       no more than one char size only
-         0  CH2      no DBCS
-         1  GF          CGCSID present
-         0  - reserved -
-       00 - no LOAD PS slot size required
-       09 - default width
-       0c - default height
-       00 00 00 00 - LOAD PS format types supported (none)
-       07 - length of each descriptor
-
-          00 - SET  - char set
-          10 - Flags
-              00010000
-                 0 - LOAD    Non-loadable
-                 0 - TRIPLE  Not triple plane
-                 0 - CHAR    Single-byte character set
-                 1 - CB      No LCID compare
-                 0000 - reserved
-          00 LCID - Local character set id
-          [ bytes SW and SH missing as MS is zero ]
-          [ bytes SUBSN and SUBSN missing as CH2 is zero ]
-
-          CGCSID - present as GF set to one
-0080      02 b9 - character set number - 697
-          00 25 - code page - 037
-
-          01 - char set
-          10 - No LCID compare
-          f1 - Local character set id
-          03 c3 - character set 963
-          01 36 - code page 310
-
-       00 26 - length (38)
-       81  - query reply
-       86 - colour
-       00
-0090   10 00 f4 f1 f1 f2 f2 f3 f3 f4 f4 f5 f5 f6 f6 f7
-00a0   f7 f8 f8 f9 f9 fa fa fb fb fc fc fd fd fe fe ff
-00b0   ff ff ff
-
-
-       00 0f - length (15)
-       81 - query reply
-       87 - highlight
-       05 00 f0 f1 f1 f2 f2 f4 f4
-00c0   f8 f8
-
-       00 07 - length (7)
-       81 - query reply
-       88 - reply modes
-       00 - field mode
-       01 - extended field mode
-       02 - character mode
-
-       00 0c - length (12)
-       81 - query reply
-       95 - DDM
-       00 00 - reserved
-       10
-00d0   00 - limin 4096
-       10 00 - limout 4096
-       01 - 1 subset
-       01 - subset id
-
-       00 12 - length (18)
-       81 - query reply
-       a1 - rpq names
-       00 00 00 00 - device type id
-       00 00 00 00 - model (all models)
-00e0   06 - length (6)
-       a7 f3 f2 f7 f0 - x3270
-
-       00 11 - length (17)
-       81 - query reply
-       a6 - implicit partition
-       00 00 - reserved
-       0b - length
-       01 - implicit partition sizes
-       00 - reserved
-00f0   00 50 - width of default screen (80)
-       00 18 - height of default screen (24)
-       00 50 - width of alternate screen (80)
-       00 2b - height of alternate screen (43)
-
-     */
-
-    unsigned char qrt[] = {
-                            0x00, 0x09,    /* Length */
-                            IBM3270_SF_QUERYREPLY,
-                            IBM3270_SF_QUERYREPLY_SUMMARY,
-                            IBM3270_SF_QUERYREPLY_COLOUR,
-                            IBM3270_SF_QUERYREPLY_IMPPARTS,
-                            IBM3270_SF_QUERYREPLY_USABLE,
-                            IBM3270_SF_QUERYREPLY_CHARSETS,
-                            IBM3270_SF_QUERYREPLY_HIGHLIGHT,
-//                            IBM3270_SF_QUERYREPLY_PARTS
-                   };
-
-    unsigned char qrcolour[] = {
-                                 0x00, 0x16,
-                                 IBM3270_SF_QUERYREPLY,
-                                 IBM3270_SF_QUERYREPLY_COLOUR,
-                                 0x00,        /* Flags:  x.xxxxxx - Reserved
-                                                         .0...... - Printer Only - Black ribbon not loaded
-                                                         .1...... - Printer Only - Black ribbon loaded
-                                              */
-                                 0x08,        /* Number of colours, plus default colour */
-                                 0x00, 0xF4,  /* Default colour */
-                                 0xF1, 0xF1,  /* Blue */
-                                 0xF2, 0xF2,  /* Red */
-                                 0xF3, 0xF3,  /* Magenta */
-                                 0xF4, 0xF4,  /* Green */
-                                 0xF5, 0xF5,  /* Cyan */
-                                 0xF6, 0xF6,  /* Yellow */
-                                 0xF7, 0xF7   /* White */
-                               };
-
-    unsigned char qpart[] = {
-                              0x00, 0x11,
-                              IBM3270_SF_QUERYREPLY,
-                              IBM3270_SF_QUERYREPLY_IMPPARTS,
-                              0x00, 0x00,  /* Reserved */
-                              0x0B,  /* Data Length */
-                              0x01,  /* Implicit Partition Sizes */
-                              0x00,  /* Reserved */
-                              0x00, 0x50,  /* Default Width in characters */
-                              0x00, 0x18,  /* Default Height in characters */
-                              0x00, 0x00,  /* Alternate Width in characters */
-                              0x00, 0x00   /* Alternate Height in characters */
-                            };
-
-    unsigned char qhighlight[] = {
-                                    0x00, 0x0D,
-                                    IBM3270_SF_QUERYREPLY,
-                                    IBM3270_SF_QUERYREPLY_HIGHLIGHT,
-                                    0x04,        /* Number of pairs */
-                                    0x00, 0xF0,  /* Default */
-                                    0xF1, 0xF1,  /* Blink */
-                                    0xF2, 0xF2,  /* Reverse */
-                                    0xF4, 0xF4   /* Uscore */
-                                 };
-
-    unsigned char qusablearea[] = {
-                                    0x00, 0x19,
-                                    IBM3270_SF_QUERYREPLY,
-                                    IBM3270_SF_QUERYREPLY_USABLE,
-                                    0x01,       /* 12/14 bit addressing */
-                                    0x00,       /* Nothing enabled */
-                                    0x00, 0x00, /*  4 & 5 - Columns */
-                                    0x00, 0x00, /*  6 & 7 - Rows */
-                                    0x01,       /* Units in mm */
-                                    0x00, 0x00, /*  9 & 10 - Xr Numerator */
-                                    0x00, 0x00, /* 11 & 12 - Xr Denominator */
-                                    0x00, 0x00, /* 13 & 14 - Yr Numerator */
-                                    0x00, 0x00, /* 15 & 16 - Yr Denominator */
-                                    0x00, 0x00, /* 17 & 18 - X units in cell */
-                                    0x00, 0x00, /* 19 & 20 - Y units in cell */
-                                    0x00, 0x00  /* 21 & 22 - Screen buffer size */
-                                  };
-
-    unsigned char qcharsets[] = {
-                                0x00, 0x1B,
-                                IBM3270_SF_QUERYREPLY,
-                                IBM3270_SF_QUERYREPLY_CHARSETS,
-                                0x82,            /* GE, CGCSGID supported only - 10000010 */
-                                                 /* x....... - ALT */
-                                                 /*            0 - Graphic Escape not supported */
-                                                 /*            1 - Graphic Escape not supported */
-                                                 /* .x...... - MULTID */
-                                                 /*            0 - Multiple LCIDs are not supported */
-                                                 /*            1 - Multiple LCIDs are supported */
-                                                 /* ..x..... - LOADABLE */
-                                                 /*            0 - LOAD PS are not supported */
-                                                 /*            1 - LOAD PS are supported */
-                                                 /* ...x.... - EXT */
-                                                 /*            0 - LOAD PS EXTENDED is not supported */
-                                                 /*            1 - LOAD PS EXTENDED is supported */
-                                                 /* ....x... - MS */
-                                                 /*            0 - Only one character slot size is supported */
-                                                 /*            1 - More than one size of character slot is supported */
-                                                 /* .....x.. - CH2 */
-                                                 /*            0 - 2-byte coded character sets are not supported */
-                                                 /*            1 - 2 byte coded character sets are supported */
-                                                 /* ......x. - GF */
-                                                 /*            0 - CGCSGID is not present */
-                                                 /*            1 - CGCSGID is present */
-                                                 /* .......x - reserved */
-
-                                0x00,            /* x.xxxxxx - reserved */
-                                                 /*  x       - Programmed Symbols Character Slot */
-                                                 /*             0 = Load PS slot size must match */
-                                                 /*             1 = Load PS slot size match not required */
-                                0x04, 0x03,      /* Default character slot width, height */
-                                0x00, 0x00, 0x00, 0x00,   /* LOAD PS format types supported - none */
-                                    0x07,   /* length of descriptor areas   */
-
-                                      // Descriptor set 1
-                                      0x00, /* char set 0 */
-                                      0x10, /* flags: no LCID compare */
-                                      0x00, /* local character set id */
-                                      0x02, 0xB9, /* character set number */
-                                      0x00, 0x25,  /* code page 037 */
-
-                                      // Descriptor set 2
-                                      0x01, /* char set 1 */
-                                      0x10, /* flags: no LCID compare */
-                                      0xF1, /* local character set id */
-                                      0x03, 0xC3, /* character set number */
-                                      0x01, 0x36  /* code page 310 */
-    };
-
-    unsigned char qalphaparts [] = {
-                    0x00, 0x08,   /* Length */
-                    0x81,         /* Query Reply */
-                    0x84,         /* Alphanumeric partitions */
-                    0x02,         /* 2 partitions supported */
-                    0xFF, 0xFE,   /* Storage allowed */
-                    0x00          /* Partition flags: */
-                                  /* x.......   SCROLL - Scrollable */
-                                  /* .xx.....   RES    - Reserved */
-                                  /* ...x....   AP     - All points addressable */
-                                  /* ....x...   PROT   - Partition Protection */
-                                  /* .....x..   COPY   - Presentation space local copy supported */
-                                  /* ......x.   MODIFY - Modify partition supported */
-                                  /* .......x   RES    - Reserved */
-    };
-
-    qpart[14] = terminal->terminalWidth(true);
-    qpart[16] = terminal->terminalHeight(true);
-
-    qusablearea[6] = 0x00;
-    qusablearea[7] = qpart[14];
-
-    qusablearea[8] = 0x00;
-    qusablearea[9] = qpart[16];
-
-    QSizeF screenSizeMM = QGuiApplication::primaryScreen()->physicalSize();
-    QSizeF screenSizePix = QGuiApplication::primaryScreen()->size();
-
-    int xmm = screenSizeMM.width();
-    int ymm = screenSizeMM.height();
-
-    qusablearea[11]  = (xmm & 0xFF00) >> 8;
-    qusablearea[12] = (xmm & 0xFF);
-
-    qusablearea[15] = (ymm & 0xFF00) >> 8;
-    qusablearea[16] = (ymm & 0xFF);
-
-    int x = screenSizePix.width();
-    int y = screenSizePix.height();
-
-    qusablearea[13] = (x & 0xFF00) >> 8;
-    qusablearea[14] = (x & 0xFF);
-
-    qusablearea[17] = (y & 0xFF00) >> 8;
-    qusablearea[18] = (y & 0xFF);
-
-    qusablearea[19] = ((int)(terminal->terminalWidth(false) * CELL_WIDTH) & 0xFF00) >> 8;
-    qusablearea[20] = ((int)(terminal->terminalWidth(false) * CELL_WIDTH) & 0xFF);
-
-    qusablearea[21] = ((int)(terminal->terminalHeight(false) * CELL_HEIGHT) & 0xFF00) >> 8;
-    qusablearea[22] = ((int)(terminal->terminalHeight(false) * CELL_HEIGHT) & 0xFF);
-
-    qusablearea[23] = ((qusablearea[5] * qusablearea[7]) & 0xFF00) >> 8;
-    qusablearea[24] = ((qusablearea[5] * qusablearea[7]) & 0xFF);
-
-
-    addBytes(qrt, 9);
-    addBytes(qrcolour, 22);
-    addBytes(qpart, 17);
-    addBytes(qhighlight, 13);
-    addBytes(qusablearea, 25);
-    addBytes(qcharsets, 27);
-//    buffer->addBlock(qalphaparts, 8);
-}
-
-/**
- * @brief   ProcessDataStream::addBytes - add bytes to a buffer
- * @param   b - the buffer
- * @param   s - the data
- * @param   l - the length
- *
- * @details addBytes is used to add bytes to a buffer that will be sent to the host. Any 0xFF characters
- *          are doubled up.
- */
-void ProcessDataStream::addBytes(uchar *s, int l)
-{
-    for (int i = 0; i < l; i++)
-    {
-        reply.append(s[i]);
-
-        //Double up 0xFF bytes
-        if (s[i] == 0xFF)
-        {
-            reply.append(0xFF);
-        }
-    }
 }
 
 /**
@@ -1284,8 +846,8 @@ int ProcessDataStream::extractBufferAddress()
 {
     //TODO: non-12/14 bit addresses & EBCDIC characters
 
-    uchar sba1 = *buffer;
-    uchar sba2 = *++buffer;
+    uchar sba1 = nextBufferByte();
+    uchar sba2 = nextBufferByte();
 
     switch((sba1>>6)&3)
     {
@@ -1330,4 +892,16 @@ void ProcessDataStream::incPos()
     {
         primary_pos = 0;
     }
+}
+
+quint8 ProcessDataStream::nextBufferByte()
+{
+    return static_cast<quint8>(*buffer++);
+}
+
+quint16 ProcessDataStream::nextBufferHalfWord()
+{
+    quint16 hi = static_cast<quint8>(*buffer++);
+    quint16 lo = static_cast<quint8>(*buffer++);
+    return (hi << 8) | lo;
 }

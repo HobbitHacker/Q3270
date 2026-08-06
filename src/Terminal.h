@@ -16,7 +16,7 @@
 #include <QGraphicsSimpleTextItem>
 #include <QMenuBar>
 
-#include "ProcessDataStream.h"
+#include "ProcessDataStream/ProcessDataStream.h"
 #include "SocketConnection.h"
 #include "Keyboard.h"
 #include "CodePage.h"

@@ -63,17 +63,33 @@
 #define IBM3270_WSF_RESET         0x00
 #define IBM3270_WSF_READPARTITION 0x01
 #define IBM3270_WSF_OB3270DS      0x40
+#define IBM3270_WSF_TRANSFER      0xD0
 
 /* Inbound Structured Fields */
 #define IBM3270_SF_QUERYREPLY            0x81
 
+/* Query Reply types */
 #define IBM3270_SF_QUERYREPLY_SUMMARY    0x80
 #define IBM3270_SF_QUERYREPLY_USABLE     0x81
 #define IBM3270_SF_QUERYREPLY_PARTS      0x84 /* Alphanumeric Partitions */
 #define IBM3270_SF_QUERYREPLY_CHARSETS   0x85 /* Graphic Escape supported for example */
 #define IBM3270_SF_QUERYREPLY_COLOUR     0x86
 #define IBM3270_SF_QUERYREPLY_HIGHLIGHT  0x87
+#define IBM3270_SF_QUERYREPLY_DDM        0x95 /* Distributed Data Management */
 #define IBM3270_SF_QUERYREPLY_IMPPARTS   0xA6 /* Implicit Partitions */
+
+/* File Transfer Structured Fields */
+#define IBM3270_FT_OPEN_REQ    0x0012    /* Open Request */
+#define IBM3270_FT_CLOSE_REQ   0x4112    /* Close Request */
+#define IBM3270_FT_INSERT_REQ  0x4711    /* Insert Data Request */
+
+#define IBM3270_FT_INSERT_DATA 0x4704    /* Insert Data, follows INSERT_REQ */
+
+#define IBM3270_FT_NORMAL_ACK  0x4705
+#define IBM3270_FT_CLOSE_ACK   0x4109
+#define IBM3270_FT_OPEN_ACK    0x0009
+
+#define IBM3270_FT_RECNUM_HDR  0x6306
 
 /* Extended Attributes */
 #define IBM3270_EXT_DEFAULT       0x00

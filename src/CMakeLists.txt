@@ -22,7 +22,7 @@ set(SOURCES
     KeyboardThemeDialog.cpp
     MainWindow.cpp
     Preferences/PreferencesDialog.cpp
-    ProcessDataStream.cpp
+    ProcessDataStream/ProcessDataStream.cpp
     Sessions/SaveSessionDialog.cpp
     Models/Session.cpp
     Sessions/SessionDialogBase.cpp
@@ -35,6 +35,10 @@ set(SOURCES
     SocketConnection.cpp
     Preferences/KeyboardSequenceEdit.cpp
     Preferences/FontWidget.cpp
+    FileTransfer/FileTransferDialog.cpp
+    ProcessDataStream/StructuredFields.cpp
+    ProcessDataStream/StructuredField.cpp
+    FileTransfer/FileTransfer.cpp
 )
 
 set(HEADERS
@@ -58,7 +62,7 @@ set(HEADERS
     KeyboardThemeDialog.h
     MainWindow.h
     Preferences/PreferencesDialog.h
-    ProcessDataStream.h
+    ProcessDataStream/ProcessDataStream.h
     Q3270.h
     Sessions/SaveSessionDialog.h
     Models/Session.h
@@ -72,6 +76,9 @@ set(HEADERS
     Terminal.h
     Preferences/KeyboardSequenceEdit.h
     Preferences/FontWidget.h
+    FileTransfer/FileTransferDialog.h
+    ProcessDataStream/StructuredField.h
+    FileTransfer/FileTransfer.h
     ${CMAKE_BINARY_DIR}/Version.h
 )
 
@@ -89,6 +96,7 @@ set(FORMS
     Sessions/SessionDialog.ui
     Sessions/SessionPreview.ui
     Preferences/FontWidget.ui
+    FileTransfer/FileTransferDialog.ui
 )
 
 set(RESOURCES
@@ -104,7 +112,7 @@ qt_add_executable(Q3270 ${Q3270_BUNDLE_TYPE}
     ${HEADERS}
     ${FORMS}
     ${RESOURCES}
-    FileTransfer/FileTransferDialog.h FileTransfer/FileTransferDialog.cpp FileTransfer/FileTransferDialog.ui
+
 )
 target_link_libraries(Q3270 PRIVATE Qt6::Core Qt6::Gui Qt6::Widgets Qt6::Network Qt6::Svg Qt6::SvgWidgets)
 
