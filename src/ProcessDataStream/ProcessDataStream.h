@@ -51,6 +51,11 @@ class ProcessDataStream : public QObject
         void blink();
         void disconnected();
 
+        void ftStarted();
+        void ftUpdateCounts(unsigned long long bytesReceived, unsigned long long blocksReceived);
+        void ftUpdateMessage(const QString &message);
+        void ftComplete();
+
     private:
 
         Terminal *terminal;

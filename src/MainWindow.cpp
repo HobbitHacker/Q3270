@@ -13,6 +13,7 @@
 #include "ui_MainWindowDialog.h"
 #include "ui_About.h"
 #include "ui_ConnectionDetails.h"
+#include "FileTransfer/ui_FileTransferProgress.h"
 #include "HostAddressUtils.h"
 #include "Sessions/ManageAutoStartDialog.h"
 
@@ -97,6 +98,7 @@ MainWindow::MainWindow(LaunchParms launchParms) : QMainWindow(launchParms.parent
 
     // File Transfer Processing
     fileTransfer = new FileTransferDialog(terminal, this);
+    fileTransferProgress = new FileTransferProgress(this);
 
     // Used for dynamically showing font changes when using the font tab in Preferences
     connect(settings, &PreferencesDialog::tempFontChange, terminal, &Terminal::setCurrentFont);
@@ -112,6 +114,11 @@ MainWindow::MainWindow(LaunchParms launchParms) : QMainWindow(launchParms.parent
     
     connect(terminal, &Terminal::connectionEstablished, this, &MainWindow::enableDisconnectMenu);
     connect(terminal, &Terminal::connectionEstablished, settings, &PreferencesDialog::connected);
+
+    connect(terminal, &Terminal::relayFileTransferStart, this, &MainWindow::fileTransferStart);
+    connect(terminal, &Terminal::relayFileTransferUpdateCounts, this, &MainWindow::fileTransferUpdateCounts);
+    connect(terminal, &Terminal::relayFileTransferUpdateMessage, this, &MainWindow::fileTransferUpdateMessage);
+    connect(terminal, &Terminal::relayFileTransferComplete, this, &MainWindow::fileTransferComplete);
 
     // Set defaults for Connect options
     ui->actionDisconnect->setDisabled(true);
@@ -519,6 +526,28 @@ void MainWindow::disableDisconnectMenu()
     ui->actionConnect->setEnabled(true);
     ui->actionConnection_Information->setEnabled(true);
     ui->actionFile_Transfer->setEnabled(false);
+}
+
+void MainWindow::fileTransferStart()
+{
+    fileTransferProgress->reset();
+    fileTransferProgress->show();
+}
+
+void MainWindow::fileTransferUpdateCounts(unsigned long long bytesReceived,
+                                          unsigned long long blocksReceived)
+{
+    fileTransferProgress->updateStats(bytesReceived, blocksReceived);
+}
+
+void MainWindow::fileTransferUpdateMessage(const QString &message)
+{
+    fileTransferProgress->updateMessage(message);
+}
+
+void MainWindow::fileTransferComplete()
+{
+    fileTransferProgress->complete();
 }
 
 void MainWindow::populateMRU()

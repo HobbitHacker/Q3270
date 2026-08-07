@@ -30,6 +30,7 @@ void ProcessDataStream::ftOpen()
     else {
         ftBytes = 0;
         ftMsg = false;
+        emit ftStarted();
     }
 
     // Open sets record count to 1
@@ -65,6 +66,7 @@ void ProcessDataStream::ftInsertData()
         if (dollar > 0)
             msg = msg.left(dollar);
         qDebug() << msg << ftBytes << "bytes received";
+        emit ftUpdateMessage(msg);
         ftDataAck();
         if (msg.left(7) == "TRANS03")
             qDebug() << "Success!";
@@ -78,6 +80,7 @@ void ProcessDataStream::ftInsertData()
     if (pktLen > 0) {
         /* Write data out */
         ftBytes += pktLen;
+        emit ftUpdateCounts(ftBytes, ftRecordCount);
     }
 
     ftDataAck();
@@ -92,6 +95,8 @@ void ProcessDataStream::ftClose()
     reply.append(StructuredField(IBM3270_WSF_TRANSFER)
                      .addHalfWord(IBM3270_FT_CLOSE_ACK)
                      .toSF());
+
+    emit ftComplete();
 
     qDebug() << "ftClose - File Transfer complete - total bytes received" << ftBytes;
 }

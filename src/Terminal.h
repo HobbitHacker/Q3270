@@ -58,6 +58,11 @@ class Terminal : public QWidget
         void disconnected();
         void windowClosed(Terminal *t);
 
+        void relayFileTransferStart();
+        void relayFileTransferUpdateCounts(unsigned long long bytesReceived, unsigned long long blocksReceived);
+        void relayFileTransferUpdateMessage(const QString &message);
+        void relayFileTransferComplete();
+
     public slots:
 
         void closeConnection(QString message = "");
@@ -79,12 +84,18 @@ class Terminal : public QWidget
         // Set themes by name
         void setColourTheme(const Colours &colours);
 
-        void copyText()                         { current->copyText(); };
+        void copyText()                         { current->copyText(); }
 
         void blinkText();
         void blinkCursor();
 
         bool eventFilter(QObject* obj, QEvent* event);
+
+        // File Transfer
+        void fileTransferStart();
+        void fileTransferUpdateCounts(unsigned long long bytesReceived, unsigned long long blocksReceived);
+        void fileTransferUpdateMessage(const QString &message);
+        void fileTransferComplete();
         
     private:
 

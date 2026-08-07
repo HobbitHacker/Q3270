@@ -39,6 +39,7 @@ set(SOURCES
     ProcessDataStream/StructuredFields.cpp
     ProcessDataStream/StructuredField.cpp
     FileTransfer/FileTransfer.cpp
+    FileTransfer/FileTransferProgress.cpp
 )
 
 set(HEADERS
@@ -79,6 +80,7 @@ set(HEADERS
     FileTransfer/FileTransferDialog.h
     ProcessDataStream/StructuredField.h
     FileTransfer/FileTransfer.h
+    FileTransfer/FileTransferProgress.h
     ${CMAKE_BINARY_DIR}/Version.h
 )
 
@@ -97,6 +99,7 @@ set(FORMS
     Sessions/SessionPreview.ui
     Preferences/FontWidget.ui
     FileTransfer/FileTransferDialog.ui
+    FileTransfer/FileTransferProgress.ui
 )
 
 set(RESOURCES
@@ -112,7 +115,6 @@ qt_add_executable(Q3270 ${Q3270_BUNDLE_TYPE}
     ${HEADERS}
     ${FORMS}
     ${RESOURCES}
-
 )
 target_link_libraries(Q3270 PRIVATE Qt6::Core Qt6::Gui Qt6::Widgets Qt6::Network Qt6::Svg Qt6::SvgWidgets)
 
