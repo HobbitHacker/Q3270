@@ -1,22 +1,18 @@
 #include <QFileDialog>
+#include <QMessageBox>
 
 #include "FileTransferDialog.h"
 
 #include "ui_FileTransferDialog.h"
 
 
-FileTransferDialog::FileTransferDialog(Terminal *terminal, QWidget *parent)
+FileTransferDialog::FileTransferDialog(QWidget *parent)
     : QDialog(parent)
     , ui(new Ui::FileTransferDialog)
-    , terminal(terminal)
 
 {
     ui->setupUi(this);
 
-/*    connect(ui->sendFileButton, &QPushButton::clicked, this, [this]() {
-        terminal->sendFile(ui->fileNameEdit->text());
-    });
-*/
     connect(ui->browse, &QPushButton::clicked, this, &FileTransferDialog::on_browseButton_clicked);
     connect(ui->direction, &QComboBox::currentIndexChanged, this, &FileTransferDialog::on_direction_changed);
     connect(ui->hosttype, &QComboBox::currentIndexChanged, this, &FileTransferDialog::on_hosttype_changed);
@@ -35,7 +31,31 @@ FileTransferDialog::~FileTransferDialog()
 
 bool FileTransferDialog::showForm()
 {
-    return (this->exec() == QDialog::Accepted);
+    for (;;) {
+        int result = this->exec();
+
+        if (result == QDialog::Rejected)
+            return false;
+
+        qDebug() << "FileTransferDialog::showForm() - local file:" << getLocalFile() << "remote file:" << ui->remoteFile->text() << "direction:" << getDirection();
+
+        if (getDirection() == Q3270::TransferDirection::Send)
+            break;
+
+        qDebug() << QFile::exists(getLocalFile());
+
+        if (QFile::exists(getLocalFile())) {
+            QMessageBox::StandardButton reply = QMessageBox::question(this, "File Exists", "The file already exists. Do you want to overwrite it?", QMessageBox::Yes | QMessageBox::No);
+
+            if (reply == QMessageBox::Yes) {
+                break;
+            }
+        }
+        else
+            break;
+    }
+
+    return true;
 }
 
 const QString FileTransferDialog::getCommand()
@@ -111,8 +131,9 @@ const QString FileTransferDialog::getCommand()
 
 void FileTransferDialog::on_browseButton_clicked()
 {
-    QString title = ui->direction->currentIndex() == 0 ? tr("Select File to Send")
-                                                       : tr("Select File to Receive");
+    bool send = ui->direction->currentIndex() == 0;
+
+    QString title = send ? tr("Select File to Send") : tr("Select File to Receive");
 
     QString fileName = QFileDialog::getOpenFileName(this, title, QDir::homePath());
 
@@ -177,6 +198,23 @@ void FileTransferDialog::setOptions()
     ui->recfm->setCurrentIndex(0);
 }
 
+Q3270::TransferDirection FileTransferDialog::getDirection()
+{
+    return ui->direction->currentIndex() == 0 ? Q3270::TransferDirection::Send :
+                                                Q3270::TransferDirection::Receive;
+}
+
+QString FileTransferDialog::getLocalFile()
+{
+    QString fileName = ui->localFile->text();
+
+    if (fileName.startsWith("~")) {
+        fileName = QDir::homePath() + fileName.mid(1);
+    }
+
+    return fileName;
+}
+
 void FileTransferDialog::on_hosttype_changed()
 {
     setOptions();
@@ -203,4 +241,14 @@ void FileTransferDialog::on_space_changed()
 void FileTransferDialog::on_ascii_changed()
 {
     ui->crlf->setEnabled(ui->ascii->isChecked());
+}
+
+bool FileTransferDialog::isAscii()
+{
+    return ui->ascii->isChecked();
+}
+
+bool FileTransferDialog::isCRLF()
+{
+    return ui->crlf->isChecked();
 }

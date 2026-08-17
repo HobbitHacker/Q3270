@@ -115,6 +115,8 @@ qt_add_executable(Q3270 ${Q3270_BUNDLE_TYPE}
     ${HEADERS}
     ${FORMS}
     ${RESOURCES}
+
+
 )
 target_link_libraries(Q3270 PRIVATE Qt6::Core Qt6::Gui Qt6::Widgets Qt6::Network Qt6::Svg Qt6::SvgWidgets)
 

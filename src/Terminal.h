@@ -22,6 +22,7 @@
 #include "CodePage.h"
 #include "ActiveSettings.h"
 #include "Display/StatusBar.h"
+#include "FileTransfer/FileTransfer.h"
 
 class Terminal : public QWidget
 {
@@ -29,7 +30,7 @@ class Terminal : public QWidget
 
     public:
 
-        Terminal(QGraphicsView *screen, ActiveSettings &activeSettings, CodePage &cp, Keyboard &kb, const Colours &cs);
+        Terminal(QGraphicsView *screen, ActiveSettings &activeSettings, CodePage &cp, Keyboard &kb, const Colours &cs, FileTransfer &f);
         ~Terminal();
 
         void connectSession();
@@ -58,11 +59,6 @@ class Terminal : public QWidget
         void disconnected();
         void windowClosed(Terminal *t);
 
-        void relayFileTransferStart();
-        void relayFileTransferUpdateCounts(unsigned long long bytesReceived, unsigned long long blocksReceived);
-        void relayFileTransferUpdateMessage(const QString &message);
-        void relayFileTransferComplete();
-
     public slots:
 
         void closeConnection(QString message = "");
@@ -90,12 +86,6 @@ class Terminal : public QWidget
         void blinkCursor();
 
         bool eventFilter(QObject* obj, QEvent* event);
-
-        // File Transfer
-        void fileTransferStart();
-        void fileTransferUpdateCounts(unsigned long long bytesReceived, unsigned long long blocksReceived);
-        void fileTransferUpdateMessage(const QString &message);
-        void fileTransferComplete();
         
     private:
 
@@ -114,6 +104,8 @@ class Terminal : public QWidget
         ActiveSettings &activeSettings;
 
         QGraphicsView *screen;
+
+        FileTransfer &fileTransfer;
 
         QGraphicsRectItem *notConnected;
         QGraphicsSimpleTextItem *ncReason;

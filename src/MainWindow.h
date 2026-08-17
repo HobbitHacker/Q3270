@@ -33,6 +33,7 @@
 #include "Preferences/PreferencesDialog.h"
 #include "FileTransfer/FileTransferDialog.h"
 #include "FileTransfer/FileTransferProgress.h"
+#include "FileTransfer/FileTransfer.h"
 #include "Terminal.h"
 #include "ColourTheme.h"
 #include "KeyboardThemeDialog.h"
@@ -121,9 +122,12 @@ class MainWindow : public QMainWindow
 
       // File Transfer updates
       void fileTransferStart();
-      void fileTransferUpdateCounts(unsigned long long bytesReceived, unsigned long long blocksReceived);
+      void fileTransferUpdateCounts();
       void fileTransferUpdateMessage(const QString &message);
       void fileTransferComplete();
+
+      void fileTransferSuccess();
+      void fileTransferFailure();
 
   private:
 
@@ -149,8 +153,9 @@ class MainWindow : public QMainWindow
       ColourTheme *colourTheme;
 
       // File Transfer
-      FileTransferDialog *fileTransfer;
-      FileTransferProgress *fileTransferProgress;
+      FileTransferDialog *ftDialog;
+      FileTransferProgress *ftProgress;
+      FileTransfer fileTransfer;
 
       int maxMruCount;
 

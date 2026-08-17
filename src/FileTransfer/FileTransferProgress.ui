@@ -39,7 +39,7 @@
      <item row="1" column="1">
       <widget class="QLabel" name="blockCount">
        <property name="text">
-        <string>99999</string>
+        <string>0</string>
        </property>
       </widget>
      </item>
@@ -53,7 +53,7 @@
      <item row="0" column="1">
       <widget class="QLabel" name="byteCount">
        <property name="text">
-        <string>99999</string>
+        <string>0</string>
        </property>
       </widget>
      </item>
@@ -98,7 +98,7 @@
       <enum>Qt::Orientation::Horizontal</enum>
      </property>
      <property name="standardButtons">
-      <set>QDialogButtonBox::StandardButton::Cancel</set>
+      <set>QDialogButtonBox::StandardButton::Cancel|QDialogButtonBox::StandardButton::Close</set>
      </property>
     </widget>
    </item>

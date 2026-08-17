@@ -1,7 +1,7 @@
 /*
  * Q3270 Terminal Emulator
  *
- * Copyright (c) 2020–2025 Andy Styles
+ * Copyright (c) 2026 Andy Styles
  * SPDX-License-Identifier: BSD-3-Clause
  *
  * This file is part of Q3270.
@@ -211,36 +211,55 @@ void ProcessDataStream::replySummary()
     //                                                    .......x - Reserved */
     //                 .toSF());
 
+    // TODO: LIMIN and LIMOUT values should be dynamic.
     reply.append(StructuredField(IBM3270_SF_QUERYREPLY)
                     .addByte(IBM3270_SF_QUERYREPLY_DDM)
                     .addBytes({0x00, 0x00}) /* Reserved */
                     .addHalfWord(16384) /* Limit In (LIMIN) */
                     .addHalfWord(16384) /* Limit Out (LIMOUT) */
-//                     .addHalfWord(128) /* Limit In (LIMIN) */
-//                     .addHalfWord(128) /* Limit Out (LIMOUT) */
-                     .addByte(0x01) /* Number of subsets supported */
+                    .addByte(0x01) /* Number of subsets supported */
                     .addByte(0x01) /* Subset number */
                     .toSF());
 }
 
+/**
+ * @brief   ProcessDataStream::WSFtransfer - The 3270 Structured Field File Transfer
+ *
+ * @details The Transfer structured field is used to transfer data between the host and the terminal.
+ *          This is typically used for file transfer operations, such as sending or receiving files.
+ */
 void ProcessDataStream::WSFtransfer()
 {
+    // TODO: To be resinstated later
+    /*
+    if (!fileTransfer.isExpected()) {
+        qDebug() << "WSFtransfer: File Transfer not expected - ignoring";
+        return;
+    }
+    */
+
     quint16 trtype = nextBufferHalfWord();
 
     qDebug() << "WSFtransfer: type" << QString::number(trtype, 16);
 
     switch (trtype) {
         case IBM3270_FT_OPEN_REQ:
-            ftOpen();
+            fileTransfer.open(buffer, reply, wsfLen);
             break;
         case IBM3270_FT_INSERT_REQ:
-            ftInsertReq();
+            fileTransfer.insertReq();
             break;
         case IBM3270_FT_INSERT_DATA:
-            ftInsertData();
+            fileTransfer.insertData(buffer, reply);
+            break;
+        case IBM3270_FT_SETCUR_REQ:
+            fileTransfer.setCursorReq();
+            break;
+        case IBM3270_FT_GET_REQ:
+            fileTransfer.getData(reply);
             break;
         case IBM3270_FT_CLOSE_REQ:
-            ftClose();
+            fileTransfer.close(reply);
             break;
         default:
             qDebug() << QString("[** WSF Transfer - Not Implemented %1 **]").arg(trtype, 4, 16);

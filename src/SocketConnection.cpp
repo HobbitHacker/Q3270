@@ -517,7 +517,7 @@ void SocketConnection::escapeFF(const QByteArray &raw)
         escapedData.append(raw.at(i));
 
         //Double up 0xFF bytes
-        if (raw.at(i) == 0xFF)
+        if ((uint)raw.at(i) == (uint)0xFF)
         {
             escapedData.append(0xFF);
         }

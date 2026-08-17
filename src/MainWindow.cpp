@@ -38,7 +38,8 @@ MainWindow::MainWindow(LaunchParms launchParms) : QMainWindow(launchParms.parent
     keyboardStore(),
     keyboardTheme(nullptr),
     settings(nullptr),
-    colourTheme(nullptr)
+    colourTheme(nullptr),
+    fileTransfer()
 {   
     QCoreApplication::setApplicationVersion(Q3270_VERSION_FULL);
 
@@ -94,11 +95,11 @@ MainWindow::MainWindow(LaunchParms launchParms) : QMainWindow(launchParms.parent
     colourTheme = new ColourTheme(colourStore);
 
     // Construct the 3270 Terminal
-    terminal = new Terminal(ui->screenView, activeSettings, codePage, keyboard, Colours::getFactoryTheme());
+    terminal = new Terminal(ui->screenView, activeSettings, codePage, keyboard, Colours::getFactoryTheme(), fileTransfer);
 
     // File Transfer Processing
-    fileTransfer = new FileTransferDialog(terminal, this);
-    fileTransferProgress = new FileTransferProgress(this);
+    ftDialog = new FileTransferDialog(this);
+    ftProgress = new FileTransferProgress(fileTransfer);
 
     // Used for dynamically showing font changes when using the font tab in Preferences
     connect(settings, &PreferencesDialog::tempFontChange, terminal, &Terminal::setCurrentFont);
@@ -115,10 +116,14 @@ MainWindow::MainWindow(LaunchParms launchParms) : QMainWindow(launchParms.parent
     connect(terminal, &Terminal::connectionEstablished, this, &MainWindow::enableDisconnectMenu);
     connect(terminal, &Terminal::connectionEstablished, settings, &PreferencesDialog::connected);
 
-    connect(terminal, &Terminal::relayFileTransferStart, this, &MainWindow::fileTransferStart);
-    connect(terminal, &Terminal::relayFileTransferUpdateCounts, this, &MainWindow::fileTransferUpdateCounts);
-    connect(terminal, &Terminal::relayFileTransferUpdateMessage, this, &MainWindow::fileTransferUpdateMessage);
-    connect(terminal, &Terminal::relayFileTransferComplete, this, &MainWindow::fileTransferComplete);
+    // NOTE: Some of these could link straight to FileTransferDialog/Progress probably
+    connect(&fileTransfer, &FileTransfer::ftStarted, this, &MainWindow::fileTransferStart);
+    connect(&fileTransfer, &FileTransfer::ftUpdateCounts,  this, &MainWindow::fileTransferUpdateCounts);
+    connect(&fileTransfer, &FileTransfer::ftUpdateMessage, this, &MainWindow::fileTransferUpdateMessage);
+    connect(&fileTransfer, &FileTransfer::ftComplete, this, &MainWindow::fileTransferComplete);
+
+    connect(&fileTransfer, &FileTransfer::ftSuccess, this, &MainWindow::fileTransferSuccess);
+    connect(&fileTransfer, &FileTransfer::ftFailure, this, &MainWindow::fileTransferFailure);
 
     // Set defaults for Connect options
     ui->actionDisconnect->setDisabled(true);
@@ -313,9 +318,21 @@ void MainWindow::menuSaveSessionAs()
  */
 void MainWindow::menuFileTransfer()
 {
-    if (fileTransfer->showForm()) {
+    if (ftDialog->showForm()) {
         // File transfer dialog returned OK, so start the file transfer
-        keyboard.sendKeys(fileTransfer->getCommand());
+        Q3270::TransferDirection d = ftDialog->getDirection();
+
+        if (d == Q3270::TransferDirection::Send) {
+            ftProgress->setWindowTitle("Sending File");
+        } else {
+            ftProgress->setWindowTitle("Receiving File");
+        }
+
+        fileTransfer.setExpected(true);
+        fileTransfer.setProperties(ftDialog->getLocalFile(), d, ftDialog->isAscii(), ftDialog->isCRLF());
+
+        keyboard.sendKeys(ftDialog->getCommand());
+        keyboard.sendActionKey("Enter");
     }
 }
 
@@ -528,28 +545,75 @@ void MainWindow::disableDisconnectMenu()
     ui->actionFile_Transfer->setEnabled(false);
 }
 
+/**
+ * @brief   MainWindow::fileTransferStart - triggered when a file transfer begins
+ *
+ * @details Signalled when the file transfer initiation is received from the mainframe
+ */
 void MainWindow::fileTransferStart()
 {
-    fileTransferProgress->reset();
-    fileTransferProgress->show();
+    ftProgress->updateMessage("Transferring file...");
+    ftProgress->show();
 }
 
-void MainWindow::fileTransferUpdateCounts(unsigned long long bytesReceived,
-                                          unsigned long long blocksReceived)
+/**
+ * @brief   MainWindow::fileTransferUpdateCounts - signalled to update the in progress dialog
+ *
+ * @details Signalled when there is an update to the file transfer progress dialog box for the
+ *          counts displayed.
+ */
+void MainWindow::fileTransferUpdateCounts()
 {
-    fileTransferProgress->updateStats(bytesReceived, blocksReceived);
+    ftProgress->updateStats();
 }
 
+/**
+ * @brief   MainWindow::fileTransferUpdateMessage - signalled to update the progress dialog
+ * @param   message - the message to show in the dialog
+ *
+ * @details When there's a message to show in the dialog, either from the host or from Q3270,
+ *          this routine is called to update the program dialog.
+ */
 void MainWindow::fileTransferUpdateMessage(const QString &message)
 {
-    fileTransferProgress->updateMessage(message);
+    ftProgress->updateMessage(message);
 }
 
+/**
+ * @brief   MainWindow::fileTransferComplete - signalled when the file transfer completes
+ *
+ * @details When the file transfer is completed is called to update the progress dialog.
+ */
 void MainWindow::fileTransferComplete()
 {
-    fileTransferProgress->complete();
+    ftProgress->complete();
 }
 
+/**
+ *  @brief   MainWindow::fileTransferSuccess - called when the transfer completes successfully
+ *
+ *  @details When the file transfer completes, this updates the dialog buttons.
+ */
+void MainWindow::fileTransferSuccess()
+{
+    ftProgress->ftSuccess();
+}
+
+/**
+ *  @brief   MainWindow::fileTransferFailure - called when the transfer does not complete
+ *
+ *  @details When the file transfer completes, this updates the dialog buttons.
+ */
+void MainWindow::fileTransferFailure()
+{
+    ftProgress->ftFailure();
+}
+
+/**
+ * @brief   MainWindow::populateMRU - populate the Most Recently Used list
+ *
+ * @details When the program initializes, this routine updates the MRU list from the settings file.
+ */
 void MainWindow::populateMRU()
 {
     // Read global settings

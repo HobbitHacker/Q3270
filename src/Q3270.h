@@ -75,21 +75,36 @@
 #define IBM3270_SF_QUERYREPLY_CHARSETS   0x85 /* Graphic Escape supported for example */
 #define IBM3270_SF_QUERYREPLY_COLOUR     0x86
 #define IBM3270_SF_QUERYREPLY_HIGHLIGHT  0x87
-#define IBM3270_SF_QUERYREPLY_DDM        0x95 /* Distributed Data Management */
+#define IBM3270_SF_QUERYREPLY_DDM        0x95 /* Distributed Data Management - IND$FILE suport */
 #define IBM3270_SF_QUERYREPLY_IMPPARTS   0xA6 /* Implicit Partitions */
 
 /* File Transfer Structured Fields */
-#define IBM3270_FT_OPEN_REQ    0x0012    /* Open Request */
-#define IBM3270_FT_CLOSE_REQ   0x4112    /* Close Request */
-#define IBM3270_FT_INSERT_REQ  0x4711    /* Insert Data Request */
+#define IBM3270_FT_OPEN_REQ     0x0012    /* Open Request */
+#define IBM3270_FT_CLOSE_REQ    0x4112    /* Close Request */
+#define IBM3270_FT_INSERT_REQ   0x4711    /* Insert Data Request */
+#define IBM3270_FT_SETCUR_REQ   0x4511    /* Set Cursor request */
+#define IBM3270_FT_GET_REQ      0x4611    /* Get Data Request */
 
-#define IBM3270_FT_INSERT_DATA 0x4704    /* Insert Data, follows INSERT_REQ */
+#define IBM3270_FT_INSERT_DATA  0x4704    /* Insert Data, follows INSERT_REQ */
 
-#define IBM3270_FT_NORMAL_ACK  0x4705
-#define IBM3270_FT_CLOSE_ACK   0x4109
-#define IBM3270_FT_OPEN_ACK    0x0009
+#define IBM3270_FT_NORMAL_ACK   0x4705    /* Normal Acknowledge, follows INSERT_DATA or GET_DATA */
+#define IBM3270_FT_CLOSE_ACK    0x4109    /* Close Acknowledge, follows CLOSE_REQ */
+#define IBM3270_FT_OPEN_ACK     0x0009    /* Open Acknowledge, follows OPEN_REQ */
+#define IBM3270_FT_GET_ACK      0x4605    /* Get Acknowledge, follows GET_REQ */
 
-#define IBM3270_FT_RECNUM_HDR  0x6306
+#define IBM3270_FT_RECNUM_HDR   0x6306    /* Record Number Header, used in GET_ACK and INSERT_DATA */
+#define IBM3270_FT_ERROR_HDR    0x6904
+
+#define IBM3270_FT_ERROR_CMD    0x0100    /* Error in command */
+#define IBM3270_FT_ERROR_OPEN   0x0008    /* Error opening file */
+#define IBM3270_FT_ERROR_GET    0x4608    /* Error reading local data or writing host data */
+#define IBM3270_FT_ERROR_INSERT 0x4708    /* Error writing local data or reading host data */
+#define IBM3270_FT_ERROR_CLOSE  0x4108    /* Error closing file */
+
+#define IBM3270_FT_ERROR_EOF    0x2200    /* Non-error EOF */
+
+#define IBM3270_FT_NOTCOMP      0xC080    /* Data not compressed - always */
+#define IBM3270_FT_DATA_START     0x61    /* Data starts after this byte */
 
 /* Extended Attributes */
 #define IBM3270_EXT_DEFAULT       0x00
@@ -294,6 +309,11 @@ namespace Q3270 {
         CICS = 2
     };
 
+    enum class TransferDirection {
+        Send = 0,
+        Receive = 1
+    };
+
     Q_ENUM_NS(TelnetState)
     Q_ENUM_NS(RulerStyle)
     Q_ENUM_NS(Colour)
@@ -304,6 +324,7 @@ namespace Q3270 {
     Q_ENUM_NS(EraseResetMDT)
     Q_ENUM_NS(Highlight)
     Q_ENUM_NS(TransferHostType)
+    Q_ENUM_NS(TransferDirection)
 }
 
 Q_DECLARE_METATYPE(Q3270::RulerStyle)

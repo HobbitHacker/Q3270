@@ -18,9 +18,10 @@
  *
  * @details Initialise the ProcessDataStream object, setting power on settings.
  */
-ProcessDataStream::ProcessDataStream(Terminal *t, DisplayScreen *screen)
+ProcessDataStream::ProcessDataStream(Terminal *t, DisplayScreen *screen, FileTransfer &f)
     : terminal(t)
     , screen(screen)
+    , fileTransfer(f)
 {
     primary_pos = 0;
 
@@ -894,11 +895,25 @@ void ProcessDataStream::incPos()
     }
 }
 
+/**
+ * @brief   ProcessDataStream::nextBufferByte - extract the next byte from the buffer
+ * @return  the next byte from the buffer
+ *
+ * @details This function is used to extract a single byte from the data stream buffer. The buffer is
+ *          advanced by one byte.
+ */
 quint8 ProcessDataStream::nextBufferByte()
 {
     return static_cast<quint8>(*buffer++);
 }
 
+/**
+ * @brief   ProcessDataStream::nextBufferHalfWord - extract the next two bytes from the buffer as a 16 bit value
+ * @return  the next two bytes from the buffer as a 16 bit value
+ *
+ * @details This function is used to extract two bytes from the data stream buffer and combine them into
+ *          a single 16 bit value. The buffer is advanced by two bytes.
+ */
 quint16 ProcessDataStream::nextBufferHalfWord()
 {
     quint16 hi = static_cast<quint8>(*buffer++);

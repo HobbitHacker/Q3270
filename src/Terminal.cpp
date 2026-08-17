@@ -31,12 +31,13 @@
  *          There are two displays built; the primary one is always 24x80, and the alternate is defined
  *          by the user, based on the Terminal Model type selected.
  */
-Terminal::Terminal(QGraphicsView *screen, ActiveSettings &activeSettings, CodePage &cp, Keyboard &kb, const Colours &cs)
+Terminal::Terminal(QGraphicsView *screen, ActiveSettings &activeSettings, CodePage &cp, Keyboard &kb, const Colours &cs, FileTransfer &fileTransfer)
     : kbd(kb)
     , cp(cp)
     , palette(cs)
     , activeSettings(activeSettings)
     , screen(screen)
+    , fileTransfer(fileTransfer)
 {   
 
     screen->viewport()->installEventFilter(this);
@@ -254,7 +255,7 @@ void Terminal::connectSession()
 
     statusBar->setPos(0, current->boundingRect().height() + 1);
 
-    datastream = new ProcessDataStream(this, current);
+    datastream = new ProcessDataStream(this, current, fileTransfer);
     socket = new SocketConnection(activeSettings.getTerminalModel());
 
     socket->setSecure(activeSettings.getSecureMode());
@@ -262,11 +263,6 @@ void Terminal::connectSession()
 
     connect(datastream, &ProcessDataStream::bufferReady, socket, &SocketConnection::sendResponse);
     connect(datastream, &ProcessDataStream::setAlternateScreen, this, &Terminal::setAlternateScreen);
-
-    connect(datastream, &ProcessDataStream::ftStarted, this, &Terminal::fileTransferStart);
-    connect(datastream, &ProcessDataStream::ftUpdateCounts, this, &Terminal::fileTransferUpdateCounts);
-    connect(datastream, &ProcessDataStream::ftUpdateMessage, this, &Terminal::fileTransferUpdateMessage);
-    connect(datastream, &ProcessDataStream::ftComplete, this, &Terminal::fileTransferComplete);
 
     connect(current, &DisplayScreen::bufferReady, socket, &SocketConnection::sendResponse);
 
@@ -325,11 +321,6 @@ void Terminal::closeConnection(QString message)
 
     disconnect(datastream, &ProcessDataStream::bufferReady, socket, &SocketConnection::sendResponse);
     disconnect(datastream, &ProcessDataStream::setAlternateScreen, this, &Terminal::setAlternateScreen);
-
-    disconnect(datastream, &ProcessDataStream::ftStarted, this, &Terminal::fileTransferStart);
-    disconnect(datastream, &ProcessDataStream::ftUpdateCounts, this, &Terminal::fileTransferUpdateCounts);
-    disconnect(datastream, &ProcessDataStream::ftUpdateMessage, this, &Terminal::fileTransferUpdateMessage);
-    disconnect(datastream, &ProcessDataStream::ftComplete, this, &Terminal::fileTransferComplete);
 
     disconnect(current, &DisplayScreen::bufferReady, socket, &SocketConnection::sendResponse);
 
@@ -744,29 +735,4 @@ bool Terminal::eventFilter(QObject* obj, QEvent* event)
         return false;
     }
     return QWidget::eventFilter(obj, event);
-}
-
-
-void Terminal::fileTransferStart()
-{
-    qDebug() << "Terminal - FileTransfer start";
-    emit relayFileTransferStart();
-}
-
-void Terminal::fileTransferUpdateCounts(unsigned long long bytesReceived, unsigned long long blocksReceived)
-{
-    qDebug() << "Terminal - FileTransfer update counts: bytesReceived=" << bytesReceived << ", blocksReceived=" << blocksReceived;
-    emit relayFileTransferUpdateCounts(bytesReceived, blocksReceived);
-}
-
-void Terminal::fileTransferUpdateMessage(const QString &message)
-{
-    qDebug() << "Terminal - FileTransfer update message: " << message;
-    emit relayFileTransferUpdateMessage(message);
-}
-
-void Terminal::fileTransferComplete()
-{
-    qDebug() << "Terminal - FileTransfer complete";
-    emit relayFileTransferComplete();
 }
