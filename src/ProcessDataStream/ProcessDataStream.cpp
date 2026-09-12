@@ -12,6 +12,10 @@
 #include "ProcessDataStream.h"
 #include "Terminal.h"
 
+// TODO: PROGxxx codes
+// https://bitsavers.trailing-edge.com/pdf/ibm/pc/3270/3270_PC/SC23-0103-2_3270_PC_Control_Program_Users_Guide_and_Reference_Jul84.pdf
+// B-57 onwards
+
 /**
  * @brief   ProcessDataStream::ProcessDataStream - 3270 Data Stream processing
  * @param   t - the terminal object
@@ -124,7 +128,7 @@ void ProcessDataStream::processStream(QByteArray &b, bool tn3270e)
             processRM();
             break;
         case IBM3270_RMA:
-/*        case IBM3270_CCW_RMA */
+        case IBM3270_CCW_RMA:
             processRMA();
             break;
         case IBM3270_EAU:
@@ -154,7 +158,7 @@ void ProcessDataStream::processStream(QByteArray &b, bool tn3270e)
     }
 
 
-//    qDebug() << QDateTime::currentMSecsSinceEpoch() << "ProcessDataStream: processingComplete";
+    // qDebug() << QDateTime::currentMSecsSinceEpoch() << "ProcessDataStream: processingComplete";
 
     if (lastwasWrite)
         emit processingComplete();
@@ -166,17 +170,22 @@ void ProcessDataStream::processStream(QByteArray &b, bool tn3270e)
 
     if (restoreKeyboard)
     {
-//        qDebug() << QDateTime::currentMSecsSinceEpoch() << "ProcessDataStream: unlockKeyboard";
+    // qDebug() << QDateTime::currentMSecsSinceEpoch() << "ProcessDataStream: unlockKeyboard";
         emit unlockKeyboard();
     }
 
     // Reset character attributes
     screen->resetCharAttr();
 
+    // Check for active file transfer
+    if  (fileTransfer.isExpected()) {
+        fileTransfer.checkCUT(screen, reply);
+    }
+
     // If a response was built, send it
     if (!reply.isEmpty())
     {
-//        qDebug() << QDateTime::currentMSecsSinceEpoch() << "ProcessDataStream: Sending Query reply";
+        // qDebug() << QDateTime::currentMSecsSinceEpoch() << "ProcessDataStream: Sending Query reply";
         emit bufferReady(reply);
     }
 
@@ -439,8 +448,16 @@ void ProcessDataStream::processWSF()
  */
 void ProcessDataStream::processRM()
 {
-    printf("[ReadModified]");
-    screen->processAID(lastAID, Q3270_SHORT_READ);
+    qDebug() << "[ReadModified]";
+
+    if (lastAID == IBM3270_AID_SF)
+    {
+        fileTransfer.readModified(reply);
+    }
+    else
+    {
+        screen->processAID(lastAID, Q3270_SHORT_READ);
+    }
 }
 
 /**

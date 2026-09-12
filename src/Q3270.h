@@ -36,6 +36,7 @@
 #define IBM3270_CCW_EWA    0x0D   /* Erase/Write Alternate */
 #define IBM3270_CCW_RB     0x02   /* Read Buffer */
 #define IBM3270_CCW_RM     0x06   /* Read Modified */
+#define IBM3270_CCW_RMA    0x0E   /* Read Modified All */
 #define IBM3270_CCW_EAU    0x0F   /* Erase All Unprotected */
 #define IBM3270_CCW_WSF    0x11   /* Write Structured Field */
 #define IBM3270_CCW_NOP    0x03   /* No Operation */
@@ -78,11 +79,11 @@
 #define IBM3270_SF_QUERYREPLY_DDM        0x95 /* Distributed Data Management - IND$FILE suport */
 #define IBM3270_SF_QUERYREPLY_IMPPARTS   0xA6 /* Implicit Partitions */
 
-/* File Transfer Structured Fields */
+/* File Transfer DFT Mode */
 #define IBM3270_FT_OPEN_REQ     0x0012    /* Open Request */
 #define IBM3270_FT_CLOSE_REQ    0x4112    /* Close Request */
 #define IBM3270_FT_INSERT_REQ   0x4711    /* Insert Data Request */
-#define IBM3270_FT_SETCUR_REQ   0x4511    /* Set Cursor request */
+#define IBM3270_FT_SETCUR_REQ   0x4511    /* Set Cursor Request */
 #define IBM3270_FT_GET_REQ      0x4611    /* Get Data Request */
 
 #define IBM3270_FT_INSERT_DATA  0x4704    /* Insert Data, follows INSERT_REQ */
@@ -105,6 +106,33 @@
 
 #define IBM3270_FT_NOTCOMP      0xC080    /* Data not compressed - always */
 #define IBM3270_FT_DATA_START     0x61    /* Data starts after this byte */
+
+/* File Transfer CUT Mode */
+#define IBM3270_FT_CUT_FIELD      1919    /* Position of the attribute byte for CUT mode */
+#define IBM3270_FT_FRAMETYPE         0    /* Position of the frame type for CUT mode - 1 byte */
+
+#define IBM3270_FT_CUT_DATA       0xC1    /* Incoming data  (Download/GET) */
+#define IBM3270_FT_CUT_DATAREQ    0xC2    /* Get Data Request (Upload/PUT) */
+#define IBM3270_FT_CUT_CONTROL    0xC3    /* Bidrectional control code */
+#define IBM3270_FT_CUT_RETRANS    0xC4    /* Retransmit data */
+
+#define IBM3270_FT_CUT_CTRLSTAT      2    /* Position of frame status code - 2 bytes */
+#define IBM3270_FT_CUT_CTRLMSGE      4    /* Position of frame message - 80 bytes */
+
+#define IBM3270_FT_CUT_CTRL_ACK 0x8181    /* Acknowledgement */
+#define IBM3270_FT_CUT_CTRL_CMP 0x8189    /* Complete */
+#define IBM3270_FT_CUT_CTRL_ABF 0x8194    /* Abort, File error */
+#define IBM3270_FT_CUT_CTRL_ABX 0x8198    /* Abort, transmission error */
+
+#define IBM3270_FT_CUT_RESPONSE   1914    /* Repsonse field position - 5 bytes back from IBM_FT_CUT_FIELD */
+#define IBM3270_FT_CUT_RESP_FTYP  1915    /* Response Frame Type position */
+#define IBM3270_FT_CUT_RESP_FSEQ  1916    /* Response Frame Sequence position */
+#define IBM3270_FT_CUT_RESP_REAS  1917    /* Response Reason Code (2 bytes) position */
+
+#define IBM3270_FT_CUT_DATA_FSEQ     1    /* Position of data frame sequence number */
+#define IBM3270_FT_CUT_DATA_CKSM     2    /* Position of data checksum */
+#define IBM3270_FT_CUT_DATA_LEN      3    /* Position of data length (2 bytes) */
+#define IBM3270_FT_CUT_DATA_STRT     5    /* Position of data start */
 
 /* Extended Attributes */
 #define IBM3270_EXT_DEFAULT       0x00

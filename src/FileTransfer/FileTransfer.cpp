@@ -17,7 +17,7 @@
 /*
  * IND$FILE Processing
  *
- * IND$FILE has a number of commands:
+ * IND$FILE has a number of commands in DFT mode:
  *
  * Open Req       - Open a transfer
  * Insert Req     - Receive a block of data - could be a message or a data (this preceeds Insert Data)
@@ -39,6 +39,9 @@
  * Error EOF  - returned when the Get Req reaches the end of file
  *
  * IND$FILE also returns a number of messages as Insert Data after an Open Req:
+ *
+ * https://bitsavers.trailing-edge.com/pdf/ibm/pc/3270/3270_PC/SC23-0103-2_3270_PC_Control_Program_Users_Guide_and_Reference_Jul84.pdf
+ * Appendix E
  *
  * ZTRANS03 - Transfer completed successfully
  * ZTRANS04 - File transfer complete, with records segmented
@@ -66,6 +69,9 @@
  * Of these, only ZTRANS03 is a success message; with ZTRANS04 being a qualified success message
  * (the file was segmented). All others are errors. Many of the errors would be prevented by GUI
  * validation of the file transfer options before sending the Open Req.
+ *
+ * For IND$FILE in CUT mode, the screen is formatted with blanks, a skip attribute in 1919 and
+ * an enterable field in
  */
 
 /**
@@ -221,6 +227,7 @@ void FileTransfer::insertData(QByteArray::Iterator &buffer, QByteArray &reply)
             msg = msg.left(dollar);
         qDebug() << msg << bytesTransferred << "bytes received";
         emit ftUpdateMessage(msg);
+        emit ftUpdateCounts();
         ftDataAck(reply);
         // TRANS03 is complete, TRANS04 is complete with segemented records
         if (msg.left(7) == "TRANS03" || msg.left(7) == "TRANS04")
@@ -233,16 +240,16 @@ void FileTransfer::insertData(QByteArray::Iterator &buffer, QByteArray &reply)
     if (pktLen > 0) {
         // If this is an ASCII transfer with CRLF, remove the CR and EOF characters
         if (ascii && crlf) {
-            QByteArray converted;
+            ftBlock.clear();
             for (int i = 0; i < pktLen; i++) {
                 uint c = buffer[i];
                 if (c == 0x1A || c == '\r') {
                     // Skip EOF character and carriage return
                     continue;
                 }
-                converted.append(c);
+                ftBlock.append(c);
             }
-            incomingFile.write(converted, converted.length());
+            incomingFile.write(ftBlock, ftBlock.length());
         } else {
             /* Write data out */
             incomingFile.write(reinterpret_cast<const char *>(buffer), pktLen);
@@ -297,6 +304,19 @@ void FileTransfer::getData(QByteArray &reply)
         return;
     }
 
+    ftBlock.clear();
+    ftBlock.append(IBM3270_AID_SF);
+
+    StructuredField sendData = StructuredField(IBM3270_WSF_TRANSFER)
+                                   .addHalfWord(IBM3270_FT_GET_ACK)
+                                   .addHalfWord(IBM3270_FT_RECNUM_HDR)
+                                   .addWord(blocksTransferred)
+                                   .addHalfWord(IBM3270_FT_NOTCOMP)
+                                   .addByte(IBM3270_FT_DATA_START)
+                                   .addHalfWord(data.length() + 5); // Add 5 for the 5 bytes of header
+
+    // TODO: Improve efficiency of CRLF conversion. This is a simple implementation
+    //       that converts LF to CRLF, but it could be improved.
     if (crlf) {
         QByteArray converted;
         for (int i = 0; i < data.length(); i++) {
@@ -311,22 +331,13 @@ void FileTransfer::getData(QByteArray &reply)
         data = converted;
     }
 
-    reply.append(IBM3270_AID_SF);
-
-    StructuredField sendData = StructuredField(IBM3270_WSF_TRANSFER)
-                     .addHalfWord(IBM3270_FT_GET_ACK)
-                     .addHalfWord(IBM3270_FT_RECNUM_HDR)
-                     .addWord(blocksTransferred)
-                     .addHalfWord(IBM3270_FT_NOTCOMP)
-                     .addByte(IBM3270_FT_DATA_START)
-                     .addHalfWord(data.length() + 5); // Add 5 for the 5 bytes of header
-
     for (int i = 0; i < data.length(); i++) {
-       qDebug() << "getData - data[" << i << "] = " << QString::number(data[i], 16);
        sendData.addByte(data[i]);
     }
 
-    reply.append(sendData.toSF());
+    ftBlock.append(sendData.toSF());
+
+    reply.append(ftBlock);
 
     bytesTransferred += data.length();
     blocksTransferred++;
@@ -406,6 +417,13 @@ void FileTransfer::ftAbort(QString msg, quint16 abortType, QByteArray &reply)
     emit ftAbort();
 }
 
+void FileTransfer::readModified(QByteArray &reply)
+{
+    if (ftBlock.size()) {
+        reply.append(ftBlock);
+    }
+}
+
 /**
  * @brief   FileTransfer::reset - reset the file transfer state
  *
@@ -415,8 +433,14 @@ void FileTransfer::ftAbort(QString msg, quint16 abortType, QByteArray &reply)
 void FileTransfer::setExpected(bool exp)
 {
     ftExpected = exp;
-    if (ftExpected)
+
+    if (ftExpected) {
+        blocksTransferred = 0;
+        bytesTransferred = 0;
+        emit ftUpdateCounts();
         emit ftStarted();
+    }
+
 }
 
 /**
@@ -450,4 +474,260 @@ quint64 FileTransfer::getBlocks()
 bool FileTransfer::isExpected()
 {
     return ftExpected;
+}
+
+void FileTransfer::checkCUT(DisplayScreen *screen, QByteArray &reply)
+{
+    qDebug() << "FileTransfer::checkCUT - Checking for CUT mode transfer - expected " << ftExpected;
+
+    if (!ftExpected)
+        return;
+
+    if (screen->isFieldStart(IBM3270_FT_CUT_FIELD) && screen->isAskip(IBM3270_FT_CUT_FIELD))
+    {
+        quint8 frameType = screen->getChar(IBM3270_FT_FRAMETYPE);
+
+        qDebug() << QString("CUT frame type = %1").arg(frameType, 2, 16);
+
+        switch (frameType)
+        {
+            case IBM3270_FT_CUT_DATA:
+                cutData(screen, reply);
+                break;
+            case IBM3270_FT_CUT_DATAREQ:
+                cutDataReq(screen, reply);
+                break;
+            case IBM3270_FT_CUT_CONTROL:
+                cutControlCode(screen, reply);
+                break;
+            case IBM3270_FT_CUT_RETRANS:
+                cutRetransmit(screen, reply);
+                break;
+            default:
+                qDebug() << "Unknown CUT frame type";
+                reply.append(IBM3270_AID_F2);
+                break;
+        }
+    }
+}
+
+void FileTransfer::cutData(DisplayScreen *screen, QByteArray &reply)
+{
+
+    // Open file if it's the first time through
+    if (!incomingFile.isOpen())
+    {
+        blocksTransferred = 0;
+        bytesTransferred = 0;
+        emit ftUpdateCounts();
+        incomingFile.setFileName(filename);
+        if (!incomingFile.open(QIODevice::WriteOnly)) {
+            qDebug() << "cutData - File Transfer Open failed to open file for Write:" << filename;
+            emit ftUpdateMessage(incomingFile.errorString());
+            cutAbort(screen, reply, IBM3270_FT_CUT_CTRL_ABX);
+            return;
+        }
+    }
+
+    screen->dumpDisplay();
+
+    ftBlock.clear();
+
+    int dataLen = fromBase64(screen->getChar(IBM3270_FT_CUT_DATA_LEN)) << 6 | fromBase64(screen->getChar(IBM3270_FT_CUT_DATA_LEN + 1));
+
+    qDebug() << "FileTransfer::cutData - Incoming data - length " << dataLen;
+
+    // Detect EOF as 5C A9 in the first two bytes of the data.
+    // This is a special case that indicates the end of the file transfer.
+    if (dataLen == 2)
+    {
+        if (screen->getChar(IBM3270_FT_CUT_DATA_STRT) == 0x5C && screen->getChar(IBM3270_FT_CUT_DATA_STRT + 1) == 0xA9)
+        {
+            qDebug() << "FileTransfer::cutData - Incoming data - EOF";
+            reply.append(IBM3270_AID_ENTER);
+            return;
+        }
+    }
+
+    int loopCount = 1;
+
+    // Loop count is used when the quadrant needs to be reset. If the quadrant is reset,
+    // the quadrant needs to be re-evaluated for the current character.
+    for (int dp = 0; dp < dataLen; dp += loopCount)
+    {
+        loopCount = 1;
+
+        quint8 thisChar = screen->getChar(IBM3270_FT_CUT_DATA_STRT + dp);
+        if (!quadrant)
+        {
+            if (!(quadrant = findQuadrant(thisChar)))
+            {
+                qDebug() << "Failed to find quadrant for" << QString("%1").arg(thisChar, 2, 16);
+                cutAbort(screen, reply, IBM3270_FT_CUT_CTRL_ABX);
+            }
+            else
+                qDebug() << "Quadrant for " << QString("%1").arg(thisChar, 2, 16) << "is" << quadrant;
+            continue;
+        }
+
+        quint8 asc = e2a[thisChar];
+        const char* pos = strchr(alphas, asc);
+
+        if (pos == nullptr)
+        {
+            qDebug() << "Character not mapped; resetting quadrant" << QString("%1").arg(thisChar, 2, 16);
+            quadrant = nullptr;
+            loopCount = 0;
+            continue;
+        }
+
+        int index = pos - alphas;
+        if (quadrant->map[index] == 0x00 && quadrant != &quadrants[2] && thisChar != 0xC1)
+        {
+            qDebug() << "Returned character was NULL but this quadrant isn't valid for that. Resetting";
+            loopCount = 0;
+        }
+
+        quint8 c = quadrant->map[index];
+
+        if (ascii && crlf)
+        {
+            if (c == 0x1A || c == '\r')
+            {
+                // Skip EOF character and carriage return
+                continue;
+            }
+        }
+
+        ftBlock.append(c);
+
+        qDebug() << QString("%1 maps to %2").arg(thisChar, 2, 16).arg(c, 2, 16);
+    }
+
+    incomingFile.write(ftBlock, ftBlock.length());
+
+    if (incomingFile.error() != QFile::NoError)
+    {
+        emit ftUpdateMessage(incomingFile.errorString());
+        cutAbort(screen, reply, IBM3270_FT_CUT_CTRL_ABF);
+    }
+
+    bytesTransferred += ftBlock.size();
+    blocksTransferred++;
+
+    emit ftUpdateCounts();
+
+    reply.append(IBM3270_AID_ENTER);
+}
+
+void FileTransfer::cutDataReq(DisplayScreen *screen, QByteArray &reply)
+{
+    qDebug() << "FileTransfer::cutDataReq - Outgoing data request";
+
+    reply.append(IBM3270_AID_ENTER);
+}
+
+void FileTransfer::cutControlCode(DisplayScreen *screen, QByteArray &reply)
+{
+    QString msg;
+
+    int code = (screen->getChar(IBM3270_FT_CUT_CTRLSTAT)) << 8 | screen->getChar(IBM3270_FT_CUT_CTRLSTAT + 1);
+
+    qDebug() << "FileTranfer::cutControlCode - incoming control code" << QString("%1").arg(code, 4, 16);
+
+    screen->dumpDisplay();
+
+    if (code != IBM3270_FT_CUT_CTRL_ACK)
+    {
+        for (int i = 0; i < 80; i++)
+        {
+            msg.append((QChar)e2a[screen->getChar(IBM3270_FT_CUT_CTRLMSGE + i)]);
+        }
+
+        msg = msg.trimmed();
+        if (msg.last(1) == "$")
+            msg = msg.left(msg.length() - 1);
+
+        emit ftUpdateMessage(msg);
+
+        qDebug() << "Message from host:" << msg;
+    }
+
+    switch(code)
+    {
+        case IBM3270_FT_CUT_CTRL_ACK:
+            reply.append(IBM3270_AID_ENTER);
+            quadrant = nullptr;
+            break;
+        case IBM3270_FT_CUT_CTRL_CMP:
+            setExpected(false);
+            if (direction == Q3270::TransferDirection::Send) {
+                outgoingFile.close();
+            } else if (!incomingFile.commit()) {
+                qDebug() << "ftClose - File Transfer Close failed to commit file:" << filename;
+                emit ftUpdateMessage(incomingFile.errorString());
+                cutAbort(screen, reply, IBM3270_FT_CUT_CTRL_ABF);
+                return;
+            }
+            qDebug() << "FileTransfer::cutControlCode - File Transfer complete - total bytes received" << bytesTransferred;
+            if (msg.left(7) == "TRANS03" || msg.left(7) == "TRANS04")
+                emit ftSuccess();
+            else
+                emit ftFailure();
+            emit ftComplete();
+            reply.append(IBM3270_AID_ENTER);
+            break;
+        case IBM3270_FT_CUT_CTRL_ABF:
+        case IBM3270_FT_CUT_CTRL_ABX:
+            emit ftUpdateCounts();
+            reply.append(IBM3270_AID_ENTER);
+            break;
+        default:
+            msg = QString("Unknown CUT control code %1").arg(code, 4, 16);
+            emit ftUpdateMessage(msg);
+            cutAbort(screen, reply, IBM3270_FT_CUT_CTRL_ABX);
+    }
+
+}
+
+void FileTransfer::cutRetransmit(DisplayScreen *screen, QByteArray &reply)
+{
+    qDebug() << "FileTranfer::cutControlCode - retransmission request";
+
+    reply.append(IBM3270_AID_ENTER);
+}
+
+quint8 FileTransfer::fromBase64(quint8 b)
+{
+    quint8 ascii = e2a[b];
+    int index = base64.indexOf((QChar)ascii);
+
+    return (index < 0) ? 0 : (quint8)index;
+}
+
+void FileTransfer::cutAbort(DisplayScreen *screen, QByteArray &reply, quint16 reason)
+{
+    qDebug() << "FileTransfer::cutAbort - aborting with" << QString("%1").arg(reason, 4, 16);
+
+    quint8 bh = (reason >> 8) & 0xFF;
+    quint8 bl = reason & 0xFF;
+
+    reply.append(IBM3270_AID_F2);
+
+    screen->setChar(IBM3270_FT_CUT_RESP_FTYP, IBM3270_FT_CUT_CONTROL, false);
+    screen->setChar(IBM3270_FT_CUT_RESP_FSEQ, IBM3270_FT_CUT_DATA_FSEQ, false);
+    screen->setChar(IBM3270_FT_CUT_RESP_REAS,  bh, false);
+    screen->setChar(IBM3270_FT_CUT_RESP_REAS + 1, bl, false);
+
+}
+
+const FileTransfer::Quadrant* FileTransfer::findQuadrant(quint8 b)
+{
+    for (int q = 0; q < 4 && quadrant == nullptr; q++)
+    {
+        if (b == quadrants[q].key)
+            return &(quadrants[q]);
+    }
+
+    return nullptr;
 }

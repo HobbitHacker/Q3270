@@ -1212,6 +1212,13 @@ void DisplayScreen::addPosToBuffer(QByteArray &buffer, int pos)
     buffer.append(byte2);
 }
 
+
+quint8 DisplayScreen::getChar(int pos) const
+{
+    return cells[pos].getEBCDIC();
+}
+
+
 /**
  * @brief   DisplayScreen::dumpFields - debug routine to print out all fields
  *

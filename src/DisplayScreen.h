@@ -102,6 +102,8 @@ class DisplayScreen : public QGraphicsObject
 
         void addPosToBuffer(QByteArray &buffer, int pos);
 
+        quint8 getChar(int pos) const;
+
         void dumpFields();
         void dumpDisplay();
         void dumpInfo();

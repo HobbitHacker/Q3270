@@ -212,14 +212,14 @@ void ProcessDataStream::replySummary()
     //                 .toSF());
 
     // TODO: LIMIN and LIMOUT values should be dynamic.
-    reply.append(StructuredField(IBM3270_SF_QUERYREPLY)
-                    .addByte(IBM3270_SF_QUERYREPLY_DDM)
-                    .addBytes({0x00, 0x00}) /* Reserved */
-                    .addHalfWord(16384) /* Limit In (LIMIN) */
-                    .addHalfWord(16384) /* Limit Out (LIMOUT) */
-                    .addByte(0x01) /* Number of subsets supported */
-                    .addByte(0x01) /* Subset number */
-                    .toSF());
+    // reply.append(StructuredField(IBM3270_SF_QUERYREPLY)
+    //                 .addByte(IBM3270_SF_QUERYREPLY_DDM)
+    //                 .addBytes({0x00, 0x00}) /* Reserved */
+    //                 .addHalfWord(16384) /* Limit In (LIMIN) */
+    //                 .addHalfWord(16384) /* Limit Out (LIMOUT) */
+    //                 .addByte(0x01) /* Number of subsets supported */
+    //                 .addByte(0x01) /* Subset number */
+    //                 .toSF());
 }
 
 /**
@@ -245,21 +245,25 @@ void ProcessDataStream::WSFtransfer()
     switch (trtype) {
         case IBM3270_FT_OPEN_REQ:
             fileTransfer.open(buffer, reply, wsfLen);
+            lastAID = IBM3270_AID_SF;
             break;
         case IBM3270_FT_INSERT_REQ:
             fileTransfer.insertReq();
             break;
         case IBM3270_FT_INSERT_DATA:
             fileTransfer.insertData(buffer, reply);
+            lastAID = IBM3270_AID_SF;
             break;
         case IBM3270_FT_SETCUR_REQ:
             fileTransfer.setCursorReq();
             break;
         case IBM3270_FT_GET_REQ:
             fileTransfer.getData(reply);
+            lastAID = IBM3270_AID_SF;
             break;
         case IBM3270_FT_CLOSE_REQ:
             fileTransfer.close(reply);
+            lastAID = IBM3270_AID_SF;
             break;
         default:
             qDebug() << QString("[** WSF Transfer - Not Implemented %1 **]").arg(trtype, 4, 16);

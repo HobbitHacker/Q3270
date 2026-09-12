@@ -320,6 +320,9 @@
        <property name="text">
         <string>Block Size</string>
        </property>
+       <property name="buddy">
+        <cstring>blksize</cstring>
+       </property>
       </widget>
      </item>
      <item row="3" column="1">
@@ -346,6 +349,23 @@
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>direction</tabstop>
+  <tabstop>hosttype</tabstop>
+  <tabstop>localFile</tabstop>
+  <tabstop>browse</tabstop>
+  <tabstop>remoteFile</tabstop>
+  <tabstop>ascii</tabstop>
+  <tabstop>crlf</tabstop>
+  <tabstop>append</tabstop>
+  <tabstop>recfm</tabstop>
+  <tabstop>lrecl</tabstop>
+  <tabstop>blksize</tabstop>
+  <tabstop>space</tabstop>
+  <tabstop>primary</tabstop>
+  <tabstop>secondary</tabstop>
+  <tabstop>averageblock</tabstop>
+ </tabstops>
  <resources/>
  <connections>
   <connection>
