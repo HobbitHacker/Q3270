@@ -1204,6 +1204,13 @@ void Keyboard::setConnected(bool state)
     connectedState = state;
 }
 
+/**
+ * @brief   Keyboard::setLocked - set the keyboard lock
+ * @param   lock - true to lock, false to unlock
+ *
+ * @details setLocked is used to lock or unlock the keyboard. If the keyboard is unlocked, nextKey()
+ *          is called to process any buffered keys.
+ */
 void Keyboard::setLocked(const bool lock)
 {
     systemLock = lock;

@@ -134,6 +134,19 @@
 #define IBM3270_FT_CUT_DATA_LEN      3    /* Position of data length (2 bytes) */
 #define IBM3270_FT_CUT_DATA_STRT     5    /* Position of data start */
 
+#define IBM3270_FT_CUT_RDAT_FSEQ     3    /* Position of sending (us to host) frame sequence number */
+#define IBM3270_FT_CUT_RDAT_CKSM     4    /* Position of sending (us to host) checksum */
+#define IBM3270_FT_CUT_RDAT_LEN      5    /* Position of sending (us to host) data length (2 bytes) */
+#define IBM3270_FT_CUT_RDAT_SEND     7    /* Position of sending (us to host) data start */
+
+/* The direct CUT response starts at screen position IBM3270_FT_CUT_RDAT_FSEQ. */
+#define IBM3270_FT_CUT_RESPONSE_FSEQ  0   /* Response-relative frame sequence number */
+#define IBM3270_FT_CUT_RESPONSE_CKSM  1   /* Response-relative checksum */
+#define IBM3270_FT_CUT_RESPONSE_LEN   2   /* Response-relative data length (2 bytes) */
+#define IBM3270_FT_CUT_RESPONSE_SEND  4   /* Response-relative data start */
+
+#define IBM3270_FT_CUT_DATA_MAX   IBM3270_FT_CUT_FIELD - IBM3270_FT_CUT_RDAT_SEND /* Maximum data length in a CUT frame */
+
 /* Extended Attributes */
 #define IBM3270_EXT_DEFAULT       0x00
 #define IBM3270_EXT_3270          0xC0

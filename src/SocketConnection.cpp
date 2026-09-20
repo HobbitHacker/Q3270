@@ -705,12 +705,12 @@ void SocketConnection::dump(QByteArray &a, QString title)
 
         uchar latin1 = unicode.toLatin1().data()[0];
 
-        if (isalnum(latin1))
+        if (isprint(latin1))
             bytesEBCDIC.append(QChar(latin1));
         else
             bytesEBCDIC.append(".");
 
-        if (isalnum(ebcdicchar))
+        if (isprint(ebcdicchar))
             bytesASCII.append(QChar(ebcdicchar));
         else
             bytesASCII.append(".");

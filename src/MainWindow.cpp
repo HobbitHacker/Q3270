@@ -328,8 +328,8 @@ void MainWindow::menuFileTransfer()
             ftProgress->setWindowTitle("Receiving File");
         }
 
-        fileTransfer.setExpected(true);
         fileTransfer.setProperties(ftDialog->getLocalFile(), d, ftDialog->isAscii(), ftDialog->isCRLF());
+        fileTransfer.setExpected(true);
 
         keyboard.sendKeys(ftDialog->getCommand());
         keyboard.sendActionKey("Enter");

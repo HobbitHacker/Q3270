@@ -558,9 +558,10 @@ void FileTransfer::cutData(DisplayScreen *screen, QByteArray &reply)
         loopCount = 1;
 
         quint8 thisChar = screen->getChar(IBM3270_FT_CUT_DATA_STRT + dp);
+
         if (!quadrant)
         {
-            if (!(quadrant = findQuadrant(thisChar)))
+            if (!(quadrant = findQuadrantByCode(thisChar)))
             {
                 qDebug() << "Failed to find quadrant for" << QString("%1").arg(thisChar, 2, 16);
                 cutAbort(screen, reply, IBM3270_FT_CUT_CTRL_ABX);
@@ -624,7 +625,119 @@ void FileTransfer::cutDataReq(DisplayScreen *screen, QByteArray &reply)
 {
     qDebug() << "FileTransfer::cutDataReq - Outgoing data request";
 
+    quint8 frameSeq = screen->getChar(IBM3270_FT_CUT_RDAT_FSEQ);
+    QByteArray response;
+
+    response.append(frameSeq);
+    response.append(static_cast<char>(0x00)); // Checksum is filled after the data has been added.
+    response.append(static_cast<char>(0x00)); // Data length is filled after
+    response.append(static_cast<char>(0x00)); //      the data has been added.
+
+    // Open file if it's the first time through
+    if (!outgoingFile.isOpen())
+    {
+        blocksTransferred = 0;
+        bytesTransferred = 0;
+        emit ftUpdateCounts();
+        outgoingFile.setFileName(filename);
+        if (!outgoingFile.open(QIODevice::ReadOnly)) {
+            qDebug() << "cutData - File Transfer Open failed to open file for Read:" << filename;
+            emit ftUpdateMessage(outgoingFile.errorString());
+            cutAbort(screen, reply, IBM3270_FT_CUT_CTRL_ABX);
+            return;
+        }
+    }
+
+    quint8 c;
+    int pos = 0;
+
+    quadrant = nullptr;
+
+    outgoingFile.getChar((char*)&c);
+
+    while(pos < IBM3270_FT_CUT_DATA_MAX && !outgoingFile.atEnd())
+    {
+        if (quadrant == nullptr)
+        {
+            if (!(quadrant = findQuadrantByChar(c)))
+            {
+                qDebug() << "Failed to find quadrant for" << QString("%1").arg(c, 2, 16);
+                cutAbort(screen, reply, IBM3270_FT_CUT_CTRL_ABX);
+                return;
+            }
+//            qDebug() << QString("Quadrant for %1 (%2) is %3 (%4").arg(c, 2, 16).arg(c).arg(quadrant->key, 2, 16).arg(quadrant->key);
+            response.append(quadrant->key);
+            pos++;
+        }
+
+        quint8 ebc = a2e[c];
+
+        const void *chr = memchr(quadrant->map, c, 77);
+
+//        qDebug() << "Searching for" << QString("%1").arg(ebc, 2, 16) << "in quadrant" << quadrant << "map" << quadrant->map << "chr" << chr;
+
+        if (chr != nullptr)
+        {
+            int index = (char*)chr - (char *)quadrant->map;
+            quint8 ebc = a2e[(int)alphas[index]];
+            qDebug() << QString("%1 maps to %2").arg(c, 2, 16).arg(ebc, 2, 16);
+            response.append(ebc);
+            pos++;
+            outgoingFile.getChar((char*)&c);
+        }
+        else
+        {
+            quadrant = nullptr;
+//            qDebug() << "Character not mapped; resetting quadrant" << QString("%1").arg(c, 2, 16);
+            continue;
+        }
+    }
+
+    // Handle EOF (only processed if the file is at EOF and no data has been sent)
+    if (outgoingFile.atEnd() && pos == 0)
+    {
+        qDebug() << "FileTransfer::cutDataReq - Outgoing data request - EOF";
+        response.append(0x5C);
+        response.append(0xA9);
+        pos = 2;
+    }
+
+    qDebug() << "FileTransfer::cutDataReq - Outgoing data request - sent" << pos << "bytes";
+
+    // Store data length in base64, converting to EBCDIC for the screen
+
+    QChar b1 = base64.at((pos >> 6) & 0x3F);
+    QChar b2 = base64.at(pos & 0x3F);
+
+    quint8 b1_e = a2e[static_cast<quint8>(b1.toLatin1())];
+    quint8 b2_e = a2e[static_cast<quint8>(b2.toLatin1())];
+
+    qDebug() << "FileTransfer::cutDataReq - Outgoing data request - length" << pos << "base64" << b1 << b2 << "EBCDIC" << QString("%1").arg(b1_e, 2, 16) << QString("%1").arg(b2_e, 2, 16);
+
+    response[IBM3270_FT_CUT_RESPONSE_LEN] =
+        a2e[static_cast<quint8>((base64.at((pos >> 6) & 0x3f)).toLatin1())];
+    response[IBM3270_FT_CUT_RESPONSE_LEN + 1] =
+        a2e[static_cast<quint8>(base64.at(pos & 0x3F).toLatin1())];
+
+    // Calculate checksum
+    int checksum = 0;
+
+    for (int i = IBM3270_FT_CUT_RESPONSE_SEND; i < response.size(); i++)
+        checksum ^= static_cast<quint8>(response.at(i));
+
+    // Store checksum in base64, converting to EBCDIC for the screen
+    response[IBM3270_FT_CUT_RESPONSE_CKSM] =
+        a2e[static_cast<quint8>(base64.at(checksum & 0x3F).toLatin1())];
+
     reply.append(IBM3270_AID_ENTER);
+    reply.append(0x40); // Cursor address
+    reply.append(0xC4);
+    reply.append(IBM3270_SBA);
+    reply.append(0x40); // Field address
+    reply.append(0xC2);
+    reply.append(IBM3270_FT_CUT_DATA);
+    reply.append(response);
+
 }
 
 void FileTransfer::cutControlCode(DisplayScreen *screen, QByteArray &reply)
@@ -645,7 +758,8 @@ void FileTransfer::cutControlCode(DisplayScreen *screen, QByteArray &reply)
         }
 
         msg = msg.trimmed();
-        if (msg.last(1) == "$")
+
+        if (msg.size() > 0 && msg.last(1) == "$")
             msg = msg.left(msg.length() - 1);
 
         emit ftUpdateMessage(msg);
@@ -679,7 +793,12 @@ void FileTransfer::cutControlCode(DisplayScreen *screen, QByteArray &reply)
             break;
         case IBM3270_FT_CUT_CTRL_ABF:
         case IBM3270_FT_CUT_CTRL_ABX:
+            qDebug() << "FileTransfer::cutControlCode - File Transfer aborted - total bytes received" << bytesTransferred;
             emit ftUpdateCounts();
+            emit ftFailure();
+            emit ftComplete();
+            if (msg == "")
+                emit ftUpdateMessage(QString("File Transfer aborted"));
             reply.append(IBM3270_AID_ENTER);
             break;
         default:
@@ -721,13 +840,28 @@ void FileTransfer::cutAbort(DisplayScreen *screen, QByteArray &reply, quint16 re
 
 }
 
-const FileTransfer::Quadrant* FileTransfer::findQuadrant(quint8 b)
+const FileTransfer::Quadrant* FileTransfer::findQuadrantByCode(quint8 b)
 {
-    for (int q = 0; q < 4 && quadrant == nullptr; q++)
+    for (int q = 0; q < 4; q++)
     {
         if (b == quadrants[q].key)
             return &(quadrants[q]);
     }
 
     return nullptr;
+}
+
+const FileTransfer::Quadrant* FileTransfer::findQuadrantByChar(quint8 c)
+{
+    for (int q = 0; q < 4; q++)
+    {
+        for (int i = 0; i < 77; i++)
+        {
+            if (c == quadrants[q].map[i])
+            {
+//                qDebug() << QString("Found quadrant for %1 is %2").arg(c, 2, 16).arg(quadrants[q].key, 2, 16);
+                return &(quadrants[q]);
+            }
+        }
+    }
 }
