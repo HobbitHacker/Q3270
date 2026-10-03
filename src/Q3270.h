@@ -114,7 +114,7 @@
 #define IBM3270_FT_CUT_DATA       0xC1    /* Incoming data  (Download/GET) */
 #define IBM3270_FT_CUT_DATAREQ    0xC2    /* Get Data Request (Upload/PUT) */
 #define IBM3270_FT_CUT_CONTROL    0xC3    /* Bidrectional control code */
-#define IBM3270_FT_CUT_RETRANS    0xC4    /* Retransmit data */
+#define IBM3270_FT_CUT_RETRANS    0x4C    /* Retransmit data */
 
 #define IBM3270_FT_CUT_CTRLSTAT      2    /* Position of frame status code - 2 bytes */
 #define IBM3270_FT_CUT_CTRLMSGE      4    /* Position of frame message - 80 bytes */

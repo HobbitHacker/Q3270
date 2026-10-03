@@ -83,17 +83,18 @@
 FileTransfer::FileTransfer()
 {
     ftExpected = false;
+    ftMode = FTMode::NONE;
 }
 
 /**
  * @brief   FileTransfer::setProperties - set the properties for the file transfer
  * @param   filename  - the local file name to read/write
- * @param   direction - the direction of the transfer (send or receive)
+ * @param   direction - the direction of the file transfer (send or receive)
  * @param   ascii     - true for ASCII transfer, false for binary
  * @param   crlf      - true to convert CRLF to LF on receive, false otherwise
  *
  * @details This function is called before starting a file transfer to set the properties of
- *          the transfer.
+ *          the file transfer.
  */
 void FileTransfer::setProperties(QString filename, Q3270::TransferDirection direction, bool ascii, bool crlf)
 {
@@ -101,23 +102,25 @@ void FileTransfer::setProperties(QString filename, Q3270::TransferDirection dire
     this->direction = direction;
     this->ascii = ascii;
     this->crlf = crlf;
+    this->ftMode = FTMode::NONE;
 }
 
 /**
  * @brief   FileTransfer::open - process the Open Req structured field
- * @param   buffer - the incoming data buffer
+ * @param   buffer - the buffer containing the Open Req data
  * @param   reply  - the reply buffer to send back to the host
  * @param   wsfLen - the length of the structured field
  *
  * @details This function processes the Open Req structured field. It checks the packet type and opens
- *          the local file for reading or writing, depending on the direction of the transfer. It detects
- *          whether the OPEN request is for data or for a message.
+ *          the file for reading or writing, depending on the direction of the transfer.
  */
 void FileTransfer::open(QByteArray::Iterator &buffer, QByteArray &reply, int wsfLen)
 {
     QString packetType;
 
     qDebug() << "ftOpen - File Transfer Open command received";
+
+    ftMode = FTMode::DFT;
 
     switch (wsfLen) {
         // Receive
@@ -192,6 +195,7 @@ void FileTransfer::open(QByteArray::Iterator &buffer, QByteArray &reply, int wsf
  */
 void FileTransfer::insertReq()
 {
+    ftMode = FTMode::DFT;
 }
 
 /**
@@ -206,6 +210,8 @@ void FileTransfer::insertReq()
 void FileTransfer::insertData(QByteArray::Iterator &buffer, QByteArray &reply)
 {
     qDebug() << "ftInsertData - File Transfer Insert Data command received";
+
+    ftMode = FTMode::DFT;
 
     // Skip past C0 80 61 static bytes
     // These, according to x3270, are compression indicator (C080) and start of data flags (61)
@@ -272,6 +278,7 @@ void FileTransfer::insertData(QByteArray::Iterator &buffer, QByteArray &reply)
  */
 void FileTransfer::setCursorReq()
 {
+    ftMode = FTMode::DFT;
 }
 
 /**
@@ -285,6 +292,8 @@ void FileTransfer::setCursorReq()
  */
 void FileTransfer::getData(QByteArray &reply)
 {
+    ftMode = FTMode::DFT;
+
     if (outgoingFile.atEnd()) {
         reply.append(IBM3270_AID_SF);
         reply.append(StructuredField(IBM3270_WSF_TRANSFER)
@@ -356,6 +365,8 @@ void FileTransfer::close(QByteArray &reply)
 {
     qDebug() << "ftClose - File Transfer Close";
 
+    ftMode = FTMode::DFT;
+
     if (direction == Q3270::TransferDirection::Send) {
         outgoingFile.close();
 
@@ -419,7 +430,8 @@ void FileTransfer::ftAbort(QString msg, quint16 abortType, QByteArray &reply)
 
 void FileTransfer::readModified(QByteArray &reply)
 {
-    if (ftBlock.size()) {
+    if (ftBlock.size())
+    {
         reply.append(ftBlock);
     }
 }
@@ -433,6 +445,7 @@ void FileTransfer::readModified(QByteArray &reply)
 void FileTransfer::setExpected(bool exp)
 {
     ftExpected = exp;
+    ftMode = FTMode::NONE;
 
     if (ftExpected) {
         blocksTransferred = 0;
@@ -476,6 +489,14 @@ bool FileTransfer::isExpected()
     return ftExpected;
 }
 
+/**
+ * @brief   FileTransfer::checkCUT - check for CUT mode transfer
+ * @param   screen - the display screen object
+ * @param   reply  - the reply buffer to send back to the host
+ *
+ * @details This function checks if a CUT mode transfer is in progress and passes 
+ *          control to the appopriate handler.
+ */
 void FileTransfer::checkCUT(DisplayScreen *screen, QByteArray &reply)
 {
     qDebug() << "FileTransfer::checkCUT - Checking for CUT mode transfer - expected " << ftExpected;
@@ -489,6 +510,8 @@ void FileTransfer::checkCUT(DisplayScreen *screen, QByteArray &reply)
 
         qDebug() << QString("CUT frame type = %1").arg(frameType, 2, 16);
 
+        ftMode = FTMode::CUT;
+
         switch (frameType)
         {
             case IBM3270_FT_CUT_DATA:
@@ -501,7 +524,7 @@ void FileTransfer::checkCUT(DisplayScreen *screen, QByteArray &reply)
                 cutControlCode(screen, reply);
                 break;
             case IBM3270_FT_CUT_RETRANS:
-                cutRetransmit(screen, reply);
+                cutRetransmit(reply);
                 break;
             default:
                 qDebug() << "Unknown CUT frame type";
@@ -511,6 +534,16 @@ void FileTransfer::checkCUT(DisplayScreen *screen, QByteArray &reply)
     }
 }
 
+
+/** 
+ * @brief   FileTransfer::cutData - process the CUT mode data frame
+ * @param   screen - the display screen object
+ * @param   reply  - the reply buffer to send back to the host
+ * 
+ * @details This function processes the CUT mode data frame. It extracts the data
+ *          from the screen, writes it to the local file, and acknowledges the data. When the end of file
+ *          is reached, it sends an EOF error (which is really just an acknowledgement of the end of the transfer).
+ */
 void FileTransfer::cutData(DisplayScreen *screen, QByteArray &reply)
 {
 
@@ -531,6 +564,7 @@ void FileTransfer::cutData(DisplayScreen *screen, QByteArray &reply)
 
     screen->dumpDisplay();
 
+    // Clear the block buffer for the incoming data
     ftBlock.clear();
 
     int dataLen = fromBase64(screen->getChar(IBM3270_FT_CUT_DATA_LEN)) << 6 | fromBase64(screen->getChar(IBM3270_FT_CUT_DATA_LEN + 1));
@@ -591,6 +625,7 @@ void FileTransfer::cutData(DisplayScreen *screen, QByteArray &reply)
 
         quint8 c = quadrant->map[index];
 
+        // Handle ASCII and CRLF conversion. If the character is a CR or EOF, skip it.
         if (ascii && crlf)
         {
             if (c == 0x1A || c == '\r')
@@ -626,16 +661,18 @@ void FileTransfer::cutDataReq(DisplayScreen *screen, QByteArray &reply)
     qDebug() << "FileTransfer::cutDataReq - Outgoing data request";
 
     quint8 frameSeq = screen->getChar(IBM3270_FT_CUT_RDAT_FSEQ);
-    QByteArray response;
+    ftBlock.clear();
 
-    response.append(frameSeq);
-    response.append(static_cast<char>(0x00)); // Checksum is filled after the data has been added.
-    response.append(static_cast<char>(0x00)); // Data length is filled after
-    response.append(static_cast<char>(0x00)); //      the data has been added.
+    ftBlock.append(frameSeq);
+    ftBlock.append(static_cast<char>(0x00)); // Checksum is filled after the data has been added.
+    ftBlock.append(static_cast<char>(0x00)); // Data length is filled after
+    ftBlock.append(static_cast<char>(0x00)); //      the data has been added.
 
     // Open file if it's the first time through
     if (!outgoingFile.isOpen())
     {
+        quadrant = nullptr;
+        lastwasCR = false;
         blocksTransferred = 0;
         bytesTransferred = 0;
         emit ftUpdateCounts();
@@ -648,15 +685,22 @@ void FileTransfer::cutDataReq(DisplayScreen *screen, QByteArray &reply)
         }
     }
 
-    quint8 c;
     int pos = 0;
 
-    quadrant = nullptr;
-
-    outgoingFile.getChar((char*)&c);
-
-    while(pos < IBM3270_FT_CUT_DATA_MAX && !outgoingFile.atEnd())
+    // Allow for padding of 3 bytes for conversion between quadrants.
+    while(pos <= IBM3270_FT_CUT_DATA_MAX - 3)
     {
+        // Peek at the next byte in the file. If there is no next byte, we are at EOF, which is handled
+        // after the loop, and must be done in a separate block.
+        const QByteArray nextByte = outgoingFile.peek(1);
+        if (nextByte.isEmpty())
+            break;
+
+        quint8 c = static_cast<quint8>(nextByte.at(0));
+
+        // If the quadrant is not set, find the quadrant for the character. If the character is not in any
+        // quadrant, abort the transfer because we don't know what to do with it. This should never happen
+        // because all characters should be in one of the quadrants, but just in case, we handle it.
         if (quadrant == nullptr)
         {
             if (!(quadrant = findQuadrantByChar(c)))
@@ -666,24 +710,64 @@ void FileTransfer::cutDataReq(DisplayScreen *screen, QByteArray &reply)
                 return;
             }
 //            qDebug() << QString("Quadrant for %1 (%2) is %3 (%4").arg(c, 2, 16).arg(c).arg(quadrant->key, 2, 16).arg(quadrant->key);
-            response.append(quadrant->key);
+            ftBlock.append(quadrant->key);
             pos++;
         }
 
-        quint8 ebc = a2e[c];
+        // NULL can only be sent in quadrant 2. If the character is NULL and the current quadrant isn't 2,
+        // switch to quadrant 2.
+        if (!c)
+        {
+            if (quadrant != &quadrants[2])
+            {
+                quadrant = &quadrants[2];
+                ftBlock.append(quadrant->key);
+                pos++;
+            }
 
+            ftBlock.append(0xC1);
+            pos++;
+            lastwasCR = false;
+            char consumed;
+            outgoingFile.getChar(&consumed);
+            continue;
+        }
+
+        // If ASCII and CRLF, and the last character wasn't a CR and this is a NL, add a CR
+        if (ascii && crlf && !lastwasCR && c == '\n')
+        {
+            // Switch to quadrant 2 if not already there, and add the quadrant key
+            if (quadrant != &quadrants[2])
+            {
+                quadrant = &quadrants[2];
+                ftBlock.append(quadrant->key);
+                pos++;
+            }
+            // Find CR in the quadrant and add it
+            const void *cr = memchr(quadrant->map, '\r', 77);
+            int index = (char*)cr - (char *)quadrant->map;
+            quint8 ebc = a2e[(int)alphas[index]];
+            ftBlock.append(ebc);
+            pos++;
+        }
+
+        // Search for the character in the quadrant
         const void *chr = memchr(quadrant->map, c, 77);
 
 //        qDebug() << "Searching for" << QString("%1").arg(ebc, 2, 16) << "in quadrant" << quadrant << "map" << quadrant->map << "chr" << chr;
 
+        // If the character was found, map it and add the converted character
+        // If it wasn't found, reset quadrant, add loop  around again
         if (chr != nullptr)
         {
             int index = (char*)chr - (char *)quadrant->map;
             quint8 ebc = a2e[(int)alphas[index]];
-            qDebug() << QString("%1 maps to %2").arg(c, 2, 16).arg(ebc, 2, 16);
-            response.append(ebc);
+//            qDebug() << QString("%1 maps to %2").arg(c, 2, 16).arg(ebc, 2, 16);
+            ftBlock.append(ebc);
             pos++;
-            outgoingFile.getChar((char*)&c);
+            lastwasCR = (c == '\r');
+            char consumed;
+            outgoingFile.getChar(&consumed);
         }
         else
         {
@@ -697,36 +781,25 @@ void FileTransfer::cutDataReq(DisplayScreen *screen, QByteArray &reply)
     if (outgoingFile.atEnd() && pos == 0)
     {
         qDebug() << "FileTransfer::cutDataReq - Outgoing data request - EOF";
-        response.append(0x5C);
-        response.append(0xA9);
+        ftBlock.append(0x5C);
+        ftBlock.append(0xA9);
         pos = 2;
     }
 
     qDebug() << "FileTransfer::cutDataReq - Outgoing data request - sent" << pos << "bytes";
 
-    // Store data length in base64, converting to EBCDIC for the screen
-
-    QChar b1 = base64.at((pos >> 6) & 0x3F);
-    QChar b2 = base64.at(pos & 0x3F);
-
-    quint8 b1_e = a2e[static_cast<quint8>(b1.toLatin1())];
-    quint8 b2_e = a2e[static_cast<quint8>(b2.toLatin1())];
-
-    qDebug() << "FileTransfer::cutDataReq - Outgoing data request - length" << pos << "base64" << b1 << b2 << "EBCDIC" << QString("%1").arg(b1_e, 2, 16) << QString("%1").arg(b2_e, 2, 16);
-
-    response[IBM3270_FT_CUT_RESPONSE_LEN] =
-        a2e[static_cast<quint8>((base64.at((pos >> 6) & 0x3f)).toLatin1())];
-    response[IBM3270_FT_CUT_RESPONSE_LEN + 1] =
-        a2e[static_cast<quint8>(base64.at(pos & 0x3F).toLatin1())];
+    // Calculate length field
+    ftBlock[IBM3270_FT_CUT_RESPONSE_LEN] = a2e[static_cast<quint8>((base64.at((pos >> 6) & 0x3f)).toLatin1())];
+    ftBlock[IBM3270_FT_CUT_RESPONSE_LEN + 1] = a2e[static_cast<quint8>(base64.at(pos & 0x3F).toLatin1())];
 
     // Calculate checksum
     int checksum = 0;
 
-    for (int i = IBM3270_FT_CUT_RESPONSE_SEND; i < response.size(); i++)
-        checksum ^= static_cast<quint8>(response.at(i));
+    for (int i = IBM3270_FT_CUT_RESPONSE_SEND; i < ftBlock.size(); i++)
+        checksum ^= static_cast<quint8>(ftBlock.at(i));
 
     // Store checksum in base64, converting to EBCDIC for the screen
-    response[IBM3270_FT_CUT_RESPONSE_CKSM] =
+    ftBlock[IBM3270_FT_CUT_RESPONSE_CKSM] =
         a2e[static_cast<quint8>(base64.at(checksum & 0x3F).toLatin1())];
 
     reply.append(IBM3270_AID_ENTER);
@@ -736,10 +809,23 @@ void FileTransfer::cutDataReq(DisplayScreen *screen, QByteArray &reply)
     reply.append(0x40); // Field address
     reply.append(0xC2);
     reply.append(IBM3270_FT_CUT_DATA);
-    reply.append(response);
+    reply.append(ftBlock);
 
+    bytesTransferred += pos;
+    blocksTransferred++;  
+
+    emit ftUpdateCounts();
 }
 
+/**
+ * @brief   FileTransfer::cutControlCode - process the CUT mode control frame
+ * @param   screen - the display screen object
+ * @param   reply  - the reply buffer to send back to the host  
+ * 
+ * @details This function processes the CUT mode control frame. It extracts the control code from the screen,
+ *          and handles the control code accordingly. It emits signals for success, failure, or completion
+ *          of the file transfer. It also handles error messages from the host and sends appropriate replies.
+ */
 void FileTransfer::cutControlCode(DisplayScreen *screen, QByteArray &reply)
 {
     QString msg;
@@ -748,7 +834,7 @@ void FileTransfer::cutControlCode(DisplayScreen *screen, QByteArray &reply)
 
     qDebug() << "FileTranfer::cutControlCode - incoming control code" << QString("%1").arg(code, 4, 16);
 
-    screen->dumpDisplay();
+//    screen->dumpDisplay();
 
     if (code != IBM3270_FT_CUT_CTRL_ACK)
     {
@@ -802,20 +888,48 @@ void FileTransfer::cutControlCode(DisplayScreen *screen, QByteArray &reply)
             reply.append(IBM3270_AID_ENTER);
             break;
         default:
-            msg = QString("Unknown CUT control code %1").arg(code, 4, 16);
+            msg = QString("Unknown CUT control code %1").arg(code, 4, 16, '0');
             emit ftUpdateMessage(msg);
             cutAbort(screen, reply, IBM3270_FT_CUT_CTRL_ABX);
     }
 
 }
 
-void FileTransfer::cutRetransmit(DisplayScreen *screen, QByteArray &reply)
+/**
+ * @brief   FileTransfer::cutRetransmit - process the CUT mode retransmit frame
+ * @param   screen - the display screen object
+ * @param   reply  - the reply buffer to send back to the host
+ * 
+ * @details This function processes the CUT mode retransmit frame. It sends an Enter AID to the host to request
+ *          retransmission of the last data frame.
+ */
+void FileTransfer::cutRetransmit(QByteArray &reply)
 {
     qDebug() << "FileTranfer::cutControlCode - retransmission request";
 
+    if (ftMode != FTMode::CUT)
+    {
+        qDebug() << "FileTransfer::cutRetransmit - Not in CUT mode, ignoring retransmit request";
+        return;
+    }
+
     reply.append(IBM3270_AID_ENTER);
+    reply.append(0x40); // Cursor address
+    reply.append(0xC4);
+    reply.append(IBM3270_SBA);
+    reply.append(0x40); // Field address
+    reply.append(0xC2);
+    reply.append(IBM3270_FT_CUT_DATA);
+    reply.append(ftBlock);
 }
 
+/**
+ * @brief   FileTransfer::fromBase64 - convert a base64 character to its index
+ * @param   b - the base64 character to convert
+ * 
+ * @details This function converts a base64 character to its index in the base64 character set. It uses the e2a
+ *          table to convert from EBCDIC to ASCII, and then finds the index of the ASCII character in the base64 string.
+ */
 quint8 FileTransfer::fromBase64(quint8 b)
 {
     quint8 ascii = e2a[b];
@@ -824,6 +938,16 @@ quint8 FileTransfer::fromBase64(quint8 b)
     return (index < 0) ? 0 : (quint8)index;
 }
 
+/**
+ * @brief   FileTransfer::cutAbort - send an abort response for CUT mode transfer
+ * @param   screen - the display screen object
+ * @param   reply  - the reply buffer to send back to the host
+ * @param   reason - the reason code for the abort
+ * 
+ * @details This function sends an abort response for a CUT mode transfer. It sets the appropriate fields on the screen
+ *          and appends the abort reason to the reply buffer. It is called when an error occurs during a CUT mode transfer,
+ *          such as a file open failure or an unmapped character.
+ */
 void FileTransfer::cutAbort(DisplayScreen *screen, QByteArray &reply, quint16 reason)
 {
     qDebug() << "FileTransfer::cutAbort - aborting with" << QString("%1").arg(reason, 4, 16);
@@ -840,6 +964,13 @@ void FileTransfer::cutAbort(DisplayScreen *screen, QByteArray &reply, quint16 re
 
 }
 
+/**
+ * @brief   FileTransfer::findQuadrantByCode - find the quadrant by its code
+ * @param   b - the code of the quadrant to find
+ * 
+ * @details This function searches the quadrants array for a quadrant with the specified code. It returns a pointer
+ *         to the quadrant if found, or nullptr if not found.
+ */
 const FileTransfer::Quadrant* FileTransfer::findQuadrantByCode(quint8 b)
 {
     for (int q = 0; q < 4; q++)
@@ -851,6 +982,13 @@ const FileTransfer::Quadrant* FileTransfer::findQuadrantByCode(quint8 b)
     return nullptr;
 }
 
+/** 
+ * @brief   FileTransfer::findQuadrantByChar - find the quadrant by a character
+ * @param   c - the character to find the quadrant for
+ * 
+ * @details This function searches the quadrants array for a quadrant that contains the specified character in its
+ *          map. It returns a pointer to the quadrant if found, or returns nullptr.
+ */
 const FileTransfer::Quadrant* FileTransfer::findQuadrantByChar(quint8 c)
 {
     for (int q = 0; q < 4; q++)
@@ -864,4 +1002,10 @@ const FileTransfer::Quadrant* FileTransfer::findQuadrantByChar(quint8 c)
             }
         }
     }
+    return nullptr;
+}
+
+const FileTransfer::FTMode FileTransfer::getMode()
+{
+    return ftMode;
 }

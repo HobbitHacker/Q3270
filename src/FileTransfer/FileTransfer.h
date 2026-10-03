@@ -25,6 +25,13 @@ class FileTransfer : public QObject
     Q_OBJECT
 
     public:
+
+        enum class FTMode {
+            NONE,
+            DFT,
+            CUT
+        };
+
         FileTransfer();
 
         void setExpected(bool expected);
@@ -40,6 +47,7 @@ class FileTransfer : public QObject
 
         // CUT mode functions
         void checkCUT(DisplayScreen *screen, QByteArray &reply);
+        void cutRetransmit(QByteArray &reply);
 
         void setProperties(QString filemame, Q3270::TransferDirection direction, bool ascii, bool crlf);
 
@@ -47,6 +55,7 @@ class FileTransfer : public QObject
         quint64 getBlocks();
 
         bool isExpected();
+        const FileTransfer::FTMode getMode();
 
     signals:
 
@@ -78,6 +87,10 @@ class FileTransfer : public QObject
 
         bool ascii;
         bool crlf;
+
+        bool lastwasCR;
+
+        FTMode ftMode;
 
         QString base64 = "abcdefghijklmnopqrstuvwxyz&-.,:+ABCDEFGHIJKLMNOPQRSTUVWXYZ012345";
 
@@ -218,7 +231,7 @@ class FileTransfer : public QObject
         void cutData(DisplayScreen *screen, QByteArray &reply);
         void cutDataReq(DisplayScreen *screen, QByteArray &reply);
         void cutControlCode(DisplayScreen *screen, QByteArray &reply);
-        void cutRetransmit(DisplayScreen *screen, QByteArray &reply);
+
 
         void cutAbort(DisplayScreen *screen, QByteArray &reply, quint16 reason);
 

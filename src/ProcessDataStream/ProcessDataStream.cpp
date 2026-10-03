@@ -178,7 +178,7 @@ void ProcessDataStream::processStream(QByteArray &b, bool tn3270e)
     screen->resetCharAttr();
 
     // Check for active file transfer
-    if  (fileTransfer.isExpected()) {
+    if (lastwasWrite && fileTransfer.isExpected()) {
         fileTransfer.checkCUT(screen, reply);
     }
 
@@ -453,6 +453,10 @@ void ProcessDataStream::processRM()
     if (lastAID == IBM3270_AID_SF)
     {
         fileTransfer.readModified(reply);
+    }
+    else if (fileTransfer.getMode() == FileTransfer::FTMode::CUT)
+    {
+        fileTransfer.cutRetransmit(reply);
     }
     else
     {
