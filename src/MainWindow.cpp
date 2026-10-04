@@ -322,12 +322,8 @@ void MainWindow::menuFileTransfer()
         // File transfer dialog returned OK, so start the file transfer
         Q3270::TransferDirection d = ftDialog->getDirection();
 
-        if (d == Q3270::TransferDirection::Send) {
-            ftProgress->setWindowTitle("Sending File");
-        } else {
-            ftProgress->setWindowTitle("Receiving File");
-        }
-
+        ftProgress->setDirection(d);
+        
         fileTransfer.setProperties(ftDialog->getLocalFile(), d, ftDialog->isAscii(), ftDialog->isCRLF());
         fileTransfer.setExpected(true);
 

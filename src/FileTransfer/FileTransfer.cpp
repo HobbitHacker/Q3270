@@ -562,7 +562,7 @@ void FileTransfer::cutData(DisplayScreen *screen, QByteArray &reply)
         }
     }
 
-    screen->dumpDisplay();
+//    screen->dumpDisplay();
 
     // Clear the block buffer for the incoming data
     ftBlock.clear();
@@ -636,8 +636,6 @@ void FileTransfer::cutData(DisplayScreen *screen, QByteArray &reply)
         }
 
         ftBlock.append(c);
-
-        qDebug() << QString("%1 maps to %2").arg(thisChar, 2, 16).arg(c, 2, 16);
     }
 
     incomingFile.write(ftBlock, ftBlock.length());
@@ -709,7 +707,6 @@ void FileTransfer::cutDataReq(DisplayScreen *screen, QByteArray &reply)
                 cutAbort(screen, reply, IBM3270_FT_CUT_CTRL_ABX);
                 return;
             }
-//            qDebug() << QString("Quadrant for %1 (%2) is %3 (%4").arg(c, 2, 16).arg(c).arg(quadrant->key, 2, 16).arg(quadrant->key);
             ftBlock.append(quadrant->key);
             pos++;
         }
@@ -754,15 +751,12 @@ void FileTransfer::cutDataReq(DisplayScreen *screen, QByteArray &reply)
         // Search for the character in the quadrant
         const void *chr = memchr(quadrant->map, c, 77);
 
-//        qDebug() << "Searching for" << QString("%1").arg(ebc, 2, 16) << "in quadrant" << quadrant << "map" << quadrant->map << "chr" << chr;
-
         // If the character was found, map it and add the converted character
         // If it wasn't found, reset quadrant, add loop  around again
         if (chr != nullptr)
         {
             int index = (char*)chr - (char *)quadrant->map;
             quint8 ebc = a2e[(int)alphas[index]];
-//            qDebug() << QString("%1 maps to %2").arg(c, 2, 16).arg(ebc, 2, 16);
             ftBlock.append(ebc);
             pos++;
             lastwasCR = (c == '\r');
@@ -772,7 +766,6 @@ void FileTransfer::cutDataReq(DisplayScreen *screen, QByteArray &reply)
         else
         {
             quadrant = nullptr;
-//            qDebug() << "Character not mapped; resetting quadrant" << QString("%1").arg(c, 2, 16);
             continue;
         }
     }
@@ -944,8 +937,7 @@ quint8 FileTransfer::fromBase64(quint8 b)
  * @param   reply  - the reply buffer to send back to the host
  * @param   reason - the reason code for the abort
  * 
- * @details This function sends an abort response for a CUT mode transfer. It sets the appropriate fields on the screen
- *          and appends the abort reason to the reply buffer. It is called when an error occurs during a CUT mode transfer,
+ * @details This function appends the abort response at the CUT response field position. It is called when an error occurs during a CUT mode transfer,
  *          such as a file open failure or an unmapped character.
  */
 void FileTransfer::cutAbort(DisplayScreen *screen, QByteArray &reply, quint16 reason)
@@ -955,12 +947,19 @@ void FileTransfer::cutAbort(DisplayScreen *screen, QByteArray &reply, quint16 re
     quint8 bh = (reason >> 8) & 0xFF;
     quint8 bl = reason & 0xFF;
 
-    reply.append(IBM3270_AID_F2);
+    reply.append(IBM3270_AID_ENTER);
+    reply.append(0x40); // Cursor address
+    reply.append(0xC4);
 
-    screen->setChar(IBM3270_FT_CUT_RESP_FTYP, IBM3270_FT_CUT_CONTROL, false);
-    screen->setChar(IBM3270_FT_CUT_RESP_FSEQ, IBM3270_FT_CUT_DATA_FSEQ, false);
-    screen->setChar(IBM3270_FT_CUT_RESP_REAS,  bh, false);
-    screen->setChar(IBM3270_FT_CUT_RESP_REAS + 1, bl, false);
+    // Position of only enterable field on the CUT screen, at IBM3270_FT_CUT_RESP_FTYP
+    reply.append(IBM3270_SBA);
+    screen->addPosToBuffer(reply, IBM3270_FT_CUT_RESP_FTYP);
+
+    // Four bytes of response: CUT control code, CUT data frame sequence, and the two bytes of the reason code
+    reply.append(IBM3270_FT_CUT_CONTROL);
+    reply.append(IBM3270_FT_CUT_DATA_FSEQ);
+    reply.append(static_cast<char>(bh));
+    reply.append(static_cast<char>(bl));
 
 }
 
@@ -1005,7 +1004,7 @@ const FileTransfer::Quadrant* FileTransfer::findQuadrantByChar(quint8 c)
     return nullptr;
 }
 
-const FileTransfer::FTMode FileTransfer::getMode()
+FileTransfer::FTMode FileTransfer::getMode()
 {
     return ftMode;
 }

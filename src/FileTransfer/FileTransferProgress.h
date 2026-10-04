@@ -30,6 +30,7 @@ class FileTransferProgress : public QDialog
 
         void reset();
         void complete();
+        void setDirection(Q3270::TransferDirection direction);
 
     public slots:
         void updateStats();

@@ -55,7 +55,7 @@ class FileTransfer : public QObject
         quint64 getBlocks();
 
         bool isExpected();
-        const FileTransfer::FTMode getMode();
+        FileTransfer::FTMode getMode();
 
     signals:
 

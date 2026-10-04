@@ -112,3 +112,19 @@ void FileTransferProgress::ftFailure()
     ui->buttonBox->button(QDialogButtonBox::Close)->hide();
     ui->buttonBox->button(QDialogButtonBox::Cancel)->show();
 }
+
+void FileTransferProgress::setDirection(Q3270::TransferDirection direction)
+{
+    if (direction == Q3270::TransferDirection::Send)
+    {
+            setWindowTitle("Sending File");
+            ui->blockMessage->setText("Blocks Sent:");
+            ui->byteMessage->setText("Bytes Sent:");
+    }
+    else
+    {
+            setWindowTitle("Receiving File");
+            ui->blockMessage->setText("Blocks Received:");
+            ui->byteMessage->setText("Bytes Received:");
+    }
+}
