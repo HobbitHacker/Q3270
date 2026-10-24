@@ -29,7 +29,7 @@ FileTransferProgress::FileTransferProgress(FileTransfer &ftDetails, QWidget *par
     ui->setupUi(this);
 
     // Set cancel button
-    ftFailure();
+    showAbort();
 }
 
 /**
@@ -77,42 +77,36 @@ void FileTransferProgress::updateMessage(const QString &message)
 }
 
 /**
- * @brief   FileTransferProgress::complete - complete the file transfer progress dialog
- *
- * @details Complete the file transfer progress dialog. This is called when the file transfer is complete.
- */
-void FileTransferProgress::complete()
-{
-    qDebug() << "FileTransferProgress complete";
-
-    ftDetails.setExpected(false);
-}
-
-
-/**
- * @brief   FileTransferProgress::ftSuccess - file transfer successful
+ * @brief   FileTransferProgress::showClose - file transfer successful
  *
  * @details File transfer successful. This is called when the file transfer is successful.
  *          It hides the cancel button and shows the close button.
  */
-void FileTransferProgress::ftSuccess()
+void FileTransferProgress::showClose()
 {
-    ui->buttonBox->button(QDialogButtonBox::Cancel)->hide();
+    ui->buttonBox->button(QDialogButtonBox::Abort)->hide();
     ui->buttonBox->button(QDialogButtonBox::Close)->show();
 }
 
 /**
- * @brief   FileTransferProgress::ftFailure - file transfer failed
+ * @brief   FileTransferProgress::showAbort - file transfer failed
  *
  * @details File transfer failed. This is called when the file transfer fails.
  *          It hides the close button and shows the cancel button.
  */
-void FileTransferProgress::ftFailure()
+void FileTransferProgress::showAbort()
 {
     ui->buttonBox->button(QDialogButtonBox::Close)->hide();
-    ui->buttonBox->button(QDialogButtonBox::Cancel)->show();
+    ui->buttonBox->button(QDialogButtonBox::Abort)->show();
 }
 
+/**
+ * @brief   FileTransferProgress::setDirection - set the direction of the file transfer
+ * @param   direction - the direction of the file transfer
+ *
+ * @details Set the direction of the file transfer. This is called when a new file transfer is started.
+ * 
+ */
 void FileTransferProgress::setDirection(Q3270::TransferDirection direction)
 {
     if (direction == Q3270::TransferDirection::Send)
@@ -126,5 +120,25 @@ void FileTransferProgress::setDirection(Q3270::TransferDirection direction)
             setWindowTitle("Receiving File");
             ui->blockMessage->setText("Blocks Received:");
             ui->byteMessage->setText("Bytes Received:");
+    }
+}
+
+/**
+ * @brief   FileTransferProgress::reject - reject the file transfer
+ *
+ * @details Reject the file transfer. This is called when the user cancels the file transfer. The
+ *          first time this is called, it emits a signal to cancel the transfer, which is when
+ *          the user clicks the cancel button. The second time, it closes the dialog, which is
+  *         when the user clicks the close button after the cancellation is complete.
+ */
+void FileTransferProgress::reject()
+{
+    if (ftDetails.getState() != FileTransfer::FTState::NONE)
+    {
+        emit cancelTransfer();
+    }
+    else
+    {
+        QDialog::reject();
     }
 }

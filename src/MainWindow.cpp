@@ -120,10 +120,11 @@ MainWindow::MainWindow(LaunchParms launchParms) : QMainWindow(launchParms.parent
     connect(&fileTransfer, &FileTransfer::ftStarted, this, &MainWindow::fileTransferStart);
     connect(&fileTransfer, &FileTransfer::ftUpdateCounts,  this, &MainWindow::fileTransferUpdateCounts);
     connect(&fileTransfer, &FileTransfer::ftUpdateMessage, this, &MainWindow::fileTransferUpdateMessage);
-    connect(&fileTransfer, &FileTransfer::ftComplete, this, &MainWindow::fileTransferComplete);
 
     connect(&fileTransfer, &FileTransfer::ftSuccess, this, &MainWindow::fileTransferSuccess);
     connect(&fileTransfer, &FileTransfer::ftFailure, this, &MainWindow::fileTransferFailure);
+
+    connect(ftProgress, &FileTransferProgress::cancelTransfer, &fileTransfer, &FileTransfer::ftCancel);
 
     // Set defaults for Connect options
     ui->actionDisconnect->setDisabled(true);
@@ -323,9 +324,8 @@ void MainWindow::menuFileTransfer()
         Q3270::TransferDirection d = ftDialog->getDirection();
 
         ftProgress->setDirection(d);
-        
+
         fileTransfer.setProperties(ftDialog->getLocalFile(), d, ftDialog->isAscii(), ftDialog->isCRLF());
-        fileTransfer.setExpected(true);
 
         keyboard.sendKeys(ftDialog->getCommand());
         keyboard.sendActionKey("Enter");
@@ -576,23 +576,13 @@ void MainWindow::fileTransferUpdateMessage(const QString &message)
 }
 
 /**
- * @brief   MainWindow::fileTransferComplete - signalled when the file transfer completes
- *
- * @details When the file transfer is completed is called to update the progress dialog.
- */
-void MainWindow::fileTransferComplete()
-{
-    ftProgress->complete();
-}
-
-/**
  *  @brief   MainWindow::fileTransferSuccess - called when the transfer completes successfully
  *
  *  @details When the file transfer completes, this updates the dialog buttons.
  */
 void MainWindow::fileTransferSuccess()
 {
-    ftProgress->ftSuccess();
+    ftProgress->showClose();
 }
 
 /**
@@ -602,7 +592,7 @@ void MainWindow::fileTransferSuccess()
  */
 void MainWindow::fileTransferFailure()
 {
-    ftProgress->ftFailure();
+    ftProgress->showAbort();
 }
 
 /**
@@ -749,7 +739,7 @@ void MainWindow::showEvent(QShowEvent *event)
  * @param   event - the event
  *
  * @details Ensure that the content of the terminal fits inside the window when the window is
- *          resized.
+ *          resized.ftSuccess
  */
 void MainWindow::resizeEvent(QResizeEvent *event)
 {

@@ -29,15 +29,21 @@ class FileTransferProgress : public QDialog
         ~FileTransferProgress();
 
         void reset();
-        void complete();
         void setDirection(Q3270::TransferDirection direction);
+        void showClose();
+        void showAbort();
 
     public slots:
+
         void updateStats();
         void updateMessage(const QString &message);
 
-        void ftSuccess();
-        void ftFailure();
+
+        void reject();
+
+    signals:
+
+        void cancelTransfer();
 
     private:
 

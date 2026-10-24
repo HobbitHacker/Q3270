@@ -32,9 +32,17 @@ class FileTransfer : public QObject
             CUT
         };
 
+        enum class FTState {
+            NONE,
+            EXPECTED,
+            IN_PROGRESS,
+            ABORTING
+        };
+
         FileTransfer();
 
-        void setExpected(bool expected);
+        void setState(FileTransfer::FTState state);
+        FileTransfer::FTState getState();
 
         // DFT mode functions
         void open(QByteArray::Iterator &buffer, QByteArray &reply, int wsfLen);
@@ -54,7 +62,6 @@ class FileTransfer : public QObject
         quint64 getBytes();
         quint64 getBlocks();
 
-        bool isExpected();
         FileTransfer::FTMode getMode();
 
     signals:
@@ -67,6 +74,10 @@ class FileTransfer : public QObject
 
         void ftSuccess();
         void ftFailure();
+
+    public slots:
+
+        void ftCancel();
 
     private:
 
@@ -82,7 +93,6 @@ class FileTransfer : public QObject
         quint64 bytesTransferred;
         quint64 blocksTransferred;
 
-        bool ftExpected;
         bool ftMsg;
 
         bool ascii;
@@ -91,6 +101,7 @@ class FileTransfer : public QObject
         bool lastwasCR;
 
         FTMode ftMode;
+        FTState ftState;
 
         QString base64 = "abcdefghijklmnopqrstuvwxyz&-.,:+ABCDEFGHIJKLMNOPQRSTUVWXYZ012345";
 
@@ -231,7 +242,6 @@ class FileTransfer : public QObject
         void cutData(DisplayScreen *screen, QByteArray &reply);
         void cutDataReq(DisplayScreen *screen, QByteArray &reply);
         void cutControlCode(DisplayScreen *screen, QByteArray &reply);
-
 
         void cutAbort(DisplayScreen *screen, QByteArray &reply, quint16 reason);
 

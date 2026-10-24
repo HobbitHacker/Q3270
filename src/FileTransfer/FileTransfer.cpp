@@ -82,8 +82,7 @@
  */
 FileTransfer::FileTransfer()
 {
-    ftExpected = false;
-    ftMode = FTMode::NONE;
+    setState(FTState::NONE);
 }
 
 /**
@@ -102,7 +101,8 @@ void FileTransfer::setProperties(QString filename, Q3270::TransferDirection dire
     this->direction = direction;
     this->ascii = ascii;
     this->crlf = crlf;
-    this->ftMode = FTMode::NONE;
+
+    setState(FTState::EXPECTED);
 }
 
 /**
@@ -174,6 +174,7 @@ void FileTransfer::open(QByteArray::Iterator &buffer, QByteArray &reply, int wsf
             default:
                 qDebug() << "ftOpen - File Transfer Open unknown direction";
         }
+        ftState = FTState::EXPECTED;
     }
 
     // Open sets record count to 1
@@ -196,6 +197,7 @@ void FileTransfer::open(QByteArray::Iterator &buffer, QByteArray &reply, int wsf
 void FileTransfer::insertReq()
 {
     ftMode = FTMode::DFT;
+    ftState = FTState::IN_PROGRESS;
 }
 
 /**
@@ -212,6 +214,7 @@ void FileTransfer::insertData(QByteArray::Iterator &buffer, QByteArray &reply)
     qDebug() << "ftInsertData - File Transfer Insert Data command received";
 
     ftMode = FTMode::DFT;
+    ftState = FTState::IN_PROGRESS;
 
     // Skip past C0 80 61 static bytes
     // These, according to x3270, are compression indicator (C080) and start of data flags (61)
@@ -235,11 +238,8 @@ void FileTransfer::insertData(QByteArray::Iterator &buffer, QByteArray &reply)
         emit ftUpdateMessage(msg);
         emit ftUpdateCounts();
         ftDataAck(reply);
-        // TRANS03 is complete, TRANS04 is complete with segemented records
-        if (msg.left(7) == "TRANS03" || msg.left(7) == "TRANS04")
-            emit ftSuccess();
-        else
-            emit ftFailure();
+        ftState = FTState::NONE;
+        emit ftSuccess();
         return;
     }
 
@@ -293,6 +293,7 @@ void FileTransfer::setCursorReq()
 void FileTransfer::getData(QByteArray &reply)
 {
     ftMode = FTMode::DFT;
+    ftState = FTState::IN_PROGRESS;
 
     if (outgoingFile.atEnd()) {
         reply.append(IBM3270_AID_SF);
@@ -382,7 +383,7 @@ void FileTransfer::close(QByteArray &reply)
                      .addHalfWord(IBM3270_FT_CLOSE_ACK)
                      .toSF());
 
-    emit ftComplete();
+    ftState = FTState::NONE;
 
     qDebug() << "ftClose - File Transfer complete - total bytes received" << bytesTransferred;
 }
@@ -425,7 +426,7 @@ void FileTransfer::ftAbort(QString msg, quint16 abortType, QByteArray &reply)
                   .addHalfWord(IBM3270_FT_ERROR_CMD)
                   .toSF());
 
-    emit ftAbort();
+    emit ftCancel();
 }
 
 void FileTransfer::readModified(QByteArray &reply)
@@ -442,18 +443,20 @@ void FileTransfer::readModified(QByteArray &reply)
  * @details This function resets the file transfer state. It is called when a new file transfer
  *          is expected and when one is complete.
  */
-void FileTransfer::setExpected(bool exp)
+void FileTransfer::setState(FileTransfer::FTState state)
 {
-    ftExpected = exp;
-    ftMode = FTMode::NONE;
+    ftState = state;
 
-    if (ftExpected) {
+    if (ftState == FTState::NONE) {
+        ftMode = FTMode::NONE;
+    }
+
+    if (ftState == FTState::EXPECTED) {
         blocksTransferred = 0;
         bytesTransferred = 0;
         emit ftUpdateCounts();
         emit ftStarted();
     }
-
 }
 
 /**
@@ -484,9 +487,9 @@ quint64 FileTransfer::getBlocks()
  * @details This function returns true if a file transfer is expected, false otherwise. It is used to
  *          determine if the incoming structured fields should be processed as part of a file transfer.
  */
-bool FileTransfer::isExpected()
+FileTransfer::FTState FileTransfer::getState()
 {
-    return ftExpected;
+    return ftState;
 }
 
 /**
@@ -499,9 +502,9 @@ bool FileTransfer::isExpected()
  */
 void FileTransfer::checkCUT(DisplayScreen *screen, QByteArray &reply)
 {
-    qDebug() << "FileTransfer::checkCUT - Checking for CUT mode transfer - expected " << ftExpected;
+    qDebug() << "FileTransfer::checkCUT - Checking for CUT mode transfer - expected " << (ftState == FileTransfer::FTState::EXPECTED);
 
-    if (!ftExpected)
+    if (ftState == FileTransfer::FTState::NONE)
         return;
 
     if (screen->isFieldStart(IBM3270_FT_CUT_FIELD) && screen->isAskip(IBM3270_FT_CUT_FIELD))
@@ -534,7 +537,6 @@ void FileTransfer::checkCUT(DisplayScreen *screen, QByteArray &reply)
     }
 }
 
-
 /** 
  * @brief   FileTransfer::cutData - process the CUT mode data frame
  * @param   screen - the display screen object
@@ -546,6 +548,15 @@ void FileTransfer::checkCUT(DisplayScreen *screen, QByteArray &reply)
  */
 void FileTransfer::cutData(DisplayScreen *screen, QByteArray &reply)
 {
+
+    if (ftState == FileTransfer::FTState::ABORTING)
+    {
+        cutAbort(screen, reply, IBM3270_FT_CUT_CTRL_ABX);
+        qDebug() << "FileTransfer::cutData - File Transfer is aborting, ignoring data";
+        return;
+    }   
+
+    setState(FileTransfer::FTState::IN_PROGRESS);
 
     // Open file if it's the first time through
     if (!incomingFile.isOpen())
@@ -657,6 +668,14 @@ void FileTransfer::cutData(DisplayScreen *screen, QByteArray &reply)
 void FileTransfer::cutDataReq(DisplayScreen *screen, QByteArray &reply)
 {
     qDebug() << "FileTransfer::cutDataReq - Outgoing data request";
+
+    if (ftState == FileTransfer::FTState::ABORTING)
+    {
+        emit ftUpdateMessage("Transfer aborting...");
+        cutAbort(screen, reply, IBM3270_FT_CUT_CTRL_ABX);
+        qDebug() << "FileTransfer::cutData - File Transfer is aborting";
+        return;
+    }   
 
     quint8 frameSeq = screen->getChar(IBM3270_FT_CUT_RDAT_FSEQ);
     ftBlock.clear();
@@ -849,11 +868,14 @@ void FileTransfer::cutControlCode(DisplayScreen *screen, QByteArray &reply)
     switch(code)
     {
         case IBM3270_FT_CUT_CTRL_ACK:
+            if (ftState == FTState::ABORTING)
+            {
+                setState(FTState::NONE);
+            }
             reply.append(IBM3270_AID_ENTER);
             quadrant = nullptr;
             break;
         case IBM3270_FT_CUT_CTRL_CMP:
-            setExpected(false);
             if (direction == Q3270::TransferDirection::Send) {
                 outgoingFile.close();
             } else if (!incomingFile.commit()) {
@@ -863,22 +885,19 @@ void FileTransfer::cutControlCode(DisplayScreen *screen, QByteArray &reply)
                 return;
             }
             qDebug() << "FileTransfer::cutControlCode - File Transfer complete - total bytes received" << bytesTransferred;
-            if (msg.left(7) == "TRANS03" || msg.left(7) == "TRANS04")
-                emit ftSuccess();
-            else
-                emit ftFailure();
-            emit ftComplete();
             reply.append(IBM3270_AID_ENTER);
+            setState(FTState::NONE);
+            emit ftSuccess();
             break;
         case IBM3270_FT_CUT_CTRL_ABF:
         case IBM3270_FT_CUT_CTRL_ABX:
             qDebug() << "FileTransfer::cutControlCode - File Transfer aborted - total bytes received" << bytesTransferred;
             emit ftUpdateCounts();
-            emit ftFailure();
-            emit ftComplete();
             if (msg == "")
                 emit ftUpdateMessage(QString("File Transfer aborted"));
             reply.append(IBM3270_AID_ENTER);
+            setState(FTState::NONE);
+            emit ftSuccess();
             break;
         default:
             msg = QString("Unknown CUT control code %1").arg(code, 4, 16, '0');
@@ -907,10 +926,10 @@ void FileTransfer::cutRetransmit(QByteArray &reply)
     }
 
     reply.append(IBM3270_AID_ENTER);
-    reply.append(0x40); // Cursor address
+    reply.append(0x40); // Cursor address (4)0,(C)4
     reply.append(0xC4);
     reply.append(IBM3270_SBA);
-    reply.append(0x40); // Field address
+    reply.append(0x40); // Field address (4)0,(C)2
     reply.append(0xC2);
     reply.append(IBM3270_FT_CUT_DATA);
     reply.append(ftBlock);
@@ -960,7 +979,6 @@ void FileTransfer::cutAbort(DisplayScreen *screen, QByteArray &reply, quint16 re
     reply.append(IBM3270_FT_CUT_DATA_FSEQ);
     reply.append(static_cast<char>(bh));
     reply.append(static_cast<char>(bl));
-
 }
 
 /**
@@ -1004,7 +1022,20 @@ const FileTransfer::Quadrant* FileTransfer::findQuadrantByChar(quint8 c)
     return nullptr;
 }
 
+/** 
+ * @brief   FileTransfer::getMode - get the current file transfer mode
+ * @details This function returns the current file transfer mode. It is used
+ *          to determine if the transfer is in DFT or CUT mode.
+ */
 FileTransfer::FTMode FileTransfer::getMode()
 {
     return ftMode;
+}
+
+void FileTransfer::ftCancel()
+{
+    qDebug() << "FileTransfer::ftCancel - transfer cancelled";
+    emit ftUpdateMessage(QString("File Transfer aborting..."));
+
+    setState(FTState::ABORTING);
 }

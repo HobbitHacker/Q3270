@@ -178,7 +178,7 @@ void ProcessDataStream::processStream(QByteArray &b, bool tn3270e)
     screen->resetCharAttr();
 
     // Check for active file transfer
-    if (lastwasWrite && fileTransfer.isExpected()) {
+    if (lastwasWrite && fileTransfer.getState() != FileTransfer::FTState::NONE) {
         fileTransfer.checkCUT(screen, reply);
     }
 

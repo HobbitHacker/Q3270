@@ -124,7 +124,6 @@ class MainWindow : public QMainWindow
       void fileTransferStart();
       void fileTransferUpdateCounts();
       void fileTransferUpdateMessage(const QString &message);
-      void fileTransferComplete();
 
       void fileTransferSuccess();
       void fileTransferFailure();
