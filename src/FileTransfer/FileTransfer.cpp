@@ -10,6 +10,7 @@
 
 #include <QString>
 #include <QDebug>
+#include <limits>
 
 #include "FileTransfer/FileTransfer.h"
 #include "ProcessDataStream/StructuredField.h"
@@ -95,12 +96,14 @@ FileTransfer::FileTransfer()
  * @details This function is called before starting a file transfer to set the properties of
  *          the file transfer.
  */
-void FileTransfer::setProperties(QString filename, Q3270::TransferDirection direction, bool ascii, bool crlf)
+void FileTransfer::setProperties(QString filename, Q3270::TransferDirection direction, bool ascii, bool crlf, bool dftEnabled, quint16 dftBlockSize)
 {
     this->filename = filename;
     this->direction = direction;
     this->ascii = ascii;
     this->crlf = crlf;
+    this->dftEnabled = dftEnabled;
+    this->dftBlockSize = dftBlockSize;
 
     setState(FTState::EXPECTED);
 }
@@ -129,15 +132,12 @@ void FileTransfer::open(QByteArray::Iterator &buffer, QByteArray &reply, int wsf
             qDebug() << "FTopen() - Packet type:" << packetType;
             break;
         // Send
-        case 0x29:
-            {
-                quint16 hi = static_cast<quint8>(*buffer++);
-                quint16 lo = static_cast<quint8>(*buffer++);
-                quint16 pktLen = (hi << 8) | lo;
-                packetType = QString::fromLatin1(reinterpret_cast<const char *>(buffer + 29), 7);
-                qDebug() << "FTopen() - Packet type:" << packetType;
-            }
+        case 0x29: {
+            const quint8 *p = reinterpret_cast<const quint8 *>(buffer);
+            packetType = QString::fromLatin1(reinterpret_cast<const char *>(p + 29), 7);
+            qDebug() << "FTopen() - Packet type:" << packetType;
             break;
+        }
         default:
             ftAbort("Unknnown open", IBM3270_FT_ERROR_OPEN, reply);
             return;
@@ -170,6 +170,7 @@ void FileTransfer::open(QByteArray::Iterator &buffer, QByteArray &reply, int wsf
                     ftAbort(outgoingFile.errorString(), IBM3270_FT_ERROR_OPEN, reply);
                     return;
                 }
+                pendingDFTLF = false;
                 break;
             default:
                 qDebug() << "ftOpen - File Transfer Open unknown direction";
@@ -295,7 +296,61 @@ void FileTransfer::getData(QByteArray &reply)
     ftMode = FTMode::DFT;
     ftState = FTState::IN_PROGRESS;
 
-    if (outgoingFile.atEnd()) {
+    constexpr qsizetype structuredFieldOverhead = 16;
+    constexpr qsizetype dftBlockHeadroom = 27;
+    constexpr qsizetype maxStructuredFieldPayload = std::numeric_limits<quint16>::max() - structuredFieldOverhead;
+    
+    if (dftBlockSize > 0 && dftBlockSize <= dftBlockHeadroom) {
+        ftAbort("DFT block size is too small for a data packet", IBM3270_FT_ERROR_GET, reply);
+        return;
+    }
+
+    const qsizetype blockSize = dftBlockSize == 0
+                                    ? maxStructuredFieldPayload
+                                    : qMin(dftBlockSize - dftBlockHeadroom,
+                                      maxStructuredFieldPayload);
+
+    const bool convertLineEndings = ascii && crlf;
+    QByteArray data;
+    data.reserve(blockSize);
+
+    while (data.size() < blockSize) {
+        if (pendingDFTLF) {
+            data.append('\n');
+            pendingDFTLF = false;
+            continue;
+        }
+
+        const QByteArray nextByte = outgoingFile.peek(1);
+        if (nextByte.isEmpty())
+            break;
+
+        const char sourceByte = nextByte.at(0);
+        if (convertLineEndings && sourceByte == '\n') {
+            const qsizetype remainingCapacity = blockSize - data.size();
+            if (remainingCapacity == 1) {
+                data.append('\r');
+                pendingDFTLF = true;
+            } else if (remainingCapacity >= 2) {
+                data.append("\r\n", 2);
+            } else {
+                break;
+            }
+        } else {
+            data.append(sourceByte);
+        }
+
+        char consumedByte;
+        if (!outgoingFile.getChar(&consumedByte))
+            break;
+    }
+
+    if (outgoingFile.error() != QFile::NoError) {
+        ftAbort(outgoingFile.errorString(), IBM3270_FT_ERROR_GET, reply);
+        return;
+    }
+
+    if (data.isEmpty() && outgoingFile.atEnd() && !pendingDFTLF) {
         reply.append(IBM3270_AID_SF);
         reply.append(StructuredField(IBM3270_WSF_TRANSFER)
                          .addHalfWord(IBM3270_FT_ERROR_GET)
@@ -303,14 +358,6 @@ void FileTransfer::getData(QByteArray &reply)
                          .addHalfWord(IBM3270_FT_ERROR_EOF)
                          .toSF());
         qDebug() << "ftGetData - File Transfer Get Data end of file reached";
-        return;
-    }
-
-    // TODO: Should be dynamic, as per replySummary
-    QByteArray data = outgoingFile.read(16384 - 27); // 27 bytes for header and SF
-
-    if (outgoingFile.error() != QFile::NoError) {
-        ftAbort(outgoingFile.errorString(), IBM3270_FT_ERROR_GET, reply);
         return;
     }
 
@@ -325,21 +372,6 @@ void FileTransfer::getData(QByteArray &reply)
                                    .addByte(IBM3270_FT_DATA_START)
                                    .addHalfWord(data.length() + 5); // Add 5 for the 5 bytes of header
 
-    // TODO: Improve efficiency of CRLF conversion. This is a simple implementation
-    //       that converts LF to CRLF, but it could be improved.
-    if (crlf) {
-        QByteArray converted;
-        for (int i = 0; i < data.length(); i++) {
-            uint c = data[i];
-            if (c == '\n') {
-                converted.append('\r');
-                converted.append('\n');
-            } else {
-                converted.append(c);
-            }
-        }
-        data = converted;
-    }
 
     for (int i = 0; i < data.length(); i++) {
        sendData.addByte(data[i]);
@@ -505,6 +537,9 @@ void FileTransfer::checkCUT(DisplayScreen *screen, QByteArray &reply)
     qDebug() << "FileTransfer::checkCUT - Checking for CUT mode transfer - expected " << (ftState == FileTransfer::FTState::EXPECTED);
 
     if (ftState == FileTransfer::FTState::NONE)
+        return;
+
+    if (ftMode == FTMode::DFT)
         return;
 
     if (screen->isFieldStart(IBM3270_FT_CUT_FIELD) && screen->isAskip(IBM3270_FT_CUT_FIELD))
@@ -870,7 +905,15 @@ void FileTransfer::cutControlCode(DisplayScreen *screen, QByteArray &reply)
         case IBM3270_FT_CUT_CTRL_ACK:
             if (ftState == FTState::ABORTING)
             {
+                if (outgoingFile.isOpen())
+                    outgoingFile.close();
+                if (incomingFile.isOpen())
+                    incomingFile.cancelWriting();
+
+                pendingDFTLF = false;
                 setState(FTState::NONE);
+                emit ftUpdateMessage(QString("Transfer cancelled"));
+                emit ftFailure();
             }
             reply.append(IBM3270_AID_ENTER);
             quadrant = nullptr;
@@ -1038,4 +1081,30 @@ void FileTransfer::ftCancel()
     emit ftUpdateMessage(QString("File Transfer aborting..."));
 
     setState(FTState::ABORTING);
+}
+
+void FileTransfer::connectionLost()
+{
+    if (ftState == FTState::NONE)
+        return;
+
+    if (outgoingFile.isOpen())
+        outgoingFile.close();
+    if (incomingFile.isOpen())
+        incomingFile.cancelWriting();
+
+    pendingDFTLF = false;
+    setState(FTState::NONE);
+    emit ftUpdateMessage(QString("Connection lost; transfer stopped"));
+    emit ftFailure();
+}
+
+bool FileTransfer::isDFTEnabled()
+{
+    return dftEnabled;
+}
+
+quint16 FileTransfer::getDFTBlockSize()
+{
+    return dftBlockSize;
 }

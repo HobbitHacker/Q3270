@@ -57,12 +57,15 @@ class FileTransfer : public QObject
         void checkCUT(DisplayScreen *screen, QByteArray &reply);
         void cutRetransmit(QByteArray &reply);
 
-        void setProperties(QString filemame, Q3270::TransferDirection direction, bool ascii, bool crlf);
+        void setProperties(QString filemame, Q3270::TransferDirection direction, bool ascii, bool crlf, bool dftEnabled, quint16 dftBlockSize);
 
         quint64 getBytes();
         quint64 getBlocks();
 
         FileTransfer::FTMode getMode();
+
+        bool isDFTEnabled();
+        quint16 getDFTBlockSize();
 
     signals:
 
@@ -78,6 +81,7 @@ class FileTransfer : public QObject
     public slots:
 
         void ftCancel();
+        void connectionLost();
 
     private:
 
@@ -99,6 +103,10 @@ class FileTransfer : public QObject
         bool crlf;
 
         bool lastwasCR;
+        bool pendingDFTLF = false;
+
+        bool dftEnabled;
+        quint16 dftBlockSize;
 
         FTMode ftMode;
         FTState ftState;

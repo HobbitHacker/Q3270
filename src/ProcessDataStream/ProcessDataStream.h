@@ -59,6 +59,7 @@ class ProcessDataStream : public QObject
         FileTransfer &fileTransfer;
 
         QByteArray::Iterator buffer;
+        QByteArray::Iterator bufferEnd;
 
         // Used to build replies to incoming commands (eg, RMx and inbound 3270 data streams)
         QByteArray reply;

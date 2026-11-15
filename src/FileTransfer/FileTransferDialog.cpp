@@ -243,6 +243,13 @@ void FileTransferDialog::on_ascii_changed()
     ui->crlf->setEnabled(ui->ascii->isChecked());
 }
 
+void FileTransferDialog::on_dftEnabled_changed()
+{
+    bool dftEnabled = ui->dftEnabled->isChecked();
+
+    ui->dftBlockSize->setEnabled(dftEnabled);
+}
+
 bool FileTransferDialog::isAscii()
 {
     return ui->ascii->isChecked();
@@ -251,4 +258,14 @@ bool FileTransferDialog::isAscii()
 bool FileTransferDialog::isCRLF()
 {
     return ui->crlf->isChecked();
+}
+
+bool FileTransferDialog::isDFTEnabled()
+{
+    return ui->dftEnabled->isChecked();
+}
+
+quint16 FileTransferDialog::getDFTBlockSize()
+{
+    return ui->dftBlockSize->text().toInt();
 }

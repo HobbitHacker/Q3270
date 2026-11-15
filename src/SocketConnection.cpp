@@ -473,54 +473,45 @@ void SocketConnection::onReadyRead()
  * @details Send data back to the host. This may be prefixed with a TN3270E header if TN3270E negotiation
  *          happened earlier.
  */
-void SocketConnection::sendResponse(QByteArray &b)
+void SocketConnection::sendResponse(const QByteArray &b)
 {
     responseBuffer.clear();
-
-    // create a QDataStream operating on the socket
-    QDataStream dataStream(dataSocket);
+    responseBuffer.reserve(b.size() + b.count(char(0xFF)) + 16); // one allocation
 
     if (tn3270e_Mode)
     {
-        responseBuffer.append((uchar) TN3270E_DATATYPE_3270_DATA);
-        responseBuffer.append((uchar) 0x00);
-        responseBuffer.append((uchar) 0x00);
-        responseBuffer.append((uchar) 0x00);
-        responseBuffer.append((uchar) 0x00);
+        responseBuffer.append(static_cast<char>(TN3270E_DATATYPE_3270_DATA));
+        responseBuffer.append(4, char(0x00));
     }
 
     dump(b, "Sending data");
 
-    escapeFF(b);
-    responseBuffer.append(escapedData);
+    appendEscaped(responseBuffer, b);
 
-    responseBuffer.append((uchar) IAC);
-    responseBuffer.append((uchar) EOR);
+    responseBuffer.append(static_cast<char>(IAC));
+    responseBuffer.append(static_cast<char>(EOR));
 
-    dataStream.writeRawData(responseBuffer, responseBuffer.size());
+    dataSocket->write(responseBuffer);
 }
 
-/**
- * @brief   SocketConnection::escapeFF - double up 0xFF bytes in a buffer
- * @param   raw - the raw data to be sent to the host
- * @return  the escaped data
- *
- * @details Any 0xFF bytes in the outgoing data need to be doubled up. This routine takes a buffer and
- *          returns a new buffer with any 0xFF bytes doubled up.
- */
-void SocketConnection::escapeFF(const QByteArray &raw)
+
+void SocketConnection::appendEscaped(QByteArray &dst, const QByteArray &src)
 {
-    escapedData.clear();
+    const char *p = src.constData();
+    const qsizetype n = src.size();
+    qsizetype start = 0;
 
-    for(int i = 0; i < raw.size(); i++)
+    for (;;)
     {
-        escapedData.append(raw.at(i));
-
-        //Double up 0xFF bytes
-        if ((uint)raw.at(i) == (uint)0xFF)
+        const qsizetype ff = src.indexOf(char(0xFF), start);
+        if (ff < 0)
         {
-            escapedData.append(0xFF);
+            dst.append(p + start, n - start);
+            return;
         }
+        dst.append(p + start, ff + 1 - start); // run up to and including the FF
+        dst.append(char(0xFF));                // the doubled FF
+        start = ff + 1;
     }
 }
 
@@ -670,7 +661,7 @@ void SocketConnection::processSubNegotiation()
  * @details Debugging utility method to hexdump a buffer, formatted at 32 bytes, with EBCDIC/ASCII character
  *          representation.
  */
-void SocketConnection::dump(QByteArray &a, QString title)
+void SocketConnection::dump(const QByteArray &a, QString title)
 {
     
     CodePage ibm037 = CodePage();

@@ -105,15 +105,18 @@ void ProcessDataStream::replySummary()
     int x = screenSizePix.width();
     int y = screenSizePix.height();
 
-    reply.append(StructuredField(IBM3270_SF_QUERYREPLY)
+    StructuredField sf = StructuredField(IBM3270_SF_QUERYREPLY)
                     .addByte(IBM3270_SF_QUERYREPLY_SUMMARY)
                     .addByte(IBM3270_SF_QUERYREPLY_COLOUR)
                     .addByte(IBM3270_SF_QUERYREPLY_IMPPARTS)
                     .addByte(IBM3270_SF_QUERYREPLY_USABLE)
                     .addByte(IBM3270_SF_QUERYREPLY_CHARSETS)
-                    .addByte(IBM3270_SF_QUERYREPLY_HIGHLIGHT)
-                    .addByte(IBM3270_SF_QUERYREPLY_DDM)
-                    .toSF());
+                    .addByte(IBM3270_SF_QUERYREPLY_HIGHLIGHT);
+
+    if (fileTransfer.isDFTEnabled())
+        sf.addByte(IBM3270_SF_QUERYREPLY_DDM);
+
+    reply.append(sf.toSF());
 
     reply.append(StructuredField(IBM3270_SF_QUERYREPLY)
                     .addByte(IBM3270_SF_QUERYREPLY_COLOUR)
@@ -211,15 +214,16 @@ void ProcessDataStream::replySummary()
     //                                                    .......x - Reserved */
     //                 .toSF());
 
-    // TODO: LIMIN and LIMOUT values should be dynamic.
-    // reply.append(StructuredField(IBM3270_SF_QUERYREPLY)
-    //                 .addByte(IBM3270_SF_QUERYREPLY_DDM)
-    //                 .addBytes({0x00, 0x00}) /* Reserved */
-    //                 .addHalfWord(16384) /* Limit In (LIMIN) */
-    //                 .addHalfWord(16384) /* Limit Out (LIMOUT) */
-    //                 .addByte(0x01) /* Number of subsets supported */
-    //                 .addByte(0x01) /* Subset number */
-    //                 .toSF());
+
+    if (fileTransfer.isDFTEnabled())
+        reply.append(StructuredField(IBM3270_SF_QUERYREPLY)
+                    .addByte(IBM3270_SF_QUERYREPLY_DDM)
+                    .addBytes({0x00, 0x00}) /* Reserved */
+                    .addHalfWord(fileTransfer.getDFTBlockSize()) /* Limit In (LIMIN) */
+                    .addHalfWord(fileTransfer.getDFTBlockSize()) /* Limit Out (LIMOUT) */
+                    .addByte(0x01) /* Number of subsets supported */
+                    .addByte(0x01) /* Subset number */
+                    .toSF());
 }
 
 /**

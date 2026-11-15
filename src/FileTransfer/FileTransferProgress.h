@@ -13,6 +13,7 @@
 #define FILETRANSFERPROGRESS_H
 
 #include <QDialog>
+#include <QTimer>
 
 #include "FileTransfer/FileTransfer.h"
 
@@ -38,8 +39,10 @@ class FileTransferProgress : public QDialog
         void updateStats();
         void updateMessage(const QString &message);
 
-
         void reject();
+
+    private slots:
+        void cancelTimedOut();
 
     signals:
 
@@ -50,6 +53,9 @@ class FileTransferProgress : public QDialog
         Ui::FileTransferProgress *ui;
 
         FileTransfer &ftDetails;
+        QTimer cancelTimer;
+        bool cancelPending = false;
+        bool closeAnywayAvailable = false;
 
 };
 

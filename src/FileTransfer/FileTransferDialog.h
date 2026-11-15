@@ -24,6 +24,8 @@ class FileTransferDialog : public QDialog
         QString getLocalFile();
         bool isAscii();
         bool isCRLF();
+        bool isDFTEnabled();
+        quint16 getDFTBlockSize();
 
     private slots:
 
@@ -33,6 +35,7 @@ class FileTransferDialog : public QDialog
         void on_recfm_changed();
         void on_space_changed();
         void on_ascii_changed();
+        void on_dftEnabled_changed();
 
     private:
         void setOptions();

@@ -38,7 +38,7 @@ class SocketConnection : public QObject
 
         void setSecure(bool s);
         void setVerify(bool v);
-        void sendResponse(QByteArray &b);
+        void sendResponse(const QByteArray &b);
 
         QList<QSslCertificate> getCertDetails();
 
@@ -91,8 +91,8 @@ class SocketConnection : public QObject
 
         char tn32703_functions_flags[5];
 
-        void dump(QByteArray &a, QString title);
-        void escapeFF(const QByteArray &a);
+        void dump(const QByteArray &a, QString title);
+        void appendEscaped(QByteArray &a, const QByteArray &b);
 };
 
 #endif // SOCKETCONNECTION_H

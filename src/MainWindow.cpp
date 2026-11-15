@@ -112,6 +112,7 @@ MainWindow::MainWindow(LaunchParms launchParms) : QMainWindow(launchParms.parent
     // Enable/Disable menu entries if connected/disconnected
     connect(terminal, &Terminal::disconnected, this, &MainWindow::disableDisconnectMenu);
     connect(terminal, &Terminal::disconnected, settings, &PreferencesDialog::disconnected);
+    connect(terminal, &Terminal::disconnected, &fileTransfer, &FileTransfer::connectionLost);
     
     connect(terminal, &Terminal::connectionEstablished, this, &MainWindow::enableDisconnectMenu);
     connect(terminal, &Terminal::connectionEstablished, settings, &PreferencesDialog::connected);
@@ -325,7 +326,7 @@ void MainWindow::menuFileTransfer()
 
         ftProgress->setDirection(d);
 
-        fileTransfer.setProperties(ftDialog->getLocalFile(), d, ftDialog->isAscii(), ftDialog->isCRLF());
+        fileTransfer.setProperties(ftDialog->getLocalFile(), d, ftDialog->isAscii(), ftDialog->isCRLF(), ftDialog->isDFTEnabled(), ftDialog->getDFTBlockSize());
 
         keyboard.sendKeys(ftDialog->getCommand());
         keyboard.sendActionKey("Enter");
@@ -548,6 +549,7 @@ void MainWindow::disableDisconnectMenu()
  */
 void MainWindow::fileTransferStart()
 {
+    ftProgress->reset();
     ftProgress->updateMessage("Transferring file...");
     ftProgress->show();
 }

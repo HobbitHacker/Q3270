@@ -88,6 +88,7 @@ void ProcessDataStream::processStream(QByteArray &b, bool tn3270e)
     screen->resetCharAttr();
 
     buffer = b.begin();
+    bufferEnd = b.end();
 
     if (tn3270e)
     {
@@ -145,7 +146,7 @@ void ProcessDataStream::processStream(QByteArray &b, bool tn3270e)
             return;
     }
 
-    while(buffer < b.end())
+    while(buffer < bufferEnd)
     {
         if (wsfProcessing)
         {
@@ -412,11 +413,29 @@ void ProcessDataStream::processWSF()
 {
     QByteArray::Iterator wsfBuffer = buffer;
 
+    // Need at least the 2 length bytes
+    if (bufferEnd - buffer < 2) {
+        qDebug() << "WSF: truncated length field - discarding record";
+        buffer = bufferEnd;
+        return;
+    }
+
     wsfLen = nextBufferHalfWord();
+
+    qsizetype remaining = bufferEnd - wsfBuffer;   // includes the length bytes
+
+    if (wsfLen == 0)
+        wsfLen = remaining;                        // legal: SF runs to end of record
+
+    if (wsfLen < 3 || wsfLen > remaining) {
+        qDebug() << QString("WSF: bad length %1 (%2 bytes available) - discarding record").arg(wsfLen).arg(remaining);
+        buffer = bufferEnd;
+        return;
+    }
 
     qDebug() << QString("Structured Field - length %1, type %2").arg(wsfLen, 4, 16).arg((uchar)*buffer, 2, 16);
 
-    switch(nextBufferByte())
+    switch(quint8 wsfType = nextBufferByte())
     {
         case IBM3270_WSF_RESET:
             WSFreset();
@@ -431,7 +450,7 @@ void ProcessDataStream::processWSF()
             WSFtransfer();
             break;
         default:
-            qDebug() << QString("ProcessDataStream: [** Unimplemented WSF command: %1 - ignored **]").arg((quint8)*buffer, 2, 16);
+            qDebug() << QString("ProcessDataStream: [** Unimplemented WSF command: %1 - ignored **]").arg(wsfType, 2, 16);
             break;
     }
 

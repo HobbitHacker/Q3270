@@ -28,6 +28,9 @@ FileTransferProgress::FileTransferProgress(FileTransfer &ftDetails, QWidget *par
 {
     ui->setupUi(this);
 
+    cancelTimer.setSingleShot(true);
+    connect(&cancelTimer, &QTimer::timeout, this, &FileTransferProgress::cancelTimedOut);
+
     // Set cancel button
     showAbort();
 }
@@ -51,7 +54,11 @@ void FileTransferProgress::reset()
 {
     ui->byteCount->setText(QString::number(0));
     ui->blockCount->setText(QString::number(0));
-
+    cancelTimer.stop();
+    cancelPending = false;
+    closeAnywayAvailable = false;
+    ui->buttonBox->button(QDialogButtonBox::Abort)->setText(tr("Cancel"));
+    ui->buttonBox->button(QDialogButtonBox::Abort)->setEnabled(true);
 }
 
 /**
@@ -84,6 +91,9 @@ void FileTransferProgress::updateMessage(const QString &message)
  */
 void FileTransferProgress::showClose()
 {
+    cancelTimer.stop();
+    cancelPending = false;
+    closeAnywayAvailable = false;
     ui->buttonBox->button(QDialogButtonBox::Abort)->hide();
     ui->buttonBox->button(QDialogButtonBox::Close)->show();
 }
@@ -96,7 +106,12 @@ void FileTransferProgress::showClose()
  */
 void FileTransferProgress::showAbort()
 {
+    cancelTimer.stop();
+    cancelPending = false;
+    closeAnywayAvailable = false;
     ui->buttonBox->button(QDialogButtonBox::Close)->hide();
+    ui->buttonBox->button(QDialogButtonBox::Abort)->setText(tr("Cancel"));
+    ui->buttonBox->button(QDialogButtonBox::Abort)->setEnabled(true);
     ui->buttonBox->button(QDialogButtonBox::Abort)->show();
 }
 
@@ -133,12 +148,37 @@ void FileTransferProgress::setDirection(Q3270::TransferDirection direction)
  */
 void FileTransferProgress::reject()
 {
-    if (ftDetails.getState() != FileTransfer::FTState::NONE)
-    {
-        emit cancelTransfer();
-    }
-    else
+    if (ftDetails.getState() == FileTransfer::FTState::NONE)
     {
         QDialog::reject();
+        return;
     }
+
+    if (closeAnywayAvailable)
+    {
+        closeAnywayAvailable = false;
+        QDialog::reject();
+        return;
+    }
+
+    if (cancelPending)
+        return;
+
+    cancelPending = true;
+    ui->buttonBox->button(QDialogButtonBox::Abort)->setText(tr("Cancelling..."));
+    ui->buttonBox->button(QDialogButtonBox::Abort)->setEnabled(false);
+    ui->message->setText(tr("Waiting for the host to stop the transfer..."));
+    cancelTimer.start(10000);
+    emit cancelTransfer();
+}
+
+void FileTransferProgress::cancelTimedOut()
+{
+    if (!cancelPending || ftDetails.getState() == FileTransfer::FTState::NONE)
+        return;
+
+    closeAnywayAvailable = true;
+    ui->buttonBox->button(QDialogButtonBox::Abort)->setText(tr("Close Anyway"));
+    ui->buttonBox->button(QDialogButtonBox::Abort)->setEnabled(true);
+    ui->message->setText(tr("Timeout waiting for cancellation. The host may still be processing the transfer."));
 }
