@@ -262,6 +262,8 @@ bool FileTransferDialog::isCRLF()
 
 bool FileTransferDialog::isDFTEnabled()
 {
+    bool dftEnabled = ui->dftEnabled->isChecked();
+    qDebug() << "FileTransferDialog::isDFTEnabled() - dftEnabled:" << dftEnabled;
     return ui->dftEnabled->isChecked();
 }
 

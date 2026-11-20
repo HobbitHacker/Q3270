@@ -105,8 +105,8 @@ class FileTransfer : public QObject
         bool lastwasCR;
         bool pendingDFTLF = false;
 
-        bool dftEnabled;
-        quint16 dftBlockSize;
+        bool dftEnabled = false;
+        quint16 dftBlockSize = 0;
 
         FTMode ftMode;
         FTState ftState;
@@ -246,6 +246,7 @@ class FileTransfer : public QObject
 
         void ftDataAck(QByteArray &reply);
         void ftAbort(QString msg, quint16 abortType, QByteArray &reply);
+        void finishDFTCancellation(QByteArray &reply, quint16 errorType);
 
         void cutData(DisplayScreen *screen, QByteArray &reply);
         void cutDataReq(DisplayScreen *screen, QByteArray &reply);

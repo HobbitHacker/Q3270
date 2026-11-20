@@ -105,6 +105,7 @@ void FileTransfer::setProperties(QString filename, Q3270::TransferDirection dire
     this->dftEnabled = dftEnabled;
     this->dftBlockSize = dftBlockSize;
 
+    ftMode = FTMode::NONE;
     setState(FTState::EXPECTED);
 }
 
@@ -119,6 +120,11 @@ void FileTransfer::setProperties(QString filename, Q3270::TransferDirection dire
  */
 void FileTransfer::open(QByteArray::Iterator &buffer, QByteArray &reply, int wsfLen)
 {
+    if (ftState == FTState::ABORTING) {
+        finishDFTCancellation(reply, IBM3270_FT_ERROR_OPEN);
+        return;
+    }
+
     QString packetType;
 
     qDebug() << "ftOpen - File Transfer Open command received";
@@ -197,6 +203,9 @@ void FileTransfer::open(QByteArray::Iterator &buffer, QByteArray &reply, int wsf
  */
 void FileTransfer::insertReq()
 {
+    if (ftState == FTState::ABORTING)
+        return;
+
     ftMode = FTMode::DFT;
     ftState = FTState::IN_PROGRESS;
 }
@@ -213,6 +222,11 @@ void FileTransfer::insertReq()
 void FileTransfer::insertData(QByteArray::Iterator &buffer, QByteArray &reply)
 {
     qDebug() << "ftInsertData - File Transfer Insert Data command received";
+
+    if (ftState == FTState::ABORTING) {
+        finishDFTCancellation(reply, IBM3270_FT_ERROR_INSERT);
+        return;
+    }
 
     ftMode = FTMode::DFT;
     ftState = FTState::IN_PROGRESS;
@@ -237,9 +251,8 @@ void FileTransfer::insertData(QByteArray::Iterator &buffer, QByteArray &reply)
             msg = msg.left(dollar);
         qDebug() << msg << bytesTransferred << "bytes received";
         emit ftUpdateMessage(msg);
-        emit ftUpdateCounts();
         ftDataAck(reply);
-        ftState = FTState::NONE;
+        setState(FTState::NONE);
         emit ftSuccess();
         return;
     }
@@ -293,6 +306,11 @@ void FileTransfer::setCursorReq()
  */
 void FileTransfer::getData(QByteArray &reply)
 {
+    if (ftState == FTState::ABORTING) {
+        finishDFTCancellation(reply, IBM3270_FT_ERROR_GET);
+        return;
+    }
+
     ftMode = FTMode::DFT;
     ftState = FTState::IN_PROGRESS;
 
@@ -398,6 +416,11 @@ void FileTransfer::close(QByteArray &reply)
 {
     qDebug() << "ftClose - File Transfer Close";
 
+    if (ftState == FTState::ABORTING) {
+        finishDFTCancellation(reply, IBM3270_FT_ERROR_CLOSE);
+        return;
+    }
+
     ftMode = FTMode::DFT;
 
     if (direction == Q3270::TransferDirection::Send) {
@@ -415,7 +438,7 @@ void FileTransfer::close(QByteArray &reply)
                      .addHalfWord(IBM3270_FT_CLOSE_ACK)
                      .toSF());
 
-    ftState = FTState::NONE;
+    setState(FTState::NONE);
 
     qDebug() << "ftClose - File Transfer complete - total bytes received" << bytesTransferred;
 }
@@ -1008,8 +1031,12 @@ void FileTransfer::cutAbort(DisplayScreen *screen, QByteArray &reply, quint16 re
 
     quint8 bh = (reason >> 8) & 0xFF;
     quint8 bl = reason & 0xFF;
+    quint8 frameType = screen->getChar(IBM3270_FT_FRAMETYPE);
+    quint8 frameSeq = screen->getChar(frameType == IBM3270_FT_CUT_DATAREQ
+                                          ? IBM3270_FT_CUT_RDAT_FSEQ
+                                          : IBM3270_FT_CUT_DATA_FSEQ);
 
-    reply.append(IBM3270_AID_ENTER);
+    reply.append(IBM3270_AID_F2);
     reply.append(0x40); // Cursor address
     reply.append(0xC4);
 
@@ -1019,7 +1046,7 @@ void FileTransfer::cutAbort(DisplayScreen *screen, QByteArray &reply, quint16 re
 
     // Four bytes of response: CUT control code, CUT data frame sequence, and the two bytes of the reason code
     reply.append(IBM3270_FT_CUT_CONTROL);
-    reply.append(IBM3270_FT_CUT_DATA_FSEQ);
+    reply.append(frameSeq);
     reply.append(static_cast<char>(bh));
     reply.append(static_cast<char>(bl));
 }
@@ -1078,9 +1105,32 @@ FileTransfer::FTMode FileTransfer::getMode()
 void FileTransfer::ftCancel()
 {
     qDebug() << "FileTransfer::ftCancel - transfer cancelled";
-    emit ftUpdateMessage(QString("File Transfer aborting..."));
+    emit ftUpdateMessage("File Transfer aborting...");
+
+    if (ftMode == FTMode::DFT) {
+        if (outgoingFile.isOpen())
+            outgoingFile.close();
+        if (incomingFile.isOpen())
+            incomingFile.cancelWriting();
+        pendingDFTLF = false;
+    }
 
     setState(FTState::ABORTING);
+}
+
+void FileTransfer::finishDFTCancellation(QByteArray &reply, quint16 errorType)
+{
+    reply.append(IBM3270_AID_SF);
+    reply.append(StructuredField(IBM3270_WSF_TRANSFER)
+                     .addHalfWord(errorType)
+                     .addHalfWord(IBM3270_FT_ERROR_HDR)
+                     .addHalfWord(IBM3270_FT_ERROR_CMD)
+                     .toSF());
+
+    pendingDFTLF = false;
+    setState(FTState::NONE);
+    emit ftUpdateMessage(QString("Transfer cancelled"));
+    emit ftFailure();
 }
 
 void FileTransfer::connectionLost()

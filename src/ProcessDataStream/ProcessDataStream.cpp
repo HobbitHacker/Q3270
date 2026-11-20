@@ -105,8 +105,17 @@ void ProcessDataStream::processStream(QByteArray &b, bool tn3270e)
         }
     }
 
+    // DFT traffic is carried in structured fields and must not be interpreted as screen orders.
+    quint8 command = nextBufferByte();
+    if (fileTransfer.getMode() == FileTransfer::FTMode::DFT &&
+        command != IBM3270_WSF && command != IBM3270_CCW_WSF)
+    {
+        qDebug() << "Ignoring non-WSF data stream during DFT transfer:" << QString::number(command, 16);
+        return;
+    }
+
     // Process the incoming command
-    switch(nextBufferByte())
+    switch(command)
     {
         case IBM3270_EW:
         case IBM3270_CCW_EW:

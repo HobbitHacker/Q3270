@@ -31,6 +31,13 @@
  */
 void ProcessDataStream::WSFoutbound3270DS()
 {
+    if (wsfLen < 6)
+    {
+        qDebug() << "Outbound 3270DS: field is too short for partition, command, and WCC";
+        return;
+    }
+
+    QByteArray::Iterator fieldEnd = buffer + (wsfLen - 3);
     quint8 partition = nextBufferByte();
     quint8 cmnd = nextBufferByte();
 
@@ -41,7 +48,8 @@ void ProcessDataStream::WSFoutbound3270DS()
         case IBM3270_W:
             qDebug() << "Write ";
             processWCC();
-            processOrders();
+            while (buffer < fieldEnd)
+                processOrders();
             break;
         default:
             qDebug() << QString("\n[** Unimplemented Outbound3270DS command %02X - Ignored **]\n\n").arg(cmnd, 2, 16);
@@ -245,6 +253,11 @@ void ProcessDataStream::WSFtransfer()
     quint16 trtype = nextBufferHalfWord();
 
     qDebug() << "WSFtransfer: type" << QString::number(trtype, 16);
+
+    if (!fileTransfer.isDFTEnabled()) {
+        qDebug() << "WSFtransfer: DFT is disabled for this transfer; structured field ignored";
+        return;
+    }
 
     switch (trtype) {
         case IBM3270_FT_OPEN_REQ:
