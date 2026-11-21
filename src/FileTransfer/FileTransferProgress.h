@@ -13,6 +13,7 @@
 #define FILETRANSFERPROGRESS_H
 
 #include <QDialog>
+#include <QElapsedTimer>
 #include <QTimer>
 
 #include "FileTransfer/FileTransfer.h"
@@ -30,7 +31,7 @@ class FileTransferProgress : public QDialog
         ~FileTransferProgress();
 
         void reset();
-        void setDirection(Q3270::TransferDirection direction);
+        void setDirection(Q3270::TransferDirection direction, QString fromFile, QString toFile);
         void showClose();
         void showAbort();
 
@@ -54,6 +55,10 @@ class FileTransferProgress : public QDialog
 
         FileTransfer &ftDetails;
         QTimer cancelTimer;
+        QTimer statsTimer;
+        QElapsedTimer elapsedTimer;
+        qint64 finalElapsedMs = 0;
+        bool timingActive = false;
         bool cancelPending = false;
         bool closeAnywayAvailable = false;
 

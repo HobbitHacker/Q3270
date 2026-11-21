@@ -22,6 +22,7 @@ class FileTransferDialog : public QDialog
         const QString getCommand();
         Q3270::TransferDirection getDirection();
         QString getLocalFile();
+        QString getRemoteFile();
         bool isAscii();
         bool isCRLF();
         bool isDFTEnabled();

@@ -96,6 +96,7 @@ class FileTransfer : public QObject
 
         quint64 bytesTransferred;
         quint64 blocksTransferred;
+        quint64 dftRecordNumber;
 
         bool ftMsg;
 

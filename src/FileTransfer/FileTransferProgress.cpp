@@ -29,7 +29,11 @@ FileTransferProgress::FileTransferProgress(FileTransfer &ftDetails, QWidget *par
     ui->setupUi(this);
 
     cancelTimer.setSingleShot(true);
+
     connect(&cancelTimer, &QTimer::timeout, this, &FileTransferProgress::cancelTimedOut);
+    connect(&statsTimer, &QTimer::timeout, this, &FileTransferProgress::updateStats);
+
+    statsTimer.setInterval(1000);
 
     // Set cancel button
     showAbort();
@@ -54,9 +58,20 @@ void FileTransferProgress::reset()
 {
     ui->byteCount->setText(QString::number(0));
     ui->blockCount->setText(QString::number(0));
+
+    elapsedTimer.start();
+
+    finalElapsedMs = 0;
+    timingActive = true;
+
+    statsTimer.start();
+
+    updateStats();
+
     cancelTimer.stop();
     cancelPending = false;
     closeAnywayAvailable = false;
+
     ui->buttonBox->button(QDialogButtonBox::Abort)->setText(tr("Cancel"));
     ui->buttonBox->button(QDialogButtonBox::Abort)->setEnabled(true);
 }
@@ -68,8 +83,34 @@ void FileTransferProgress::reset()
  */
 void FileTransferProgress::updateStats()
 {
-    ui->byteCount->setText(QString::number(ftDetails.getBytes()));
+    const quint64 bytesTransferred = ftDetails.getBytes();
+    const qint64 elapsedMs = timingActive ? elapsedTimer.elapsed() : finalElapsedMs;
+    const qint64 totalSeconds = elapsedMs / 1000;
+    const qint64 hours = totalSeconds / 3600;
+    const qint64 minutes = (totalSeconds / 60) % 60;
+    const qint64 seconds = totalSeconds % 60;
+    const double bytesPerSecond = elapsedMs > 0
+                                      ? static_cast<double>(bytesTransferred) * 1000.0 / elapsedMs
+                                      : 0.0;
+    double scaledRate = bytesPerSecond;
+    const QStringList rateUnits = {"B/s", "KiB/s", "MiB/s", "GiB/s", "TiB/s"};
+    qsizetype rateUnit = 0;
+    while (scaledRate >= 1024.0 && rateUnit < rateUnits.size() - 1) {
+        scaledRate /= 1024.0;
+        ++rateUnit;
+    }
+
+    ui->byteCount->setText(QString::number(bytesTransferred));
     ui->blockCount->setText(QString::number(ftDetails.getBlocks()));
+
+    ui->elapsedTime->setText(QStringLiteral("%1:%2:%3")
+                                 .arg(hours, 2, 10, QLatin1Char('0'))
+                                 .arg(minutes, 2, 10, QLatin1Char('0'))
+                                 .arg(seconds, 2, 10, QLatin1Char('0')));
+
+    ui->throughput->setText(QStringLiteral("%1 %2")
+                                .arg(scaledRate, 0, 'f', 1)
+                                .arg(rateUnits.at(rateUnit)));
 }
 
 /**
@@ -91,6 +132,11 @@ void FileTransferProgress::updateMessage(const QString &message)
  */
 void FileTransferProgress::showClose()
 {
+    finalElapsedMs = elapsedTimer.isValid() ? elapsedTimer.elapsed() : 0;
+    timingActive = false;
+    statsTimer.stop();
+    if (elapsedTimer.isValid())
+        updateStats();
     cancelTimer.stop();
     cancelPending = false;
     closeAnywayAvailable = false;
@@ -106,6 +152,13 @@ void FileTransferProgress::showClose()
  */
 void FileTransferProgress::showAbort()
 {
+    if (timingActive) {
+        finalElapsedMs = elapsedTimer.elapsed();
+        timingActive = false;
+    }
+    statsTimer.stop();
+    if (elapsedTimer.isValid())
+        updateStats();
     cancelTimer.stop();
     cancelPending = false;
     closeAnywayAvailable = false;
@@ -122,19 +175,23 @@ void FileTransferProgress::showAbort()
  * @details Set the direction of the file transfer. This is called when a new file transfer is started.
  * 
  */
-void FileTransferProgress::setDirection(Q3270::TransferDirection direction)
+void FileTransferProgress::setDirection(Q3270::TransferDirection direction, QString fromFile, QString toFile)
 {
     if (direction == Q3270::TransferDirection::Send)
     {
             setWindowTitle("Sending File");
             ui->blockMessage->setText("Blocks Sent:");
             ui->byteMessage->setText("Bytes Sent:");
+            ui->fromFile->setText(fromFile);
+            ui->toFile->setText(toFile);
     }
     else
     {
             setWindowTitle("Receiving File");
             ui->blockMessage->setText("Blocks Received:");
             ui->byteMessage->setText("Bytes Received:");
+            ui->fromFile->setText(fromFile);
+            ui->toFile->setText(toFile);
     }
 }
 

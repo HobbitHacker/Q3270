@@ -149,14 +149,13 @@ void FileTransfer::open(QByteArray::Iterator &buffer, QByteArray &reply, int wsf
             return;
     }
 
-    // Set to zero in case of errors
-    blocksTransferred = 0;
-
     // Messages are sent as OPEN REQ and the INSERT DATA request that follows is for the message not
     // the data. The packet type is FT:MSG for messages and FT:DATA for data.
-    if (packetType.slice(0, 6) == "FT:MSG")
+    if (packetType.slice(0, 6) == "FT:MSG") {
         ftMsg = true;
-    else {
+    } else {
+        // Set to zero in case of errors
+        blocksTransferred = 0;
         bytesTransferred = 0;
         emit ftUpdateCounts();
         ftMsg = false;
@@ -184,8 +183,8 @@ void FileTransfer::open(QByteArray::Iterator &buffer, QByteArray &reply, int wsf
         ftState = FTState::EXPECTED;
     }
 
-    // Open sets record count to 1
-    blocksTransferred = 1;
+    // The open request starts the DFT record sequence at one.
+    dftRecordNumber = 1;
 
     reply.append(IBM3270_AID_SF);
 
@@ -278,9 +277,10 @@ void FileTransfer::insertData(QByteArray::Iterator &buffer, QByteArray &reply)
             ftAbort(incomingFile.errorString(), IBM3270_FT_ERROR_INSERT, reply);
         }
         bytesTransferred += pktLen;
-        emit ftUpdateCounts();
     }
 
+    blocksTransferred++;
+    emit ftUpdateCounts();
     ftDataAck(reply);
 }
 
@@ -385,7 +385,7 @@ void FileTransfer::getData(QByteArray &reply)
     StructuredField sendData = StructuredField(IBM3270_WSF_TRANSFER)
                                    .addHalfWord(IBM3270_FT_GET_ACK)
                                    .addHalfWord(IBM3270_FT_RECNUM_HDR)
-                                   .addWord(blocksTransferred)
+                                   .addWord(dftRecordNumber)
                                    .addHalfWord(IBM3270_FT_NOTCOMP)
                                    .addByte(IBM3270_FT_DATA_START)
                                    .addHalfWord(data.length() + 5); // Add 5 for the 5 bytes of header
@@ -401,6 +401,7 @@ void FileTransfer::getData(QByteArray &reply)
 
     bytesTransferred += data.length();
     blocksTransferred++;
+    dftRecordNumber++;
 
     emit ftUpdateCounts();
 }
@@ -447,7 +448,7 @@ void FileTransfer::close(QByteArray &reply)
  * @brief   FileTransfer::ftDataAck - acknowledge the Insert Data structured field
  * @param   reply - the reply buffer to send back to the host
  *
- * @details This function sends a Normal Ack for the Insert Data structured field. It increments the block count.
+ * @details This function sends a Normal Ack for the Insert Data structured field and advances the DFT record sequence.
  */
 void FileTransfer::ftDataAck(QByteArray &reply)
 {
@@ -456,10 +457,10 @@ void FileTransfer::ftDataAck(QByteArray &reply)
     reply.append(StructuredField(IBM3270_WSF_TRANSFER)
                      .addHalfWord(IBM3270_FT_NORMAL_ACK)
                      .addHalfWord(IBM3270_FT_RECNUM_HDR)
-                     .addWord(blocksTransferred)
+                     .addWord(dftRecordNumber)
                      .toSF());
 
-    blocksTransferred++;
+    dftRecordNumber++;
 }
 
 /**
@@ -509,6 +510,7 @@ void FileTransfer::setState(FileTransfer::FTState state)
     if (ftState == FTState::EXPECTED) {
         blocksTransferred = 0;
         bytesTransferred = 0;
+        dftRecordNumber = 0;
         emit ftUpdateCounts();
         emit ftStarted();
     }

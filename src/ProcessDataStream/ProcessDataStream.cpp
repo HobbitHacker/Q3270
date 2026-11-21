@@ -110,8 +110,7 @@ void ProcessDataStream::processStream(QByteArray &b, bool tn3270e)
     if (fileTransfer.getMode() == FileTransfer::FTMode::DFT &&
         command != IBM3270_WSF && command != IBM3270_CCW_WSF)
     {
-        qDebug() << "Ignoring non-WSF data stream during DFT transfer:" << QString::number(command, 16);
-        return;
+        qDebug() << "WSF data stream during DFT transfer:" << QString::number(command, 16);
     }
 
     // Process the incoming command

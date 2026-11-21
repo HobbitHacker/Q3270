@@ -215,6 +215,11 @@ QString FileTransferDialog::getLocalFile()
     return fileName;
 }
 
+QString FileTransferDialog::getRemoteFile()
+{
+    return ui->remoteFile->text();
+}
+
 void FileTransferDialog::on_hosttype_changed()
 {
     setOptions();
