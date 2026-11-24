@@ -26,19 +26,19 @@ Install Qt 6 development libraries via your package manager, then build from sou
 
 **Ubuntu/Debian:**
 ```
-sudo apt install build-essential qtbase5-dev qttools5-dev-tools libqt5svg5-dev
+sudo apt install build-essential cmake qt6-base-dev qt6-svg-dev qt6-tools-dev qt6-tools-dev-tools
 ```
 **Fedora:**
 ```
-sudo dnf install qt5-qtbase-devel qt5-qtsvg-devel
+sudo dnf install gcc-c++ cmake qt6-qtbase-devel qt6-qtsvg-devel qt6-qttools-devel
 ```
 **openSUSE:**
 ```
-sudo zypper install libqt5-qtbase-devel libqt5-qtsvg-devel
+sudo zypper install gcc-c++ cmake qt6-base-devel qt6-svg-devel qt6-tools-devel
 ```
 **Arch Linux:**
 ```
-sudo pacman -S base-devel qt5-base qt5-svg
+sudo pacman -S base-devel cmake qt6-base qt6-svg qt6-tools
 ```
 
 Then:

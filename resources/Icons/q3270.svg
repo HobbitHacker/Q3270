@@ -25,7 +25,7 @@
      inkscape:cx="511.55245"
      inkscape:cy="446.20979"
      inkscape:window-width="2560"
-     inkscape:window-height="1380"
+     inkscape:window-height="1381"
      inkscape:window-x="0"
      inkscape:window-y="0"
      inkscape:window-maximized="1"
@@ -75,7 +75,7 @@
      ry="108"
      fill="#0e120e"
      id="rect2"
-     style="fill:#ffffff;fill-opacity:1" />
+     style="fill:#125a05;fill-opacity:1;stroke-width:1.00007812;stroke-dasharray:none;stroke:#ffffff;stroke-opacity:1" />
   <rect
      x="80"
      y="80"
@@ -87,7 +87,8 @@
      stroke="#1a2e1a"
      stroke-width="3"
      opacity="0.6"
-     id="rect43" />
+     id="rect43"
+     style="stroke:#f5fff5;stroke-opacity:1" />
   <g
      clip-path="url(#sq)"
      id="g41"
@@ -356,7 +357,7 @@
            sodipodi:role="line"
            id="tspan46"
            x="148"
-           y="355">Q3270 Terminal Emulator v0.3.1</tspan></text>
+           y="355">Q3270 Terminal Emulator v0.4.0</tspan></text>
       <text
          x="148"
          y="368"
