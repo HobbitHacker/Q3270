@@ -1,8 +1,10 @@
 var dir_68267d1309a1af8e8297ef4c3efbcdba =
 [
     [ "Display", "dir_8b29354ea792f14f229ba6ab36888b3c.html", "dir_8b29354ea792f14f229ba6ab36888b3c" ],
+    [ "FileTransfer", "dir_7dbf29c0495ba8491691575f76f9aa53.html", "dir_7dbf29c0495ba8491691575f76f9aa53" ],
     [ "Models", "dir_36df885461d6bd14211edf06510d126c.html", "dir_36df885461d6bd14211edf06510d126c" ],
     [ "Preferences", "dir_a5ecc063dbadccaa2a488da0ba7e8a88.html", "dir_a5ecc063dbadccaa2a488da0ba7e8a88" ],
+    [ "ProcessDataStream", "dir_d735bd3be2dda8202aed78325d3b32f8.html", "dir_d735bd3be2dda8202aed78325d3b32f8" ],
     [ "Sessions", "dir_09fb339739a0135e2df78536425ea8fd.html", "dir_09fb339739a0135e2df78536425ea8fd" ],
     [ "Stores", "dir_431e08d6d32193ca308f5fbaa900b5e4.html", "dir_431e08d6d32193ca308f5fbaa900b5e4" ],
     [ "ActiveSettings.h", "ActiveSettings_8h_source.html", null ],
@@ -16,7 +18,6 @@ var dir_68267d1309a1af8e8297ef4c3efbcdba =
     [ "Keyboard.h", "Keyboard_8h_source.html", null ],
     [ "KeyboardThemeDialog.h", "KeyboardThemeDialog_8h_source.html", null ],
     [ "MainWindow.h", "MainWindow_8h_source.html", null ],
-    [ "ProcessDataStream.h", "ProcessDataStream_8h_source.html", null ],
     [ "Q3270.h", "Q3270_8h_source.html", null ],
     [ "SocketConnection.h", "SocketConnection_8h_source.html", null ],
     [ "Terminal.h", "Terminal_8h_source.html", null ]

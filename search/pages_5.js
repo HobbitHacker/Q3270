@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['—_20a_20qt_20based_20tn3270_20emulator_0',['Q3270 — A Qt-based TN3270 Emulator',['../md__2home_2runner_2work_2Q3270_2Q3270_2README.html',1,'']]]
+  ['features_0',['Features',['..//home/runner/work/Q3270/Q3270/README.md#autotoc_md40',1,'']]],
+  ['file_20menu_1',['File Menu',['../index.html#autotoc_md15',1,'']]]
 ];

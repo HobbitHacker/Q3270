@@ -1,6 +1,6 @@
 var classTerminal =
 [
-    [ "Terminal", "classTerminal.html#a87424f9f279b581d47d799fcbd74ccba", null ],
+    [ "Terminal", "classTerminal.html#af79b60827cf95b7dc034aa31428a4ae8", null ],
     [ "~Terminal", "classTerminal.html#add5a7d4dd45b68af9a0afb1cc845af2f", null ],
     [ "blinkCursor", "classTerminal.html#a4ef48a1450184038c414d6d6edcf5f3c", null ],
     [ "blinkText", "classTerminal.html#afd69e096aa2c06c50482d71d88d93462", null ],

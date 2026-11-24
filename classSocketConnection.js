@@ -7,7 +7,7 @@ var classSocketConnection =
     [ "disconnectMainframe", "classSocketConnection.html#aab5971bac52d7c58f71775779f91548a", null ],
     [ "getCertDetails", "classSocketConnection.html#a6bd650585620c76d3c31ea472eae39a4", null ],
     [ "opened", "classSocketConnection.html#a46381b7efbc8ed85114f236ce39b6efe", null ],
-    [ "sendResponse", "classSocketConnection.html#a075f1d5c0b534b2bc040331a4017adbd", null ],
+    [ "sendResponse", "classSocketConnection.html#a678f55c3f15d17bae4874773582ee912", null ],
     [ "setSecure", "classSocketConnection.html#aec09a1be1661219e7fedad0b055e23fb", null ],
     [ "setVerify", "classSocketConnection.html#ab40915caf1ed95b88ac41ea865fc59e4", null ]
 ];

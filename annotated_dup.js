@@ -10,6 +10,9 @@ var annotated_dup =
     [ "ColourTheme", "classColourTheme.html", "classColourTheme" ],
     [ "ConnectionDetails", "classConnectionDetails.html", "classConnectionDetails" ],
     [ "DisplayScreen", "classDisplayScreen.html", "classDisplayScreen" ],
+    [ "FileTransfer", "classFileTransfer.html", "classFileTransfer" ],
+    [ "FileTransferDialog", "classFileTransferDialog.html", null ],
+    [ "FileTransferProgress", "classFileTransferProgress.html", "classFileTransferProgress" ],
     [ "FontWidget", "classFontWidget.html", "classFontWidget" ],
     [ "FunctionInfo", "structFunctionInfo.html", null ],
     [ "FunctionRegistry", "classFunctionRegistry.html", null ],
@@ -35,5 +38,6 @@ var annotated_dup =
     [ "SessionStore", "classSessionStore.html", "classSessionStore" ],
     [ "SocketConnection", "classSocketConnection.html", "classSocketConnection" ],
     [ "StatusBar", "classStatusBar.html", "classStatusBar" ],
+    [ "StructuredField", "classStructuredField.html", "classStructuredField" ],
     [ "Terminal", "classTerminal.html", "classTerminal" ]
 ];

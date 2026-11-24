@@ -57,15 +57,6 @@ var NAVTREE =
     [ "Keyboard Mapping", "index.html#autotoc_md33", null ],
     [ "Known Limitations", "index.html#autotoc_md35", null ],
     [ "Licence", "index.html#autotoc_md37", null ],
-    [ "Q3270 — A Qt-based TN3270 Emulator", "md__2home_2runner_2work_2Q3270_2Q3270_2README.html", [
-      [ "Features", "md__2home_2runner_2work_2Q3270_2Q3270_2README.html#autotoc_md40", null ],
-      [ "Installation", "md__2home_2runner_2work_2Q3270_2Q3270_2README.html#autotoc_md42", [
-        [ "Linux", "md__2home_2runner_2work_2Q3270_2Q3270_2README.html#autotoc_md43", null ],
-        [ "macOS", "md__2home_2runner_2work_2Q3270_2Q3270_2README.html#autotoc_md44", null ]
-      ] ],
-      [ "Documentation", "md__2home_2runner_2work_2Q3270_2Q3270_2README.html#autotoc_md46", null ],
-      [ "Licence", "md__2home_2runner_2work_2Q3270_2Q3270_2README.html#autotoc_md48", null ]
-    ] ],
     [ "Classes", "annotated.html", [
       [ "Class List", "annotated.html", "annotated_dup" ],
       [ "Class Index", "classes.html", null ],
@@ -84,8 +75,9 @@ var NAVTREE =
 var NAVTREEINDEX =
 [
 "ActiveSettings_8h_source.html",
-"classSessionDialogBase.html#aaddb0a3de567f188f2a8515878c817c7"
+"classMainWindow.html"
 ];
 
-var SYNCONMSG = 'click to disable panel synchronisation';
-var SYNCOFFMSG = 'click to enable panel synchronisation';
+var SYNCONMSG = 'click to disable panel synchronization';
+var SYNCOFFMSG = 'click to enable panel synchronization';
+var LISTOFALLMEMBERS = 'List of all members';

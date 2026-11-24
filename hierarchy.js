@@ -13,6 +13,8 @@ var hierarchy =
     [ "QDialog", null, [
       [ "ColourTheme", "classColourTheme.html", null ],
       [ "ConnectionDetails", "classConnectionDetails.html", null ],
+      [ "FileTransferDialog", "classFileTransferDialog.html", null ],
+      [ "FileTransferProgress", "classFileTransferProgress.html", null ],
       [ "KeyboardThemeDialog", "classKeyboardThemeDialog.html", null ],
       [ "ManageAutoStartDialog", "classManageAutoStartDialog.html", null ],
       [ "PreferencesDialog", "classPreferencesDialog.html", null ],
@@ -40,6 +42,7 @@ var hierarchy =
     ] ],
     [ "QObject", null, [
       [ "ActiveSettings", "classActiveSettings.html", null ],
+      [ "FileTransfer", "classFileTransfer.html", null ],
       [ "Keyboard", "classKeyboard.html", null ],
       [ "ProcessDataStream", "classProcessDataStream.html", null ],
       [ "SocketConnection", "classSocketConnection.html", null ]
@@ -55,5 +58,6 @@ var hierarchy =
     [ "Ui::SessionPreviewWidget", null, [
       [ "SessionPreviewWidget", "classSessionPreviewWidget.html", null ]
     ] ],
-    [ "SessionStore", "classSessionStore.html", null ]
+    [ "SessionStore", "classSessionStore.html", null ],
+    [ "StructuredField", "classStructuredField.html", null ]
 ];

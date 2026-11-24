@@ -6,5 +6,6 @@ var searchData=
   ['sessionpreviewwidget_3',['SessionPreviewWidget',['../classSessionPreviewWidget.html',1,'']]],
   ['sessionstore_4',['SessionStore',['../classSessionStore.html',1,'']]],
   ['socketconnection_5',['SocketConnection',['../classSocketConnection.html',1,'']]],
-  ['statusbar_6',['StatusBar',['../classStatusBar.html',1,'']]]
+  ['statusbar_6',['StatusBar',['../classStatusBar.html',1,'']]],
+  ['structuredfield_7',['StructuredField',['../classStructuredField.html',1,'']]]
 ];
